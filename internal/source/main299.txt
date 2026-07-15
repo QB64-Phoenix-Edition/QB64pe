@@ -1,4 +1,4 @@
-void SUB_IDECENTERCURRENTLINE(){
+int32 FUNC_UDTDYNINLINEELEMBYTES(int32*_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT,int32*_FUNC_UDTDYNINLINEELEMBYTES_LONG_LAYOUT_MODE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,26 +11,55 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_52985:;
-if ((-(*__LONG_IDEN<=(*__LONG_IDEWY- 8 )))||is_error_pending()){
-if(qbevent){evnt(25825,11938,"ide_methods.bas");if(r)goto S_52985;}
+error_track_line(28335,2258,"type.bas");
+do{
+if(!qbevent)break;evnt(28335,2258,"type.bas");}while(r);
+error_track_line(28335,2260,"type.bas");
+S_43152:;
+if ((-(((int32*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]))[array_check((*_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTEARRAYELEMENTS[4],__ARRAY_LONG_UDTEARRAYELEMENTS[5])]== 0 ))||is_error_pending()){
+if(qbevent){evnt(28335,2260,"type.bas");if(r)goto S_43152;}
+error_track_line(28335,2260,"type.bas");
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25825,11938,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(28335,2260,"type.bas");}while(r);
+error_track_line(28335,2260,"type.bas");
 }
+error_track_line(28335,2261,"type.bas");
+S_43155:;
+if ((-((((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISUDT)!= 0 ))||is_error_pending()){
+if(qbevent){evnt(28335,2261,"type.bas");if(r)goto S_43155;}
+error_track_line(28335,2262,"type.bas");
 do{
-*__LONG_IDESY=*__LONG_IDECY-((*__LONG_IDEWY- 8 )/  2 );
-if(!qbevent)break;evnt(25825,11939,"ide_methods.bas");}while(r);
-S_52989:;
-if ((-(*__LONG_IDESY< 1 ))||is_error_pending()){
-if(qbevent){evnt(25825,11940,"ide_methods.bas");if(r)goto S_52989;}
+*_FUNC_UDTDYNINLINEELEMBYTES_LONG_NESTED_UDT=((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]& 4095ll ;
+if(!qbevent)break;evnt(28335,2262,"type.bas");}while(r);
+error_track_line(28335,2263,"type.bas");
+S_43157:;
+if ((FUNC_UDTDYNHASMEMBERARRAYS(_FUNC_UDTDYNINLINEELEMBYTES_LONG_NESTED_UDT,_FUNC_UDTDYNINLINEELEMBYTES_LONG_LAYOUT_MODE))||is_error_pending()){
+if(qbevent){evnt(28335,2263,"type.bas");if(r)goto S_43157;}
+error_track_line(28335,2264,"type.bas");
 do{
-*__LONG_IDESY= 1 ;
-if(!qbevent)break;evnt(25825,11940,"ide_methods.bas");}while(r);
+*_FUNC_UDTDYNINLINEELEMBYTES_LONG_UDTDYNINLINEELEMBYTES=qb_safe_idiv(FUNC_UDTDYNLAYOUTSIZE(_FUNC_UDTDYNINLINEELEMBYTES_LONG_NESTED_UDT,_FUNC_UDTDYNINLINEELEMBYTES_LONG_LAYOUT_MODE), 8 );
+if(!qbevent)break;evnt(28335,2264,"type.bas");}while(r);
+error_track_line(28335,2265,"type.bas");
+}else{
+error_track_line(28335,2266,"type.bas");
+do{
+*_FUNC_UDTDYNINLINEELEMBYTES_LONG_UDTDYNINLINEELEMBYTES=FUNC_UDT_ARRAY_MEMBER_BYTES(_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT);
+if(!qbevent)break;evnt(28335,2266,"type.bas");}while(r);
+error_track_line(28335,2267,"type.bas");
+}
+error_track_line(28335,2268,"type.bas");
+}else{
+error_track_line(28335,2269,"type.bas");
+do{
+*_FUNC_UDTDYNINLINEELEMBYTES_LONG_UDTDYNINLINEELEMBYTES=FUNC_UDT_ARRAY_MEMBER_BYTES(_FUNC_UDTDYNINLINEELEMBYTES_LONG_ELEMENT);
+if(!qbevent)break;evnt(28335,2269,"type.bas");}while(r);
+error_track_line(28335,2270,"type.bas");
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free299.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_UDTDYNINLINEELEMBYTES_LONG_UDTDYNINLINEELEMBYTES;
 }

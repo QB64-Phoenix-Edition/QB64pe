@@ -1,4 +1,4 @@
-qbs* FUNC_FINDPROPOSEDTITLE(){
+qbs* FUNC_IDEGETLINE(int32*_FUNC_IDEGETLINE_LONG_I){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,114 +11,25 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28345,12112,"ide_methods.bas");
+S_57524:;
+if ((-(*_FUNC_IDEGETLINE_LONG_I!= -1 ))||is_error_pending()){
+if(qbevent){evnt(28345,12112,"ide_methods.bas");if(r)goto S_57524;}
+error_track_line(28345,12112,"ide_methods.bas");
 do{
-if(!qbevent)break;evnt(25825,20464,"ide_methods.bas");}while(r);
-S_62545:;
-fornext_value7037= 1 ;
-fornext_finalvalue7037=*__LONG_IDEN;
-fornext_step7037= 1 ;
-if (fornext_step7037<0) fornext_step_negative7037=1; else fornext_step_negative7037=0;
-if (is_error_pending()) goto fornext_error7037;
-goto fornext_entrylabel7037;
-while(1){
-fornext_value7037=fornext_step7037+(*_FUNC_FINDPROPOSEDTITLE_LONG_I);
-fornext_entrylabel7037:
-*_FUNC_FINDPROPOSEDTITLE_LONG_I=fornext_value7037;
-if (fornext_step_negative7037){
-if (fornext_value7037<fornext_finalvalue7037) break;
-}else{
-if (fornext_value7037>fornext_finalvalue7037) break;
+SUB_IDEGOTOLINE(_FUNC_IDEGETLINE_LONG_I);
+if(!qbevent)break;evnt(28345,12112,"ide_methods.bas");}while(r);
+error_track_line(28345,12112,"ide_methods.bas");
 }
-fornext_error7037:;
-if(qbevent){evnt(25825,20465,"ide_methods.bas");if(r)goto S_62545;}
+error_track_line(28345,12113,"ide_methods.bas");
 do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,FUNC_IDEGETLINE(_FUNC_FINDPROPOSEDTITLE_LONG_I));
+qbs_set(_FUNC_IDEGETLINE_STRING_IDEGETLINE,func_mid(__STRING_IDET,*__LONG_IDELI+ 4 ,string2l(func_mid(__STRING_IDET,*__LONG_IDELI, 4 ,0|1)),0|1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20466,"ide_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,qbs_ltrim(qbs_rtrim(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20467,"ide_methods.bas");}while(r);
-do{
-*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE=func_instr(NULL,qbs_ucase(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE),qbs_add(qbs_new_txt_len("_TITLE ",7),func_chr( 34 )),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20468,"ide_methods.bas");}while(r);
-S_62549:;
-if ((-(*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE> 0 ))||is_error_pending()){
-if(qbevent){evnt(25825,20469,"ide_methods.bas");if(r)goto S_62549;}
-do{
-SUB_FINDQUOTECOMMENT(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE,_FUNC_FINDPROPOSEDTITLE_BYTE_C,_FUNC_FINDPROPOSEDTITLE_BYTE_Q);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20470,"ide_methods.bas");}while(r);
-S_62551:;
-if ((~(*_FUNC_FINDPROPOSEDTITLE_BYTE_Q))||is_error_pending()){
-if(qbevent){evnt(25825,20471,"ide_methods.bas");if(r)goto S_62551;}
-do{
-*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE=func_instr(*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE+ 8 ,_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,func_chr( 34 ),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20472,"ide_methods.bas");}while(r);
-S_62553:;
-if ((-(*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE> 0 ))||is_error_pending()){
-if(qbevent){evnt(25825,20473,"ide_methods.bas");if(r)goto S_62553;}
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE,func_mid(_FUNC_FINDPROPOSEDTITLE_STRING_THISLINE,*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE+ 8 ,(*_FUNC_FINDPROPOSEDTITLE_LONG_FIND_CLOSINGQUOTE-*_FUNC_FINDPROPOSEDTITLE_LONG_FOUND_TITLE)- 8 ,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20474,"ide_methods.bas");}while(r);
-}
-do{
-goto fornext_exit_7036;
-if(!qbevent)break;evnt(25825,20476,"ide_methods.bas");}while(r);
-}
-}
-fornext_continue_7036:;
-}
-fornext_exit_7036:;
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_INVALIDCHARS,qbs_add(qbs_new_txt_len(":/\\?*><|",8),func_chr( 34 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20481,"ide_methods.bas");}while(r);
-S_62561:;
-fornext_value7039= 1 ;
-fornext_finalvalue7039=_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE->len;
-fornext_step7039= 1 ;
-if (fornext_step7039<0) fornext_step_negative7039=1; else fornext_step_negative7039=0;
-if (is_error_pending()) goto fornext_error7039;
-goto fornext_entrylabel7039;
-while(1){
-fornext_value7039=fornext_step7039+(*_FUNC_FINDPROPOSEDTITLE_LONG_I);
-fornext_entrylabel7039:
-*_FUNC_FINDPROPOSEDTITLE_LONG_I=fornext_value7039;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative7039){
-if (fornext_value7039<fornext_finalvalue7039) break;
-}else{
-if (fornext_value7039>fornext_finalvalue7039) break;
-}
-fornext_error7039:;
-if(qbevent){evnt(25825,20482,"ide_methods.bas");if(r)goto S_62561;}
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR,func_mid(_FUNC_FINDPROPOSEDTITLE_STRING_TEMPFOUND_TITLE,*_FUNC_FINDPROPOSEDTITLE_LONG_I, 1 ,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20483,"ide_methods.bas");}while(r);
-S_62563:;
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_FINDPROPOSEDTITLE_STRING_INVALIDCHARS,_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR,0)== 0 )))||is_error_pending()){
-if(qbevent){evnt(25825,20484,"ide_methods.bas");if(r)goto S_62563;}
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE,qbs_add(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE,_FUNC_FINDPROPOSEDTITLE_STRING_THISCHAR));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20485,"ide_methods.bas");}while(r);
-}
-fornext_continue_7038:;
-}
-fornext_exit_7038:;
-do{
-qbs_set(_FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE,qbs_ltrim(qbs_rtrim(_FUNC_FINDPROPOSEDTITLE_STRING_FOUND_TITLE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,20489,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(28345,12113,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free364.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE);return _FUNC_FINDPROPOSEDTITLE_STRING_FINDPROPOSEDTITLE;
+qbs_maketmp(_FUNC_IDEGETLINE_STRING_IDEGETLINE);return _FUNC_IDEGETLINE_STRING_IDEGETLINE;
 }

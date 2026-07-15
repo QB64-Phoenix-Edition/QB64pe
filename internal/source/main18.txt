@@ -1,4 +1,4 @@
-void SUB_CLEARID(){
+int32 FUNC_UDTDYNMEMBERSIZE(int32*_FUNC_UDTDYNMEMBERSIZE_LONG_MEMBER_ID,int32*_FUNC_UDTDYNMEMBERSIZE_LONG_LAYOUT_MODE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,45 +11,26 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(15697,0,NULL);
+S_18195:;
+if ((-(*_FUNC_UDTDYNMEMBERSIZE_LONG_LAYOUT_MODE== 1 ))||is_error_pending()){
+if(qbevent){evnt(15697);if(r)goto S_18195;}
+error_track_line(15698,0,NULL);
 do{
-memcpy((((char*)__UDT_ID)+((0+0))+ 0),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 0), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 256),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 256), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 512),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 512), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 516),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 516), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 518),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 518), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 520),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 520), 8);
-memcpy((((char*)__UDT_ID)+((0+0))+ 528),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 528), 8);
-memcpy((((char*)__UDT_ID)+((0+0))+ 536),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 536), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 540),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 540), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 544),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 544), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 546),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 546), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 548),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 548), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 550),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 550), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 806),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 806), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 808),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 808), 1);
-memcpy((((char*)__UDT_ID)+((0+0))+ 809),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 809), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 811),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 811), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 813),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 813), 400);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1213),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1213), 400);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1613),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1613), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1869),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1869), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2125),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2125), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2381),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2381), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2385),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2385), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2641),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2641), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2645),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2645), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2647),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2647), 100);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2747),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2747), 100);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2847),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2847), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2851),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2851), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2853),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2853), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2855),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2855), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2859),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2859), 2);
-qbs_set(*(qbs**)(((char*)__UDT_ID)+((0+0))+ 2861), *(qbs**)(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2861));
-if(!qbevent)break;evnt(15243);}while(r);
+*_FUNC_UDTDYNMEMBERSIZE_LONG_UDTDYNMEMBERSIZE=((int32*)(__ARRAY_LONG_UDTEFDYNSIZE[0]))[array_check((*_FUNC_UDTDYNMEMBERSIZE_LONG_MEMBER_ID)-__ARRAY_LONG_UDTEFDYNSIZE[4],__ARRAY_LONG_UDTEFDYNSIZE[5])];
+if(!qbevent)break;evnt(15698);}while(r);
+error_track_line(15699,0,NULL);
+}else{
+error_track_line(15700,0,NULL);
+do{
+*_FUNC_UDTDYNMEMBERSIZE_LONG_UDTDYNMEMBERSIZE=((int32*)(__ARRAY_LONG_UDTEDYNSIZE[0]))[array_check((*_FUNC_UDTDYNMEMBERSIZE_LONG_MEMBER_ID)-__ARRAY_LONG_UDTEDYNSIZE[4],__ARRAY_LONG_UDTEDYNSIZE[5])];
+if(!qbevent)break;evnt(15700);}while(r);
+error_track_line(15701,0,NULL);
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free18.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_UDTDYNMEMBERSIZE_LONG_UDTDYNMEMBERSIZE;
 }

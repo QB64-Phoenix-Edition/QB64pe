@@ -1,4 +1,4 @@
-void SUB_CONVBUFTONATIVEEOL(int16*_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE){
+void SUB_INISETAUTOCOMMIT(int8*_SUB_INISETAUTOCOMMIT_BYTE_STATE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,36 +11,25 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28330,480,"ini.bm");
 do{
-if(!qbevent)break;evnt(25811,812,"simplebuffer.bm");}while(r);
-S_36156:;
-if ((~(FUNC_CHECKHANDLE(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(25811,814,"simplebuffer.bm");if(r)goto S_36156;}
+if(!qbevent)break;evnt(28330,480,"ini.bm");}while(r);
+error_track_line(28330,481,"ini.bm");
+S_38281:;
+if ((*_SUB_INISETAUTOCOMMIT_BYTE_STATE)||is_error_pending()){
+if(qbevent){evnt(28330,481,"ini.bm");if(r)goto S_38281;}
+error_track_line(28330,482,"ini.bm");
 do{
-error( 258 );
-if(!qbevent)break;evnt(25811,814,"simplebuffer.bm");}while(r);
-do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(25811,814,"simplebuffer.bm");}while(r);
-}
-do{
-*_SUB_CONVBUFTONATIVEEOL_LONG_BUF=*_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(25811,815,"simplebuffer.bm");}while(r);
-S_36161:;
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,func__os(),qbs_new_txt_len("[LINUX]",7),0)> 0 )))||is_error_pending()){
-if(qbevent){evnt(25811,817,"simplebuffer.bm");if(r)goto S_36161;}
-do{
-SUB_CONVBUFTOLNXMACEOL(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE);
-if(!qbevent)break;evnt(25811,818,"simplebuffer.bm");}while(r);
+*__LONG_INIDISABLEAUTOCOMMIT= 0 ;
+if(!qbevent)break;evnt(28330,482,"ini.bm");}while(r);
+error_track_line(28330,483,"ini.bm");
 }else{
+error_track_line(28330,484,"ini.bm");
 do{
-SUB_CONVBUFTOWINEOL(_SUB_CONVBUFTONATIVEEOL_INTEGER_HANDLE);
-if(!qbevent)break;evnt(25811,820,"simplebuffer.bm");}while(r);
+*__LONG_INIDISABLEAUTOCOMMIT= -1 ;
+if(!qbevent)break;evnt(28330,484,"ini.bm");}while(r);
+error_track_line(28330,485,"ini.bm");
 }
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_CONVBUFTONATIVEEOL_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 9 , 4 ,qbs_new_txt_len("EolN",4),1);
-if(!qbevent)break;evnt(25811,822,"simplebuffer.bm");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free169.txt"

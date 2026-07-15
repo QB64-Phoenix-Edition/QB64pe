@@ -5,7 +5,38 @@ on:
     branches:
       - 'main'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  # 1. Prepare-Job: Cloudflare settings
+  BotFight-OFF:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable Cloudflare Bot Fight Mode
+        run: |
+          curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" \
+               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data '{"fight_mode": false}'
+
+  # 2. Main-Job: Wait for Job 1, then call the Matrix-Build
+  CI-Run:
+    needs: BotFight-OFF
     uses: ./.github/workflows/build-process.yml
     secrets: inherit
+
+  # 3. Cleanup-Job: Wait for Job 2, then reset Cloudflare
+  # Runs ALWAYS – doesn't matter if the Build succeeds, fails or got canceled.
+  BotFight-ON:
+    needs: CI-Run
+    if: always() || cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable Cloudflare Bot Fight Mode
+        run: |
+          curl -g -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/bot_management" \
+               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data '{"fight_mode": true}'

@@ -1,4 +1,4 @@
-qbs* FUNC_WIKISAFENAME(qbs*_FUNC_WIKISAFENAME_STRING_PAGE){
+qbs* FUNC_IDEZGETFILEPATH(qbs*_FUNC_IDEZGETFILEPATH_STRING_ROOT,qbs*_FUNC_IDEZGETFILEPATH_STRING_F){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,80 +11,97 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28345,15738,"ide_methods.bas");
 do{
-qbs_set(_FUNC_WIKISAFENAME_STRING_EXT,func_space(_FUNC_WIKISAFENAME_STRING_PAGE->len));
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P,FUNC_IDEZTAKEPATH(_FUNC_IDEZGETFILEPATH_STRING_F));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,1140,"wiki_methods.bas");}while(r);
-S_64899:;
-fornext_value7381= 1 ;
-fornext_finalvalue7381=_FUNC_WIKISAFENAME_STRING_PAGE->len;
-fornext_step7381= 1 ;
-if (fornext_step7381<0) fornext_step_negative7381=1; else fornext_step_negative7381=0;
-if (is_error_pending()) goto fornext_error7381;
-goto fornext_entrylabel7381;
-while(1){
-fornext_value7381=fornext_step7381+(*_FUNC_WIKISAFENAME_LONG_I);
-fornext_entrylabel7381:
-*_FUNC_WIKISAFENAME_LONG_I=fornext_value7381;
+if(!qbevent)break;evnt(28345,15738,"ide_methods.bas");}while(r);
+error_track_line(28345,15741,"ide_methods.bas");
+S_61389:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_IDEZGETFILEPATH_STRING_P->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(28345,15741,"ide_methods.bas");if(r)goto S_61389;}
+error_track_line(28345,15741,"ide_methods.bas");
+do{
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P,_FUNC_IDEZGETFILEPATH_STRING_ROOT);
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative7381){
-if (fornext_value7381<fornext_finalvalue7381) break;
-}else{
-if (fornext_value7381>fornext_finalvalue7381) break;
+if(!qbevent)break;evnt(28345,15741,"ide_methods.bas");}while(r);
+error_track_line(28345,15741,"ide_methods.bas");
 }
-fornext_error7381:;
-if(qbevent){evnt(25825,1141,"wiki_methods.bas");if(r)goto S_64899;}
+error_track_line(28345,15744,"ide_methods.bas");
+S_61392:;
+if ((qbs_cleanup(qbs_tmp_base,func__direxists(qbs_add(qbs_add(_FUNC_IDEZGETFILEPATH_STRING_ROOT,__STRING1_IDEPATHSEP),_FUNC_IDEZGETFILEPATH_STRING_P))))||is_error_pending()){
+if(qbevent){evnt(28345,15744,"ide_methods.bas");if(r)goto S_61392;}
+error_track_line(28345,15744,"ide_methods.bas");
 do{
-*_FUNC_WIKISAFENAME_LONG_C=qbs_asc(_FUNC_WIKISAFENAME_STRING_PAGE,*_FUNC_WIKISAFENAME_LONG_I);
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P,qbs_add(qbs_add(_FUNC_IDEZGETFILEPATH_STRING_ROOT,__STRING1_IDEPATHSEP),_FUNC_IDEZGETFILEPATH_STRING_P));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,1142,"wiki_methods.bas");}while(r);
-S_64901:;
-if(qbevent){evnt(25825,1143,"wiki_methods.bas");if(r)goto S_64901;}
-S_64902:;
-if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 65 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 90 ))))||is_error_pending()){
-if(qbevent){evnt(25825,1144,"wiki_methods.bas");if(r)goto S_64902;}
-do{
-tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
-tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
-tmp_long= 49 ; if (!is_error_pending()){
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-}}}
-if(!qbevent)break;evnt(25825,1144,"wiki_methods.bas");}while(r);
-sc_ec_476_end:;
-goto sc_7383_end;
+if(!qbevent)break;evnt(28345,15744,"ide_methods.bas");}while(r);
+error_track_line(28345,15744,"ide_methods.bas");
 }
-S_64904:;
-if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 97 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 122 ))))||is_error_pending()){
-if(qbevent){evnt(25825,1145,"wiki_methods.bas");if(r)goto S_64904;}
+error_track_line(28345,15748,"ide_methods.bas");
 do{
-tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
-tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
-tmp_long= 48 ; if (!is_error_pending()){
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-}}}
-if(!qbevent)break;evnt(25825,1145,"wiki_methods.bas");}while(r);
-sc_ec_477_end:;
-goto sc_7383_end;
-}
+*__LONG_IDEERROR= 4 ;
+if(!qbevent)break;evnt(28345,15748,"ide_methods.bas");}while(r);
+error_track_line(28345,15749,"ide_methods.bas");
 do{
-tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
-tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
-tmp_long=*_FUNC_WIKISAFENAME_LONG_C; if (!is_error_pending()){
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-}}}
-if(!qbevent)break;evnt(25825,1146,"wiki_methods.bas");}while(r);
-sc_7383_end:;
-fornext_continue_7380:;
-}
-fornext_exit_7380:;
-do{
-qbs_set(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME,qbs_add(qbs_add(_FUNC_WIKISAFENAME_STRING_PAGE,qbs_new_txt_len("_",1)),_FUNC_WIKISAFENAME_STRING_EXT));
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P2,_FUNC_IDEZGETFILEPATH_STRING_P);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25825,1149,"wiki_methods.bas");}while(r);
+if(!qbevent)break;evnt(28345,15749,"ide_methods.bas");}while(r);
+error_track_line(28345,15750,"ide_methods.bas");
+S_61397:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(28345,15750,"ide_methods.bas");if(r)goto S_61397;}
+error_track_line(28345,15751,"ide_methods.bas");
+S_61398:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(_FUNC_IDEZGETFILEPATH_STRING_P2, 1 ),qbs_new_txt_len(":",1))))||is_error_pending()){
+if(qbevent){evnt(28345,15751,"ide_methods.bas");if(r)goto S_61398;}
+error_track_line(28345,15751,"ide_methods.bas");
+do{
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P2,qbs_add(_FUNC_IDEZGETFILEPATH_STRING_P2,qbs_new_txt_len("\\",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,15751,"ide_methods.bas");}while(r);
+error_track_line(28345,15751,"ide_methods.bas");
+}
+error_track_line(28345,15752,"ide_methods.bas");
+}
+error_track_line(28345,15753,"ide_methods.bas");
+S_61402:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__direxists(_FUNC_IDEZGETFILEPATH_STRING_P2)== 0 )))||is_error_pending()){
+if(qbevent){evnt(28345,15753,"ide_methods.bas");if(r)goto S_61402;}
+error_track_line(28345,15753,"ide_methods.bas");
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28345,15753,"ide_methods.bas");}while(r);
+error_track_line(28345,15753,"ide_methods.bas");
+}
+error_track_line(28345,15755,"ide_methods.bas");
+do{
+sub_chdir(_FUNC_IDEZGETFILEPATH_STRING_P2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,15755,"ide_methods.bas");}while(r);
+error_track_line(28345,15756,"ide_methods.bas");
+do{
+*__LONG_IDEERROR= 1 ;
+if(!qbevent)break;evnt(28345,15756,"ide_methods.bas");}while(r);
+error_track_line(28345,15758,"ide_methods.bas");
+do{
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_P,func__cwd());
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,15758,"ide_methods.bas");}while(r);
+error_track_line(28345,15760,"ide_methods.bas");
+do{
+sub_chdir(__STRING_IDEROOT);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,15760,"ide_methods.bas");}while(r);
+error_track_line(28345,15762,"ide_methods.bas");
+do{
+qbs_set(_FUNC_IDEZGETFILEPATH_STRING_IDEZGETFILEPATH,_FUNC_IDEZGETFILEPATH_STRING_P);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,15762,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free395.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME);return _FUNC_WIKISAFENAME_STRING_WIKISAFENAME;
+qbs_maketmp(_FUNC_IDEZGETFILEPATH_STRING_IDEZGETFILEPATH);return _FUNC_IDEZGETFILEPATH_STRING_IDEZGETFILEPATH;
 }

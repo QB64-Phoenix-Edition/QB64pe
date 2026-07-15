@@ -1,4 +1,4 @@
-void SUB_PUSHELEMENT(qbs*_SUB_PUSHELEMENT_STRING_A,qbs*_SUB_PUSHELEMENT_STRING_B){
+qbs* FUNC_STRREPLACE(qbs*_FUNC_STRREPLACE_STRING_MYSTRING,qbs*_FUNC_STRREPLACE_STRING_FIND,qbs*_FUNC_STRREPLACE_STRING_REPLACEWITH){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,22 +11,73 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_34203:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_PUSHELEMENT_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(25808,58,"elements.bas");if(r)goto S_34203;}
+error_track_line(28325,19,"strings.bas");
 do{
-qbs_set(_SUB_PUSHELEMENT_STRING_A,qbs_add(qbs_add(_SUB_PUSHELEMENT_STRING_A,__STRING1_SP),_SUB_PUSHELEMENT_STRING_B));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25808,58,"elements.bas");}while(r);
-}else{
+if(!qbevent)break;evnt(28325,19,"strings.bas");}while(r);
+error_track_line(28325,20,"strings.bas");
 do{
-qbs_set(_SUB_PUSHELEMENT_STRING_A,_SUB_PUSHELEMENT_STRING_B);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25808,58,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28325,20,"strings.bas");}while(r);
+error_track_line(28325,21,"strings.bas");
+S_36765:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_STRREPLACE_STRING_MYSTRING->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(28325,21,"strings.bas");if(r)goto S_36765;}
+error_track_line(28325,21,"strings.bas");
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28325,21,"strings.bas");}while(r);
+error_track_line(28325,21,"strings.bas");
 }
+error_track_line(28325,22,"strings.bas");
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_MYSTRING);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,22,"strings.bas");}while(r);
+error_track_line(28325,23,"strings.bas");
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_B,qbs_lcase(_FUNC_STRREPLACE_STRING_FIND));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,23,"strings.bas");}while(r);
+error_track_line(28325,24,"strings.bas");
+do{
+*_FUNC_STRREPLACE_LONG_BASEI= 1 ;
+if(!qbevent)break;evnt(28325,24,"strings.bas");}while(r);
+error_track_line(28325,25,"strings.bas");
+do{
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,25,"strings.bas");}while(r);
+error_track_line(28325,26,"strings.bas");
+S_36772:;
+while((*_FUNC_STRREPLACE_LONG_I)||is_error_pending()){
+if(qbevent){evnt(28325,26,"strings.bas");if(r)goto S_36772;}
+error_track_line(28325,27,"strings.bas");
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_STRREPLACE_STRING_A,*_FUNC_STRREPLACE_LONG_I- 1 ),_FUNC_STRREPLACE_STRING_REPLACEWITH),qbs_right(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_A->len-*_FUNC_STRREPLACE_LONG_I-_FUNC_STRREPLACE_STRING_B->len+ 1 )));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,27,"strings.bas");}while(r);
+error_track_line(28325,28,"strings.bas");
+do{
+*_FUNC_STRREPLACE_LONG_BASEI=*_FUNC_STRREPLACE_LONG_I+_FUNC_STRREPLACE_STRING_REPLACEWITH->len;
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,28,"strings.bas");}while(r);
+error_track_line(28325,29,"strings.bas");
+do{
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,29,"strings.bas");}while(r);
+error_track_line(28325,30,"strings.bas");
+dl_continue_4410:;
+}
+dl_exit_4410:;
+error_track_line(28325,31,"strings.bas");
+do{
+qbs_set(_FUNC_STRREPLACE_STRING_STRREPLACE,_FUNC_STRREPLACE_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28325,31,"strings.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free108.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_STRREPLACE_STRING_STRREPLACE);return _FUNC_STRREPLACE_STRING_STRREPLACE;
 }

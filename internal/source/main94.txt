@@ -1,4 +1,4 @@
-int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
+qbs* FUNC_NEWBYTEELEMENT(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,53 +11,53 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_34071:;
-fornext_value3961=_FUNC_FILEHASEXTENSION_STRING_F->len;
-fornext_finalvalue3961= 1 ;
-fornext_step3961= -1 ;
-if (fornext_step3961<0) fornext_step_negative3961=1; else fornext_step_negative3961=0;
-if (is_error_pending()) goto fornext_error3961;
-goto fornext_entrylabel3961;
-while(1){
-fornext_value3961=fornext_step3961+(*_FUNC_FILEHASEXTENSION_LONG_I);
-fornext_entrylabel3961:
-*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value3961;
+error_track_line(27778,0,NULL);
+do{
+qbs_set(_FUNC_NEWBYTEELEMENT_STRING_A,qbs_add(qbs_new_txt_len("byte_element_",13),qbs__tostr((int32)(FUNC_UNIQUENUMBER()),NULL,0)));
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3961){
-if (fornext_value3961<fornext_finalvalue3961) break;
+if(!qbevent)break;evnt(27778);}while(r);
+error_track_line(27779,0,NULL);
+do{
+qbs_set(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT,_FUNC_NEWBYTEELEMENT_STRING_A);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(27779);}while(r);
+error_track_line(27780,0,NULL);
+S_36127:;
+if ((*__LONG_USE_GLOBAL_BYTE_ELEMENTS)||is_error_pending()){
+if(qbevent){evnt(27780);if(r)goto S_36127;}
+error_track_line(27781,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass4307=*__LONG_GLOBTXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)malloc(12);",34)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(27781);}while(r);
+error_track_line(27782,0,NULL);
 }else{
-if (fornext_value3961>fornext_finalvalue3961) break;
-}
-fornext_error3961:;
-if(qbevent){evnt(25806,36,"file.bas");if(r)goto S_34071;}
+error_track_line(27783,0,NULL);
 do{
-*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
+SUB_WRITEBUFLINE(&(pass4308=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("byte_element_struct *",21),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=NULL;",6)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25806,37,"file.bas");}while(r);
-S_34073:;
-if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(25806,38,"file.bas");if(r)goto S_34073;}
+if(!qbevent)break;evnt(27783);}while(r);
+error_track_line(27784,0,NULL);
 do{
-goto fornext_exit_3960;
-if(!qbevent)break;evnt(25806,38,"file.bas");}while(r);
-}
-S_34076:;
-if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(25806,39,"file.bas");if(r)goto S_34076;}
+SUB_WRITEBUFLINE(&(pass4309=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_new_txt_len("if (!",5),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("){",2)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(27784);}while(r);
+error_track_line(27785,0,NULL);
 do{
-*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
-if(!qbevent)break;evnt(25806,39,"file.bas");}while(r);
+SUB_WRITEBUFLINE(&(pass4310=*__LONG_DATATXTBUF),qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("if ((mem_static_pointer+=12)<mem_static_limit) ",47),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)(mem_static_pointer-12); else ",53)),_FUNC_NEWBYTEELEMENT_STRING_A),qbs_new_txt_len("=(byte_element_struct*)mem_static_malloc(12);",45)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(27785);}while(r);
+error_track_line(27786,0,NULL);
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25806,39,"file.bas");}while(r);
+SUB_WRITEBUFLINE(&(pass4311=*__LONG_DATATXTBUF),qbs_new_txt_len("}",1));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(27786);}while(r);
+error_track_line(27787,0,NULL);
 }
-fornext_continue_3960:;
-}
-fornext_exit_3960:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free94.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
+qbs_maketmp(_FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT);return _FUNC_NEWBYTEELEMENT_STRING_NEWBYTEELEMENT;
 }

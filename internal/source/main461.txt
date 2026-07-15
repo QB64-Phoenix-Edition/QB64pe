@@ -1,0 +1,103 @@
+qbs* FUNC_WIKISAFENAME(qbs*_FUNC_WIKISAFENAME_STRING_PAGE){
+qbs *tqbs;
+ptrszint tmp_long;
+int32 tmp_fileno;
+uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+uint8 *tmp_mem_static_pointer=mem_static_pointer;
+uint32 tmp_cmem_sp=cmem_sp;
+#include "data461.txt"
+mem_lock *sf_mem_lock;
+new_mem_lock();
+sf_mem_lock=mem_lock_tmp;
+sf_mem_lock->type=3;
+if (is_error_pending()) goto exit_subfunc;
+error_track_line(28345,1143,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKISAFENAME_STRING_EXT,func_space(_FUNC_WIKISAFENAME_STRING_PAGE->len));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,1143,"wiki_methods.bas");}while(r);
+error_track_line(28345,1144,"wiki_methods.bas");
+S_69445:;
+fornext_value8103= 1 ;
+fornext_finalvalue8103=_FUNC_WIKISAFENAME_STRING_PAGE->len;
+fornext_step8103= 1 ;
+if (fornext_step8103<0) fornext_step_negative8103=1; else fornext_step_negative8103=0;
+if (is_error_pending()) goto fornext_error8103;
+goto fornext_entrylabel8103;
+while(1){
+fornext_value8103=fornext_step8103+(*_FUNC_WIKISAFENAME_LONG_I);
+fornext_entrylabel8103:
+*_FUNC_WIKISAFENAME_LONG_I=fornext_value8103;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative8103){
+if (fornext_value8103<fornext_finalvalue8103) break;
+}else{
+if (fornext_value8103>fornext_finalvalue8103) break;
+}
+fornext_error8103:;
+if(qbevent){evnt(28345,1144,"wiki_methods.bas");if(r)goto S_69445;}
+error_track_line(28345,1145,"wiki_methods.bas");
+do{
+*_FUNC_WIKISAFENAME_LONG_C=qbs_asc(_FUNC_WIKISAFENAME_STRING_PAGE,*_FUNC_WIKISAFENAME_LONG_I);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,1145,"wiki_methods.bas");}while(r);
+error_track_line(28345,1146,"wiki_methods.bas");
+S_69447:;
+if(qbevent){evnt(28345,1146,"wiki_methods.bas");if(r)goto S_69447;}
+error_track_line(28345,1147,"wiki_methods.bas");
+S_69448:;
+if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 65 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 90 ))))||is_error_pending()){
+if(qbevent){evnt(28345,1147,"wiki_methods.bas");if(r)goto S_69448;}
+error_track_line(28345,1147,"wiki_methods.bas");
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long= 49 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(28345,1147,"wiki_methods.bas");}while(r);
+error_track_line(28345,1148,"wiki_methods.bas");
+sc_ec_484_end:;
+goto sc_8105_end;
+}
+S_69450:;
+if ((((*_FUNC_WIKISAFENAME_LONG_C>=( 97 ))&&(*_FUNC_WIKISAFENAME_LONG_C<=( 122 ))))||is_error_pending()){
+if(qbevent){evnt(28345,1148,"wiki_methods.bas");if(r)goto S_69450;}
+error_track_line(28345,1148,"wiki_methods.bas");
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long= 48 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(28345,1148,"wiki_methods.bas");}while(r);
+error_track_line(28345,1149,"wiki_methods.bas");
+sc_ec_485_end:;
+goto sc_8105_end;
+}
+error_track_line(28345,1149,"wiki_methods.bas");
+do{
+tqbs=_FUNC_WIKISAFENAME_STRING_EXT; if (!is_error_pending()){
+tmp_fileno=*_FUNC_WIKISAFENAME_LONG_I; if (!is_error_pending()){
+tmp_long=*_FUNC_WIKISAFENAME_LONG_C; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(28345,1149,"wiki_methods.bas");}while(r);
+error_track_line(28345,1150,"wiki_methods.bas");
+sc_8105_end:;
+error_track_line(28345,1151,"wiki_methods.bas");
+fornext_continue_8102:;
+}
+fornext_exit_8102:;
+error_track_line(28345,1152,"wiki_methods.bas");
+do{
+qbs_set(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME,qbs_add(qbs_add(_FUNC_WIKISAFENAME_STRING_PAGE,qbs_new_txt_len("_",1)),_FUNC_WIKISAFENAME_STRING_EXT));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28345,1152,"wiki_methods.bas");}while(r);
+exit_subfunc:;
+free_mem_lock(sf_mem_lock);
+#include "free461.txt"
+if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_WIKISAFENAME_STRING_WIKISAFENAME);return _FUNC_WIKISAFENAME_STRING_WIKISAFENAME;
+}
