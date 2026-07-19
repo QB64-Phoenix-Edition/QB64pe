@@ -14404,6 +14404,8 @@ SUB ideQBJSBuildBox
             IF _FILEEXISTS(tempSrcFile$) THEN KILL tempSrcFile$
             OPEN tempSrcFile$ FOR BINARY AS #150
             IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
+            peInclude$ = "'$Include: 'lib/compatibility/qb64pe.bi'" + LineEnding$
+            PUT #150, , peInclude$
             FOR i = 1 TO iden
                 outfile$ = idegetline(i) + LineEnding$
                 PUT #150, , outfile$
