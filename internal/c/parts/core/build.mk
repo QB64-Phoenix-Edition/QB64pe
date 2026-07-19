@@ -1,39 +1,109 @@
 
-# GLEW Setup:
-# Download the latest release from https://github.com/nigels-com/glew/releases/latest
-# Only copy glew.c in src/ to internal/c/parts/core/glew
-# Copy the include directory to internal/c/parts/core/glew
-# Compile the source using -DGLEW_STATIC
-#
-# FreeGLUT Setup:
-# Although newer version of FreeGLUT (3.x) are available we do not use those (yet).
-# This is because the local version has quite a few custom changes that should be moved out first.
-# Download the latest 2.x release from https://freeglut.sourceforge.net/
-# Copy all .c files from the src directory into internal/c/parts/core/freeglut (after making QB64-PE specific changes)
-# Copy the include directory to internal/c/parts/core/freeglut
-# Compile the source using -DFREEGLUT_STATIC
+# When updating the GLFW library, remove everything except the "include" and "src" directories.
+# In the "src" directory, remove everything except *.c, *.m, and *.h files.
 
-FREEGLUT_SRCS := $(wildcard $(PATH_INTERNAL_C)/parts/core/freeglut/*.c)
-GLEW_SRCS := $(PATH_INTERNAL_C)/parts/core/glew/glew.c
+# GLAD can be updated simply by copying the generated files into the "glad" directory.
+# Make sure to copy both the "include" and "src" directories.
 
-FREEGLUT_INCLUDE := -I$(PATH_INTERNAL_C)/parts/core/freeglut/include -I$(PATH_INTERNAL_C)/parts/core/glew/include
+GLFW_SRCS := \
+	context.c \
+	egl_context.c \
+	init.c \
+	input.c \
+	monitor.c \
+	null_init.c \
+	null_joystick.c \
+	null_monitor.c \
+	null_window.c \
+	osmesa_context.c \
+	platform.c \
+	vulkan.c \
+	window.c
 
-FREEGLUT_OBJS := $(FREEGLUT_SRCS:.c=.o)
-GLEW_OBJS := $(GLEW_SRCS:.c=.o)
+ifeq ($(OS),win)
+	GLFW_SRCS += \
+		wgl_context.c \
+		win32_init.c \
+		win32_joystick.c \
+		win32_module.c \
+		win32_monitor.c \
+		win32_thread.c \
+		win32_time.c \
+		win32_window.c
 
-FREEGLUT_LIB := $(PATH_INTERNAL_C)/parts/core/freeglut.a
+	GLFW_DEFS := -D_GLFW_WIN32
+endif
 
-$(PATH_INTERNAL_C)/parts/core/glew/%.o: $(PATH_INTERNAL_C)/parts/core/glew/%.c
-	$(CC) -O1 $(CFLAGS) $(FREEGLUT_INCLUDE) -DGLEW_STATIC -w $< -c -o $@
+ifeq ($(OS),lnx)
+	GLFW_SRCS += \
+		glx_context.c \
+		linux_joystick.c \
+		posix_poll.c \
+		posix_time.c \
+		wl_init.c \
+		wl_monitor.c \
+		wl_window.c \
+		x11_init.c \
+		x11_monitor.c \
+		x11_window.c \
+		xkb_unicode.c
 
-$(PATH_INTERNAL_C)/parts/core/freeglut/%.o: $(PATH_INTERNAL_C)/parts/core/freeglut/%.c
-	$(CC) -O3 $(CFLAGS) $(FREEGLUT_INCLUDE) -DFREEGLUT_STATIC -DHAVE_UNISTD_H -DHAVE_FCNTL_H -w $< -c -o $@
+	GLFW_DEFS := -D_GLFW_X11
+endif
 
-$(FREEGLUT_LIB): $(FREEGLUT_OBJS)
-	$(AR) rcs $@ $(FREEGLUT_OBJS)
+ifeq ($(OS),osx)
+	GLFW_SRCS += \
+		cocoa_time.c
+	
+	GLFW_OSX_SRCS := \
+		cocoa_init.m \
+		cocoa_joystick.m \
+		cocoa_monitor.m \
+		cocoa_window.m \
+		nsgl_context.m
 
-QB_CORE_LIB := $(FREEGLUT_LIB)
+	GLFW_DEFS := -D_GLFW_COCOA
+endif
 
-CXXFLAGS += $(FREEGLUT_INCLUDE)
+# These are needed for both macOS and Linux.
+ifneq ($(OS),win)
+	GLFW_SRCS += \
+		posix_module.c \
+		posix_thread.c
+endif
 
-CLEAN_LIST += $(FREEGLUT_LIB) $(FREEGLUT_OBJS) $(GLEW_OBJS)
+GLAD_SRCS := $(PATH_INTERNAL_C)/parts/core/glad/src/gl.c
+
+CORE_INCLUDE := -I$(PATH_INTERNAL_C)/parts/core/glad/include -I$(PATH_INTERNAL_C)/parts/core/glfw/include
+
+GLFW_OBJS := $(patsubst %.c,$(PATH_INTERNAL_C)/parts/core/glfw/src/%.o,$(GLFW_SRCS))
+
+ifeq ($(OS),osx)
+	GLFW_OBJS += $(patsubst %.m,$(PATH_INTERNAL_C)/parts/core/glfw/src/%.o,$(GLFW_OSX_SRCS))
+endif
+
+GLAD_OBJS := $(GLAD_SRCS:.c=.o)
+
+#GLAD_DEFS :=
+
+CORE_LIB := $(PATH_INTERNAL_C)/parts/core/core.a
+
+$(PATH_INTERNAL_C)/parts/core/glad/src/%.o: $(PATH_INTERNAL_C)/parts/core/glad/src/%.c
+	$(CC) -O3 $(CFLAGS) $(CORE_INCLUDE) $(GLAD_DEFS) -w $< -c -o $@
+
+$(PATH_INTERNAL_C)/parts/core/glfw/src/%.o: $(PATH_INTERNAL_C)/parts/core/glfw/src/%.c
+	$(CC) -O3 $(CFLAGS) $(CORE_INCLUDE) $(GLFW_DEFS) -w $< -c -o $@
+
+ifeq ($(OS),osx)
+$(PATH_INTERNAL_C)/parts/core/glfw/src/%.o: $(PATH_INTERNAL_C)/parts/core/glfw/src/%.m
+	$(CC) -O3 $(CFLAGS) $(CORE_INCLUDE) $(GLFW_DEFS) -w $< -c -o $@
+endif
+
+$(CORE_LIB): $(GLFW_OBJS) $(GLAD_OBJS)
+	$(AR) rcs $@ $(GLFW_OBJS) $(GLAD_OBJS)
+
+QB_CORE_LIB := $(CORE_LIB)
+
+CXXFLAGS += $(CORE_INCLUDE) $(GLAD_DEFS) $(GLFW_DEFS)
+
+CLEAN_LIST += $(CORE_LIB) $(GLFW_OBJS) $(GLAD_OBJS)

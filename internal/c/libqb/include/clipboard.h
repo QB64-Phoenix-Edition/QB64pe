@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-struct qbs;
+#include "qbs.h"
+#include <cstdint>
 
 qbs *func__clipboard();
 void sub__clipboard(const qbs *qbsText);

@@ -1,187 +1,191 @@
-$Console
-_Dest _Console
-
-ChDir _StartDir$
-
 $IF LNX THEN
 
-'$include:'keyconsts.bi'
-'$include:'sendinput.bi'
+    $CONSOLE
+    _DEST _CONSOLE
 
-Dim Shared testCount As Long
+    CHDIR _STARTDIR$
 
-deviceCount& = _Devices
+    '$INCLUDE:'keyconsts.bi'
+    '$INCLUDE:'sendinput.bi'
 
-AssertPress EscScanCode
-AssertPress EnterScancode
-AssertPress TabScancode
-AssertPress OneScancode
-AssertPress AScanCode
-AssertPress WScanCode
-AssertPress SpaceScanCode
+    DIM SHARED testCount AS LONG
 
-AssertPress PgUpScanCode
-AssertPress PgDownScanCode
-AssertPress HomeScanCode
-AssertPress InsertScanCode
-AssertPress DeleteScanCode
-AssertPress EndScanCode
+    deviceCount& = _DEVICES
 
-AssertPress LCtrlScancode
-AssertPress LShiftScancode
-AssertPress LAltScancode
+    AssertPress EscScanCode
+    AssertPress EnterScancode
+    AssertPress TabScancode
+    AssertPress OneScancode
+    AssertPress AScanCode
+    AssertPress WScanCode
+    AssertPress SpaceScanCode
 
-AssertPress RCtrlScancode
-AssertPress RShiftScancode
-AssertPress RAltScancode
+    AssertPress PgUpScanCode
+    AssertPress PgDownScanCode
+    AssertPress HomeScanCode
+    AssertPress InsertScanCode
+    AssertPress DeleteScanCode
+    AssertPress EndScanCode
 
-AssertPress NumLockScancode
-AssertPress ScrollLockScancode
-AssertPress KeypadUpScancode
+    AssertPress LCtrlScancode
+    AssertPress LShiftScancode
+    AssertPress LAltScancode
 
-AssertPress F1Scancode
-AssertPress F2Scancode
-AssertPress F3Scancode
-AssertPress F4Scancode
-AssertPress F5Scancode
-AssertPress F6Scancode
-AssertPress F7Scancode
-AssertPress F8Scancode
-AssertPress F9Scancode
-AssertPress F10Scancode
-AssertPress F11Scancode
-AssertPress F12Scancode
+    AssertPress RCtrlScancode
+    AssertPress RShiftScancode
+    AssertPress RAltScancode
 
-' Test multiple keys at the same time
-' Modifiers in paticular are important to test
-emulateScancode LShiftScancode, Down
-emulateScancode LCtrlScancode, Down
-emulateScancode LAltScancode, Down
-emulateScancode AScanCode, Down
+    AssertPress NumLockScancode
+    AssertPress ScrollLockScancode
+    AssertPress KeypadUpScancode
 
-AssertDown LShiftScancode
-AssertDown LCtrlScancode
-AssertDown LAltScancode
-AssertDown AScanCode
+    AssertPress F1Scancode
+    AssertPress F2Scancode
+    AssertPress F3Scancode
+    AssertPress F4Scancode
+    AssertPress F5Scancode
+    AssertPress F6Scancode
+    AssertPress F7Scancode
+    AssertPress F8Scancode
+    AssertPress F9Scancode
+    AssertPress F10Scancode
+    AssertPress F11Scancode
+    AssertPress F12Scancode
 
-' These keys are released in same order they were pressed
-emulateScancode LShiftScancode, Up
-AssertUp LShiftScancode
-emulateScancode LCtrlScancode, Up
-AssertUp LCtrlScancode
-emulateScancode LAltScancode, Up
-AssertUp LAltScancode
-emulateScancode AScanCode, Up
-AssertUp AScanCode
+    ' Test multiple keys at the same time
+    ' Modifiers in paticular are important to test
+    emulateScancode LShiftScancode, Down
+    emulateScancode LCtrlScancode, Down
+    emulateScancode LAltScancode, Down
+    emulateScancode AScanCode, Down
 
-' Same test, but release keys in opposite order they were pressed
-emulateScancode LShiftScancode, Down
-emulateScancode LCtrlScancode, Down
-emulateScancode LAltScancode, Down
-emulateScancode AScanCode, Down
+    AssertDown LShiftScancode
+    AssertDown LCtrlScancode
+    AssertDown LAltScancode
+    AssertDown AScanCode
 
-AssertDown LShiftScancode
-AssertDown LCtrlScancode
-AssertDown LAltScancode
-AssertDown AScanCode
+    ' These keys are released in same order they were pressed
+    emulateScancode LShiftScancode, Up
+    AssertUp LShiftScancode
+    emulateScancode LCtrlScancode, Up
+    AssertUp LCtrlScancode
+    emulateScancode LAltScancode, Up
+    AssertUp LAltScancode
+    emulateScancode AScanCode, Up
+    AssertUp AScanCode
 
-emulateScancode AScanCode, Up
-AssertUp AScanCode
-emulateScancode LAltScancode, Up
-AssertUp LAltScancode
-emulateScancode LCtrlScancode, Up
-AssertUp LCtrlScancode
-emulateScancode LShiftScancode, Up
-AssertUp LShiftScancode
+    ' Same test, but release keys in opposite order they were pressed
+    emulateScancode LShiftScancode, Down
+    emulateScancode LCtrlScancode, Down
+    emulateScancode LAltScancode, Down
+    emulateScancode AScanCode, Down
 
-' Test holding and releasing both left/right modifiers
+    AssertDown LShiftScancode
+    AssertDown LCtrlScancode
+    AssertDown LAltScancode
+    AssertDown AScanCode
 
-' Shift
-emulateScancode LShiftScancode, Down
-AssertDown LShiftScancode
-emulateScancode RShiftScancode, Down
-AssertDown RShiftScancode
+    emulateScancode AScanCode, Up
+    AssertUp AScanCode
+    emulateScancode LAltScancode, Up
+    AssertUp LAltScancode
+    emulateScancode LCtrlScancode, Up
+    AssertUp LCtrlScancode
+    emulateScancode LShiftScancode, Up
+    AssertUp LShiftScancode
 
-emulateScancode LShiftScancode, Up
-AssertUp LShiftScancode
-emulateScancode RShiftScancode, Up
-AssertUp RShiftScancode
+    ' Test holding and releasing both left/right modifiers
 
-' Control
-emulateScancode LCtrlScancode, Down
-AssertDown LCtrlScancode
-emulateScancode RCtrlScancode, Down
-AssertDown RCtrlScancode
+    ' Shift
+    emulateScancode LShiftScancode, Down
+    AssertDown LShiftScancode
+    emulateScancode RShiftScancode, Down
+    AssertDown RShiftScancode
 
-emulateScancode LCtrlScancode, Up
-AssertUp LCtrlScancode
-emulateScancode RCtrlScancode, Up
-AssertUp RCtrlScancode
+    emulateScancode LShiftScancode, Up
+    AssertUp LShiftScancode
+    emulateScancode RShiftScancode, Up
+    AssertUp RShiftScancode
 
-' Alt
-emulateScancode LAltScancode, Down
-AssertDown LAltScancode
-emulateScancode RAltScancode, Down
-AssertDown RAltScancode
+    ' Control
+    emulateScancode LCtrlScancode, Down
+    AssertDown LCtrlScancode
+    emulateScancode RCtrlScancode, Down
+    AssertDown RCtrlScancode
 
-emulateScancode LAltScancode, Up
-AssertUp LAltScancode
-emulateScancode RAltScancode, Up
-AssertUp RAltScancode
+    emulateScancode LCtrlScancode, Up
+    AssertUp LCtrlScancode
+    emulateScancode RCtrlScancode, Up
+    AssertUp RCtrlScancode
 
-System
+    ' Alt
+    emulateScancode LAltScancode, Down
+    AssertDown LAltScancode
+    emulateScancode RAltScancode, Down
+    AssertDown RAltScancode
 
-'$include:'sendinput.bm'
+    emulateScancode LAltScancode, Up
+    AssertUp LAltScancode
+    emulateScancode RAltScancode, Up
+    AssertUp RAltScancode
 
-' Convert scan code into the device button number
-Function GetDeviceCode&(scan As Long)
-    Dim deviceCode As Long
+    SYSTEM
 
-    ' "Extended" keys will have the 9th bit set, so add 256
-    deviceCode = (scan And &H7FFF) + 1
-    If scan And &H8000 Then deviceCode = deviceCode + 256
+    '$INCLUDE:'sendinput.bm'
 
-    GetDeviceCode& = deviceCode
-End Function
+    ' Convert scan code into the device button number
+    FUNCTION GetDeviceCode& (scan AS LONG)
+        DIM deviceCode AS LONG
 
-Sub AssertPress(scan As Long)
-    testCount = testCount + 1
+        ' "Extended" keys will have the 9th bit set, so add 256
+        deviceCode = (scan AND &H7FFF) + 1
+        IF scan AND &H8000 THEN deviceCode = deviceCode + 256
 
-    emulateScancode scan, Down
-    AssertDown scan
+        GetDeviceCode& = deviceCode
+    END FUNCTION
 
-    emulateScancode scan, Up
-    AssertUp scan
-End Sub
+    SUB AssertPress (scan AS LONG)
+        testCount = testCount + 1
 
-Sub AssertDown(scan As Long)
-    testCount = testCount + 1
-    deviceCode = GetDeviceCode&(scan)
+        emulateScancode scan, Down
+        AssertDown scan
 
-    While _DeviceInput(1): Wend
-    Print "Test button down:"; testCount; ": ";
-    If _Button(deviceCode) Then Print "PASS!" Else Print "FAIL! Key="; scan And &H7FFF; ", state="; _Button(deviceCode)
-End Sub
+        emulateScancode scan, Up
+        AssertUp scan
+    END SUB
 
-Sub AssertUp(scan As Long)
-    testCount = testCount + 1
-    deviceCode = GetDeviceCode&(scan)
+    SUB AssertDown (scan AS LONG)
+        testCount = testCount + 1
+        deviceCode = GetDeviceCode&(scan)
 
-    While _DeviceInput(1): Wend
-    Print "Test button up  :"; testCount; ": ";
-    If Not _Button(deviceCode) Then Print "PASS!" Else Print "FAIL! Key="; scan And &H7FFF; ", state="; _Button(deviceCode)
-End Sub
+        WHILE _DEVICEINPUT(1): WEND
+        PRINT "Test button down:"; testCount; ": ";
+        IF _BUTTON(deviceCode) THEN PRINT "PASS!" ELSE PRINT "FAIL! Key="; scan AND &H7FFF; ", state="; _BUTTON(deviceCode)
+    END SUB
 
-$Else
+    SUB AssertUp (scan AS LONG)
+        testCount = testCount + 1
+        deviceCode = GetDeviceCode&(scan)
 
-' Not supported for other platforms at the moment, output is simulated
-Open "devices_windows.output" For Input As #1
+        WHILE _DEVICEINPUT(1): WEND
+        PRINT "Test button up  :"; testCount; ": ";
+        IF NOT _BUTTON(deviceCode) THEN PRINT "PASS!" ELSE PRINT "FAIL! Key="; scan AND &H7FFF; ", state="; _BUTTON(deviceCode)
+    END SUB
 
-While Not Eof(1)
-    Line Input #1, l$
-    Print l$
-Wend
+$ELSE
 
-System
+    $CONSOLE:ONLY
 
-$End If
+    CHDIR _STARTDIR$
+
+    ' Not supported for other platforms at the moment, output is simulated
+    OPEN "devices_windows.output" FOR INPUT AS #1
+
+    WHILE NOT EOF(1)
+        LINE INPUT #1, l$
+        PRINT l$
+    WEND
+
+    SYSTEM
+
+$END IF

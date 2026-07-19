@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-struct qbs;
+#include "qbs.h"
+#include <cstdint>
 
 void FS_SaveStartDirectory();
 bool FS_DirectoryExists(const char *path);

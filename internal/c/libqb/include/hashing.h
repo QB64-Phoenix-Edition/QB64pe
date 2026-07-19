@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <stdint.h>
-
-struct qbs;
+#include "qbs.h"
+#include <cstdint>
 
 uint32_t func__adler32(qbs *text);
 uint32_t func__crc32(qbs *text);

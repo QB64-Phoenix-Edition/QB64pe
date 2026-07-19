@@ -12,6 +12,8 @@
 #pragma once
 
 #include "logging.h"
+#include "memblock.h"
+#include "qbs.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -25,9 +27,6 @@
         if (!(_exp_))                                                                                                                                          \
             audio_log_warn("Condition (%s) failed", #_exp_);                                                                                                   \
     } while (0)
-
-struct qbs;
-struct mem_block;
 
 void sub_beep();
 double func_play(uint32_t voice, int32_t passed);

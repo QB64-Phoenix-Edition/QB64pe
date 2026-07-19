@@ -10,14 +10,14 @@
 
 static int64_t gfs_nextid = 1;
 
-static gfs_file_struct *gfs_file = (gfs_file_struct *)malloc(1);
+static gfs_file_struct *gfs_file = (gfs_file_struct *)malloc(sizeof(gfs_file_struct));
 
 static int32_t gfs_n = 0;
 static int32_t gfs_freed_n = 0;
-static int32_t *gfs_freed = (int32_t *)malloc(1);
+static int32_t *gfs_freed = (int32_t *)malloc(sizeof(int32_t));
 static int32_t gfs_freed_size = 0;
 
-static int32_t *gfs_fileno = (int32_t *)malloc(1);
+static int32_t *gfs_fileno = (int32_t *)malloc(sizeof(int32_t));
 static int32_t gfs_fileno_n = 0;
 
 int32_t gfs_get_fileno(int file_number) {

@@ -13,10 +13,11 @@
 
 #pragma once
 
+#include "libqb-common.h"
+
 #include "audio.h"
 #include "extras/foo_midi/InstrumentBankManager.h"
 #include "extras/stb/stb_vorbis.h"
-#include "libqb-common.h"
 #include "miniaudio/miniaudio.h"
 #include <algorithm>
 #include <array>

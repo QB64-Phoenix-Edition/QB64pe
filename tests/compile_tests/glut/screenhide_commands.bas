@@ -1,57 +1,62 @@
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT _TRUE
+    PRINT _TRUE
+    PRINT "Got past icon!"
+    PRINT "Got past MouseHide!"
+    PRINT "Got past MouseShow!"
+    PRINT _FALSE
+    PRINT "Got past ScreenHide"
+    PRINT _FALSE
+    PRINT "Error:"; 5
+    PRINT "Error:"; 5
+    PRINT "Title: foobar"
+    PRINT _FALSE
+    PRINT _TRUE
+    PRINT "Got past ScreenShow!"
+    SYSTEM
+$END IF
+
 $SCREENHIDE
 $CONSOLE
-_Dest _Console
+_DEST _CONSOLE
 ON ERROR GOTO errorhand
 
-$IF WIN THEN
-Print _DesktopHeight > 0
-$ELSE
-Print _DesktopHeight = 0
-$END IF
+PRINT _DESKTOPHEIGHT > 0
 
-$IF WIN THEN
-Print _DesktopWidth > 0
-$ELSE
-Print _DesktopWidth = 0
-$END IF
+PRINT _DESKTOPWIDTH > 0
 
-_Icon
-Print "Got past icon!"
+_ICON
+PRINT "Got past icon!"
 
-_MouseHide
-Print "Got past MouseHide!"
+_MOUSEHIDE
+PRINT "Got past MouseHide!"
 
-_MouseShow
-Print "Got past MouseHide!"
+_MOUSESHOW
+PRINT "Got past MouseShow!"
 
-Print _ScreenExists
+PRINT _SCREENEXISTS
 
-_ScreenHide
-Print "Got past ScreenHide"
+_SCREENHIDE
+PRINT "Got past ScreenHide"
 
-Print _ScreenIcon <> 0
+PRINT _SCREENICON <> 0
 
-$IF LINUX THEN
-' Since these functions don't work on linux they also don't trigger errors
-' We're just printing the error manually so the test passes on Linux
-Print "Error:"; 5
-Print "Error:"; 5
-$ELSE
-Print _ScreenX >= 0
-Print _ScreenY >= 0
-$END IF
+PRINT _SCREENX >= 0
+PRINT _SCREENY >= 0
 
-_Title "foobar"
-Print "Title: "; _Title$
+_TITLE "foobar"
+PRINT "Title: "; _TITLE$
 
-Print _WindowHandle <> 0
-Print _WindowHasFocus <= 0 ' This can be a bit random
+PRINT _WINDOWHANDLE <> 0
+PRINT _WINDOWHASFOCUS <= 0 ' This can be a bit random
 
-_ScreenShow
-Print "Got past ScreenShow!"
-System
+_SCREENSHOW
+PRINT "Got past ScreenShow!"
+SYSTEM
 
-System
+SYSTEM
 
 errorhand:
 PRINT "Error:"; ERR

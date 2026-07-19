@@ -10,9 +10,9 @@
 
 #include "command.h"
 #include "error_handle.h"
-#include "logging.h"
 #include "event.h"
 #include "gui.h"
+#include "logging.h"
 
 uint32_t new_error;
 uint32_t error_occurred;
