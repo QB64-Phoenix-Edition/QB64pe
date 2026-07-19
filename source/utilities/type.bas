@@ -787,16 +787,17 @@ END FUNCTION
 
 SUB increaseUDTArrays
     ' The dynamic-member metadata is parallel to the legacy UDT tables.
-    ' *_dyn* stores the normal REDIM/runtime descriptor layout; *_fdyn* stores
-    ' the forced-only layout used when explicit _Dynamic members appear in
-    ' otherwise inline/DIM-created UDT storage. Both layouts are kept because
-    ' the same TYPE can be instantiated through different storage paths.
+    ' *_dyn* stores canonical mode 2 for TYPE graphs containing runtime-bound
+    ' member arrays. *_fdyn* stores canonical mode 1 for explicit _Dynamic
+    ' members without runtime bounds. A TYPE selects one mode from its declaration;
+    ' DIM, REDIM and call sites do not switch that TYPE to another physical layout.
     x = UBOUND(udtxname)
     REDIM _PRESERVE udtxname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxcname(x + 1000) AS STRING * 256
     REDIM _PRESERVE udtxsize(x + 1000) AS LONG
     REDIM _PRESERVE udtxdynsize(x + 1000) AS LONG
     REDIM _PRESERVE udtxfdynsize(x + 1000) AS LONG
+    REDIM _PRESERVE udtxcanonmode(x + 1000) AS INTEGER
     REDIM _PRESERVE udtxnext(x + 1000) AS LONG
     REDIM _PRESERVE udtxvariable(x + 1000) AS INTEGER 'true if the udt contains variable length elements
     'elements
@@ -825,13 +826,22 @@ SUB increaseUDTArrays
 END SUB
 
 ' Build the alternate physical layouts used by nested member arrays.
-' Layout mode 1 is the forced-only descriptor layout for explicit _Dynamic
-' members under otherwise inline storage. Layout mode 2 is the full dynamic
-' layout used by REDIM/runtime descriptor paths. Static legacy layout remains
-' stored in udtxsize/udtesize and is not modified here.
+' Layout mode 1 is the canonical descriptor layout for explicit _Dynamic members
+' when the TYPE graph has no runtime-bound member arrays. Layout mode 2 is the
+' canonical layout for TYPE graphs that do contain runtime-bound member arrays.
+' Static legacy layout remains stored in udtxsize/udtesize and is not modified here.
 SUB BuildUDTDynLayout (udt_index AS LONG)
     BuildUDTDynLayoutM udt_index, 1
     BuildUDTDynLayoutM udt_index, 2
+
+    ' Cache the declaration-driven mode once, after both physical layouts exist.
+    ' Runtime-bound metadata takes precedence over explicit _Dynamic members.
+    udtxcanonmode(udt_index) = 0
+    IF UDTDynHasRunArrays%(udt_index, 2) THEN
+        udtxcanonmode(udt_index) = 2
+    ELSEIF UDTDynHasMemberArrays%(udt_index, 1) THEN
+        udtxcanonmode(udt_index) = 1
+    END IF
 END SUB
 
 SUB BuildUDTDynLayoutM (udt_index AS LONG, layout_mode AS LONG)
@@ -844,12 +854,32 @@ SUB BuildUDTDynLayoutM (udt_index AS LONG, layout_mode AS LONG)
     DIM dynbits AS LONG
     DIM ptrbits AS LONG
     DIM membersize AS LONG
+    DIM memberalign AS LONG
+    DIM layoutalign AS LONG
 
     member_id = udtxnext(udt_index)
     dynbits = 0
     ptrbits = OFFSETTYPE AND UDTMASK
+    layoutalign = 8
 
     DO WHILE member_id
+        memberalign = 8
+        IF UDTMemberDynDesc%(member_id, layout_mode) THEN
+            memberalign = ptrbits
+        ELSEIF (udtetype(member_id) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(member_id) AND UDTMASK
+            IF UDTDynHasMemberArrays%(nested_udt, layout_mode) THEN memberalign = ptrbits
+        END IF
+
+        ' Descriptor slots are dereferenced as ptrszint** in generated C. Align
+        ' their offsets, and the start of nested descriptor layouts, so those
+        ' accesses are valid C++ rather than architecture-dependent unaligned
+        ' pointer dereferences. dynbits and ptrbits are measured in bits.
+        IF memberalign > 8 THEN
+            IF dynbits MOD memberalign THEN dynbits = dynbits + memberalign - (dynbits MOD memberalign)
+            layoutalign = ptrbits
+        END IF
+
         IF layout_mode = 1 THEN
             udtefdynoffset(member_id) = dynbits
         ELSE
@@ -892,6 +922,13 @@ SUB BuildUDTDynLayoutM (udt_index AS LONG, layout_mode AS LONG)
         dynbits = dynbits + membersize
         member_id = udtenext(member_id)
     LOOP
+
+    ' Keep every element of a dynamic-layout UDT array correctly aligned. It is
+    ' not enough to align the first descriptor offset: without tail padding the
+    ' next UDT element could begin between pointer boundaries.
+    IF layoutalign > 8 THEN
+        IF dynbits MOD layoutalign THEN dynbits = dynbits + layoutalign - (dynbits MOD layoutalign)
+    END IF
 
     IF layout_mode = 1 THEN
         udtxfdynsize(udt_index) = dynbits
@@ -968,7 +1005,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                     ' legacy inline arrays do not silently change storage model.
                     IF UDTMemberDynDesc%(member_id, layout_mode) THEN
                         IF udtearrayfieldmode(member_id) <> 2 THEN
-                            Give_Error "Dynamic TYPE variable-length STRING member arrays require _Dynamic for now"
+                            Give_Error "A variable-length STRING array inside a TYPE must be declared with _Dynamic"
                             UDTDynMembersOK% = 0
                             EXIT FUNCTION
                         END IF
@@ -994,7 +1031,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                 ' UDT arrays remain compatible with legacy layout.
                 IF UDTMemberDynDesc%(member_id, layout_mode) AND udtxvariable(nested_udt) THEN
                     IF udtearrayfieldmode(member_id) <> 2 THEN
-                        Give_Error "Dynamic TYPE UDT member arrays containing variable-length strings require _Dynamic for now"
+                        Give_Error "A TYPE array member whose element type contains variable-length STRING members must be declared with _Dynamic"
                         UDTDynMembersOK% = 0
                         EXIT FUNCTION
                     END IF
@@ -1019,7 +1056,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                     UDTDynMembersOK% = 0
                     EXIT FUNCTION
                 END IF
-                Give_Error "Dynamic TYPE layout supports only fixed-length strings for now"
+                Give_Error "This TYPE combines dynamic nested arrays with an inline variable-length STRING array; declare that STRING array with _Dynamic or use STRING * length"
                 UDTDynMembersOK% = 0
                 EXIT FUNCTION
             END IF
@@ -1672,7 +1709,7 @@ SUB AppendDynUDTDescInitAt (data_expr AS STRING, udt_index AS LONG, root_offset 
             ' those values and performs runtime bounds validation before allocation.
             IF LEFT$(member_desc, 1) = "@" THEN
                 IF prep_prefix = "" THEN
-                    Give_Error "Invalid TYPE member array metadata"
+                    Give_Error "Cannot process the declared bounds of this TYPE member array"
                     EXIT SUB
                 END IF
 
@@ -1683,7 +1720,7 @@ SUB AppendDynUDTDescInitAt (data_expr AS STRING, udt_index AS LONG, root_offset 
 
                 FOR dim_idx = 1 TO dims_count
                     IF ParseNextUDTRunDescDim(member_desc, desc_pos, lower_expr, upper_expr) = 0 THEN
-                        Give_Error "Invalid TYPE member array metadata"
+                        Give_Error "Cannot process the declared bounds of this TYPE member array"
                         EXIT SUB
                     END IF
 
@@ -1712,7 +1749,7 @@ SUB AppendDynUDTDescInitAt (data_expr AS STRING, udt_index AS LONG, root_offset 
                 ' or mismatched TYPE metadata before C code is emitted.
                 FOR dim_idx = 1 TO dims_count
                     IF ParseNextUDTArrayDescriptorDim(member_desc, desc_pos, lower_val, count_val) = 0 THEN
-                        Give_Error "Invalid TYPE member array metadata"
+                        Give_Error "Cannot process the declared bounds of this TYPE member array"
                         EXIT SUB
                     END IF
                     desc_idx = (dims_count - dim_idx) * 4 + 4
@@ -1725,7 +1762,7 @@ SUB AppendDynUDTDescInitAt (data_expr AS STRING, udt_index AS LONG, root_offset 
                 NEXT
 
                 IF count_total <> udtearrayelements(member_id) THEN
-                    Give_Error "Invalid TYPE member array metadata"
+                    Give_Error "Cannot process the declared bounds of this TYPE member array"
                     EXIT SUB
                 END IF
 
@@ -2244,6 +2281,18 @@ END SUB
 ' not by the legacy inline udtesize value.
 FUNCTION udt_dyn_array_elem_bytes& (element, layout_mode AS LONG)
     IF udtearrayelements(element) = 0 THEN EXIT FUNCTION
+
+    ' Ordinary QB64 string arrays always store each qbs* in one uint64 slot,
+    ' including 32-bit builds. Descriptor-backed _Dynamic AS STRING payloads
+    ' must use the same 8-byte stride so they can be passed directly to a
+    ' normal items() AS STRING parameter. A pointer-sized stride would make
+    ' the parameter index the second element past the allocated payload on
+    ' 32-bit builds and can crash in qbs_set/qbs_free.
+    IF DynMemVarStr%(element) THEN
+        udt_dyn_array_elem_bytes& = 8
+        EXIT FUNCTION
+    END IF
+
     IF (udtetype(element) AND ISUDT) <> 0 THEN
         udt_dyn_array_elem_bytes& = UDTDynLayoutSize&(udtetype(element) AND UDTMASK, layout_mode) \ 8
     ELSE

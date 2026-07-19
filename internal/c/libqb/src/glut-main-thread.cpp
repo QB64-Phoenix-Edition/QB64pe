@@ -113,6 +113,9 @@ static void initialize_glut(int argc, char **argv) {
 }
 
 static bool glut_is_started;
+// True only on the initial thread that owns GLUT. thread_local avoids any
+// platform-specific thread-ID API and works on Windows, Linux and macOS.
+static thread_local bool current_thread_owns_glut;
 static struct completion glut_thread_starter;
 static struct completion *glut_thread_initialized;
 
@@ -136,7 +139,13 @@ bool libqb_is_glut_up() {
     return glut_is_started;
 }
 
+bool libqb_is_glut_thread() {
+    return current_thread_owns_glut;
+}
+
 void libqb_glut_presetup(int argc, char **argv) {
+    current_thread_owns_glut = true;
+
     if (!screen_hide) {
         initialize_glut(argc, argv); // Initialize GLUT if the screen isn't hidden
         glut_is_started = true;
@@ -168,16 +177,13 @@ void libqb_start_main_thread(int argc, char **argv) {
     glutMainLoop();
 }
 
-// Due to GLUT making use of cleanup via atexit, we have to call exit() from
-// the same thread handling the GLUT logic so that the atexit handler also runs
-// from that thread (not doing that can result in a segfault due to using GLUT
-// from two threads at the same time).
-//
-// This is accomplished by simply queuing a GLUT message that calls exit() for us.
+// Due to GLUT making use of cleanup via atexit, exit() must run on the thread
+// that owns GLUT. Calls from another thread are transferred through the GLUT
+// queue. Calls already executing on the GLUT thread exit directly; queueing
+// and waiting there would deadlock the thread against its own message queue.
 void libqb_exit(int exitcode) {
     libqb_log_info("Program exiting with code: %d\n", exitcode);
-    // If GLUT isn't running then we're free to do the exit() call from here
-    if (!libqb_is_glut_up())
+    if (!libqb_is_glut_up() || libqb_is_glut_thread())
         exit(exitcode);
 
     libqb_glut_exit_program(exitcode);
