@@ -1490,10 +1490,13 @@ SUB AppendDynUDTOwnSetAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS L
     DIM cr AS STRING
 
     cr = CHR$(13) + CHR$(10)
-    dst_offset = dst_root
-    src_offset = src_root
     member_id = udtxnext(udt_index)
     DO WHILE member_id
+        ' Use the computed dynamic-layout offset for every member. Descriptor
+        ' alignment can insert padding before a _Dynamic slot, so advancing by
+        ' member sizes alone can address the padding instead of the descriptor.
+        dst_offset = dst_root + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+        src_offset = src_root + UDTDynMemberOffset&(member_id, layout_mode) \ 8
         IF UDTMemberDynDesc%(member_id, layout_mode) THEN
             member_elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
             nested_udt = 0
@@ -1539,8 +1542,6 @@ SUB AppendDynUDTOwnSetAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS L
         ELSE
             acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
         END IF
-        dst_offset = dst_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
-        src_offset = src_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
         member_id = udtenext(member_id)
     LOOP
 END SUB
@@ -1565,10 +1566,13 @@ SUB AppendDynUDTOwnCloneAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS
     DIM cr AS STRING
 
     cr = CHR$(13) + CHR$(10)
-    dst_offset = dst_root
-    src_offset = src_root
     member_id = udtxnext(udt_index)
     DO WHILE member_id
+        ' Use the computed dynamic-layout offset for every member. Descriptor
+        ' alignment can insert padding before a _Dynamic slot, so advancing by
+        ' member sizes alone can address the padding instead of the descriptor.
+        dst_offset = dst_root + UDTDynMemberOffset&(member_id, layout_mode) \ 8
+        src_offset = src_root + UDTDynMemberOffset&(member_id, layout_mode) \ 8
         IF UDTMemberDynDesc%(member_id, layout_mode) THEN
             member_elem_bytes = udt_dyn_array_elem_bytes(member_id, layout_mode)
             nested_udt = 0
@@ -1612,8 +1616,6 @@ SUB AppendDynUDTOwnCloneAt (dst_expr AS STRING, src_expr AS STRING, udt_index AS
         ELSE
             acc = acc + cr + "memcpy(((uint8*)(" + dst_expr + "))+" + elem_bytes + "*(" + dst_index + ")+" + LTRIM$(STR$(dst_offset)) + ",((uint8*)(" + src_expr + "))+" + elem_bytes + "*(" + src_index + ")+" + LTRIM$(STR$(src_offset)) + ",(size_t)" + LTRIM$(STR$(udtesize(member_id) \ 8)) + ");"
         END IF
-        dst_offset = dst_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
-        src_offset = src_offset + UDTDynMemberSize&(member_id, layout_mode) \ 8
         member_id = udtenext(member_id)
     LOOP
 END SUB

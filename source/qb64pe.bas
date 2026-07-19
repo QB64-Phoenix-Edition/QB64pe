@@ -15922,7 +15922,7 @@ FUNCTION ParseUDTArrayBoundsEx& (indexes$, effective_optionbase AS LONG, lower_b
             END IF
 
             IF (lower_const AND upper_const) = 0 THEN
-                Give_Error "This TYPE member array requires constant numeric bounds"
+                Give_Error "TYPE member array requires constant numeric bounds"
                 EXIT FUNCTION
             END IF
 
