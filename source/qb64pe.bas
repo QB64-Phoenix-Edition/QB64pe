@@ -19092,7 +19092,11 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
             IF Error_Happened THEN EXIT FUNCTION
             udtElem = matched_member_id
             IF o MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
-            arrbytes = (udtesize(matched_member_id) \ 8) \ udtearrayelements(matched_member_id)
+            IF dynlayout THEN
+                arrbytes = UDTDynInlineElemBytes&(matched_member_id, id.dynudtmode)
+            ELSE
+                arrbytes = (udtesize(matched_member_id) \ 8) \ udtearrayelements(matched_member_id)
+            END IF
             o = o \ 8
 
             o$ = "(" + o$ + "+" + _TOSTR$(o) + ")" 'Block for indexed static member array

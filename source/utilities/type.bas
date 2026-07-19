@@ -8,28 +8,22 @@
 SUB AppendDynUDTDescNullSlots (rootptr$, udt AS LONG, off$, acc$, layout_mode AS LONG)
     DIM elemnum AS LONG
     DIM nestedudt AS LONG
-    DIM dynbitpos AS LONG
     DIM dynoffbytes AS LONG
     DIM nestoff$
 
     elemnum = udtxnext(udt)
-    dynbitpos = 0
     DO WHILE elemnum
+        dynoffbytes = UDTDynMemberOffset&(elemnum, layout_mode) \ 8
         IF UDTMemberDynDesc%(elemnum, layout_mode) THEN
-            IF dynbitpos MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-            dynoffbytes = dynbitpos \ 8
             acc$ = acc$ + "*((ptrszint**)(((uint8*)(" + rootptr$ + "))+(" + off$ + "+" + _TOSTR$(dynoffbytes) + ")))=NULL;" + CHR$(13) + CHR$(10)
         ELSEIF (udtetype(elemnum) AND ISUDT) <> 0 THEN
             nestedudt = udtetype(elemnum) AND UDTMASK
             IF UDTDynHasMemberArrays%(nestedudt, layout_mode) THEN
-                IF dynbitpos MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-                dynoffbytes = dynbitpos \ 8
                 nestoff$ = "(" + off$ + "+" + _TOSTR$(dynoffbytes) + ")"
                 AppendDynUDTDescNullSlots rootptr$, nestedudt, nestoff$, acc$, layout_mode
                 IF Error_Happened THEN EXIT SUB
             END IF
         END IF
-        dynbitpos = dynbitpos + UDTDynMemberSize&(elemnum, layout_mode)
         elemnum = udtenext(elemnum)
     LOOP
 END SUB
@@ -48,7 +42,6 @@ SUB AppendDynUDTDescCopy (dstbase$, srcbase$, udt AS LONG, dstoff$, srcoff$, byt
 
     DIM elemnum AS LONG
     DIM nestedudt AS LONG
-    DIM dynbitpos AS LONG
     DIM dynoffbytes AS LONG
     DIM memberelembytes AS LONG
     DIM elemvarstr AS LONG
@@ -58,11 +51,9 @@ SUB AppendDynUDTDescCopy (dstbase$, srcbase$, udt AS LONG, dstoff$, srcoff$, byt
     DIM nestedsrc$
 
     elemnum = udtxnext(udt)
-    dynbitpos = 0
     DO WHILE elemnum
+        dynoffbytes = UDTDynMemberOffset&(elemnum, layout_mode) \ 8
         IF UDTMemberDynDesc%(elemnum, layout_mode) THEN
-            IF dynbitpos MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-            dynoffbytes = dynbitpos \ 8
             memberelembytes = udt_dyn_array_elem_bytes(elemnum, layout_mode)
             elemvarstr = DynMemVarStr%(elemnum)
             nestedudt = 0
@@ -165,15 +156,12 @@ SUB AppendDynUDTDescCopy (dstbase$, srcbase$, udt AS LONG, dstoff$, srcoff$, byt
         ELSEIF (udtetype(elemnum) AND ISUDT) <> 0 THEN
             nestedudt = udtetype(elemnum) AND UDTMASK
             IF UDTDynHasMemberArrays%(nestedudt, layout_mode) THEN
-                IF dynbitpos MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-                dynoffbytes = dynbitpos \ 8
                 nesteddst$ = "(" + dstoff$ + "+" + _TOSTR$(dynoffbytes) + ")"
                 nestedsrc$ = "(" + srcoff$ + "+" + _TOSTR$(dynoffbytes) + ")"
                 AppendDynUDTDescCopy dstbase$, srcbase$, nestedudt, nesteddst$, nestedsrc$, _TOSTR$(UDTDynMemberSize&(elemnum, layout_mode) \ 8), acc$, layout_mode
                 IF Error_Happened THEN EXIT SUB
             END IF
         END IF
-        dynbitpos = dynbitpos + UDTDynMemberSize&(elemnum, layout_mode)
         elemnum = udtenext(elemnum)
     LOOP
 END SUB
@@ -2599,9 +2587,9 @@ END SUB
 ' slots are skipped because they must be cloned, not memcpy'd, to avoid shared
 ' descriptors and double-free hazards.
 SUB copy_dyn_udt_scalars (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
-    copyoff& = base_offset
     member_id& = udtxnext(udt)
     DO WHILE member_id&
+        copyoff& = base_offset + (UDTDynMemberOffset&(member_id&, layout_mode) \ 8)
         IF UDTMemberDynDesc%(member_id&, layout_mode) THEN
             'Descriptor slots are handled by AppendDynUDTDescCopy(). Do not memcpy them.
         ELSEIF udtearrayelements(member_id&) THEN
@@ -2649,7 +2637,6 @@ SUB copy_dyn_udt_scalars (dst$, src$, buf, base_offset, udt, layout_mode AS LONG
         ELSE
             WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&, layout_mode) \ 8)) + ");"
         END IF
-        copyoff& = copyoff& + (UDTDynMemberSize&(member_id&, layout_mode) \ 8)
         member_id& = udtenext(member_id&)
     LOOP
 END SUB
