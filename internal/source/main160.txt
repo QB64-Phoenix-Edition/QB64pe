@@ -1,4 +1,4 @@
-int16 FUNC_REMOVEBUFFIND(int16*_FUNC_REMOVEBUFFIND_INTEGER_HANDLE,int16*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID){
+void SUB_INICOMMIT(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,50 +11,90 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28330,40,"ini.bm");
 do{
-if(!qbevent)break;evnt(25811,496,"simplebuffer.bm");}while(r);
-S_35860:;
-if ((~(FUNC_CHECKHANDLE(_FUNC_REMOVEBUFFIND_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(25811,498,"simplebuffer.bm");if(r)goto S_35860;}
+if(!qbevent)break;evnt(28330,40,"ini.bm");}while(r);
+error_track_line(28330,41,"ini.bm");
 do{
-error( 258 );
-if(!qbevent)break;evnt(25811,498,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(28330,41,"ini.bm");}while(r);
+error_track_line(28330,43,"ini.bm");
+S_37867:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(28330,43,"ini.bm");if(r)goto S_37867;}
+error_track_line(28330,43,"ini.bm");
 do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(25811,498,"simplebuffer.bm");}while(r);
-}
-do{
-*_FUNC_REMOVEBUFFIND_LONG_BUF=*_FUNC_REMOVEBUFFIND_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(25811,499,"simplebuffer.bm");}while(r);
-do{
-*_FUNC_REMOVEBUFFIND_INTEGER_REMOVEBUFFIND= -13ll ;
-if(!qbevent)break;evnt(25811,501,"simplebuffer.bm");}while(r);
-S_35866:;
-if ((qbs_cleanup(qbs_tmp_base,((-(*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID< 1 ))|(-(*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID> 100 )))&(-(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_REMOVEBUFFIND_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]))->len== 16 ))))||is_error_pending()){
-if(qbevent){evnt(25811,502,"simplebuffer.bm");if(r)goto S_35866;}
+*__LONG_INICODE= 18 ;
+if(!qbevent)break;evnt(28330,43,"ini.bm");}while(r);
+error_track_line(28330,43,"ini.bm");
 do{
 goto exit_subfunc;
-if(!qbevent)break;evnt(25811,502,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(28330,43,"ini.bm");}while(r);
+error_track_line(28330,43,"ini.bm");
 }
+error_track_line(28330,45,"ini.bm");
 do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_REMOVEBUFFIND_LONG_BUF+ 3 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID* 4 , 4 ,l2string( -889275714 ),1);
-if(!qbevent)break;evnt(25811,504,"simplebuffer.bm");}while(r);
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_REMOVEBUFFIND_LONG_BUF+ 4 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID* 4 , 4 ,l2string( -889275714 ),1);
-if(!qbevent)break;evnt(25811,505,"simplebuffer.bm");}while(r);
-do{
-tmp_long=array_check((*_FUNC_REMOVEBUFFIND_LONG_BUF+*_FUNC_REMOVEBUFFIND_INTEGER_SBFINDID+ 4 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long])),qbs_new_txt_len("",0));
+qbs_set(__STRING_INIWHOLEFILE,__STRING_ININEWFILE);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25811,506,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(28330,45,"ini.bm");}while(r);
+error_track_line(28330,46,"ini.bm");
 do{
-*_FUNC_REMOVEBUFFIND_INTEGER_REMOVEBUFFIND= 0 ;
-if(!qbevent)break;evnt(25811,507,"simplebuffer.bm");}while(r);
+*__ULONG_CURRENTINIFILELOF=__STRING_ININEWFILE->len;
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28330,46,"ini.bm");}while(r);
+error_track_line(28330,48,"ini.bm");
+S_37873:;
+if ((~(*__LONG_INIDISABLEAUTOCOMMIT))||is_error_pending()){
+if(qbevent){evnt(28330,48,"ini.bm");if(r)goto S_37873;}
+error_track_line(28330,49,"ini.bm");
+do{
+if(!qbevent)break;evnt(28330,49,"ini.bm");}while(r);
+error_track_line(28330,51,"ini.bm");
+do{
+*_SUB_INICOMMIT_INTEGER_FILENUM=func_freefile();
+if(!qbevent)break;evnt(28330,51,"ini.bm");}while(r);
+error_track_line(28330,52,"ini.bm");
+do{
+sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28330,52,"ini.bm");}while(r);
+error_track_line(28330,54,"ini.bm");
+S_37877:;
+if ((qbs_cleanup(qbs_tmp_base,-(__STRING_INIWHOLEFILE->len<func_lof(*_SUB_INICOMMIT_INTEGER_FILENUM))))||is_error_pending()){
+if(qbevent){evnt(28330,54,"ini.bm");if(r)goto S_37877;}
+error_track_line(28330,55,"ini.bm");
+do{
+sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
+if(!qbevent)break;evnt(28330,55,"ini.bm");}while(r);
+error_track_line(28330,56,"ini.bm");
+do{
+sub_open(__STRING_CURRENTINIFILENAME, 4 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28330,56,"ini.bm");}while(r);
+error_track_line(28330,56,"ini.bm");
+do{
+sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
+if(!qbevent)break;evnt(28330,56,"ini.bm");}while(r);
+error_track_line(28330,57,"ini.bm");
+do{
+sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28330,57,"ini.bm");}while(r);
+error_track_line(28330,58,"ini.bm");
+}
+error_track_line(28330,60,"ini.bm");
+do{
+sub_put2(*_SUB_INICOMMIT_INTEGER_FILENUM, 1 ,byte_element((uint64)__STRING_ININEWFILE->chr,__STRING_ININEWFILE->len,byte_element_4607),1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28330,60,"ini.bm");}while(r);
+error_track_line(28330,61,"ini.bm");
+do{
+sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
+if(!qbevent)break;evnt(28330,61,"ini.bm");}while(r);
+error_track_line(28330,62,"ini.bm");
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free160.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_REMOVEBUFFIND_INTEGER_REMOVEBUFFIND;
 }

@@ -54,10 +54,11 @@ rem Check if the C++ compiler is there and skip MINGW setup if it exists
 if exist "internal\c\c_compiler\bin\c++.exe" goto build_qb64pe
 
 rem Check the processor type and then set the BITS variable
-powershell -NoProfile -Command "(Get-WmiObject Win32_OperatingSystem).OsArchitecture" | find /i "64-bit" > nul && set BITS=64 || set BITS=32
+powershell -NoProfile -Command "if ([Environment]::Is64BitOperatingSystem) { exit 0 } else { exit 1 }" > nul 2> nul && set "BITS=64" || set "BITS=32"
+echo Detected %BITS%-bit Windows.
 
 rem If the OS is 32-bit then proceed to download right away
-if %BITS% == 32 goto setup_mingw
+if "%BITS%" == "32" goto setup_mingw
 
 rem Check if the user wants to use 32-bit MINGW on a 64-bit system. Default to 64-bit after 60 seconds
 choice /t 60 /c 12 /d 1 /m "Do you prefer to download MinGW [1] 64-bit (default) or [2] 32-bit"

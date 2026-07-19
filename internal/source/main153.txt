@@ -1,4 +1,4 @@
-void SUB_WRITEBUFRAWDATA(int16*_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE,qbs*_SUB_WRITEBUFRAWDATA_STRING_RAWDATA){
+qbs* FUNC_CREATEELEMENTSTRING(qbs*_FUNC_CREATEELEMENTSTRING_STRING_S){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,97 +11,33 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28328,610,"elements.bas");
 do{
-if(!qbevent)break;evnt(25811,291,"simplebuffer.bm");}while(r);
-S_35733:;
-if ((~(FUNC_CHECKHANDLE(_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(25811,293,"simplebuffer.bm");if(r)goto S_35733;}
+if(!qbevent)break;evnt(28328,610,"elements.bas");}while(r);
+error_track_line(28328,611,"elements.bas");
 do{
-error( 258 );
-if(!qbevent)break;evnt(25811,293,"simplebuffer.bm");}while(r);
-do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(25811,293,"simplebuffer.bm");}while(r);
-}
-do{
-*_SUB_WRITEBUFRAWDATA_LONG_BUF=*_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(25811,294,"simplebuffer.bm");}while(r);
-do{
-*_SUB_WRITEBUFRAWDATA_LONG_CUR=FUNC_GETBUFPOS(_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE);
-if(!qbevent)break;evnt(25811,296,"simplebuffer.bm");}while(r);
-do{
-*_SUB_WRITEBUFRAWDATA_LONG_RDL=_SUB_WRITEBUFRAWDATA_STRING_RAWDATA->len;
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 ));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25811,296,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(28328,611,"elements.bas");}while(r);
+error_track_line(28328,613,"elements.bas");
 do{
-*_SUB_WRITEBUFRAWDATA_INTEGER64_CBL=FUNC_GETBUFLEN(_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE);
-if(!qbevent)break;evnt(25811,297,"simplebuffer.bm");}while(r);
-S_35741:;
-if ((-((*_SUB_WRITEBUFRAWDATA_INTEGER64_CBL+*_SUB_WRITEBUFRAWDATA_LONG_RDL)>( 1073741824ll )))||is_error_pending()){
-if(qbevent){evnt(25811,299,"simplebuffer.bm");if(r)goto S_35741;}
-do{
-error( 7 );
-if(!qbevent)break;evnt(25811,300,"simplebuffer.bm");}while(r);
-}else{
-do{
-*_SUB_WRITEBUFRAWDATA_LONG_BSZ=((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]))->len;
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,FUNC_ESCAPESTRING(_FUNC_CREATEELEMENTSTRING_STRING_S)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25811,305,"simplebuffer.bm");}while(r);
+if(!qbevent)break;evnt(28328,613,"elements.bas");}while(r);
+error_track_line(28328,615,"elements.bas");
 do{
-*_SUB_WRITEBUFRAWDATA_LONG_EXT= 0 ;
-if(!qbevent)break;evnt(25811,305,"simplebuffer.bm");}while(r);
-S_35746:;
-while((-((*_SUB_WRITEBUFRAWDATA_INTEGER64_CBL+*_SUB_WRITEBUFRAWDATA_LONG_RDL)>(*_SUB_WRITEBUFRAWDATA_LONG_BSZ+*_SUB_WRITEBUFRAWDATA_LONG_EXT)))||is_error_pending()){
-if(qbevent){evnt(25811,306,"simplebuffer.bm");if(r)goto S_35746;}
-do{
-*_SUB_WRITEBUFRAWDATA_LONG_EXT=*_SUB_WRITEBUFRAWDATA_LONG_EXT+ 16384 ;
-if(!qbevent)break;evnt(25811,306,"simplebuffer.bm");}while(r);
-ww_continue_4191:;
-}
-ww_exit_4191:;
-S_35749:;
-if ((-(*_SUB_WRITEBUFRAWDATA_LONG_EXT> 0 ))||is_error_pending()){
-if(qbevent){evnt(25811,307,"simplebuffer.bm");if(r)goto S_35749;}
-do{
-tmp_long=array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]);
-if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long])),qbs_add(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),func_space(*_SUB_WRITEBUFRAWDATA_LONG_EXT)));
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int32)(_FUNC_CREATEELEMENTSTRING_STRING_S->len),NULL,0)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25811,308,"simplebuffer.bm");}while(r);
-}
+if(!qbevent)break;evnt(28328,615,"elements.bas");}while(r);
+error_track_line(28328,616,"elements.bas");
 do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_SUB_WRITEBUFRAWDATA_LONG_CUR,0,qbs_add(_SUB_WRITEBUFRAWDATA_STRING_RAWDATA,func_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_SUB_WRITEBUFRAWDATA_LONG_CUR,*_SUB_WRITEBUFRAWDATA_INTEGER64_CBL-*_SUB_WRITEBUFRAWDATA_LONG_CUR+ 1 ,0|1)),0);
-if(!qbevent)break;evnt(25811,311,"simplebuffer.bm");}while(r);
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 1 , 4 ,l2string(*_SUB_WRITEBUFRAWDATA_LONG_CUR+*_SUB_WRITEBUFRAWDATA_LONG_RDL),1);
-if(!qbevent)break;evnt(25811,312,"simplebuffer.bm");}while(r);
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 5 , 4 ,l2string(*_SUB_WRITEBUFRAWDATA_INTEGER64_CBL+*_SUB_WRITEBUFRAWDATA_LONG_RDL),1);
-if(!qbevent)break;evnt(25811,313,"simplebuffer.bm");}while(r);
-S_35755:;
-if ((-(*_SUB_WRITEBUFRAWDATA_LONG_RDL> 0 ))||is_error_pending()){
-if(qbevent){evnt(25811,314,"simplebuffer.bm");if(r)goto S_35755;}
-S_35756:;
-if ((qbs_cleanup(qbs_tmp_base,(-(func_instr(NULL,_SUB_WRITEBUFRAWDATA_STRING_RAWDATA,func_chr( 10 ),0)> 0 ))|(-(func_instr(NULL,_SUB_WRITEBUFRAWDATA_STRING_RAWDATA,func_chr( 13 ),0)> 0 ))))||is_error_pending()){
-if(qbevent){evnt(25811,315,"simplebuffer.bm");if(r)goto S_35756;}
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 9 , 4 ,qbs_new_txt_len("EolU",4),1);
-if(!qbevent)break;evnt(25811,317,"simplebuffer.bm");}while(r);
-}
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_WRITEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 13 , 4 ,l2string( -1 ),1);
-if(!qbevent)break;evnt(25811,319,"simplebuffer.bm");}while(r);
-}
-do{
-SUB_RECALCMARKS(_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE,_SUB_WRITEBUFRAWDATA_LONG_CUR,_SUB_WRITEBUFRAWDATA_LONG_RDL);
-if(!qbevent)break;evnt(25811,322,"simplebuffer.bm");}while(r);
-do{
-SUB_RECALCFINDS(_SUB_WRITEBUFRAWDATA_INTEGER_HANDLE,_SUB_WRITEBUFRAWDATA_LONG_CUR,_SUB_WRITEBUFRAWDATA_LONG_RDL);
-if(!qbevent)break;evnt(25811,323,"simplebuffer.bm");}while(r);
-}
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING,_FUNC_CREATEELEMENTSTRING_STRING_ELE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28328,616,"elements.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free153.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+qbs_maketmp(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING);return _FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING;
 }

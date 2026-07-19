@@ -1,4 +1,4 @@
-qbs* FUNC_READCHUNK(qbs*_FUNC_READCHUNK_STRING_A,qbs*_FUNC_READCHUNK_STRING_LAST_CHARACTER){
+qbs* FUNC_GETMAKEEXECUTABLE(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,71 +11,28 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
+error_track_line(28327,21,"build.bas");
+S_36935:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(28327,21,"build.bas");if(r)goto S_36935;}
+error_track_line(28327,22,"build.bas");
 do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_rtrim(_FUNC_READCHUNK_STRING_A)));
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_add(FUNC_GETCOMPILERPATH(),qbs_new_txt_len("mingw32-make.exe",16)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,58,"opengl_methods.bas");}while(r);
-S_34744:;
-fornext_value4072= 1 ;
-fornext_finalvalue4072=_FUNC_READCHUNK_STRING_A->len;
-fornext_step4072= 1 ;
-if (fornext_step4072<0) fornext_step_negative4072=1; else fornext_step_negative4072=0;
-if (is_error_pending()) goto fornext_error4072;
-goto fornext_entrylabel4072;
-while(1){
-fornext_value4072=fornext_step4072+(*_FUNC_READCHUNK_LONG_X);
-fornext_entrylabel4072:
-*_FUNC_READCHUNK_LONG_X=fornext_value4072;
-qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4072){
-if (fornext_value4072<fornext_finalvalue4072) break;
+if(!qbevent)break;evnt(28327,22,"build.bas");}while(r);
+error_track_line(28327,23,"build.bas");
 }else{
-if (fornext_value4072>fornext_finalvalue4072) break;
+error_track_line(28327,24,"build.bas");
+do{
+qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_new_txt_len("make",4));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28327,24,"build.bas");}while(r);
+error_track_line(28327,25,"build.bas");
 }
-fornext_error4072:;
-if(qbevent){evnt(25809,59,"opengl_methods.bas");if(r)goto S_34744;}
-do{
-*_FUNC_READCHUNK_LONG_C=qbs_asc(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,60,"opengl_methods.bas");}while(r);
-S_34746:;
-if (((-(*_FUNC_READCHUNK_LONG_C== 32 ))|(-(*_FUNC_READCHUNK_LONG_C== 44 ))|(-(*_FUNC_READCHUNK_LONG_C== 40 ))|(-(*_FUNC_READCHUNK_LONG_C== 41 )))||is_error_pending()){
-if(qbevent){evnt(25809,61,"opengl_methods.bas");if(r)goto S_34746;}
-do{
-qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,func_chr(*_FUNC_READCHUNK_LONG_C));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,61,"opengl_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,qbs_left(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,61,"opengl_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_right(_FUNC_READCHUNK_STRING_A,_FUNC_READCHUNK_STRING_A->len-*_FUNC_READCHUNK_LONG_X)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,61,"opengl_methods.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(25809,61,"opengl_methods.bas");}while(r);
-}
-fornext_continue_4071:;
-}
-fornext_exit_4071:;
-do{
-qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,_FUNC_READCHUNK_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,63,"opengl_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,63,"opengl_methods.bas");}while(r);
-do{
-qbs_set(_FUNC_READCHUNK_STRING_A,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(25809,63,"opengl_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free129.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_READCHUNK_STRING_READCHUNK);return _FUNC_READCHUNK_STRING_READCHUNK;
+qbs_maketmp(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE);return _FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE;
 }

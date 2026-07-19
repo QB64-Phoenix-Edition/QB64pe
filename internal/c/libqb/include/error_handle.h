@@ -34,6 +34,7 @@ qbs *func__inclerrorfile();
 qbs *func__errormessage(int32_t errorcode, int32_t passed);
 
 void error_set_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename);
+void error_track_line(uint32_t errorline, uint32_t incerrorline, const char *incfilename);
 
 #define QB_ERROR_NEXT_WITHOUT_FOR 1
 #define QB_ERROR_SYNTAX_ERROR 2

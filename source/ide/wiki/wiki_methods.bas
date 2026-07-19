@@ -61,6 +61,9 @@ FUNCTION Wiki$ (PageName$) 'Read cached wiki page (download, if not yet cached)
         PRINT a$;
 
         PCOPY 3, 0
+    ELSEIF Help_Recaching = 2 THEN
+        _DEST _CONSOLE
+        PRINT "Downloading '" + PageName$ + "' page..."
     END IF
 
     'Url query and output file name (&qbide=1 is used to identify a request
@@ -1154,6 +1157,10 @@ FUNCTION wikiDLPage$ (url$, timeout#)
     wikiDLPage$ = ""
     wik$ = url$: tio# = timeout#
     redirDev$ = "/dev/null": IF INSTR(_OS$, "WIN") > 0 THEN redirDev$ = "NUL"
+    '--- rate limiting ---
+    STATIC lastCall#
+    WHILE timeElapsedSince#(lastCall#) < 0.5: _DELAY 0.1: WEND
+    lastCall# = TIMER(0.001)
     '--- request wiki page ---
     retry:
     FOR r% = 1 TO 3

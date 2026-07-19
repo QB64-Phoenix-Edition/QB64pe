@@ -48,10 +48,19 @@ BookmarksFile$ = ConfigFolder$ + pathsep$ + "bookmarks.bin" 'set bokmarks (globa
 RecentFile$ = ConfigFolder$ + pathsep$ + "recent.bin" 'recent file list (globally shared)
 SearchedFile$ = ConfigFolder$ + pathsep$ + "searched.bin" 'search history (globally shared)
 AutosaveFile$ = ConfigFolder$ + pathsep$ + "autosave" + tempfolderindexstr$ + ".bin" 'autosave flag (per instance)
-UndoFile$ = ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin" 'undo storage (per instance)
+UndoFile$ = ConfigFolder$ + pathsep$ + "undo3" + tempfolderindexstr$ + ".bin" 'undo storage (per instance) (3rd file generation = compressed)
 '---
 askToCopyOther = _FALSE 'shall we ask the user to copy settings from another QB64-PE installation
-IF NOT _DIREXISTS(ConfigFolder$) THEN MKDIR ConfigFolder$: askToCopyOther = _TRUE
+IF NOT _DIREXISTS(ConfigFolder$) THEN
+    'create folder and set ask flag
+    MKDIR ConfigFolder$
+    askToCopyOther = _TRUE
+ELSE
+    'delete old (1st/2nd gen. = uncompressed) undo file of this instance (if any)
+    IF _FILEEXISTS(ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin") THEN
+        KILL ConfigFolder$ + pathsep$ + "undo" + tempfolderindexstr$ + ".bin"
+    END IF
+END IF
 
 '===== Define sections and standard behavior ==================================
 '--- config.ini

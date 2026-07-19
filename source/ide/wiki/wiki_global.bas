@@ -54,7 +54,7 @@ DIM SHARED Help_Recaching, Help_IgnoreCache
 'Help_Recaching = 0 >>>> regular help operation, if Help_IgnoreCache = 0 use cached page if available,
 '                        otherwise fetch it from Wiki
 'Help_Recaching = 1 >>>> update cached contents with GUI progress, i.e. re-fetch all pages (except _GL pages) from Wiki
-'Help_Recaching = 2 >>>> update cached contents without any output, i.e. re-fetch all pages (except _GL pages) from Wiki,
+'Help_Recaching = 2 >>>> update cached contents with console output, i.e. re-fetch all pages (except _GL pages) from Wiki,
 '                        intended for command line based update during CI/Release builds (qb64pe -u)
 'Help_IgnoreCache = 1 >> temporarily ignore cached content, i.e. re-fetch pages directly from the Wiki
 

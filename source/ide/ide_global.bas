@@ -141,7 +141,7 @@ CONST idesystem2.w = 20 '"Find" field width (Status bar)
 DIM SHARED idesubwindow, idehelp, statusarealink AS INTEGER
 DIM SHARED ideexit
 DIM SHARED idet AS STRING, idel, ideli, iden
-DIM SHARED ideundopos, ideundobase, ideundoflag
+DIM SHARED ideundotxt AS STRING, ideundopos, ideundobase, ideundoflag
 DIM SHARED idelaunched, idecompiling
 DIM SHARED idecompiledline 'stores the number of the last line sent to the compiler, used only to know which line to send next
 DIM SHARED idecompiledline$ 'stores the last line sent to the compiler

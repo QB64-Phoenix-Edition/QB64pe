@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  Build:
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +33,8 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
         fetch-depth: 0
 
     - uses: maxim-lobanov/setup-xcode@v1
@@ -90,7 +92,21 @@ jobs:
     - name: Print QB64-PE Version
       run: ./qb64pe -?
 
-    - name: Test
+    # Note we can use a short wait time for whitelist propagation throughout the
+    # Cloudflare network, as we only need whitelisting for the 'Create Atrifact'
+    # step. Before that the 'Testing' step is running for approx. 20-30 minutes,
+    # which should be more than enough time for the propagation.
+    - name: Whitelist runner IP at Cloudflare
+      id: whitelist
+      uses: DiyRex/gh-cf-ip-whitelist@v1
+      with:
+        api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        action: 'create'
+        wait-time: '5'
+
+    - name: Testing
+      timeout-minutes: 105
       shell: bash
       env:
         CI_TESTING: y
@@ -101,6 +117,7 @@ jobs:
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
+      timeout-minutes: 45
       shell: bash
       run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
 
@@ -143,3 +160,12 @@ jobs:
           qb64pe_osx*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Remove Cloudflare IP whitelisting
+      if: always() || cancelled()
+      uses: DiyRex/gh-cf-ip-whitelist@v1
+      with:
+        api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        action: 'delete'
+        rule-id: ${{ steps.whitelist.outputs.rule-id }}

@@ -416,7 +416,9 @@ SUB ExportCodeAs (docFormat$)
             CASE "FOR", "OUTPUT", "APPEND", "INPUT", "BINARY", "RANDOM": page$ = "OPEN#File_Access_Modes": RETURN
         END SELECT
     END IF
-    IF fu% < 0 AND INSTR(fu$, "@" + page$ + "@") > 0 THEN
+    IF page$ = "_STATIC" OR page$ = "_DYNAMIC" THEN
+        page$ = page$ + " (type field)"
+    ELSEIF fu% < 0 AND INSTR(fu$, "@" + page$ + "@") > 0 THEN
         page$ = page$ + " (function)"
     ELSEIF bo% AND INSTR(bo$, "@" + page$ + "@") > 0 THEN
         page$ = page$ + " (boolean)"
