@@ -937,13 +937,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                     ' A variable-length STRING member array owns qbs* slots. Explicit _Dynamic
                     ' stores those slots behind a live descriptor; unmarked and _Static members
                     ' stay inline. The storage form is never inferred from DIM, REDIM or a call site.
-                    IF UDTMemberDynDesc%(member_id) THEN
-                        IF udtearrayfieldmode(member_id) <> 2 THEN
-                            Give_Error "A variable-length STRING array inside a TYPE must be declared with _Dynamic"
-                            UDTDynMembersOK% = 0
-                            EXIT FUNCTION
-                        END IF
-                    ELSE
+                    IF UDTMemberDynDesc%(member_id) = 0 THEN
                         ' Inline variable-length STRING arrays in owner layouts are managed as
                         ' qbs* slots; the owner lifecycle helpers initialize and free each
                         ' element instead of treating the member as one scalar string.
@@ -964,11 +958,6 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
                 ' needs recursive owner helpers. An unmarked or _Static member array remains
                 ' inline; only its nested element layout becomes descriptor-aware when required.
                 IF UDTMemberDynDesc%(member_id) AND udtxvariable(nested_udt) THEN
-                    IF udtearrayfieldmode(member_id) <> 2 THEN
-                        Give_Error "A TYPE array member whose element type contains variable-length STRING members must be declared with _Dynamic"
-                        UDTDynMembersOK% = 0
-                        EXIT FUNCTION
-                    END IF
                     IF UDTDynOwnerOK%(nested_udt, layout_mode) = 0 THEN
                         UDTDynMembersOK% = 0
                         EXIT FUNCTION
@@ -984,13 +973,7 @@ FUNCTION UDTDynMembersOK% (udt_index AS LONG, layout_mode AS LONG)
         ' owner-aware lifecycle path so its qbs* slot is initialized, copied and freed safely.
         ELSEIF (udtetype(member_id) AND ISSTRING) <> 0 THEN
             IF (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
-                IF UDTDynOwnerOK%(udt_index, layout_mode) THEN EXIT FUNCTION
-                IF Error_Happened THEN
-                    UDTDynMembersOK% = 0
-                    EXIT FUNCTION
-                END IF
-                Give_Error "This TYPE combines descriptor-backed nested arrays with an unsupported inline variable-length STRING array; declare that STRING array with _Dynamic or use STRING * length"
-                UDTDynMembersOK% = 0
+                IF UDTDynOwnerOK%(udt_index, layout_mode) = 0 THEN UDTDynMembersOK% = 0
                 EXIT FUNCTION
             END IF
         ELSEIF udtetype(member_id) AND ISUDT THEN
