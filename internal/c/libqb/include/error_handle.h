@@ -6,6 +6,7 @@
 
 void error(int32_t error_number);
 void fix_error();
+void libqb_check_stack();
 
 // FIXME: Should be removed in the future, use `is_error_pending()`.
 //

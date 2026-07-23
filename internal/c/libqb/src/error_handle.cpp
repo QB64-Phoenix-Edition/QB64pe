@@ -84,11 +84,11 @@ static const char *critical_error_message(const char *message) {
     return errmess;
 }
 
-// Returns true after reporting error 256 when the current native thread is
-// close enough to its stack limit that another recursive BASIC call would be
-// unsafe. Stack-bound discovery is platform-specific, but the policy and
-// reporting path are shared by Windows, Linux and macOS.
-bool error_check_stack() {
+// Reports fatal error 256 when the current native thread is close enough to
+// its stack limit that another recursive BASIC call would be unsafe. Stack-bound
+// discovery is platform-specific, but the policy and reporting path are shared
+// by Windows, Linux and macOS.
+void libqb_check_stack() {
     // Keep enough stack available for error formatting, the native dialog and
     // the platform-specific shutdown path. The check is emitted for every user
     // SUB/FUNCTION; $ErrorLocation affects only source-position reporting.
@@ -138,11 +138,8 @@ bool error_check_stack() {
     if (!stack_error_reported && stack_bounds_available && current_stack > stack_lower_bound &&
         current_stack - stack_lower_bound < STACK_REPORT_RESERVE) {
         stack_error_reported = true;
-        error(256);
-        return true;
+        error(QB_ERROR_OUT_OF_STACK_SPACE);
     }
-
-    return stack_error_reported;
 }
 
 static const char *error_code_to_text(int32_t errorcode) {

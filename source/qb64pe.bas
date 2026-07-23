@@ -5746,8 +5746,7 @@ DO
             ' the report includes a BASIC source position; stack exhaustion must
             ' still be caught when source tracking is disabled. The runtime helper
             ' uses platform-specific stack bounds behind one common interface.
-            WriteBufLine MainTxtBuf, "extern bool error_check_stack();"
-            WriteBufLine MainTxtBuf, "if (error_check_stack()) goto exit_subfunc;"
+            WriteBufLine MainTxtBuf, "libqb_check_stack();"
 
             IF GetRCStateVar(vWatchOn) THEN
                 WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
