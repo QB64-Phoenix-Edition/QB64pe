@@ -33,6 +33,10 @@ bool libqb_is_glut_up() {
     return false;
 }
 
+bool libqb_is_glut_thread() {
+    return false;
+}
+
 void libqb_process_glut_queue() {}
 
 void libqb_glut_set_cursor(int style) {

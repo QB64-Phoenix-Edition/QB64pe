@@ -3431,6 +3431,7 @@ FUNCTION ide2 (ignore)
         IF mB AND idemouseselect <= 1 THEN
             IF mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < idewy - 5 THEN 'inside text box
                 IF idemouseselect = 1 THEN
+                    idembmonitor = 0
                     idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     IF idecx < 1 THEN idecx = 1
                     idecy = mY - 2 + idesy - 1
@@ -3442,6 +3443,7 @@ FUNCTION ide2 (ignore)
         IF mB THEN
             IF ((mX = 1 AND NOT ShowLineNumbers) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) OR mX = idewx OR mY <= 2 OR mY >= idewy - 5 THEN 'off text window area
                 IF idemouseselect = 1 THEN
+                    idembmonitor = 1
 
                     'scroll window
                     IF mY >= idewy - 5 THEN idecy = idecy + 1: IF idecy > iden THEN idecy = iden
