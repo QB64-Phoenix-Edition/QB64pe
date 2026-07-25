@@ -9,32 +9,30 @@ Dim As Double t, ct, d1, d2
 
 Play "mb"
 
-_Delay 1
-t = Timer
+t = Timer(.001)
 For i = 1 To 34
     Read note, duration, word
     Sound note, duration: Print word$;
 Next
 Print
-ct = Timer
+ct = Timer(.001)
 If t > ct Then t = t - 86400
 d1 = ct - t
-_Delay 1
+
+_Delay 25
 
 Restore
 Play "mf"
 
-_Delay 1
-t = Timer
+t = Timer(.001)
 For i = 1 To 34
     Read note, duration, word
     Sound note, duration: Print word$;
 Next
 Print
-ct = Timer
+ct = Timer(.001)
 If t > ct Then t = t - 86400
 d2 = ct - t
-_Delay 1
 
 If d2 - d1 > 5 Then
     Print "Foreground playback always takes longer to complete than background playback."
