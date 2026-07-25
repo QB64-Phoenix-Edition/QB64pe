@@ -32,7 +32,7 @@ ct = Timer
 If t > ct Then t = t - 86400
 d2 = ct - t
 
-If d2 - d1 > 5 Then
+If d2 > d1 Then
     Print "Foreground playback always takes longer to complete than background playback."
 End If
 
