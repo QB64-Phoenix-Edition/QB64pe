@@ -1,4 +1,4 @@
-int32 FUNC_READWRITELONGSETTINGVALUE(qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,int32*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT){
+int32 FUNC_COPYFILE(qbs*_FUNC_COPYFILE_STRING_SOURCEFILE,qbs*_FUNC_COPYFILE_STRING_DESTFILE){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,50 +11,52 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28325,136,"strings.bas");
+error_track_line(28163,8,"file.bas");
 do{
-if(!qbevent)break;evnt(28325,136,"strings.bas");}while(r);
-error_track_line(28325,137,"strings.bas");
+qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
+qbs_cleanup(qbs_tmp_base, 0);
+error_goto_line=11;
+if(!qbevent)break;evnt(28163,8,"file.bas");}while(r);
+error_track_line(28163,9,"file.bas");
 do{
-if(!qbevent)break;evnt(28325,137,"strings.bas");}while(r);
-error_track_line(28325,138,"strings.bas");
+*__LONG_E= 0 ;
+if(!qbevent)break;evnt(28163,9,"file.bas");}while(r);
+error_track_line(28163,9,"file.bas");
 do{
-if(!qbevent)break;evnt(28325,138,"strings.bas");}while(r);
-error_track_line(28325,140,"strings.bas");
-do{
-*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE);
+qbs_set(_FUNC_COPYFILE_STRING_DAT,func__readfile(_FUNC_COPYFILE_STRING_SOURCEFILE));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28325,140,"strings.bas");}while(r);
-error_track_line(28325,142,"strings.bas");
+if(!qbevent)break;evnt(28163,9,"file.bas");}while(r);
+error_track_line(28163,10,"file.bas");
+S_36720:;
+if ((-(*__LONG_E== 0 ))||is_error_pending()){
+if(qbevent){evnt(28163,10,"file.bas");if(r)goto S_36720;}
+error_track_line(28163,10,"file.bas");
 do{
-*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT=qbr(qbs_val<long double>(_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE));
+sub__writefile(_FUNC_COPYFILE_STRING_DESTFILE,_FUNC_COPYFILE_STRING_DAT);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28325,142,"strings.bas");}while(r);
-error_track_line(28325,144,"strings.bas");
-S_36829:;
-if (((-(*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT== 0 ))|(-(*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT<= 0 )))||is_error_pending()){
-if(qbevent){evnt(28325,144,"strings.bas");if(r)goto S_36829;}
-error_track_line(28325,145,"strings.bas");
-do{
-SUB_WRITECONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,qbs__tostr((int32)(*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT),NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28325,145,"strings.bas");}while(r);
-error_track_line(28325,146,"strings.bas");
-do{
-*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT;
-if(!qbevent)break;evnt(28325,146,"strings.bas");}while(r);
-error_track_line(28325,147,"strings.bas");
+if(!qbevent)break;evnt(28163,10,"file.bas");}while(r);
+error_track_line(28163,10,"file.bas");
 }else{
-error_track_line(28325,148,"strings.bas");
+error_track_line(28163,10,"file.bas");
 do{
-*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT;
-if(!qbevent)break;evnt(28325,148,"strings.bas");}while(r);
-error_track_line(28325,149,"strings.bas");
+*__LONG_E= -1 ;
+if(!qbevent)break;evnt(28163,10,"file.bas");}while(r);
+error_track_line(28163,10,"file.bas");
 }
+error_track_line(28163,11,"file.bas");
+do{
+error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
+qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
+qbs_cleanup(qbs_tmp_base, 0);
+if(!qbevent)break;evnt(28163,11,"file.bas");}while(r);
+error_track_line(28163,13,"file.bas");
+do{
+*_FUNC_COPYFILE_LONG_COPYFILE=*__LONG_E;
+if(!qbevent)break;evnt(28163,13,"file.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free118.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE;
+return *_FUNC_COPYFILE_LONG_COPYFILE;
 }

@@ -1,4 +1,4 @@
-int16 FUNC_CHECKHANDLE(int16*_FUNC_CHECKHANDLE_INTEGER_HANDLE){
+int16 FUNC_FREEID(int16*_FUNC_FREEID_INTEGER_HANDLE,int16*_FUNC_FREEID_INTEGER_SLOT){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,45 +11,58 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28331,894,"simplebuffer.bm");
+error_track_line(28168,906,"simplebuffer.bm");
 do{
-if(!qbevent)break;evnt(28331,894,"simplebuffer.bm");}while(r);
-error_track_line(28331,896,"simplebuffer.bm");
+if(!qbevent)break;evnt(28168,906,"simplebuffer.bm");}while(r);
+error_track_line(28168,908,"simplebuffer.bm");
 do{
-*_FUNC_CHECKHANDLE_LONG_BUF=*_FUNC_CHECKHANDLE_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(28331,896,"simplebuffer.bm");}while(r);
-error_track_line(28331,896,"simplebuffer.bm");
+*_FUNC_FREEID_LONG_BUF=*_FUNC_FREEID_INTEGER_HANDLE* 106 ;
+if(!qbevent)break;evnt(28168,908,"simplebuffer.bm");}while(r);
+error_track_line(28168,908,"simplebuffer.bm");
 do{
-*_FUNC_CHECKHANDLE_INTEGER_CHECKHANDLE= 0 ;
-if(!qbevent)break;evnt(28331,896,"simplebuffer.bm");}while(r);
-error_track_line(28331,897,"simplebuffer.bm");
-S_39017:;
-if ((qbs_cleanup(qbs_tmp_base,(-(*_FUNC_CHECKHANDLE_LONG_BUF< 0 ))|(-(*_FUNC_CHECKHANDLE_LONG_BUF>func_ubound(__ARRAY_STRING_SIMPLEBUFFER_ARRAY,1,1)))))||is_error_pending()){
-if(qbevent){evnt(28331,897,"simplebuffer.bm");if(r)goto S_39017;}
-error_track_line(28331,897,"simplebuffer.bm");
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28331,897,"simplebuffer.bm");}while(r);
-error_track_line(28331,897,"simplebuffer.bm");
+*_FUNC_FREEID_INTEGER_FREEID= -2ll ;
+if(!qbevent)break;evnt(28168,908,"simplebuffer.bm");}while(r);
+error_track_line(28168,909,"simplebuffer.bm");
+S_38909:;
+fornext_value4674= 1 ;
+fornext_finalvalue4674= 100 ;
+fornext_step4674= 1 ;
+if (fornext_step4674<0) fornext_step_negative4674=1; else fornext_step_negative4674=0;
+if (is_error_pending()) goto fornext_error4674;
+goto fornext_entrylabel4674;
+while(1){
+fornext_value4674=fornext_step4674+(*_FUNC_FREEID_INTEGER_IDX);
+fornext_entrylabel4674:
+*_FUNC_FREEID_INTEGER_IDX=fornext_value4674;
+if (fornext_step_negative4674){
+if (fornext_value4674<fornext_finalvalue4674) break;
+}else{
+if (fornext_value4674>fornext_finalvalue4674) break;
 }
-error_track_line(28331,898,"simplebuffer.bm");
-S_39020:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_CHECKHANDLE_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28331,898,"simplebuffer.bm");if(r)goto S_39020;}
-error_track_line(28331,898,"simplebuffer.bm");
+fornext_error4674:;
+if(qbevent){evnt(28168,909,"simplebuffer.bm");if(r)goto S_38909;}
+error_track_line(28168,910,"simplebuffer.bm");
+S_38910:;
+if ((qbs_cleanup(qbs_tmp_base,-(string2l(func_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_FUNC_FREEID_LONG_BUF+*_FUNC_FREEID_INTEGER_SLOT)-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),*_FUNC_FREEID_INTEGER_IDX* 4 , 4 ,0|1))== -889275714 )))||is_error_pending()){
+if(qbevent){evnt(28168,910,"simplebuffer.bm");if(r)goto S_38910;}
+error_track_line(28168,911,"simplebuffer.bm");
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28331,898,"simplebuffer.bm");}while(r);
-error_track_line(28331,898,"simplebuffer.bm");
+*_FUNC_FREEID_INTEGER_FREEID=*_FUNC_FREEID_INTEGER_IDX;
+if(!qbevent)break;evnt(28168,911,"simplebuffer.bm");}while(r);
+error_track_line(28168,911,"simplebuffer.bm");
+do{
+goto fornext_exit_4673;
+if(!qbevent)break;evnt(28168,911,"simplebuffer.bm");}while(r);
+error_track_line(28168,912,"simplebuffer.bm");
 }
-error_track_line(28331,899,"simplebuffer.bm");
-do{
-*_FUNC_CHECKHANDLE_INTEGER_CHECKHANDLE= -1 ;
-if(!qbevent)break;evnt(28331,899,"simplebuffer.bm");}while(r);
+error_track_line(28168,913,"simplebuffer.bm");
+fornext_continue_4673:;
+}
+fornext_exit_4673:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free199.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_CHECKHANDLE_INTEGER_CHECKHANDLE;
+return *_FUNC_FREEID_INTEGER_FREEID;
 }
