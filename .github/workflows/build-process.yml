@@ -51,16 +51,13 @@ jobs:
 
     - name: Install dependencies
       if: ${{ matrix.prefix == 'lnx' }}
-      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev pulseaudio dbus-x11 libportaudio2 libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev pulseaudio pulseaudio-utils dbus-x11 libportaudio2 libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
 
-      # Since ubuntu-24.04 PulseAudio was replaced by PipeWire, we set it up with
-      # a dummy-sink which allows us to do audio testing on Linux
-    - name: Set up PipeWire Headless Audio
+      # Pulseaudio puts a dummy ALSA device in place, which allows us to do
+      # audio testing on Linux
+    - name: Start Pulseaudio
       if: ${{ matrix.prefix == 'lnx' }}
-      run: |
-        mkdir -p ~/.config/pipewire/pipewire.conf.d
-        echo 'context.modules = [ { name = libpipewire-module-loopback args = { audio.position = [ FL FR ] node.name = "dummy-sink" node.description = "Dummy Output" } } ]' > ~/.config/pipewire/pipewire.conf.d/dummy.conf
-        systemctl --user start pipewire pipewire-pulse wireplumber
+      run: dbus-launch pulseaudio --start
 
     - name: Calculate Version
       shell: bash
@@ -114,7 +111,10 @@ jobs:
       env:
         CI_TESTING: y
         CI_OS: ${{ matrix.prefix }}
-      run: tests/run_tests.sh
+      run: |
+        echo "pcm.!default { type null }" > $GITHUB_WORKSPACE/silence-alsa.conf
+        export ALSA_CONFIG_PATH=$GITHUB_WORKSPACE/silence-alsa.conf
+        tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
       timeout-minutes: 45
