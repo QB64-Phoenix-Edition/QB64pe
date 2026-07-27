@@ -19,9 +19,6 @@ bool libqb_is_glut_up();
 // Returns true only on the native thread that owns the GLUT event loop.
 bool libqb_is_glut_thread();
 
-// Called at consistent intervals from a GLUT callback
-void libqb_process_glut_queue();
-
 // Called to properly exit the program. Necessary because GLUT requires a
 // special care to not seg-fault when exiting the program.
 void libqb_exit(int);

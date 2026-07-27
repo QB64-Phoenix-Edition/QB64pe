@@ -22,6 +22,10 @@ bool libqb_is_glut_up() {
     return false;
 }
 
+bool libqb_is_glut_thread() {
+    return false;
+}
+
 // Since there's no GLUT thread to deal with we can just exit() like normal
 void libqb_exit(int code) {
     exit(code);

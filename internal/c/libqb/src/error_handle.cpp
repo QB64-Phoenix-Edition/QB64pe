@@ -15,9 +15,9 @@
 #include "command.h"
 #include "error_handle.h"
 #include "event.h"
-#include "glut-thread.h"
 #include "gui.h"
 #include "logging.h"
+#include "main-thread.h"
 
 uint32_t new_error;
 uint32_t error_occurred;
