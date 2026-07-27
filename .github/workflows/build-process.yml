@@ -35,6 +35,7 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         repository: ${{ github.event.pull_request.head.repo.full_name }}
+        allow-unsafe-pr-checkout: true
         fetch-depth: 0
 
     - uses: maxim-lobanov/setup-xcode@v1
@@ -114,6 +115,7 @@ jobs:
       run: |
         echo "pcm.!default { type null }" > $GITHUB_WORKSPACE/silence-alsa.conf
         export ALSA_CONFIG_PATH=$GITHUB_WORKSPACE/silence-alsa.conf
+        sleep 5m
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
