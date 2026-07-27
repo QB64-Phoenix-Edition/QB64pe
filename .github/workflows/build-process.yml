@@ -115,6 +115,7 @@ jobs:
       run: |
         echo "pcm.!default { type null }" > $GITHUB_WORKSPACE/silence-alsa.conf
         export ALSA_CONFIG_PATH=$GITHUB_WORKSPACE/silence-alsa.conf
+        sleep 5m
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
