@@ -1,4 +1,4 @@
-qbs* FUNC_GETFILEEXTENSION(qbs*_FUNC_GETFILEEXTENSION_STRING_F){
+void SUB_PATH_SLASH_CORRECT(qbs*_SUB_PATH_SLASH_CORRECT_STRING_A){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,69 +11,93 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28326,62,"file.bas");
-S_36874:;
-fornext_value4455=_FUNC_GETFILEEXTENSION_STRING_F->len;
-fornext_finalvalue4455= 1 ;
-fornext_step4455= -1 ;
-if (fornext_step4455<0) fornext_step_negative4455=1; else fornext_step_negative4455=0;
-if (is_error_pending()) goto fornext_error4455;
-goto fornext_entrylabel4455;
+error_track_line(28163,74,"file.bas");
+S_36767:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+if(qbevent){evnt(28163,74,"file.bas");if(r)goto S_36767;}
+error_track_line(28163,75,"file.bas");
+S_36768:;
+fornext_value4395= 1 ;
+fornext_finalvalue4395=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
+fornext_step4395= 1 ;
+if (fornext_step4395<0) fornext_step_negative4395=1; else fornext_step_negative4395=0;
+if (is_error_pending()) goto fornext_error4395;
+goto fornext_entrylabel4395;
 while(1){
-fornext_value4455=fornext_step4455+(*_FUNC_GETFILEEXTENSION_LONG_I);
-fornext_entrylabel4455:
-*_FUNC_GETFILEEXTENSION_LONG_I=fornext_value4455;
+fornext_value4395=fornext_step4395+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
+fornext_entrylabel4395:
+*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value4395;
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4455){
-if (fornext_value4455<fornext_finalvalue4455) break;
+if (fornext_step_negative4395){
+if (fornext_value4395<fornext_finalvalue4395) break;
 }else{
-if (fornext_value4455>fornext_finalvalue4455) break;
+if (fornext_value4395>fornext_finalvalue4395) break;
 }
-fornext_error4455:;
-if(qbevent){evnt(28326,62,"file.bas");if(r)goto S_36874;}
-error_track_line(28326,63,"file.bas");
+fornext_error4395:;
+if(qbevent){evnt(28163,75,"file.bas");if(r)goto S_36768;}
+error_track_line(28163,76,"file.bas");
+S_36769:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 47 )))||is_error_pending()){
+if(qbevent){evnt(28163,76,"file.bas");if(r)goto S_36769;}
+error_track_line(28163,76,"file.bas");
 do{
-*_FUNC_GETFILEEXTENSION_LONG_A=qbs_asc(_FUNC_GETFILEEXTENSION_STRING_F,*_FUNC_GETFILEEXTENSION_LONG_I);
+tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
+tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
+tmp_long= 92 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(28163,76,"file.bas");}while(r);
+error_track_line(28163,76,"file.bas");
+}
+error_track_line(28163,77,"file.bas");
+fornext_continue_4394:;
+}
+fornext_exit_4394:;
+error_track_line(28163,78,"file.bas");
+}else{
+error_track_line(28163,79,"file.bas");
+S_36774:;
+fornext_value4398= 1 ;
+fornext_finalvalue4398=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
+fornext_step4398= 1 ;
+if (fornext_step4398<0) fornext_step_negative4398=1; else fornext_step_negative4398=0;
+if (is_error_pending()) goto fornext_error4398;
+goto fornext_entrylabel4398;
+while(1){
+fornext_value4398=fornext_step4398+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
+fornext_entrylabel4398:
+*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value4398;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28326,63,"file.bas");}while(r);
-error_track_line(28326,64,"file.bas");
-S_36876:;
-if (((-(*_FUNC_GETFILEEXTENSION_LONG_A== 47 ))|(-(*_FUNC_GETFILEEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(28326,64,"file.bas");if(r)goto S_36876;}
-error_track_line(28326,64,"file.bas");
-do{
-goto fornext_exit_4454;
-if(!qbevent)break;evnt(28326,64,"file.bas");}while(r);
-error_track_line(28326,64,"file.bas");
+if (fornext_step_negative4398){
+if (fornext_value4398<fornext_finalvalue4398) break;
+}else{
+if (fornext_value4398>fornext_finalvalue4398) break;
 }
-error_track_line(28326,65,"file.bas");
-S_36879:;
-if ((-(*_FUNC_GETFILEEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(28326,65,"file.bas");if(r)goto S_36879;}
-error_track_line(28326,65,"file.bas");
+fornext_error4398:;
+if(qbevent){evnt(28163,79,"file.bas");if(r)goto S_36774;}
+error_track_line(28163,80,"file.bas");
+S_36775:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 92 )))||is_error_pending()){
+if(qbevent){evnt(28163,80,"file.bas");if(r)goto S_36775;}
+error_track_line(28163,80,"file.bas");
 do{
-qbs_set(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION,func_mid(_FUNC_GETFILEEXTENSION_STRING_F,*_FUNC_GETFILEEXTENSION_LONG_I+ 1 ,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28326,65,"file.bas");}while(r);
-error_track_line(28326,65,"file.bas");
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28326,65,"file.bas");}while(r);
-error_track_line(28326,65,"file.bas");
+tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
+tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
+tmp_long= 47 ; if (!is_error_pending()){
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+}}}
+if(!qbevent)break;evnt(28163,80,"file.bas");}while(r);
+error_track_line(28163,80,"file.bas");
 }
-error_track_line(28326,66,"file.bas");
-fornext_continue_4454:;
+error_track_line(28163,81,"file.bas");
+fornext_continue_4397:;
 }
-fornext_exit_4454:;
-error_track_line(28326,67,"file.bas");
-do{
-qbs_set(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28326,67,"file.bas");}while(r);
+fornext_exit_4397:;
+error_track_line(28163,82,"file.bas");
+}
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free123.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION);return _FUNC_GETFILEEXTENSION_STRING_GETFILEEXTENSION;
 }

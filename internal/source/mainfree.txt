@@ -986,14 +986,6 @@ free((void*)(__ARRAY_INTEGER_SFELELIST[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_SFELELIST)[8] );
-if (__ARRAY_INTEGER_SFDYNMODELIST[2]&1){
-if (__ARRAY_INTEGER_SFDYNMODELIST[2]&4){
-cmem_dynamic_free((uint8*)(__ARRAY_INTEGER_SFDYNMODELIST[0]));
-}else{
-free((void*)(__ARRAY_INTEGER_SFDYNMODELIST[0]));
-}
-}
-free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_SFDYNMODELIST)[8] );
 qbs_free(__STRING_SENDC);
 qbs_free(__STRING_C);
 qbs_free(__STRING_A3);
@@ -1006,14 +998,6 @@ qbs_free(__STRING_TERRMSG);
 qbs_free(__STRING_CURRENTDIR);
 qbs_free(__STRING_MYLIB);
 qbs_free(__STRING_MYLIBOPT);
-if (__ARRAY_LONG_UDTXDYNSIZE[2]&1){
-if (__ARRAY_LONG_UDTXDYNSIZE[2]&4){
-cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTXDYNSIZE[0]));
-}else{
-free((void*)(__ARRAY_LONG_UDTXDYNSIZE[0]));
-}
-}
-free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXDYNSIZE)[8] );
 if (__ARRAY_LONG_UDTXFDYNSIZE[2]&1){
 if (__ARRAY_LONG_UDTXFDYNSIZE[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTXFDYNSIZE[0]));
@@ -1022,22 +1006,14 @@ free((void*)(__ARRAY_LONG_UDTXFDYNSIZE[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXFDYNSIZE)[8] );
-if (__ARRAY_LONG_UDTEDYNOFFSET[2]&1){
-if (__ARRAY_LONG_UDTEDYNOFFSET[2]&4){
-cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEDYNOFFSET[0]));
+if (__ARRAY_INTEGER_UDTXCANONMODE[2]&1){
+if (__ARRAY_INTEGER_UDTXCANONMODE[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_INTEGER_UDTXCANONMODE[0]));
 }else{
-free((void*)(__ARRAY_LONG_UDTEDYNOFFSET[0]));
+free((void*)(__ARRAY_INTEGER_UDTXCANONMODE[0]));
 }
 }
-free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEDYNOFFSET)[8] );
-if (__ARRAY_LONG_UDTEDYNSIZE[2]&1){
-if (__ARRAY_LONG_UDTEDYNSIZE[2]&4){
-cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEDYNSIZE[0]));
-}else{
-free((void*)(__ARRAY_LONG_UDTEDYNSIZE[0]));
-}
-}
-free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEDYNSIZE)[8] );
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTXCANONMODE)[8] );
 if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&1){
 if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEFDYNOFFSET[0]));
@@ -1191,6 +1167,7 @@ qbs_free(__STRING_LIBPATH_INLINE);
 qbs_free(__STRING_INLINELIBNAME);
 qbs_free(__STRING_X2);
 qbs_free(__STRING_DLLNAME);
+qbs_free(__STRING_ERRORTRACKCALL);
 qbs_free(__STRING_EORIG);
 qbs_free(__STRING_EE);
 qbs_free(__STRING_SUBFUNCORIGINALNAME);
@@ -1279,10 +1256,14 @@ qbs_free(__STRING_LHSSCOPE);
 qbs_free(__STRING_DST);
 qbs_free(__STRING_SRC);
 qbs_free(__STRING_SUBCALL);
+qbs_free(__STRING_SUBARGPREP);
 qbs_free(__STRING_DYNFILEPOST);
 qbs_free(__STRING_X3);
 qbs_free(__STRING_TRY_STRING);
 qbs_free(__STRING_DYNFILEARR);
+qbs_free(__STRING_MEMBER_ARRAY_ARG_SOURCE);
+qbs_free(__STRING_MEMBER_ARG);
+qbs_free(__STRING_MEMBER_PREP);
 qbs_free(__STRING_LAYOUTCOMMENT_BACKUP);
 qbs_free(__STRING_LAYOUT_BACKUP);
 qbs_free(__STRING_LAYOUTORIGINAL_BACKUP);

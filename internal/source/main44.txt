@@ -1,4 +1,4 @@
-void SUB_CLEARID(){
+void SUB_CLOSEMAINVWATCHSECTION(){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -11,46 +11,94 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(17100,0,NULL);
+error_track_line(17058,0,NULL);
+S_19559:;
+fornext_value2959=*__LONG_FIRSTLINENUMBERLABELVWATCH;
+fornext_finalvalue2959=*__LONG_LASTLINENUMBERLABELVWATCH;
+fornext_step2959= 1 ;
+if (fornext_step2959<0) fornext_step_negative2959=1; else fornext_step_negative2959=0;
+if (is_error_pending()) goto fornext_error2959;
+goto fornext_entrylabel2959;
+while(1){
+fornext_value2959=fornext_step2959+(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I);
+fornext_entrylabel2959:
+*_SUB_CLOSEMAINVWATCHSECTION_LONG_I=fornext_value2959;
+if (fornext_step_negative2959){
+if (fornext_value2959<fornext_finalvalue2959) break;
+}else{
+if (fornext_value2959>fornext_finalvalue2959) break;
+}
+fornext_error2959:;
+if(qbevent){evnt(17058);if(r)goto S_19559;}
+error_track_line(17059,0,NULL);
+S_19560:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_VWATCHUSEDLABELS,*_SUB_CLOSEMAINVWATCHSECTION_LONG_I)== 1 )))||is_error_pending()){
+if(qbevent){evnt(17059);if(r)goto S_19560;}
+error_track_line(17060,0,NULL);
 do{
-memcpy((((char*)__UDT_ID)+((0+0))+ 0),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 0), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 256),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 256), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 512),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 512), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 516),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 516), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 518),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 518), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 520),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 520), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 522),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 522), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 524),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 524), 8);
-memcpy((((char*)__UDT_ID)+((0+0))+ 532),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 532), 8);
-memcpy((((char*)__UDT_ID)+((0+0))+ 540),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 540), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 544),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 544), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 548),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 548), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 550),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 550), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 552),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 552), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 554),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 554), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 810),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 810), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 812),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 812), 1);
-memcpy((((char*)__UDT_ID)+((0+0))+ 813),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 813), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 815),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 815), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 817),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 817), 400);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1217),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1217), 400);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1617),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1617), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 1873),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 1873), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2129),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2129), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2385),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2385), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2389),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2389), 256);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2645),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2645), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2649),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2649), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2651),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2651), 100);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2751),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2751), 100);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2851),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2851), 100);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2951),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2951), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2955),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2955), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2957),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2957), 2);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2959),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2959), 4);
-memcpy((((char*)__UDT_ID)+((0+0))+ 2963),(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2963), 2);
-qbs_set(*(qbs**)(((char*)__UDT_ID)+((0+0))+ 2965), *(qbs**)(((char*)__UDT_CLEARIDDATA)+((0+0))+ 2965));
-if(!qbevent)break;evnt(17100);}while(r);
+SUB_WRITEBUFLINE(&(pass2960=*__LONG_VWATCHMAINDISPATCHBUF),qbs_add(qbs_add(qbs_new_txt_len("    case ",9),qbs__tostr((int32)(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I),NULL,0)),qbs_new_txt_len(":",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17060);}while(r);
+error_track_line(17061,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass2961=*__LONG_VWATCHMAINDISPATCHBUF),qbs_add(qbs_add(qbs_new_txt_len("        goto VWATCH_LABEL_",26),qbs__tostr((int32)(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I),NULL,0)),qbs_new_txt_len(";",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17061);}while(r);
+error_track_line(17062,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass2962=*__LONG_VWATCHMAINDISPATCHBUF),qbs_new_txt_len("        break;",14));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17062);}while(r);
+error_track_line(17063,0,NULL);
+}
+error_track_line(17064,0,NULL);
+fornext_continue_2958:;
+}
+fornext_exit_2958:;
+error_track_line(17065,0,NULL);
+S_19566:;
+fornext_value2964=*__LONG_FIRSTLINENUMBERLABELVWATCH;
+fornext_finalvalue2964=*__LONG_LASTLINENUMBERLABELVWATCH;
+fornext_step2964= 1 ;
+if (fornext_step2964<0) fornext_step_negative2964=1; else fornext_step_negative2964=0;
+if (is_error_pending()) goto fornext_error2964;
+goto fornext_entrylabel2964;
+while(1){
+fornext_value2964=fornext_step2964+(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I);
+fornext_entrylabel2964:
+*_SUB_CLOSEMAINVWATCHSECTION_LONG_I=fornext_value2964;
+if (fornext_step_negative2964){
+if (fornext_value2964<fornext_finalvalue2964) break;
+}else{
+if (fornext_value2964>fornext_finalvalue2964) break;
+}
+fornext_error2964:;
+if(qbevent){evnt(17065);if(r)goto S_19566;}
+error_track_line(17066,0,NULL);
+S_19567:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_VWATCHUSEDSKIPLABELS,*_SUB_CLOSEMAINVWATCHSECTION_LONG_I)== 1 )))||is_error_pending()){
+if(qbevent){evnt(17066);if(r)goto S_19567;}
+error_track_line(17067,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass2965=*__LONG_VWATCHMAINSKIPBUF),qbs_add(qbs_add(qbs_new_txt_len("    case -",10),qbs__tostr((int32)(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I),NULL,0)),qbs_new_txt_len(":",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17067);}while(r);
+error_track_line(17068,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass2966=*__LONG_VWATCHMAINSKIPBUF),qbs_add(qbs_add(qbs_new_txt_len("        goto VWATCH_SKIPLABEL_",30),qbs__tostr((int32)(*_SUB_CLOSEMAINVWATCHSECTION_LONG_I),NULL,0)),qbs_new_txt_len(";",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17068);}while(r);
+error_track_line(17069,0,NULL);
+do{
+SUB_WRITEBUFLINE(&(pass2967=*__LONG_VWATCHMAINSKIPBUF),qbs_new_txt_len("        break;",14));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(17069);}while(r);
+error_track_line(17070,0,NULL);
+}
+error_track_line(17071,0,NULL);
+fornext_continue_2963:;
+}
+fornext_exit_2963:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free44.txt"
