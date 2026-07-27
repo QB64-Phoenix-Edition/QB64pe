@@ -54,12 +54,6 @@ jobs:
       if: ${{ matrix.prefix == 'lnx' }}
       run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev pulseaudio pulseaudio-utils dbus-x11 libportaudio2 libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
 
-      # Pulseaudio puts a dummy ALSA device in place, which allows us to do
-      # audio testing on Linux
-    - name: Start Pulseaudio
-      if: ${{ matrix.prefix == 'lnx' }}
-      run: dbus-launch pulseaudio --start
-
     - name: Calculate Version
       shell: bash
       run: .ci/calculate_version.sh
@@ -115,7 +109,6 @@ jobs:
       run: |
         echo "pcm.!default { type null }" > $GITHUB_WORKSPACE/silence-alsa.conf
         export ALSA_CONFIG_PATH=$GITHUB_WORKSPACE/silence-alsa.conf
-        sleep 5m
         tests/run_tests.sh
 
     - name: Create QB64-PE Artifact
