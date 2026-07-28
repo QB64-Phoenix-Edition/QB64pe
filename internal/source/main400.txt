@@ -10,27 +10,22 @@ mem_lock *sf_mem_lock;
 new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
+libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28182,16964,"ide_methods.bas");
 do{
 sub_pcopy( 0 , 2 );
 if(!qbevent)break;evnt(28182,16964,"ide_methods.bas");}while(r);
-error_track_line(28182,16965,"ide_methods.bas");
 do{
 sub_pcopy( 0 , 1 );
 if(!qbevent)break;evnt(28182,16965,"ide_methods.bas");}while(r);
-error_track_line(28182,16966,"ide_methods.bas");
 do{
 qbg_screen(NULL,NULL, 1 , 0 ,NULL,12);
 if(!qbevent)break;evnt(28182,16966,"ide_methods.bas");}while(r);
-error_track_line(28182,16967,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS= 1 ;
 if(!qbevent)break;evnt(28182,16967,"ide_methods.bas");}while(r);
-error_track_line(28182,16968,"ide_methods.bas");
 do{
 if(!qbevent)break;evnt(28182,16968,"ide_methods.bas");}while(r);
-error_track_line(28182,16969,"ide_methods.bas");
 do{
 if (_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[2]&2){
 error(10);
@@ -80,24 +75,19 @@ _FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[7]=alloc_new_desc[7];
 }
 }
 if(!qbevent)break;evnt(28182,16969,"ide_methods.bas");}while(r);
-error_track_line(28182,16970,"ide_methods.bas");
 do{
 if(!qbevent)break;evnt(28182,16970,"ide_methods.bas");}while(r);
-error_track_line(28182,16971,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING1_SEP,func_chr( 0 ));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16971,"ide_methods.bas");}while(r);
-error_track_line(28182,16975,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR,FUNC_STRREPLACE(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR,qbs_new_txt_len("\\n",2),func_chr( 10 )));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16975,"ide_methods.bas");}while(r);
-error_track_line(28182,16976,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES= 1 ;
 if(!qbevent)break;evnt(28182,16976,"ide_methods.bas");}while(r);
-error_track_line(28182,16977,"ide_methods.bas");
 do{
 if (_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[2]&2){
 error(10);
@@ -147,111 +137,83 @@ _FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[7]=alloc_new_desc[7];
 }
 }
 if(!qbevent)break;evnt(28182,16977,"ide_methods.bas");}while(r);
-error_track_line(28182,16978,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN= 1 ;
 if(!qbevent)break;evnt(28182,16978,"ide_methods.bas");}while(r);
-error_track_line(28182,16979,"ide_methods.bas");
 S_62567:;
 do{
 if(qbevent){evnt(28182,16979,"ide_methods.bas");if(r)goto S_62567;}
-error_track_line(28182,16980,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN=func_instr(*_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN+ 1 ,_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR,func_chr( 10 ),0|1);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16980,"ide_methods.bas");}while(r);
-error_track_line(28182,16981,"ide_methods.bas");
 S_62569:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN> 0 ))||is_error_pending()){
 if(qbevent){evnt(28182,16981,"ide_methods.bas");if(r)goto S_62569;}
-error_track_line(28182,16982,"ide_methods.bas");
 do{
 tmp_long=array_check((*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5]);
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[tmp_long])),func_mid(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR,*_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN,*_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN-*_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN,0|1));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16982,"ide_methods.bas");}while(r);
-error_track_line(28182,16983,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_TW=((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])]))->len+ 2 ;
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16983,"ide_methods.bas");}while(r);
-error_track_line(28182,16984,"ide_methods.bas");
 S_62572:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_TW>*_FUNC_IDEMESSAGEBOX_LONG_W))||is_error_pending()){
 if(qbevent){evnt(28182,16984,"ide_methods.bas");if(r)goto S_62572;}
-error_track_line(28182,16984,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W=*_FUNC_IDEMESSAGEBOX_LONG_TW;
 if(!qbevent)break;evnt(28182,16984,"ide_methods.bas");}while(r);
-error_track_line(28182,16984,"ide_methods.bas");
 }
-error_track_line(28182,16985,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN=*_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN+ 1 ;
 if(!qbevent)break;evnt(28182,16985,"ide_methods.bas");}while(r);
-error_track_line(28182,16986,"ide_methods.bas");
 S_62576:;
 if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES==func_ubound(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE,1,1))))||is_error_pending()){
 if(qbevent){evnt(28182,16986,"ide_methods.bas");if(r)goto S_62576;}
-error_track_line(28182,16986,"ide_methods.bas");
 do{
 goto dl_exit_7300;
 if(!qbevent)break;evnt(28182,16986,"ide_methods.bas");}while(r);
-error_track_line(28182,16986,"ide_methods.bas");
 }
-error_track_line(28182,16987,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES=*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES+ 1 ;
 if(!qbevent)break;evnt(28182,16987,"ide_methods.bas");}while(r);
-error_track_line(28182,16988,"ide_methods.bas");
 }else{
-error_track_line(28182,16989,"ide_methods.bas");
 do{
 tmp_long=array_check((*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5]);
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[tmp_long])),func_mid(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR,*_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN,NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16989,"ide_methods.bas");}while(r);
-error_track_line(28182,16990,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_TW=((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])]))->len+ 2 ;
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16990,"ide_methods.bas");}while(r);
-error_track_line(28182,16991,"ide_methods.bas");
 S_62583:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_TW>*_FUNC_IDEMESSAGEBOX_LONG_W))||is_error_pending()){
 if(qbevent){evnt(28182,16991,"ide_methods.bas");if(r)goto S_62583;}
-error_track_line(28182,16991,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W=*_FUNC_IDEMESSAGEBOX_LONG_TW;
 if(!qbevent)break;evnt(28182,16991,"ide_methods.bas");}while(r);
-error_track_line(28182,16991,"ide_methods.bas");
 }
-error_track_line(28182,16992,"ide_methods.bas");
 do{
 goto dl_exit_7300;
 if(!qbevent)break;evnt(28182,16992,"ide_methods.bas");}while(r);
-error_track_line(28182,16993,"ide_methods.bas");
 }
-error_track_line(28182,16994,"ide_methods.bas");
 dl_continue_7300:;
 }while(1);
 dl_exit_7300:;
-error_track_line(28182,16996,"ide_methods.bas");
 S_62589:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS,qbs_new_txt_len("",0))))||is_error_pending()){
 if(qbevent){evnt(28182,16996,"ide_methods.bas");if(r)goto S_62589;}
-error_track_line(28182,16996,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS,qbs_new_txt_len("#OK",3));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,16996,"ide_methods.bas");}while(r);
-error_track_line(28182,16996,"ide_methods.bas");
 }
-error_track_line(28182,16997,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS= 1 ;
 if(!qbevent)break;evnt(28182,16997,"ide_methods.bas");}while(r);
-error_track_line(28182,16998,"ide_methods.bas");
 S_62593:;
 fornext_value7304= 1 ;
 fornext_finalvalue7304=_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->len;
@@ -271,90 +233,67 @@ if (fornext_value7304>fornext_finalvalue7304) break;
 }
 fornext_error7304:;
 if(qbevent){evnt(28182,16998,"ide_methods.bas");if(r)goto S_62593;}
-error_track_line(28182,16999,"ide_methods.bas");
 S_62594:;
 if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS,*_FUNC_IDEMESSAGEBOX_LONG_I)== 59 )))||is_error_pending()){
 if(qbevent){evnt(28182,16999,"ide_methods.bas");if(r)goto S_62594;}
-error_track_line(28182,16999,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS=*_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS+ 1 ;
 if(!qbevent)break;evnt(28182,16999,"ide_methods.bas");}while(r);
-error_track_line(28182,16999,"ide_methods.bas");
 }
-error_track_line(28182,17000,"ide_methods.bas");
 fornext_continue_7303:;
 }
 fornext_exit_7303:;
-error_track_line(28182,17001,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN=(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->len)+(*_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS* 6 );
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17001,"ide_methods.bas");}while(r);
-error_track_line(28182,17003,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_I= 0 ;
 if(!qbevent)break;evnt(28182,17003,"ide_methods.bas");}while(r);
-error_track_line(28182,17004,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W2=_FUNC_IDEMESSAGEBOX_STRING_TITLESTR->len+ 4 ;
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17004,"ide_methods.bas");}while(r);
-error_track_line(28182,17005,"ide_methods.bas");
 S_62601:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_W<*_FUNC_IDEMESSAGEBOX_LONG_W2))||is_error_pending()){
 if(qbevent){evnt(28182,17005,"ide_methods.bas");if(r)goto S_62601;}
-error_track_line(28182,17005,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W=*_FUNC_IDEMESSAGEBOX_LONG_W2;
 if(!qbevent)break;evnt(28182,17005,"ide_methods.bas");}while(r);
-error_track_line(28182,17005,"ide_methods.bas");
 }
-error_track_line(28182,17006,"ide_methods.bas");
 S_62604:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_W<*_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN))||is_error_pending()){
 if(qbevent){evnt(28182,17006,"ide_methods.bas");if(r)goto S_62604;}
-error_track_line(28182,17006,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W=*_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN;
 if(!qbevent)break;evnt(28182,17006,"ide_methods.bas");}while(r);
-error_track_line(28182,17006,"ide_methods.bas");
 }
-error_track_line(28182,17007,"ide_methods.bas");
 S_62607:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_W>(*__LONG_IDEWX- 4 )))||is_error_pending()){
 if(qbevent){evnt(28182,17007,"ide_methods.bas");if(r)goto S_62607;}
-error_track_line(28182,17007,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_W=*__LONG_IDEWX- 4 ;
 if(!qbevent)break;evnt(28182,17007,"ide_methods.bas");}while(r);
-error_track_line(28182,17007,"ide_methods.bas");
 }
-error_track_line(28182,17008,"ide_methods.bas");
 do{
 SUB_IDEPAR((void*)( ((char*)(_FUNC_IDEMESSAGEBOX_UDT_P)) + ((0+0)) ),_FUNC_IDEMESSAGEBOX_LONG_W,&(pass7308= 3 +*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES),_FUNC_IDEMESSAGEBOX_STRING_TITLESTR);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17008,"ide_methods.bas");}while(r);
-error_track_line(28182,17010,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_I=*_FUNC_IDEMESSAGEBOX_LONG_I+ 1 ;
 if(!qbevent)break;evnt(28182,17010,"ide_methods.bas");}while(r);
-error_track_line(28182,17011,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+36)))= 3 ;
 if(!qbevent)break;evnt(28182,17011,"ide_methods.bas");}while(r);
-error_track_line(28182,17012,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+24)))= 3 +*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES;
 if(!qbevent)break;evnt(28182,17012,"ide_methods.bas");}while(r);
-error_track_line(28182,17013,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+44)))=FUNC_IDENEWTXT(FUNC_STRREPLACE(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS,qbs_new_txt_len(";",1),_FUNC_IDEMESSAGEBOX_STRING1_SEP));
 if(!qbevent)break;evnt(28182,17013,"ide_methods.bas");}while(r);
-error_track_line(28182,17014,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+60)))= 1 ;
 if(!qbevent)break;evnt(28182,17014,"ide_methods.bas");}while(r);
-error_track_line(28182,17018,"ide_methods.bas");
 S_62616:;
 fornext_value7310= 1 ;
 fornext_finalvalue7310= 100 ;
@@ -373,35 +312,27 @@ if (fornext_value7310>fornext_finalvalue7310) break;
 }
 fornext_error7310:;
 if(qbevent){evnt(28182,17018,"ide_methods.bas");if(r)goto S_62616;}
-error_track_line(28182,17018,"ide_methods.bas");
 do{
 memcpy(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+0))+ 0,((char*)_FUNC_IDEMESSAGEBOX_UDT_P)+((0+0))+ 0, 20);
 if(!qbevent)break;evnt(28182,17018,"ide_methods.bas");}while(r);
-error_track_line(28182,17018,"ide_methods.bas");
 fornext_continue_7309:;
 }
 fornext_exit_7309:;
-error_track_line(28182,17021,"ide_methods.bas");
 S_62619:;
 do{
 if(qbevent){evnt(28182,17021,"ide_methods.bas");if(r)goto S_62619;}
-error_track_line(28182,17025,"ide_methods.bas");
 do{
 SUB_IDEDRAWPAR((void*)( ((char*)(_FUNC_IDEMESSAGEBOX_UDT_P)) + ((0+0)) ));
 if(!qbevent)break;evnt(28182,17025,"ide_methods.bas");}while(r);
-error_track_line(28182,17026,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_F= 1 ;
 if(!qbevent)break;evnt(28182,17026,"ide_methods.bas");}while(r);
-error_track_line(28182,17026,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CX= 0 ;
 if(!qbevent)break;evnt(28182,17026,"ide_methods.bas");}while(r);
-error_track_line(28182,17026,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CY= 0 ;
 if(!qbevent)break;evnt(28182,17026,"ide_methods.bas");}while(r);
-error_track_line(28182,17027,"ide_methods.bas");
 S_62624:;
 fornext_value7313= 1 ;
 fornext_finalvalue7313= 100 ;
@@ -420,55 +351,41 @@ if (fornext_value7313>fornext_finalvalue7313) break;
 }
 fornext_error7313:;
 if(qbevent){evnt(28182,17027,"ide_methods.bas");if(r)goto S_62624;}
-error_track_line(28182,17028,"ide_methods.bas");
 S_62625:;
 if ((*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+36))))||is_error_pending()){
 if(qbevent){evnt(28182,17028,"ide_methods.bas");if(r)goto S_62625;}
-error_track_line(28182,17031,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+72)))=*_FUNC_IDEMESSAGEBOX_LONG_FOCUS-*_FUNC_IDEMESSAGEBOX_LONG_F;
 if(!qbevent)break;evnt(28182,17031,"ide_methods.bas");}while(r);
-error_track_line(28182,17032,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+64)))= 0 ;
 if(!qbevent)break;evnt(28182,17032,"ide_methods.bas");}while(r);
-error_track_line(28182,17032,"ide_methods.bas");
 do{
 *(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+68)))= 0 ;
 if(!qbevent)break;evnt(28182,17032,"ide_methods.bas");}while(r);
-error_track_line(28182,17033,"ide_methods.bas");
 do{
 SUB_IDEDRAWOBJ((void*)( ((char*)(_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])) + (((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+0)) ),_FUNC_IDEMESSAGEBOX_LONG_F);
 if(!qbevent)break;evnt(28182,17033,"ide_methods.bas");}while(r);
-error_track_line(28182,17034,"ide_methods.bas");
 S_62630:;
 if ((*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+64))))||is_error_pending()){
 if(qbevent){evnt(28182,17034,"ide_methods.bas");if(r)goto S_62630;}
-error_track_line(28182,17034,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CX=*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+64)));
 if(!qbevent)break;evnt(28182,17034,"ide_methods.bas");}while(r);
-error_track_line(28182,17034,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CY=*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+68)));
 if(!qbevent)break;evnt(28182,17034,"ide_methods.bas");}while(r);
-error_track_line(28182,17034,"ide_methods.bas");
 }
-error_track_line(28182,17035,"ide_methods.bas");
 }
-error_track_line(28182,17036,"ide_methods.bas");
 fornext_continue_7312:;
 }
 fornext_exit_7312:;
-error_track_line(28182,17037,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS=*_FUNC_IDEMESSAGEBOX_LONG_F- 1 ;
 if(!qbevent)break;evnt(28182,17037,"ide_methods.bas");}while(r);
-error_track_line(28182,17041,"ide_methods.bas");
 do{
 qbg_sub_color( 0 , 7 ,NULL,NULL,3);
 if(!qbevent)break;evnt(28182,17041,"ide_methods.bas");}while(r);
-error_track_line(28182,17042,"ide_methods.bas");
 S_62638:;
 fornext_value7315= 1 ;
 fornext_finalvalue7315=*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES;
@@ -487,284 +404,207 @@ if (fornext_value7315>fornext_finalvalue7315) break;
 }
 fornext_error7315:;
 if(qbevent){evnt(28182,17042,"ide_methods.bas");if(r)goto S_62638;}
-error_track_line(28182,17043,"ide_methods.bas");
 S_62639:;
 if ((qbs_cleanup(qbs_tmp_base,-((((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])]))->len)>(*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_UDT_P)+((0+8)))- 2 ))))||is_error_pending()){
 if(qbevent){evnt(28182,17043,"ide_methods.bas");if(r)goto S_62639;}
-error_track_line(28182,17044,"ide_methods.bas");
 do{
 tmp_long=array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5]);
 if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[tmp_long])),qbs_add(qbs_left(((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])])),*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_UDT_P)+((0+8)))- 5 ),func_string( 3 , 250 )));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17044,"ide_methods.bas");}while(r);
-error_track_line(28182,17045,"ide_methods.bas");
 }
-error_track_line(28182,17046,"ide_methods.bas");
 do{
 sub__printstring(*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_UDT_P)+((0+0)))+((qb_safe_idiv(*_FUNC_IDEMESSAGEBOX_LONG_W, 2 ))-(qb_safe_idiv(((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])]))->len, 2 )))+ 1 ,*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_UDT_P)+((0+4)))+ 1 +*_FUNC_IDEMESSAGEBOX_LONG_I,((qbs*)(((uint64*)(_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]))[array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4],_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5])])),NULL,0);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17046,"ide_methods.bas");}while(r);
-error_track_line(28182,17047,"ide_methods.bas");
 fornext_continue_7314:;
 }
 fornext_exit_7314:;
-error_track_line(28182,17051,"ide_methods.bas");
 do{
 sub_pcopy( 1 , 0 );
 if(!qbevent)break;evnt(28182,17051,"ide_methods.bas");}while(r);
-error_track_line(28182,17052,"ide_methods.bas");
 S_62645:;
 if ((*_FUNC_IDEMESSAGEBOX_LONG_CX)||is_error_pending()){
 if(qbevent){evnt(28182,17052,"ide_methods.bas");if(r)goto S_62645;}
-error_track_line(28182,17052,"ide_methods.bas");
 do{
 qbg_screen(NULL,NULL, 0 , 0 ,NULL,12);
 if(!qbevent)break;evnt(28182,17052,"ide_methods.bas");}while(r);
-error_track_line(28182,17052,"ide_methods.bas");
 do{
 qbg_sub_locate(*_FUNC_IDEMESSAGEBOX_LONG_CY,*_FUNC_IDEMESSAGEBOX_LONG_CX, 1 ,NULL,NULL,7);
 if(!qbevent)break;evnt(28182,17052,"ide_methods.bas");}while(r);
-error_track_line(28182,17052,"ide_methods.bas");
 do{
 qbg_screen(NULL,NULL, 1 , 0 ,NULL,12);
 if(!qbevent)break;evnt(28182,17052,"ide_methods.bas");}while(r);
-error_track_line(28182,17052,"ide_methods.bas");
 }
-error_track_line(28182,17055,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 0 ;
 if(!qbevent)break;evnt(28182,17055,"ide_methods.bas");}while(r);
-error_track_line(28182,17056,"ide_methods.bas");
 S_62651:;
 do{
 if(qbevent){evnt(28182,17056,"ide_methods.bas");if(r)goto S_62651;}
-error_track_line(28182,17057,"ide_methods.bas");
 do{
 SUB_GETINPUT();
 if(!qbevent)break;evnt(28182,17057,"ide_methods.bas");}while(r);
-error_track_line(28182,17058,"ide_methods.bas");
 S_62653:;
 if ((*__LONG_MWHEEL)||is_error_pending()){
 if(qbevent){evnt(28182,17058,"ide_methods.bas");if(r)goto S_62653;}
-error_track_line(28182,17058,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17058,"ide_methods.bas");}while(r);
-error_track_line(28182,17058,"ide_methods.bas");
 }
-error_track_line(28182,17059,"ide_methods.bas");
 S_62656:;
 if ((*__LONG_KB)||is_error_pending()){
 if(qbevent){evnt(28182,17059,"ide_methods.bas");if(r)goto S_62656;}
-error_track_line(28182,17059,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17059,"ide_methods.bas");}while(r);
-error_track_line(28182,17059,"ide_methods.bas");
 }
-error_track_line(28182,17060,"ide_methods.bas");
 S_62659:;
 if ((*__LONG_MCLICK)||is_error_pending()){
 if(qbevent){evnt(28182,17060,"ide_methods.bas");if(r)goto S_62659;}
-error_track_line(28182,17060,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN= 1 ;
 if(!qbevent)break;evnt(28182,17060,"ide_methods.bas");}while(r);
-error_track_line(28182,17060,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17060,"ide_methods.bas");}while(r);
-error_track_line(28182,17060,"ide_methods.bas");
 }
-error_track_line(28182,17061,"ide_methods.bas");
 S_62663:;
 if ((*__LONG_MRELEASE)||is_error_pending()){
 if(qbevent){evnt(28182,17061,"ide_methods.bas");if(r)goto S_62663;}
-error_track_line(28182,17061,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP= 1 ;
 if(!qbevent)break;evnt(28182,17061,"ide_methods.bas");}while(r);
-error_track_line(28182,17061,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17061,"ide_methods.bas");}while(r);
-error_track_line(28182,17061,"ide_methods.bas");
 }
-error_track_line(28182,17062,"ide_methods.bas");
 S_62667:;
 if ((*__LONG_MB)||is_error_pending()){
 if(qbevent){evnt(28182,17062,"ide_methods.bas");if(r)goto S_62667;}
-error_track_line(28182,17062,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17062,"ide_methods.bas");}while(r);
-error_track_line(28182,17062,"ide_methods.bas");
 }
-error_track_line(28182,17063,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_ALT=*__LONG_KALT;
 if(!qbevent)break;evnt(28182,17063,"ide_methods.bas");}while(r);
-error_track_line(28182,17063,"ide_methods.bas");
 S_62671:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_ALT!=*_FUNC_IDEMESSAGEBOX_LONG_OLDALT))||is_error_pending()){
 if(qbevent){evnt(28182,17063,"ide_methods.bas");if(r)goto S_62671;}
-error_track_line(28182,17063,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE= 1 ;
 if(!qbevent)break;evnt(28182,17063,"ide_methods.bas");}while(r);
-error_track_line(28182,17063,"ide_methods.bas");
 }
-error_track_line(28182,17064,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_OLDALT=*_FUNC_IDEMESSAGEBOX_LONG_ALT;
 if(!qbevent)break;evnt(28182,17064,"ide_methods.bas");}while(r);
-error_track_line(28182,17065,"ide_methods.bas");
 do{
 sub__limit( 100 );
 if(!qbevent)break;evnt(28182,17065,"ide_methods.bas");}while(r);
-error_track_line(28182,17066,"ide_methods.bas");
 S_62676:;
 dl_continue_7318:;
 }while((!(*_FUNC_IDEMESSAGEBOX_LONG_CHANGE))&&(!is_error_pending()));
 dl_exit_7318:;
 if(qbevent){evnt(28182,17066,"ide_methods.bas");if(r)goto S_62676;}
-error_track_line(28182,17067,"ide_methods.bas");
 S_62677:;
 if ((*_FUNC_IDEMESSAGEBOX_LONG_ALT&(~(*__LONG_KCTRL)))||is_error_pending()){
 if(qbevent){evnt(28182,17067,"ide_methods.bas");if(r)goto S_62677;}
-error_track_line(28182,17067,"ide_methods.bas");
 do{
 *__LONG_IDEHL= 1 ;
 if(!qbevent)break;evnt(28182,17067,"ide_methods.bas");}while(r);
-error_track_line(28182,17067,"ide_methods.bas");
 }else{
-error_track_line(28182,17067,"ide_methods.bas");
 do{
 *__LONG_IDEHL= 0 ;
 if(!qbevent)break;evnt(28182,17067,"ide_methods.bas");}while(r);
-error_track_line(28182,17067,"ide_methods.bas");
 }
-error_track_line(28182,17069,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17069,"ide_methods.bas");}while(r);
-error_track_line(28182,17070,"ide_methods.bas");
 S_62683:;
 if ((*_FUNC_IDEMESSAGEBOX_LONG_ALT&(~(*__LONG_KCTRL)))||is_error_pending()){
 if(qbevent){evnt(28182,17070,"ide_methods.bas");if(r)goto S_62683;}
-error_track_line(28182,17071,"ide_methods.bas");
 S_62684:;
 if ((qbs_cleanup(qbs_tmp_base,-(__STRING_K->len== 1 )))||is_error_pending()){
 if(qbevent){evnt(28182,17071,"ide_methods.bas");if(r)goto S_62684;}
-error_track_line(28182,17072,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_K=qbs_asc(qbs_ucase(__STRING_K));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17072,"ide_methods.bas");}while(r);
-error_track_line(28182,17073,"ide_methods.bas");
 S_62686:;
 if (((-(*_FUNC_IDEMESSAGEBOX_LONG_K>= 65 ))&(-(*_FUNC_IDEMESSAGEBOX_LONG_K<= 90 )))||is_error_pending()){
 if(qbevent){evnt(28182,17073,"ide_methods.bas");if(r)goto S_62686;}
-error_track_line(28182,17073,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER,func_chr(*_FUNC_IDEMESSAGEBOX_LONG_K));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17073,"ide_methods.bas");}while(r);
-error_track_line(28182,17073,"ide_methods.bas");
 }
-error_track_line(28182,17074,"ide_methods.bas");
 }
-error_track_line(28182,17075,"ide_methods.bas");
 }
-error_track_line(28182,17076,"ide_methods.bas");
 do{
 qbg_screen(NULL,NULL, 0 , 0 ,NULL,12);
 if(!qbevent)break;evnt(28182,17076,"ide_methods.bas");}while(r);
-error_track_line(28182,17076,"ide_methods.bas");
 do{
 qbg_sub_locate(NULL,NULL, 0 ,NULL,NULL,4);
 if(!qbevent)break;evnt(28182,17076,"ide_methods.bas");}while(r);
-error_track_line(28182,17076,"ide_methods.bas");
 do{
 qbg_screen(NULL,NULL, 1 , 0 ,NULL,12);
 if(!qbevent)break;evnt(28182,17076,"ide_methods.bas");}while(r);
-error_track_line(28182,17080,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_INFO= 0 ;
 if(!qbevent)break;evnt(28182,17080,"ide_methods.bas");}while(r);
-error_track_line(28182,17082,"ide_methods.bas");
 S_62695:;
 if ((qbs_cleanup(qbs_tmp_base,(qbs_greaterorequal(qbs_ucase(__STRING_K),qbs_new_txt_len("A",1)))&(qbs_lessorequal(qbs_ucase(__STRING_K),qbs_new_txt_len("Z",1)))))||is_error_pending()){
 if(qbevent){evnt(28182,17082,"ide_methods.bas");if(r)goto S_62695;}
-error_track_line(28182,17082,"ide_methods.bas");
 do{
 qbs_set(_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER,qbs_ucase(__STRING_K));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17082,"ide_methods.bas");}while(r);
-error_track_line(28182,17082,"ide_methods.bas");
 }
-error_track_line(28182,17084,"ide_methods.bas");
 S_62698:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_K,qbs_new_txt_len("",0))))||is_error_pending()){
 if(qbevent){evnt(28182,17084,"ide_methods.bas");if(r)goto S_62698;}
-error_track_line(28182,17084,"ide_methods.bas");
 do{
 qbs_set(__STRING_K,func_chr( 255 ));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17084,"ide_methods.bas");}while(r);
-error_track_line(28182,17084,"ide_methods.bas");
 }
-error_track_line(28182,17085,"ide_methods.bas");
 S_62701:;
 if ((qbs_cleanup(qbs_tmp_base,(-(*__LONG_KSHIFT== 0 ))&(qbs_equal(__STRING_K,func_chr( 9 )))))||is_error_pending()){
 if(qbevent){evnt(28182,17085,"ide_methods.bas");if(r)goto S_62701;}
-error_track_line(28182,17085,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS=*_FUNC_IDEMESSAGEBOX_LONG_FOCUS+ 1 ;
 if(!qbevent)break;evnt(28182,17085,"ide_methods.bas");}while(r);
-error_track_line(28182,17085,"ide_methods.bas");
 }
-error_track_line(28182,17086,"ide_methods.bas");
 S_62704:;
 if ((qbs_cleanup(qbs_tmp_base,(*__LONG_KSHIFT&(qbs_equal(__STRING_K,func_chr( 9 ))))|((func_instr(NULL,func__os(),qbs_new_txt_len("MAC",3),0))&(qbs_equal(__STRING_K,func_chr( 25 ))))))||is_error_pending()){
 if(qbevent){evnt(28182,17086,"ide_methods.bas");if(r)goto S_62704;}
-error_track_line(28182,17086,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS=*_FUNC_IDEMESSAGEBOX_LONG_FOCUS- 1 ;
 if(!qbevent)break;evnt(28182,17086,"ide_methods.bas");}while(r);
-error_track_line(28182,17086,"ide_methods.bas");
 do{
 qbs_set(__STRING_K,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17086,"ide_methods.bas");}while(r);
-error_track_line(28182,17086,"ide_methods.bas");
 }
-error_track_line(28182,17087,"ide_methods.bas");
 S_62708:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_FOCUS< 1 ))||is_error_pending()){
 if(qbevent){evnt(28182,17087,"ide_methods.bas");if(r)goto S_62708;}
-error_track_line(28182,17087,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS=*_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS;
 if(!qbevent)break;evnt(28182,17087,"ide_methods.bas");}while(r);
-error_track_line(28182,17087,"ide_methods.bas");
 }
-error_track_line(28182,17088,"ide_methods.bas");
 S_62711:;
 if ((-(*_FUNC_IDEMESSAGEBOX_LONG_FOCUS>*_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS))||is_error_pending()){
 if(qbevent){evnt(28182,17088,"ide_methods.bas");if(r)goto S_62711;}
-error_track_line(28182,17088,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS= 1 ;
 if(!qbevent)break;evnt(28182,17088,"ide_methods.bas");}while(r);
-error_track_line(28182,17088,"ide_methods.bas");
 }
-error_track_line(28182,17089,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_F= 1 ;
 if(!qbevent)break;evnt(28182,17089,"ide_methods.bas");}while(r);
-error_track_line(28182,17090,"ide_methods.bas");
 S_62715:;
 fornext_value7321= 1 ;
 fornext_finalvalue7321= 100 ;
@@ -783,66 +623,49 @@ if (fornext_value7321>fornext_finalvalue7321) break;
 }
 fornext_error7321:;
 if(qbevent){evnt(28182,17090,"ide_methods.bas");if(r)goto S_62715;}
-error_track_line(28182,17091,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_T=*(int32*)(((char*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])+(((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+36)));
 if(!qbevent)break;evnt(28182,17091,"ide_methods.bas");}while(r);
-error_track_line(28182,17092,"ide_methods.bas");
 S_62717:;
 if ((*_FUNC_IDEMESSAGEBOX_LONG_T)||is_error_pending()){
 if(qbevent){evnt(28182,17092,"ide_methods.bas");if(r)goto S_62717;}
-error_track_line(28182,17093,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET=*_FUNC_IDEMESSAGEBOX_LONG_FOCUS-*_FUNC_IDEMESSAGEBOX_LONG_F;
 if(!qbevent)break;evnt(28182,17093,"ide_methods.bas");}while(r);
-error_track_line(28182,17094,"ide_methods.bas");
 do{
 SUB_IDEOBJUPDATE((void*)( ((char*)(_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0])) + (((array_check((*_FUNC_IDEMESSAGEBOX_LONG_I)-_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4],_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]))*101+0)) ),_FUNC_IDEMESSAGEBOX_LONG_FOCUS,_FUNC_IDEMESSAGEBOX_LONG_F,_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET,__STRING_K,_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER,__LONG_MB,_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN,_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP,__LONG_MX,__LONG_MY,_FUNC_IDEMESSAGEBOX_LONG_INFO,__LONG_MWHEEL);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(28182,17094,"ide_methods.bas");}while(r);
-error_track_line(28182,17095,"ide_methods.bas");
 }
-error_track_line(28182,17096,"ide_methods.bas");
 fornext_continue_7320:;
 }
 fornext_exit_7320:;
-error_track_line(28182,17100,"ide_methods.bas");
 S_62722:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_K,func_chr( 27 ))))||is_error_pending()){
 if(qbevent){evnt(28182,17100,"ide_methods.bas");if(r)goto S_62722;}
-error_track_line(28182,17100,"ide_methods.bas");
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(28182,17100,"ide_methods.bas");}while(r);
-error_track_line(28182,17100,"ide_methods.bas");
 }
-error_track_line(28182,17102,"ide_methods.bas");
 S_62725:;
 if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(__STRING_K,func_chr( 13 )))|((-(*_FUNC_IDEMESSAGEBOX_LONG_INFO!= 0 )))))||is_error_pending()){
 if(qbevent){evnt(28182,17102,"ide_methods.bas");if(r)goto S_62725;}
-error_track_line(28182,17103,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_IDEMESSAGEBOX=*_FUNC_IDEMESSAGEBOX_LONG_FOCUS;
 if(!qbevent)break;evnt(28182,17103,"ide_methods.bas");}while(r);
-error_track_line(28182,17104,"ide_methods.bas");
 do{
 SUB_CLEARMOUSE();
 if(!qbevent)break;evnt(28182,17104,"ide_methods.bas");}while(r);
-error_track_line(28182,17105,"ide_methods.bas");
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(28182,17105,"ide_methods.bas");}while(r);
-error_track_line(28182,17106,"ide_methods.bas");
 }
-error_track_line(28182,17109,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN= 0 ;
 if(!qbevent)break;evnt(28182,17109,"ide_methods.bas");}while(r);
-error_track_line(28182,17110,"ide_methods.bas");
 do{
 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP= 0 ;
 if(!qbevent)break;evnt(28182,17110,"ide_methods.bas");}while(r);
-error_track_line(28182,17111,"ide_methods.bas");
 dl_continue_7311:;
 }while(1);
 dl_exit_7311:;
