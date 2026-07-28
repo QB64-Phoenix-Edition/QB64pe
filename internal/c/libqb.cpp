@@ -11753,18 +11753,18 @@ void qbs_print(qbs *str, int32 finish_on_new_line) {
     static uint32 character;
 
     if (write_page->console) {
-     if (str->len)
-         std::cout.write((char *)str->chr, str->len);
+        if (str->len)
+            std::cout.write((char *)str->chr, str->len);
 
-     if (finish_on_new_line)
-         std::cout << std::endl;
+        if (finish_on_new_line)
+            std::cout << std::endl;
 
 #ifndef QB64_WINDOWS
-    std::cout.flush();
+        std::cout.flush();
 #endif
 
-    return;
-}
+        return;
+    }
     /*
         if (!str->len){
         if (!newline) return;//no action required
