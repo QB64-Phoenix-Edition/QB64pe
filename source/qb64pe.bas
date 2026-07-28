@@ -5261,6 +5261,20 @@ DO
                 GOTO finishednonexec
             END IF
 
+            IF secondelement$ = "SUB" THEN
+                l$ = SCase$("Declare" + sp + "Sub")
+                IF n >= 3 THEN l$ = l$ + sp + getelements$(ca$, 3, n)
+                layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+                GOTO finishednonexec
+            END IF
+
+            IF secondelement$ = "FUNCTION" THEN
+                l$ = SCase$("Declare" + sp + "Function")
+                IF n >= 3 THEN l$ = l$ + sp + getelements$(ca$, 3, n)
+                layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+                GOTO finishednonexec
+            END IF
+
             GOTO finishednonexec 'note: no layout required
         END IF
     END IF
