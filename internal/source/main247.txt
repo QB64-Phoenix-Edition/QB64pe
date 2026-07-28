@@ -10,20 +10,17 @@ mem_lock *sf_mem_lock;
 new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
+libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(28171,17,"statevars.bas");
 do{
 *(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))=*_SUB_SETRCSTATEVAR_BYTE_SETVAL;
 if(!qbevent)break;evnt(28171,17,"statevars.bas");}while(r);
-error_track_line(28171,18,"statevars.bas");
 S_40530:;
 if (((-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+1)))!=*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))))&(-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+2)))== 0ll )))||is_error_pending()){
 if(qbevent){evnt(28171,18,"statevars.bas");if(r)goto S_40530;}
-error_track_line(28171,19,"statevars.bas");
 do{
 *__INTEGER_RECOMPILE= 1 ;
 if(!qbevent)break;evnt(28171,19,"statevars.bas");}while(r);
-error_track_line(28171,20,"statevars.bas");
 }
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);

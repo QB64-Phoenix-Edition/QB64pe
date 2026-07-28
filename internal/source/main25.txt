@@ -10,71 +10,55 @@ mem_lock *sf_mem_lock;
 new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
+libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-error_track_line(16008,0,NULL);
 do{
 if(!qbevent)break;evnt(16008);}while(r);
-error_track_line(16010,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_N=FUNC_NUMELEMENTS(_FUNC_UDTARRAYINDEXEXPR_STRING_INDEXES);
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16010);}while(r);
-error_track_line(16011,0,NULL);
 S_18528:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_N== 0 ))||is_error_pending()){
 if(qbevent){evnt(16011);if(r)goto S_18528;}
-error_track_line(16011,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Array index missing",19));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16011);}while(r);
-error_track_line(16011,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16011);}while(r);
-error_track_line(16011,0,NULL);
 }
-error_track_line(16012,0,NULL);
 S_18532:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_DIMENSION_COUNT<= 0 ))||is_error_pending()){
 if(qbevent){evnt(16012);if(r)goto S_18532;}
-error_track_line(16012,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("TYPE member is not an array",27));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16012);}while(r);
-error_track_line(16012,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16012);}while(r);
-error_track_line(16012,0,NULL);
 }
-error_track_line(16014,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16014);}while(r);
-error_track_line(16015,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_STRIDE= 1 ;
 if(!qbevent)break;evnt(16015);}while(r);
-error_track_line(16016,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_DESC_POS= 1 ;
 if(!qbevent)break;evnt(16016);}while(r);
-error_track_line(16017,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS= 0 ;
 if(!qbevent)break;evnt(16017);}while(r);
-error_track_line(16018,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_B= 0 ;
 if(!qbevent)break;evnt(16018);}while(r);
-error_track_line(16019,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_FIRSTI= 1 ;
 if(!qbevent)break;evnt(16019);}while(r);
-error_track_line(16021,0,NULL);
 S_18542:;
 fornext_value2707= 1 ;
 fornext_finalvalue2707=*_FUNC_UDTARRAYINDEXEXPR_LONG_N;
@@ -93,236 +77,173 @@ if (fornext_value2707>fornext_finalvalue2707) break;
 }
 fornext_error2707:;
 if(qbevent){evnt(16021);if(r)goto S_18542;}
-error_track_line(16022,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_E,FUNC_GETELEMENT(_FUNC_UDTARRAYINDEXEXPR_STRING_INDEXES,_FUNC_UDTARRAYINDEXEXPR_LONG_I));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16022);}while(r);
-error_track_line(16023,0,NULL);
 S_18544:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UDTARRAYINDEXEXPR_STRING_E,qbs_new_txt_len("(",1))))||is_error_pending()){
 if(qbevent){evnt(16023);if(r)goto S_18544;}
-error_track_line(16023,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_B=*_FUNC_UDTARRAYINDEXEXPR_LONG_B+ 1 ;
 if(!qbevent)break;evnt(16023);}while(r);
-error_track_line(16023,0,NULL);
 }
-error_track_line(16024,0,NULL);
 S_18547:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UDTARRAYINDEXEXPR_STRING_E,qbs_new_txt_len(")",1))))||is_error_pending()){
 if(qbevent){evnt(16024);if(r)goto S_18547;}
-error_track_line(16024,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_B=*_FUNC_UDTARRAYINDEXEXPR_LONG_B- 1 ;
 if(!qbevent)break;evnt(16024);}while(r);
-error_track_line(16024,0,NULL);
 }
-error_track_line(16025,0,NULL);
 S_18550:;
 if ((qbs_cleanup(qbs_tmp_base,(((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_B== 0 ))&(qbs_equal(_FUNC_UDTARRAYINDEXEXPR_STRING_E,qbs_new_txt_len(",",1)))))|(-(*_FUNC_UDTARRAYINDEXEXPR_LONG_I==*_FUNC_UDTARRAYINDEXEXPR_LONG_N))))||is_error_pending()){
 if(qbevent){evnt(16025);if(r)goto S_18550;}
-error_track_line(16026,0,NULL);
 S_18551:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_I==*_FUNC_UDTARRAYINDEXEXPR_LONG_N))||is_error_pending()){
 if(qbevent){evnt(16026);if(r)goto S_18551;}
-error_track_line(16027,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC,FUNC_GETELEMENTS(_FUNC_UDTARRAYINDEXEXPR_STRING_INDEXES,_FUNC_UDTARRAYINDEXEXPR_LONG_FIRSTI,_FUNC_UDTARRAYINDEXEXPR_LONG_I));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16027);}while(r);
-error_track_line(16028,0,NULL);
 }else{
-error_track_line(16029,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC,FUNC_GETELEMENTS(_FUNC_UDTARRAYINDEXEXPR_STRING_INDEXES,_FUNC_UDTARRAYINDEXEXPR_LONG_FIRSTI,&(pass2708=*_FUNC_UDTARRAYINDEXEXPR_LONG_I- 1 )));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16029);}while(r);
-error_track_line(16030,0,NULL);
 }
-error_track_line(16031,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC,FUNC_EVALUATETOTYP(_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC,&(pass2709= 64 )));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16031);}while(r);
-error_track_line(16032,0,NULL);
 S_18557:;
 if ((*__LONG_ERROR_HAPPENED)||is_error_pending()){
 if(qbevent){evnt(16032);if(r)goto S_18557;}
-error_track_line(16032,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16032);}while(r);
-error_track_line(16032,0,NULL);
 }
-error_track_line(16033,0,NULL);
 S_18560:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC,qbs_new_txt_len("",0))))||is_error_pending()){
 if(qbevent){evnt(16033);if(r)goto S_18560;}
-error_track_line(16033,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Array index missing",19));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16033);}while(r);
-error_track_line(16033,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16033);}while(r);
-error_track_line(16033,0,NULL);
 }
-error_track_line(16035,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS=*_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS+ 1 ;
 if(!qbevent)break;evnt(16035);}while(r);
-error_track_line(16036,0,NULL);
 S_18565:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS>*_FUNC_UDTARRAYINDEXEXPR_LONG_DIMENSION_COUNT))||is_error_pending()){
 if(qbevent){evnt(16036);if(r)goto S_18565;}
-error_track_line(16036,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Cannot change the number of elements an array has!",50));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16036);}while(r);
-error_track_line(16036,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16036);}while(r);
-error_track_line(16036,0,NULL);
 }
-error_track_line(16037,0,NULL);
 S_18569:;
 if ((qbs_cleanup(qbs_tmp_base,-(FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM(_FUNC_UDTARRAYINDEXEXPR_STRING_DESCRIPTOR,_FUNC_UDTARRAYINDEXEXPR_LONG_DESC_POS,_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_LOWER,_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_ELEMENTS)== 0 )))||is_error_pending()){
 if(qbevent){evnt(16037);if(r)goto S_18569;}
-error_track_line(16037,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Cannot process the declared bounds of this TYPE member array",60));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16037);}while(r);
-error_track_line(16037,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16037);}while(r);
-error_track_line(16037,0,NULL);
 }
-error_track_line(16039,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_LOWER_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_LOWER))));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16039);}while(r);
-error_track_line(16040,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_ELEMENTS_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_ELEMENTS))));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16040);}while(r);
-error_track_line(16041,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_STRIDE_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_UDTARRAYINDEXEXPR_LONG_STRIDE))));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16041);}while(r);
-error_track_line(16043,0,NULL);
 S_18576:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS== 1 ))||is_error_pending()){
 if(qbevent){evnt(16043);if(r)goto S_18576;}
-error_track_line(16044,0,NULL);
 S_18577:;
 if ((*__LONG_CHECKINGON)||is_error_pending()){
 if(qbevent){evnt(16044);if(r)goto S_18577;}
-error_track_line(16045,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("array_check((",13)),_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC),qbs_new_txt_len(")-(",3)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_LOWER_TXT),qbs_new_txt_len("),",2)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_ELEMENTS_TXT),qbs_new_txt_len(")+",2)));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16045);}while(r);
-error_track_line(16046,0,NULL);
 }else{
-error_track_line(16047,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("((",2)),_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC),qbs_new_txt_len(")-(",3)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_LOWER_TXT),qbs_new_txt_len("))+",3)));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16047);}while(r);
-error_track_line(16048,0,NULL);
 }
-error_track_line(16049,0,NULL);
 }else{
-error_track_line(16050,0,NULL);
 S_18583:;
 if ((*__LONG_CHECKINGON)||is_error_pending()){
 if(qbevent){evnt(16050);if(r)goto S_18583;}
-error_track_line(16051,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("array_check((",13)),_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC),qbs_new_txt_len(")-(",3)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_LOWER_TXT),qbs_new_txt_len("),",2)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_ELEMENTS_TXT),qbs_new_txt_len(")*",2)),_FUNC_UDTARRAYINDEXEXPR_STRING_STRIDE_TXT),qbs_new_txt_len("+",1)));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16051);}while(r);
-error_track_line(16052,0,NULL);
 }else{
-error_track_line(16053,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("((",2)),_FUNC_UDTARRAYINDEXEXPR_STRING_IDX_SRC),qbs_new_txt_len(")-(",3)),_FUNC_UDTARRAYINDEXEXPR_STRING_DIM_LOWER_TXT),qbs_new_txt_len("))*",3)),_FUNC_UDTARRAYINDEXEXPR_STRING_STRIDE_TXT),qbs_new_txt_len("+",1)));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16053);}while(r);
-error_track_line(16054,0,NULL);
 }
-error_track_line(16055,0,NULL);
 }
-error_track_line(16057,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_STRIDE=*_FUNC_UDTARRAYINDEXEXPR_LONG_STRIDE**_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_ELEMENTS;
 if(!qbevent)break;evnt(16057);}while(r);
-error_track_line(16058,0,NULL);
 do{
 *_FUNC_UDTARRAYINDEXEXPR_LONG_FIRSTI=*_FUNC_UDTARRAYINDEXEXPR_LONG_I+ 1 ;
 if(!qbevent)break;evnt(16058);}while(r);
-error_track_line(16059,0,NULL);
 }
-error_track_line(16060,0,NULL);
 fornext_continue_2706:;
 }
 fornext_exit_2706:;
-error_track_line(16062,0,NULL);
 S_18593:;
 if ((-(*_FUNC_UDTARRAYINDEXEXPR_LONG_FOUND_DIMENSIONS!=*_FUNC_UDTARRAYINDEXEXPR_LONG_DIMENSION_COUNT))||is_error_pending()){
 if(qbevent){evnt(16062);if(r)goto S_18593;}
-error_track_line(16062,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Cannot change the number of elements an array has!",50));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16062);}while(r);
-error_track_line(16062,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16062);}while(r);
-error_track_line(16062,0,NULL);
 }
-error_track_line(16063,0,NULL);
 S_18597:;
 if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM(_FUNC_UDTARRAYINDEXEXPR_STRING_DESCRIPTOR,_FUNC_UDTARRAYINDEXEXPR_LONG_DESC_POS,_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_LOWER,_FUNC_UDTARRAYINDEXEXPR_LONG_DIM_ELEMENTS)))||is_error_pending()){
 if(qbevent){evnt(16063);if(r)goto S_18597;}
-error_track_line(16063,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Cannot change the number of elements an array has!",50));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16063);}while(r);
-error_track_line(16063,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16063);}while(r);
-error_track_line(16063,0,NULL);
 }
-error_track_line(16064,0,NULL);
 S_18601:;
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,qbs_new_txt_len("",0))))||is_error_pending()){
 if(qbevent){evnt(16064);if(r)goto S_18601;}
-error_track_line(16064,0,NULL);
 do{
 SUB_GIVE_ERROR(qbs_new_txt_len("Array index missing",19));
 qbs_cleanup(qbs_tmp_base,0);
 if(!qbevent)break;evnt(16064);}while(r);
-error_track_line(16064,0,NULL);
 do{
 goto exit_subfunc;
 if(!qbevent)break;evnt(16064);}while(r);
-error_track_line(16064,0,NULL);
 }
-error_track_line(16066,0,NULL);
 do{
 qbs_set(_FUNC_UDTARRAYINDEXEXPR_STRING_UDTARRAYINDEXEXPR,qbs_left(_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR,_FUNC_UDTARRAYINDEXEXPR_STRING_RESULT_EXPR->len- 1 ));
 qbs_cleanup(qbs_tmp_base,0);

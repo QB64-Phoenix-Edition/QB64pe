@@ -10,6 +10,7 @@ mem_lock *sf_mem_lock;
 new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
+libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
