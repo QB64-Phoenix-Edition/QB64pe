@@ -32,6 +32,53 @@ show_incorrect_result()
     printf "GOT:      '%s'\n" "$2"
 }
 
+trimmed_output_size()
+{
+    local file="$1"
+    local size
+    local byte
+
+    size=$(wc -c < "$file")
+
+    while (( size > 0 )); do
+        byte=$(dd if="$file" bs=1 skip=$((size - 1)) count=1 2>/dev/null | od -An -tu1)
+        byte=${byte//[[:space:]]/}
+
+        # Bash command substitution historically ignored trailing newlines.
+        # Treat both LF and CRLF as line endings, but preserve a bare CR.
+        if [ "$byte" != "10" ]; then
+            break
+        fi
+
+        # Remove LF.
+        size=$((size - 1))
+
+        # On Windows the line ending may be CRLF, so remove the CR that
+        # belongs to this LF as well.
+        if (( size > 0 )); then
+            byte=$(dd if="$file" bs=1 skip=$((size - 1)) count=1 2>/dev/null | od -An -tu1)
+            byte=${byte//[[:space:]]/}
+
+            if [ "$byte" == "13" ]; then
+                size=$((size - 1))
+            fi
+        fi
+    done
+
+    printf '%s\n' "$size"
+}
+
+compare_output_files()
+{
+    expectedSize=$(trimmed_output_size "$1")
+    actualSize=$(trimmed_output_size "$2")
+
+    if [ "$expectedSize" -ne "$actualSize" ]; then
+        return 1
+    fi
+
+    cmp <(head -c "$expectedSize" "$1") <(head -c "$actualSize" "$2") > /dev/null
+}
 # This env variable exists when running in CI. It can also be defined locally
 # to enable the small OS-dependent testing
 #
@@ -43,10 +90,9 @@ OS=$CI_OS
 if [ "$OS" == "lnx" ]; then
     LNX_PREFIX=xvfb-run
 fi
-
 # Each .bas file represents a separate test.
 while IFS= read -r test
-do 
+do
     category=$(basename "$(dirname "$test")")
     testName=$(basename "$test" .bas)
 
@@ -56,7 +102,6 @@ do
     if [ "$OS" == "win" ]; then
         EXE="$EXE.exe"
     fi
-
     # If a .err file exists, then this test is actually testing a compilation error
     testType="success"
     if test -f "./tests/compile_tests/$category/$testName.err"; then
@@ -70,27 +115,23 @@ do
     rm -f "$EXE*"
 
     compileResultOutput="$RESULTS_DIR/$category-$testName-compile_result.txt"
-
     # A .flags file contains any extra compiler flags to provide to QB64 for this test
     compilerFlags=
     if test -f "./tests/compile_tests/$category/$testName.flags"; then
         compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
     fi
-
     # If a license file for this OS exists, then we also check the generated license is correct
     checkLicense=
     if [ ! -z "$OS" ] && test -f "./tests/compile_tests/$category/$testName.$OS.license"; then
         compilerFlags="$compilerFlags -f:GenerateLicenseFile=true"
         checkLicense=y
     fi
-
     # If the "compile-from-base" file exists, then this test should be compiled
     # from the ./qb64pe directory instead of the test directory
     compileFromBase=
     if test -f "./tests/compile_tests/$category/$testName.compile-from-base"; then
         compileFromBase=y
     fi
-
     if [ "$compileFromBase" == "y" ]; then
         # -m and -q make sure that we get predictable results
         "$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
@@ -98,7 +139,6 @@ do
     else
         pushd . >/dev/null
         cd "./tests/compile_tests/$category"
-
         # -m and -q make sure that we get predictable results
         "../../../$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
         ERR=$?
@@ -107,7 +147,6 @@ do
     fi
 
     cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
-
     if [ "$testType" == "success" ]; then
         (exit $ERR)
         assert_success_named "Compile" "Compilation Error:" show_failure "$category" "$testName"
@@ -118,7 +157,6 @@ do
         if [ "$checkLicense" == "y" ]; then
             expectedResult="$(cat "./tests/compile_tests/$category/$testName.$OS.license")"
             testResult="$(cat "$EXE.license.txt")"
-
             [ "$testResult" == "$expectedResult" ]
             assert_success_named "license" "License file is wrong:" show_incorrect_result "$expectedResult" "$testResult"
         fi
@@ -144,7 +182,7 @@ do
         (exit $ERR)
         assert_success_named "run" "Execution Error:" cat "$runOutput"
 
-        diff "./tests/compile_tests/$category/$testName.output" "$runOutput" > /dev/null
+        compare_output_files "./tests/compile_tests/$category/$testName.output" "$runOutput"
         assert_success_named "result" "Result is wrong:" \
             diff "./tests/compile_tests/$category/$testName.output" "$runOutput"
 
@@ -158,12 +196,10 @@ do
     else
         ! (exit $ERR)
         assert_success_named "Compile" "Compilation Success, was expecting error:" show_failure "$category" "$testName"
-
         ! test -f "$EXE"
         assert_success_named "Exe exists" "'$category-$testName - output' exists, it should not!" show_failure "$category" "$testName"
 
         expectedErr="$(cat "./tests/compile_tests/$category/$testName.err")"
-
         diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
         assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
     fi
