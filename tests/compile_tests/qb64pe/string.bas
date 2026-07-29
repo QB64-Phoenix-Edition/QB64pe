@@ -49,3 +49,7 @@ SYSTEM
 '$include:'../../../source/utilities/give_error.bas'
 '$include:'../../../source/utilities/strings.bas'
 '$include:'../../../source/utilities/type.bas'
+
+SUB WriteBufLineCpp (buf AS LONG, s AS STRING)
+    WriteBufLine buf, s
+END SUB

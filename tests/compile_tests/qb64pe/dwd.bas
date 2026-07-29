@@ -41,6 +41,15 @@ SYSTEM
 '$include:'../../../source/utilities/strings.bas'
 '$include:'../../../source/utilities/type.bas'
 
+'Standalone-test compatibility shim: type.bas's (unused, by this test) UDT
+'string-variable helpers call the full compiler's WriteBufLineCpp, which also
+'tracks #line info for generated C++. That bookkeeping isn't available outside
+'the full compiler, so stand in with plain WriteBufLine (included above via
+'simplebuffer.bm).
+SUB WriteBufLineCpp (buf AS LONG, s AS STRING)
+    WriteBufLine buf, s
+END SUB
+
 FUNCTION Readable$(a$)
 	r$ = ""
 

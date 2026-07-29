@@ -39,13 +39,19 @@ FUNCTION OpenBuffer% (sbMode$, sbName$)
     '----------
     newBuf:
     buf% = CreateBuf%: ConvBufToNativeEol buf%
-    IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+    IF buf% > UBOUND(SBufN) THEN
+        REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+        REDIM _PRESERVE SBufCppLineStatus(0 TO buf% + 99) AS _Byte 'extend by 100 buffers
+    END IF
     SBufN(buf%) = sbName$
     RETURN
     '----------
     loadBuf:
     buf% = FileToBuf%(sbName$): ConvBufToNativeEol buf%
-    IF buf% > UBOUND(SBufN) THEN REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+    IF buf% > UBOUND(SBufN) THEN
+        REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
+        REDIM _PRESERVE SBufCppLineStatus(0 TO buf% + 99) AS _Byte 'extend by 100 buffers
+    END IF
     SBufN(buf%) = sbName$
     RETURN
 END FUNCTION
@@ -67,9 +73,11 @@ SUB ClearBuffers (sbName$)
         NEXT buf%
         IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
         DisposeBuf buf%: SBufN(buf%) = ""
+        SBufCppLineStatus(buf%) = 0
     ELSE
         FOR buf% = 0 TO UBOUND(SBufN)
             IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufN(buf%) = ""
+            SBufCppLineStatus(buf%) = 0
         NEXT buf%
     END IF
 END SUB

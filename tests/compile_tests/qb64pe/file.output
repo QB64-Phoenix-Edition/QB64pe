@@ -13,3 +13,31 @@ Test 4 , Filename: foobar
 Test 5 , Filename: foobar.tar.gz
     Expected: gz, Actual: gz
       PASS!
+Relative test 1
+    Base: /home/user/proj/, Target: /home/user/proj/test.bas
+    Expected: test.bas, Actual: test.bas
+      PASS!
+Relative test 2
+    Base: /home/user/proj/, Target: /home/user/proj/lib/helper.bm
+    Expected: lib/helper.bm, Actual: lib/helper.bm
+      PASS!
+Relative test 3
+    Base: /home/user/proj/, Target: /home/user/shared/x.bi
+    Expected: ../shared/x.bi, Actual: ../shared/x.bi
+      PASS!
+Relative test 4
+    Base: /home/user/proj/a/b/, Target: /home/user/x.bi
+    Expected: ../../../x.bi, Actual: ../../../x.bi
+      PASS!
+Relative test 5
+    Base: /home/user/proj, Target: /home/user/proj/test.bas
+    Expected: test.bas, Actual: test.bas
+      PASS!
+Relative test 6
+    Base: C:\proj\, Target: C:\proj\lib\helper.bm
+    Expected: lib\helper.bm, Actual: lib\helper.bm
+      PASS!
+Relative test 7
+    Base: C:\proj\, Target: D:\other\x.bi
+    Expected: D:\other\x.bi, Actual: D:\other\x.bi
+      PASS!

@@ -58,6 +58,10 @@ SYSTEM
 '$include:'../../../source/utilities/strings.bas'
 '$include:'../../../source/utilities/type.bas'
 
+SUB WriteBufLineCpp (buf AS LONG, s AS STRING)
+    WriteBufLine buf, s
+END SUB
+
 FUNCTION Readable$(a$)
 	r$ = ""
 
