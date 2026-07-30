@@ -19,6 +19,8 @@ ifeq ($(filter-out Windows_NT,$(OS)),)
 	endif
 endif
 
+$(info OS: $(OS))
+
 # The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
 # This is blank for the 'normal' files
 TEMP_ID ?=

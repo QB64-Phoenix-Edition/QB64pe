@@ -53,7 +53,7 @@ if defined USE_SYSTEM_MINGW goto verify_system_mingw
 rem Check if the C++ compiler is there and skip MINGW setup if it exists
 if exist "internal\c\c_compiler\bin\c++.exe" goto build_qb64pe
 
-rem Check the processor type and then set the BITS variable
+rem Check the OS bitness and then set the BITS variable
 powershell -NoProfile -Command "if ([Environment]::Is64BitOperatingSystem) { exit 0 } else { exit 1 }" > nul 2> nul && set "BITS=64" || set "BITS=32"
 echo Detected %BITS%-bit Windows.
 
