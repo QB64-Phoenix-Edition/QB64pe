@@ -2,9 +2,23 @@
 # Disable implicit rules
 MAKEFLAGS += --no-builtin-rules
 
-ifndef OS
-$(error "OS must be set to 'lnx', 'win', or 'osx'")
+ifeq ($(filter-out Windows_NT,$(OS)),)
+# Attempt to auto-detect the OS
+	ifeq ($(OS),Windows_NT)
+		OS := win
+	else
+		OS_RAW := $(shell uname -s)
+		ifeq ($(OS_RAW),Darwin)
+			OS := osx
+		else ifeq ($(OS_RAW),Linux)
+			OS := lnx
+		else
+			$(error "OS must be set to 'lnx', 'win', or 'osx'")
+		endif
+	endif
 endif
+
+$(info OS: $(OS))
 
 # The extra tag to put on ./internal/temp and qbx.o when multiple instances are involved
 # This is blank for the 'normal' files
