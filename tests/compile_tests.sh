@@ -32,6 +32,54 @@ show_incorrect_result()
     printf "GOT:      '%s'\n" "$2"
 }
 
+filesize_without_trailing_newlines()
+{
+    local file="$1"
+    local size
+    local byte
+
+    size=$(wc -c < "$file")
+
+    while (( size > 0 )); do
+        byte=$(dd if="$file" bs=1 skip=$((size - 1)) count=1 2>/dev/null | od -An -tu1)
+        byte=${byte//[[:space:]]/}
+
+        # Bash command substitution historically ignored trailing newlines.
+        # Treat both LF and CRLF as line endings, but preserve a bare CR.
+        if [ "$byte" != "10" ]; then
+            break
+        fi
+
+        # Remove LF.
+        size=$((size - 1))
+
+        # On Windows the line ending may be CRLF, so remove the CR that
+        # belongs to this LF as well.
+        if (( size > 0 )); then
+            byte=$(dd if="$file" bs=1 skip=$((size - 1)) count=1 2>/dev/null | od -An -tu1)
+            byte=${byte//[[:space:]]/}
+
+            if [ "$byte" == "13" ]; then
+                size=$((size - 1))
+            fi
+        fi
+    done
+
+    printf '%s\n' "$size"
+}
+
+compare_output_files()
+{
+    expectedSize=$(filesize_without_trailing_newlines "$1")
+    actualSize=$(filesize_without_trailing_newlines "$2")
+
+    if [ "$expectedSize" -ne "$actualSize" ]; then
+        return 1
+    fi
+
+    cmp <(head -c "$expectedSize" "$1") <(head -c "$actualSize" "$2") > /dev/null
+}
+
 # This env variable exists when running in CI. It can also be defined locally
 # to enable the small OS-dependent testing
 #
@@ -46,7 +94,7 @@ fi
 
 # Each .bas file represents a separate test.
 while IFS= read -r test
-do 
+do
     category=$(basename "$(dirname "$test")")
     testName=$(basename "$test" .bas)
 
@@ -129,25 +177,24 @@ do
             continue
         fi
 
-        expectedResult="$(cat "./tests/compile_tests/$category/$testName.output")"
+        runOutput="$RESULTS_DIR/$category-$testName-run-output.txt"
 
         pushd . > /dev/null
         cd "./tests/compile_tests/$category"
-        testResult=$(\
-            QB64PE_LOG_HANDLERS=file \
-            QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
-            QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testName-log.txt" \
-            $LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" 2>&1)
+        QB64PE_LOG_HANDLERS=file \
+        QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
+        QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testName-log.txt" \
+        $LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" \
+            > "../../../$runOutput" 2>&1
         ERR=$?
         popd > /dev/null
 
-        cat >"$RESULTS_DIR/$category-$testName-run-output.txt" <<<"$testResult"
-
         (exit $ERR)
-        assert_success_named "run" "Execution Error:" echo "$testResult"
+        assert_success_named "run" "Execution Error:" cat "$runOutput"
 
-        [ "$testResult" == "$expectedResult" ]
-        assert_success_named "result" "Result is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+        compare_output_files "./tests/compile_tests/$category/$testName.output" "$runOutput"
+        assert_success_named "result" "Result is wrong:" \
+            diff "./tests/compile_tests/$category/$testName.output" "$runOutput"
 
         # Restart pulseaudio between each test to make sound tests work on Linux
         if [ "$CI_TESTING" == "y" ] && command -v pulseaudio > /dev/null
