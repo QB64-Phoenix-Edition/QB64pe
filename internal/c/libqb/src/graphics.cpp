@@ -121,7 +121,7 @@ void rgb2hsb(rgb_color *rgb, hsb_color *hsb) {
 
 uint32_t func__hsb32(double hue, double sat, double bri) {
     hsb_color hsb;
-    rgb_color rgb;
+    rgb_color rgb = {};
     // --- prepare values for conversion ---
     (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);
     (sat < 0.0) ? hsb.s = 0.0 : ((sat > 100.0) ? hsb.s = 100.0 : hsb.s = sat);
@@ -136,7 +136,7 @@ uint32_t func__hsb32(double hue, double sat, double bri) {
 
 uint32_t func__hsba32(double hue, double sat, double bri, double alf) {
     hsb_color hsb;
-    rgb_color rgb;
+    rgb_color rgb = {};
     double alpha;
     // --- prepare values for conversion ---
     (hue < 0.0) ? hsb.h = 0.0 : ((hue > 360.0) ? hsb.h = 360.0 : hsb.h = hue);

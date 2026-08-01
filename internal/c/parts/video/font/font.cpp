@@ -3,23 +3,26 @@
 // Powered by FreeType (https://freetype.org/)
 //----------------------------------------------------------------------------------------------------------------------
 
-#include "font.h"
-#include "../../../libqb.h"
+#include "../../../common.h"
+
+#include "libqb-common.h"
+
 #include "error_handle.h"
+#include "font.h"
 #include "graphics.h"
 #include "gui.h"
 #include "image.h"
-#include "libqb-common.h"
 #include "mutex.h"
 #include "rounding.h"
 #include <codecvt>
 #include <cstdio>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <locale>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 // Note: QB64 expects invalid font handles to be zero
 #define IS_VALID_FONT_HANDLE(_h_) ((_h_) > INVALID_FONT_HANDLE && (_h_) < fontManager.fonts.size() && fontManager.fonts[_h_]->isUsed)
@@ -27,7 +30,6 @@
 #define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
 // These are from libqb.cpp
-extern const img_struct *write_page;
 extern const int32_t *font;
 extern const int32_t *fontwidth;
 extern const int32_t *fontheight;

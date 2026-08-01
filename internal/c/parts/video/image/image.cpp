@@ -17,13 +17,13 @@
 //
 //-----------------------------------------------------------------------------------------------------
 
-#include "image.h"
-#include "../../../libqb.h"
+#include "libqb-common.h"
+
 #include "error_handle.h"
 #include "filepath.h"
 #include "graphics.h"
+#include "image.h"
 #include "jo_gif/jo_gif.h"
-#include "libqb-common.h"
 #include "nanosvg/nanosvg.h"
 #include "nanosvg/nanosvgrast.h"
 #include "pixelscalers/pixelscalers.h"
@@ -36,15 +36,12 @@
 #include "tiny_webp/tiny_webp.h"
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-extern const img_struct *img;                 // used by func__loadimage
-extern const img_struct *write_page;          // used by func__loadimage
 extern const uint32_t palette_256[];          // used by func__loadimage
-extern const int32_t *page;                   // used by func__saveimage
-extern const int32_t nextimg;                 // used by func__saveimage
 extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
 extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
 
@@ -680,7 +677,7 @@ static bool image_extract_8bpp(const uint32_t *src32, const uint32_t *srcPalette
 /// @return Valid LONG image handle values that are less than -1 or -1 on failure
 int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int32_t passed) {
     if (new_error || !qbsFileName->len) // leave if we do not have a file name, data or there was an error
-        return INVALID_IMAGE_HANDLE;
+        return IMAGE_INVALID_HANDLE;
 
     auto isLoadFromMemory = false;   // should the image be loaded from memory?
     auto isHardwareImage = false;    // should the image be converted to a hardware image?
@@ -703,7 +700,7 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
         if ((bpp != 32) && (bpp != 256)) { // invalid BPP?
             image_log_error("Invalid bpp (%i)", bpp);
             error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-            return INVALID_IMAGE_HANDLE;
+            return IMAGE_INVALID_HANDLE;
         }
     } else {
         if (write_page->bits_per_pixel < 32) { // default to 8bpp for all legacy screen modes
@@ -758,16 +755,16 @@ int32_t func__loadimage(qbs *qbsFileName, int32_t bpp, qbs *qbsRequirements, int
     }
 
     if (!pixels)
-        return INVALID_IMAGE_HANDLE; // Return invalid handle if loading the image failed
+        return IMAGE_INVALID_HANDLE; // Return invalid handle if loading the image failed
 
     // Convert RGBA to BGRA
     size_t size = x * y;
     image_swap_red_blue_buffer(pixels, size);
 
     auto i = func__newimage(x, y, bpp, 1);
-    if (i == INVALID_IMAGE_HANDLE) {
+    if (i == IMAGE_INVALID_HANDLE) {
         free(pixels);
-        return INVALID_IMAGE_HANDLE;
+        return IMAGE_INVALID_HANDLE;
     }
 
     // Convert image to 8bpp if requested by the user
