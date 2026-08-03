@@ -11895,6 +11895,20 @@ DO
                             END IF
                         END IF
 
+                        'A user SUB scalar parameter must not silently accept array() as array(0).
+                        'The original spelling is required because both forms currently encode offset zero.
+                        IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                            IF targettyp >= 0 THEN
+                                IF (targettyp AND ISARRAY) = 0 THEN
+                                    IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                        IF HasFinalEmptyArrayBrackets%(separgs2(i)) THEN
+                                            a$ = "Whole array cannot be passed to a scalar SUB parameter": GOTO errmes
+                                        END IF
+                                    END IF
+                                END IF
+                            END IF
+                        END IF
+
                         IF RTRIM$(id2.callname) = "sub_paint" THEN
                             IF i = 3 THEN
                                 IF (sourcetyp AND ISSTRING) THEN
@@ -20568,6 +20582,20 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF INSTR(member_array_arg_source$, ".") THEN
                         IF IsWholeMemberArrayRef%(e$, sourcetyp) THEN
                             IF HasFinalEmptyArrayBrackets%(member_array_arg_source$) = 0 THEN Give_Error "Expected: Array Name()": EXIT FUNCTION
+                        END IF
+                    END IF
+                END IF
+
+                'A user FUNCTION scalar parameter must not silently accept array() as array(0).
+                'The original spelling is required because both forms currently encode offset zero.
+                IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                    IF targettyp >= 0 THEN
+                        IF (targettyp AND ISARRAY) = 0 THEN
+                            IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                IF HasFinalEmptyArrayBrackets%(e2$) THEN
+                                    Give_Error "Whole array cannot be passed to a scalar FUNCTION parameter": EXIT FUNCTION
+                                END IF
+                            END IF
                         END IF
                     END IF
                 END IF
