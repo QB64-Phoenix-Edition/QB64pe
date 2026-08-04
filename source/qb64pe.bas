@@ -17015,7 +17015,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     DIM elemnum AS LONG
     DIM nested_udt AS LONG
     DIM stat_bit AS LONG
-    DIM dyn_bit AS LONG
     DIM stat_off AS LONG
     DIM dyn_off AS LONG
     DIM stat_bytes AS LONG
@@ -17034,14 +17033,15 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     cr = CHR$(13) + CHR$(10)
     elemnum = udtxnext(udt_index)
     stat_bit = 0
-    dyn_bit = 0
 
     DO WHILE elemnum
         IF stat_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-        IF dyn_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
+        IF UDTDynMemberOffset&(elemnum) MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
 
         stat_off = stat_bit \ 8
-        dyn_off = dyn_bit \ 8
+        ' Descriptor layouts may insert alignment padding before a member. Use the
+        ' canonical precomputed offset instead of reconstructing it from member sizes.
+        dyn_off = UDTDynMemberOffset&(elemnum) \ 8
         stat_bytes = udtesize(elemnum) \ 8
         dyn_bytes = UDTDynMemberSize&(elemnum) \ 8
         nested_udt = 0
@@ -17109,7 +17109,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
         END IF
 
         stat_bit = stat_bit + udtesize(elemnum)
-        dyn_bit = dyn_bit + UDTDynMemberSize&(elemnum)
         elemnum = udtenext(elemnum)
     LOOP
 END SUB

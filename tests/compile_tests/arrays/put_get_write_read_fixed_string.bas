@@ -25,4 +25,5 @@ CLOSE ff
 FOR f = 0 TO 10
     PRINT a(f)
 NEXT
+if _fileexists("test") then kill "test"
 SYSTEM
