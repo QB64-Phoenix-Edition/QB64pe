@@ -19,4 +19,6 @@ int32_t func__cinp(int32_t toggle, int32_t passed);
 int32_t func__console_mouse_x();
 int32_t func__console_mouse_y();
 int32_t func__console_mouse_buttons();
+int32_t func__console_mouse_movementx();
+int32_t func__console_mouse_movementy();
 void sub__echo(qbs *message);

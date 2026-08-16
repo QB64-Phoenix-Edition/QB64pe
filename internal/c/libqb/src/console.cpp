@@ -38,6 +38,11 @@ static RingBuffer<ConsoleInputEvent, ConsoleInputQueueSize, true> g_consoleInput
 static int32_t g_consoleMouseX = 0;                                                    // The current X position of the mouse in the console window.
 static int32_t g_consoleMouseY = 0;                                                    // The current Y position of the mouse in the console window.
 static uint32_t g_consoleMouseButtons = 0;                                             // The current state of the mouse buttons in the console window.
+static int32_t g_consoleMousePrevX = 0;                                                // Previous X position used to compute movement.
+static int32_t g_consoleMousePrevY = 0;                                                // Previous Y position used to compute movement.
+static int32_t g_consoleMouseMovementX = 0;                                            // Relative X movement from the last console mouse event.
+static int32_t g_consoleMouseMovementY = 0;                                            // Relative Y movement from the last console mouse event.
+static bool g_consoleMouseHasPrev = false;                                             // Whether a previous console mouse position exists.
 
 int32_t console_active = 1;
 extern int32_t console_image;
@@ -206,6 +211,18 @@ int32_t func__getconsoleinput() {
             g_consoleMouseX = evt.mouseX;
             g_consoleMouseY = evt.mouseY;
             g_consoleMouseButtons = evt.mouseButtons;
+
+            if (g_consoleMouseHasPrev) {
+                g_consoleMouseMovementX = g_consoleMouseX - g_consoleMousePrevX;
+                g_consoleMouseMovementY = g_consoleMouseY - g_consoleMousePrevY;
+            } else {
+                g_consoleMouseMovementX = 0;
+                g_consoleMouseMovementY = 0;
+                g_consoleMouseHasPrev = true;
+            }
+            g_consoleMousePrevX = g_consoleMouseX;
+            g_consoleMousePrevY = g_consoleMouseY;
+
             return 2;
         }
     }
@@ -240,6 +257,14 @@ int32_t func__console_mouse_y() {
 
 int32_t func__console_mouse_buttons() {
     return g_consoleMouseButtons;
+}
+
+int32_t func__console_mouse_movementx() {
+    return g_consoleMouseMovementX;
+}
+
+int32_t func__console_mouse_movementy() {
+    return g_consoleMouseMovementY;
 }
 
 void sub__echo(qbs *message) {

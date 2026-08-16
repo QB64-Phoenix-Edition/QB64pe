@@ -137,11 +137,15 @@ int32_t func__mousehidden() {
 }
 
 double func__mousemovementx() {
-    return Image_IsSourceConsolePage() ? 0.0 : (double)current_gui_state.movementx;
+    if (Image_IsSourceConsolePage())
+        return (double)func__console_mouse_movementx();
+    return (double)current_gui_state.movementx;
 }
 
 double func__mousemovementy() {
-    return Image_IsSourceConsolePage() ? 0.0 : (double)current_gui_state.movementy;
+    if (Image_IsSourceConsolePage())
+        return (double)func__console_mouse_movementy();
+    return (double)current_gui_state.movementy;
 }
 
 void sub__mousemove(double x, double y) {
