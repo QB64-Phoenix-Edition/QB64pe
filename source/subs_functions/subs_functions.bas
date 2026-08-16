@@ -1812,7 +1812,19 @@ SUB reginternal
     id.n = "_MouseHide"
     id.subfunc = 2
     id.callname = "sub__mousehide"
-    id.hr_syntax = "_MOUSEHIDE"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[{_Hide|_Disable}]"
+    id.hr_syntax = "_MOUSEHIDE [_DISABLE]"
+    regid
+
+    clearid
+    id.n = "_MouseDisabled"
+    id.subfunc = 1
+    id.callname = "func__mousedisabled"
+    id.ret = LONGTYPE - ISPOINTER
+    id.args = 0
+    id.hr_syntax = "_MOUSEDISABLED"
     regid
 
     clearid

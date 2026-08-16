@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <string>
 
 extern int32_t environment_2d__screen_width;
@@ -70,11 +71,16 @@ static int32_t MouseCanonicalToDeviceButtonIndex(int32_t buttonNumber) {
     return buttonNumber - 1;
 }
 
-void sub__mousehide() {
-    // GLFW_TODO: We should extend sub__mousehide to accept a parameter to show/hide the cursor instead of always hiding it
+void sub__mousehide(int32_t disable) {
 #ifndef DEPENDENCY_CONSOLE_ONLY
     OPTIONAL_GLUT();
-    GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Hidden);
+    if (disable == 2) {
+        GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Disabled);
+    } else {
+        GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Hidden);
+    }
+#else
+    (void)disable;
 #endif
 }
 
@@ -128,9 +134,16 @@ void sub__mouseshow(qbs *qbsStyle, int32_t passed) {
 int32_t func__mousehidden() {
 #ifndef DEPENDENCY_CONSOLE_ONLY
     OPTIONAL_GLUT(QB_FALSE);
-    // GLFW_TODO: We need a better way to query the current cursor mode
-    auto cursor_mode = GLUTEmu_MouseGetCursorMode();
-    return QB_BOOL(cursor_mode == GLUTEnum_MouseCursorMode::Hidden || cursor_mode == GLUTEnum_MouseCursorMode::Disabled);
+    return QB_BOOL(GLUTEmu_MouseGetCursorMode() == GLUTEnum_MouseCursorMode::Hidden);
+#else
+    return QB_FALSE;
+#endif
+}
+
+int32_t func__mousedisabled() {
+#ifndef DEPENDENCY_CONSOLE_ONLY
+    OPTIONAL_GLUT(QB_FALSE);
+    return QB_BOOL(GLUTEmu_MouseGetCursorMode() == GLUTEnum_MouseCursorMode::Disabled);
 #else
     return QB_FALSE;
 #endif
@@ -152,6 +165,8 @@ void sub__mousemove(double x, double y) {
     OPTIONAL_GLUT();
 
     int32_t x2, y2, sx, sy;
+    int32_t logicalX = 0;
+    int32_t logicalY = 0;
     if (display_page->text) {
         sx = fontwidth[display_page->font] * display_page->width;
         sy = fontheight[display_page->font] * display_page->height;
@@ -192,7 +207,21 @@ void sub__mousemove(double x, double y) {
             goto error;
     }
 
-    // x2,y2 are pixel co-ordinates
+    // x2,y2 are logical pixel co-ordinates
+    logicalX = x2;
+    logicalY = y2;
+
+    if (GLUTEmu_MouseGetCursorMode() == GLUTEnum_MouseCursorMode::Disabled) {
+        // In disabled mode there is no visible cursor.
+        GLUTEmu_MouseMove(logicalX, logicalY);
+
+        g_mouseWarpPending = true;
+        g_mouseWarpX = logicalX;
+        g_mouseWarpY = logicalY;
+
+        return;
+    }
+
     // adjust for fullscreen position as necessary:
     x2 *= environment_2d__screen_x_scale;
     y2 *= environment_2d__screen_y_scale;

@@ -18,9 +18,10 @@ void Mouse_QueueScrollEvent(double x, double y, double xOffset, double yOffset);
 
 void mouse_get_int33_status(uint16_t *buttons, double *x, double *y);
 
-void sub__mousehide();
+void sub__mousehide(int32_t disable = 0);
 void sub__mouseshow(qbs *qbsStyle, int32_t passed);
 int32_t func__mousehidden();
+int32_t func__mousedisabled();
 double func__mousemovementx();
 double func__mousemovementy();
 void sub__mousemove(double x, double y);
