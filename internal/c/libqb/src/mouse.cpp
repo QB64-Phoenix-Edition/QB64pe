@@ -50,6 +50,17 @@ static mouse_event current_gui_state{};
 // Latest pushed GUI event — used by mouse_get_int33_status without requiring _MOUSEINPUT.
 static mouse_event last_gui_pushed{};
 
+// Dedicated tracker for computing relative mouse movement.
+static double g_lastRawMouseX = 0.0;
+static double g_lastRawMouseY = 0.0;
+static bool g_lastRawMouseValid = false;
+static GLUTEnum_MouseCursorMode g_lastRawMouseMode = GLUTEnum_MouseCursorMode::Normal;
+
+// _MOUSEMOVE uses glfwSetCursorPos, which would otherwise be reported as a large mouse movement on the next position callback.
+static bool g_mouseWarpPending = false;
+static double g_mouseWarpX = 0.0;
+static double g_mouseWarpY = 0.0;
+
 static int32_t MouseCanonicalToDeviceButtonIndex(int32_t buttonNumber) {
     // _BUTTON mouse numbering: 1=left, 2=right, 3=middle.
     if (buttonNumber == 2)
@@ -185,6 +196,12 @@ void sub__mousemove(double x, double y) {
     y2 += environment_2d__screen_y1;
 
     GLUTEmu_MouseMove(x2, y2);
+
+    // Remember the warp destination so the resulting position callback is not reported as mouse movement.
+    g_mouseWarpPending = true;
+    g_mouseWarpX = x2;
+    g_mouseWarpY = y2;
+
     return;
 
 error:
@@ -381,65 +398,80 @@ void Mouse_QueueButtonDownEvent(int button, double x, double y) {
 }
 
 void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode) {
-    const double prevX = last_gui_pushed.x;
-    const double prevY = last_gui_pushed.y;
+    const double currentPixelX = (mode == GLUTEnum_MouseCursorMode::Disabled) ? x * (double)environment_2d__screen_x_scale : x;
+    const double currentPixelY = (mode == GLUTEnum_MouseCursorMode::Disabled) ? y * (double)environment_2d__screen_y_scale : y;
+
+    if (g_mouseWarpPending) {
+        if (mode == GLUTEnum_MouseCursorMode::Disabled) {
+            g_lastRawMouseValid = false;
+            g_mouseWarpPending = false;
+        } else if (std::abs(currentPixelX - g_mouseWarpX) < 2.0 && std::abs(currentPixelY - g_mouseWarpY) < 2.0) {
+            g_lastRawMouseX = currentPixelX;
+            g_lastRawMouseY = currentPixelY;
+            g_lastRawMouseValid = true;
+            g_lastRawMouseMode = mode;
+            g_mouseWarpPending = false;
+        } else {
+            g_mouseWarpPending = false;
+        }
+    }
+
+    if (mode != g_lastRawMouseMode) {
+        g_lastRawMouseValid = false;
+        g_lastRawMouseMode = mode;
+    }
+
+    double movementx = 0.0;
+    double movementy = 0.0;
+    if (g_lastRawMouseValid) {
+        movementx = currentPixelX - g_lastRawMouseX;
+        movementy = currentPixelY - g_lastRawMouseY;
+    } else {
+        g_lastRawMouseValid = true;
+    }
+    g_lastRawMouseX = currentPixelX;
+    g_lastRawMouseY = currentPixelY;
 
     mouse_event event{};
-    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-        event.x = 0;
-        event.y = 0;
-        event.movementx = x;
-        event.movementy = y;
+    if (mode == GLUTEnum_MouseCursorMode::Disabled) {
+        event.x = 0.0;
+        event.y = 0.0;
     } else {
         event.x = x;
         event.y = y;
-        event.movementx = x - prevX;
-        event.movementy = y - prevY;
     }
+    event.movementx = movementx;
+    event.movementy = movementy;
     event.buttons = last_gui_pushed.buttons;
     mouse_event_queue.Push(event);
     last_gui_pushed = event;
 
-    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-        // Push a second event to clear movement values.
-        mouse_event event2{};
-        event2.buttons = event.buttons;
-        mouse_event_queue.Push(event2);
-        last_gui_pushed = event2;
-    }
+    // Push a second event to clear movement values, matching the old behavior.
+    mouse_event reset{};
+    reset.x = event.x;
+    reset.y = event.y;
+    reset.buttons = event.buttons;
+    mouse_event_queue.Push(reset);
+    last_gui_pushed = reset;
 
     if (device_last) {
-        if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-            static device_struct *d;
-            d = &devices[2]; // mouse
+        device_struct *d = &devices[2]; // mouse
 
-            int32_t eventIndex = createDeviceEvent(d);
-            setDeviceEventWheelValue(d, eventIndex, 0, x);
-            setDeviceEventWheelValue(d, eventIndex, 1, y);
-            commitDeviceEvent(d);
-
-            eventIndex = createDeviceEvent(d);
-            setDeviceEventWheelValue(d, eventIndex, 0, 0);
-            setDeviceEventWheelValue(d, eventIndex, 1, 0);
-            commitDeviceEvent(d);
-        } else {
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32_t eventIndex = createDeviceEvent(d);
-            static double fx, fy;
-            static int32_t z;
-            fx = x;
+        // Report position on the axes and movement on wheels 0/1.
+        int32_t eventIndex = createDeviceEvent(d);
+        if (mode != GLUTEnum_MouseCursorMode::Disabled) {
+            double fx = x;
             fx -= x_offset;
-            z = x_monitor - x_offset * 2;
+            int32_t z = x_monitor - x_offset * 2;
             if (fx < 0)
                 fx = 0;
             if (fx >= z)
                 fx = z - 1;
             fx = fx / (double)(z - 1); // 0 to 1
             fx *= 2.0;                 // 0 to 2
-            fx -= 1.0;                 //-1 to 1
-            fy = y;
+            fx -= 1.0;                 // -1 to 1
+
+            double fy = y;
             fy -= y_offset;
             z = y_monitor - y_offset * 2;
             if (fy < 0)
@@ -448,11 +480,20 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
                 fy = z - 1;
             fy = fy / (double)(z - 1); // 0 to 1
             fy *= 2.0;                 // 0 to 2
-            fy -= 1.0;                 //-1 to 1
+            fy -= 1.0;                 // -1 to 1
+
             setDeviceEventAxisValue(d, eventIndex, 0, fx);
             setDeviceEventAxisValue(d, eventIndex, 1, fy);
-            commitDeviceEvent(d);
         }
+        setDeviceEventWheelValue(d, eventIndex, 0, movementx);
+        setDeviceEventWheelValue(d, eventIndex, 1, movementy);
+        commitDeviceEvent(d);
+
+        // Reset event: keep the position/axis values, but clear the movement wheels.
+        eventIndex = createDeviceEvent(d);
+        setDeviceEventWheelValue(d, eventIndex, 0, 0.0);
+        setDeviceEventWheelValue(d, eventIndex, 1, 0.0);
+        commitDeviceEvent(d);
     }
 }
 
