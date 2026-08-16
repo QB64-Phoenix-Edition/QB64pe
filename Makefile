@@ -188,7 +188,7 @@ ifeq ($(OS),win)
 endif
 
 ifeq ($(OS),osx)
-	CXXLIBS += -framework OpenGL -framework IOKit -framework Cocoa -framework CoreVideo -framework ApplicationServices -framework CoreFoundation
+	CXXLIBS += -framework OpenGL -framework IOKit -framework Cocoa -framework CoreVideo -framework ApplicationServices -framework CoreFoundation -framework QuartzCore
 
 	# OSX doesn't strip using objcopy, so we're using `-s` instead
 	ifneq ($(STRIP_SYMBOLS),n)
