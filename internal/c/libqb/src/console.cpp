@@ -25,11 +25,11 @@ static constexpr size_t ConsoleInputQueueSize = 4096;
 struct ConsoleInputEvent {
     enum class Type { None = 0, Keyboard = 1, Mouse = 2 };
 
-    Type type;
-    int32_t scanCode;
-    int32_t mouseX;
-    int32_t mouseY;
-    uint32_t mouseButtons;
+    Type type = Type::None;
+    int32_t scanCode = 0;
+    int32_t mouseX = 0;
+    int32_t mouseY = 0;
+    uint32_t mouseButtons = 0;
 };
 
 // This ia a temporary solutions for now until we can get the TermEmu library working properly on all platforms.
@@ -83,6 +83,8 @@ void sub__consoletitle(qbs *s) {
             Sleep(40);
         }
     }
+#else
+    (void)s;
 #endif
 }
 
@@ -107,6 +109,9 @@ void sub__consolefont(qbs *FontName, int32_t FontSize) {
 
     SetCurrentConsoleFontEx(cl_conout, NULL, &info);
 #    endif
+#else
+    (void)FontName;
+    (void)FontSize;
 #endif
 }
 
@@ -125,6 +130,10 @@ void sub__console_cursor(int32_t visible, int32_t cursorsize, int32_t passed) {
         info.dwSize = cursorsize; // the user passed the cursor size, of a suitable size
 
     SetConsoleCursorInfo(consoleHandle, &info);
+#else
+    (void)visible;
+    (void)cursorsize;
+    (void)passed;
 #endif
 }
 
