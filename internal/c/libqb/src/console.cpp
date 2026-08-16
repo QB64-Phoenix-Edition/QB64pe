@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 // GLFW_TODO: Get rid of OS specific code in this file and move it to term-emu.cpp
 
@@ -20,11 +21,23 @@
 
 static constexpr size_t ConsoleInputQueueSize = 4096;
 
+// A single console input event, preserving the order returned by the OS.
+struct ConsoleInputEvent {
+    enum class Type { None = 0, Keyboard = 1, Mouse = 2 };
+
+    Type type;
+    int32_t scanCode;
+    int32_t mouseX;
+    int32_t mouseY;
+    uint32_t mouseButtons;
+};
+
 // This ia a temporary solutions for now until we can get the TermEmu library working properly on all platforms.
-static RingBuffer<int32_t, ConsoleInputQueueSize, true> g_consoleKeyQueue; // A ring buffer that holds key scan codes.
-static int32_t g_consoleMouseX = 0;                                        // The current X position of the mouse in the console window.
-static int32_t g_consoleMouseY = 0;                                        // The current Y position of the mouse in the console window.
-static uint32_t g_consoleMouseButtons = 0;                                 // The current state of the mouse buttons in the console window.
+static RingBuffer<int32_t, ConsoleInputQueueSize, true> g_consoleKeyQueue;             // A ring buffer that holds key scan codes.
+static RingBuffer<ConsoleInputEvent, ConsoleInputQueueSize, true> g_consoleInputQueue; // Ordered key/mouse events from the OS.
+static int32_t g_consoleMouseX = 0;                                                    // The current X position of the mouse in the console window.
+static int32_t g_consoleMouseY = 0;                                                    // The current Y position of the mouse in the console window.
+static uint32_t g_consoleMouseButtons = 0;                                             // The current state of the mouse buttons in the console window.
 
 int32_t console_active = 1;
 extern int32_t console_image;
@@ -118,8 +131,7 @@ void sub__console_cursor(int32_t visible, int32_t cursorsize, int32_t passed) {
 int32_t func__getconsoleinput() {
 #ifdef QB64_WINDOWS
     HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-    INPUT_RECORD irInputRecord;
-    DWORD dwEventsRead, fdwMode, dwMode;
+    DWORD fdwMode, dwMode;
     CONSOLE_SCREEN_BUFFER_INFO cl_bufinfo{};
     HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hStdout != INVALID_HANDLE_VALUE)
@@ -131,19 +143,60 @@ int32_t func__getconsoleinput() {
     fdwMode = dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
     SetConsoleMode(hStdin, fdwMode);
 
+    // Drain all pending OS console input into the internal queues so that  rapid mouse clicks / movements are not overwritten in the single-call global state
+    // and so the OS input buffer cannot overflow.
     DWORD numEvents = 0;
     GetNumberOfConsoleInputEvents(hStdin, &numEvents);
     if (numEvents) {
-        ReadConsoleInputA(hStdin, &irInputRecord, 1, &dwEventsRead);
-        switch (irInputRecord.EventType) {
-        case KEY_EVENT: // keyboard input
-            g_consoleKeyQueue.Push(irInputRecord.Event.KeyEvent.wVirtualScanCode * (irInputRecord.Event.KeyEvent.bKeyDown ? 1 : -1));
+        std::vector<INPUT_RECORD> buffer(numEvents);
+        DWORD eventsRead = 0;
+        if (ReadConsoleInputA(hStdin, buffer.data(), numEvents, &eventsRead)) {
+            for (DWORD i = 0; i < eventsRead; ++i) {
+                const INPUT_RECORD &record = buffer[i];
+                switch (record.EventType) {
+                case KEY_EVENT: { // keyboard input
+                    ConsoleInputEvent evt{};
+                    evt.type = ConsoleInputEvent::Type::Keyboard;
+                    evt.scanCode = record.Event.KeyEvent.wVirtualScanCode * (record.Event.KeyEvent.bKeyDown ? 1 : -1);
+                    g_consoleInputQueue.Push(evt);
+                    break;
+                }
+                case MOUSE_EVENT: { // mouse input
+                    const uint32_t buttons = record.Event.MouseEvent.dwButtonState;
+                    const int32_t mouseX = record.Event.MouseEvent.dwMousePosition.X + 1;
+                    const int32_t mouseY = record.Event.MouseEvent.dwMousePosition.Y - cl_bufinfo.srWindow.Top + 1;
+
+                    // Merge consecutive mouse-move events that have the same button state and are not wheel events (high word of dwButtonState is zero).
+                    ConsoleInputEvent *last = g_consoleInputQueue.PeekBack();
+                    if (last && last->type == ConsoleInputEvent::Type::Mouse && last->mouseButtons == buttons && (buttons & 0xFFFF0000u) == 0) {
+                        // Overwrite the previous move event's position; keep button state.
+                        last->mouseX = mouseX;
+                        last->mouseY = mouseY;
+                    } else {
+                        ConsoleInputEvent evt{};
+                        evt.type = ConsoleInputEvent::Type::Mouse;
+                        evt.mouseX = mouseX;
+                        evt.mouseY = mouseY;
+                        evt.mouseButtons = buttons;
+                        g_consoleInputQueue.Push(evt);
+                    }
+                    break;
+                }
+                }
+            }
+        }
+    }
+
+    ConsoleInputEvent evt{};
+    if (g_consoleInputQueue.Pop(evt)) {
+        if (evt.type == ConsoleInputEvent::Type::Keyboard) { // keyboard input
+            g_consoleKeyQueue.Push(evt.scanCode);
             return 1;
-        case MOUSE_EVENT: // mouse input
-            g_consoleMouseX = irInputRecord.Event.MouseEvent.dwMousePosition.X + 1;
-            g_consoleMouseY = irInputRecord.Event.MouseEvent.dwMousePosition.Y - cl_bufinfo.srWindow.Top + 1;
-            g_consoleMouseButtons = irInputRecord.Event.MouseEvent.dwButtonState;
-            // SetConsoleMode(hStdin, dwMode);
+        }
+        if (evt.type == ConsoleInputEvent::Type::Mouse) { // mouse input
+            g_consoleMouseX = evt.mouseX;
+            g_consoleMouseY = evt.mouseY;
+            g_consoleMouseButtons = evt.mouseButtons;
             return 2;
         }
     }

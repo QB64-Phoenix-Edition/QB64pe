@@ -119,7 +119,29 @@ template <typename T, std::size_t Capacity, bool OverwriteOnFull = false> class 
     }
 
     [[nodiscard]]
+    T *PeekFront() noexcept {
+        const auto tailIndex = tail.value.load(std::memory_order_relaxed);
+
+        if (tailIndex == head.value.load(std::memory_order_acquire)) {
+            return nullptr;
+        }
+
+        return &buffer[tailIndex];
+    }
+
+    [[nodiscard]]
     const T *PeekBack() const noexcept {
+        const auto headIndex = head.value.load(std::memory_order_acquire);
+
+        if (headIndex == tail.value.load(std::memory_order_relaxed)) {
+            return nullptr;
+        }
+
+        return &buffer[(headIndex - 1) & Mask];
+    }
+
+    [[nodiscard]]
+    T *PeekBack() noexcept {
         const auto headIndex = head.value.load(std::memory_order_acquire);
 
         if (headIndex == tail.value.load(std::memory_order_relaxed)) {
