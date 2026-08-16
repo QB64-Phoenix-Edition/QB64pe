@@ -23988,7 +23988,7 @@ int32 func_stick(int32 i, int32 axis_group, int32 passed) {
     }
     static int32 di, axis, i2, v;
     static device_struct *d;
-    static float f;
+    static double f;
     axis = (i & 1) + (axis_group - 1) * 2;
     i = i >> 1;
     i2 = 0;
@@ -24000,7 +24000,7 @@ int32 func_stick(int32 i, int32 axis_group, int32 passed) {
                     f = getDeviceEventAxisValue(d, d->queued_events - 1, axis);
                     if (f > -0.01 && f <= 0.01)
                         f = 0;
-                    v = qbr_float_to_long(f * 127.0) + 127;
+                    v = qbr_double_to_long(f * 127.0) + 127;
                     if (v > 254)
                         v = 254;
                     if (v < 1)

@@ -523,7 +523,7 @@ SUB reginternal
     id.callname = "func__axis"
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.specialformat = "[?]"
     id.hr_syntax = "_AXIS(axis_number%)"
     regid
@@ -534,7 +534,7 @@ SUB reginternal
     id.callname = "func__wheel"
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.specialformat = "[?]"
     id.hr_syntax = "_WHEEL(wheelNumber%)"
     regid

@@ -427,7 +427,7 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
             d = &devices[2]; // mouse
 
             int32_t eventIndex = createDeviceEvent(d);
-            static float fx, fy;
+            static double fx, fy;
             static int32_t z;
             fx = x;
             fx -= x_offset;
@@ -436,9 +436,9 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
                 fx = 0;
             if (fx >= z)
                 fx = z - 1;
-            fx = fx / (float)(z - 1); // 0 to 1
-            fx *= 2.0;                // 0 to 2
-            fx -= 1.0;                //-1 to 1
+            fx = fx / (double)(z - 1); // 0 to 1
+            fx *= 2.0;                 // 0 to 2
+            fx -= 1.0;                 //-1 to 1
             fy = y;
             fy -= y_offset;
             z = y_monitor - y_offset * 2;
@@ -446,9 +446,9 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
                 fy = 0;
             if (fy >= z)
                 fy = z - 1;
-            fy = fy / (float)(z - 1); // 0 to 1
-            fy *= 2.0;                // 0 to 2
-            fy -= 1.0;                //-1 to 1
+            fy = fy / (double)(z - 1); // 0 to 1
+            fy *= 2.0;                 // 0 to 2
+            fy -= 1.0;                 //-1 to 1
             setDeviceEventAxisValue(d, eventIndex, 0, fx);
             setDeviceEventAxisValue(d, eventIndex, 1, fy);
             commitDeviceEvent(d);
@@ -480,8 +480,8 @@ void Mouse_QueueScrollEvent(double x, double y, double xOffset, double yOffset) 
     if (device_last) {
         device_struct *d = &devices[2];
         int32_t eventIndex = createDeviceEvent(d);
-        setDeviceEventWheelValue(d, eventIndex, 2, (float)(-yOffset)); // _WHEEL(3) = Y
-        setDeviceEventWheelValue(d, eventIndex, 3, (float)xOffset);    // _WHEEL(4) = X
+        setDeviceEventWheelValue(d, eventIndex, 2, -yOffset); // _WHEEL(3) = Y
+        setDeviceEventWheelValue(d, eventIndex, 3, xOffset);  // _WHEEL(4) = X
         commitDeviceEvent(d);
         eventIndex = createDeviceEvent(d);
         setDeviceEventWheelValue(d, eventIndex, 2, 0.0f);

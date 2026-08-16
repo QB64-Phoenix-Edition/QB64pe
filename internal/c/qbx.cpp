@@ -898,31 +898,31 @@ device_struct *devices = (device_struct *)calloc(1000 + 1, sizeof(device_struct)
 
 // device_struct helper functions
 uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex);
+    return *(device->events + eventIndex * device->event_size + device->lastaxis * 8 + device->lastwheel * 8 + objectIndex);
 }
 
 void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value) {
-    *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex) = value;
+    *(device->events + eventIndex * device->event_size + device->lastaxis * 8 + device->lastwheel * 8 + objectIndex) = value;
 }
 
-float getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4);
+double getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(double *)(device->events + eventIndex * device->event_size + objectIndex * 8);
 }
 
-void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4) = value;
+void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
+    *(double *)(device->events + eventIndex * device->event_size + objectIndex * 8) = value;
 }
 
-float getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4);
+double getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * 8 + objectIndex * 8);
 }
 
-void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4) = value;
+void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
+    *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * 8 + objectIndex * 8) = value;
 }
 
 void setupDevice(device_struct *device) {
-    int32 size = device->lastaxis * 4 + device->lastwheel * 4 + device->lastbutton;
+    int32 size = device->lastaxis * 8 + device->lastwheel * 8 + device->lastbutton;
     size += 8; // for appended ordering index
     size += 7;
     size = size - (size & 7); // align to closest 8-byte boundary
@@ -1062,7 +1062,7 @@ int32 func__buttonchange(int32 i, int32 passed) {
     return 0;
 }
 
-float func__axis(int32 i, int32 passed) {
+double func__axis(int32 i, int32 passed) {
     if (device_selected < 1 || device_selected > device_last) {
         error(5);
         return 0;
@@ -1078,7 +1078,7 @@ float func__axis(int32 i, int32 passed) {
     return getDeviceEventAxisValue(d, 1, i - 1);
 }
 
-float func__wheel(int32 i, int32 passed) {
+double func__wheel(int32 i, int32 passed) {
     if (device_selected < 1 || device_selected > device_last) {
         error(5);
         return 0;
