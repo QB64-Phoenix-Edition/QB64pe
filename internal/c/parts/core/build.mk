@@ -53,7 +53,7 @@ endif
 
 ifeq ($(OS),osx)
 	GLFW_SRCS += \
-		cocoa_time.c
+		macos_time.c
 	
 	GLFW_OSX_SRCS := \
 		cocoa_init.m \
