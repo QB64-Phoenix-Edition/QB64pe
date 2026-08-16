@@ -896,36 +896,40 @@ int32 device_last = 0;   // last used device
 int32 device_max = 1000; // number of allocated indexes
 device_struct *devices = (device_struct *)calloc(1000 + 1, sizeof(device_struct));
 
+static constexpr size_t kDeviceAxisWheelSize = sizeof(double);
+
 // device_struct helper functions
 uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(device->events + eventIndex * device->event_size + device->lastaxis * 8 + device->lastwheel * 8 + objectIndex);
+    return *(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize +
+             objectIndex);
 }
 
 void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value) {
-    *(device->events + eventIndex * device->event_size + device->lastaxis * 8 + device->lastwheel * 8 + objectIndex) = value;
+    *(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize + objectIndex) =
+        value;
 }
 
 double getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(double *)(device->events + eventIndex * device->event_size + objectIndex * 8);
+    return *(double *)(device->events + eventIndex * device->event_size + objectIndex * kDeviceAxisWheelSize);
 }
 
 void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
-    *(double *)(device->events + eventIndex * device->event_size + objectIndex * 8) = value;
+    *(double *)(device->events + eventIndex * device->event_size + objectIndex * kDeviceAxisWheelSize) = value;
 }
 
 double getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * 8 + objectIndex * 8);
+    return *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + objectIndex * kDeviceAxisWheelSize);
 }
 
 void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
-    *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * 8 + objectIndex * 8) = value;
+    *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + objectIndex * kDeviceAxisWheelSize) = value;
 }
 
 void setupDevice(device_struct *device) {
-    int32 size = device->lastaxis * 8 + device->lastwheel * 8 + device->lastbutton;
-    size += 8; // for appended ordering index
-    size += 7;
-    size = size - (size & 7); // align to closest 8-byte boundary
+    int32 size = (int32)(device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize) + device->lastbutton;
+    size += (int32)sizeof(int64_t); // for appended ordering index
+    size += (int32)sizeof(int64_t) - 1;
+    size = size - (size & ((int32)sizeof(int64_t) - 1)); // align to int64_t boundary
     device->event_size = size;
     device->events = (uint8 *)calloc(2, device->event_size); // create initial 'current' and 'previous' events
     device->max_events = 2;
@@ -953,7 +957,8 @@ int32 createDeviceEvent(device_struct *device) {
     }
     // copy previous event data into new event
     memmove(device->events + device->queued_events * device->event_size, device->events + (device->queued_events - 1) * device->event_size, device->event_size);
-    *(int64 *)(device->events + (device->queued_events * device->event_size) + (device->event_size - 8)) = device_event_index++; // set global event index
+    *(int64 *)(device->events + (device->queued_events * device->event_size) + (device->event_size - (int32)sizeof(int64_t))) =
+        device_event_index++; // set global event index
     int32 eventIndex = device->queued_events;
     return eventIndex;
 }
@@ -992,7 +997,7 @@ int32 func__deviceinput(int32 i, int32 passed) {
         for (i = 1; i <= device_last; i++) {
             d = &devices[i];
             if (d->queued_events > 2) {
-                index = *(int64 *)((d->events + d->event_size * 2) + (d->event_size - 8));
+                index = *(int64 *)((d->events + d->event_size * 2) + (d->event_size - (int32)sizeof(int64_t)));
                 if ((i2 == -1) || (index < lowest_index)) {
                     i2 = i;
                     lowest_index = index;
