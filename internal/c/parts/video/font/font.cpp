@@ -29,15 +29,6 @@
 #define IS_VALID_QB64_FONT_HANDLE(_h_) ((_h_) <= lastfont && ((fontwidth[_h_] && fontheight[_h_]) || ((_h_) >= 32 && font[_h_])))
 #define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
-// These are from libqb.cpp
-extern const int32_t *font;
-extern const int32_t *fontwidth;
-extern const int32_t *fontheight;
-extern const int32_t *fontflags;
-extern const int32_t lastfont;
-extern const uint8_t charset8x8[256][8][8];
-extern const uint8_t charset8x16[256][16][8];
-
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
 
 /// @brief A simple class that manages conversions from various encodings to UTF-32.

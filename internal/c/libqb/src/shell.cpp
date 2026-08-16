@@ -11,15 +11,12 @@
 #endif
 
 #include "command.h"
+#include "console.h"
 #include "datetime.h"
 #include "error_handle.h"
 #include "qbs.h"
 #include "shell.h"
 #include "window.h"
-
-// FIXME
-extern int32_t console;
-extern int32_t console_active;
 
 int32_t shell_call_in_progress = 0;
 

@@ -17,6 +17,7 @@
 #include "command.h"
 #include "completion.h"
 #include "compression.h"
+#include "console.h"
 #include "datetime.h"
 #include "encoding.h"
 #include "error_handle.h"
@@ -38,6 +39,7 @@
 #include "logging.h"
 #include "main-thread.h"
 #include "memblock.h"
+#include "mouse.h"
 #include "mutex.h"
 #include "printer.h"
 #include "qb_http.h"
@@ -53,15 +55,6 @@
 #include <cmath>
 #include <string>
 #include <vector>
-
-int32 disableEvents = 0;
-
-// Global console vvalues
-static int32 consolekey;
-static int32 consolemousex;
-static int32 consolemousey;
-static int32 consolebutton;
-int32 func__getconsoleinput(); // declare here, so we can use with SLEEP and END commands
 
 // This next block used to be in common.cpp; put here until I can find a better
 // place for it (LC, 2018-01-05)
@@ -593,7 +586,6 @@ extern ontimer_struct *ontimer;
 extern onkey_struct *onkey;
 extern int32 onkey_inprogress;
 
-extern int32 console;
 extern int32 screen_hide_startup;
 extern int32 asserts;
 extern int32 vwatch;
@@ -601,7 +593,6 @@ extern int32 vwatch;
 
 int64 exit_code = 0;
 
-int32 console_active = 1;
 int32 console_child = 0; // set if console is only being used by this program
 int32 console_image = -1;
 int32 screen_hide = 0;
@@ -2424,8 +2415,6 @@ int32 exit_value = 0;
 int32 width8050switch = 1; // if set, can automatically switch to WIDTH 80,50 if LOCATE'ing beyond row 26
 
 uint32 pal[256];
-
-extern qbs *nothingstring;
 
 int32 sub_screen_height_in_characters = -1; //-1=undefined
 int32 sub_screen_width_in_characters = -1;  //-1=undefined
@@ -4708,9 +4697,6 @@ int32 selectfont(int32 f, img_struct *im) {
 int32 nmodes = 0;
 int32 anymode = 0;
 
-int32 x_offset = 0, y_offset = 0;
-int32 x_limit = 0, y_limit = 0;
-
 int32 x_monitor = 0, y_monitor = 0;
 
 int32 conversion_required = 0;
@@ -4730,25 +4716,6 @@ void call_int(int32 i);
 uint32 frame = 0;
 
 extern uint8 cmem[1114099]; // 16*65535+65535+3 (enough for highest referencable dword in conv memory)
-
-struct mouse_message {
-    double x;
-    double y;
-    uint32_t buttons;
-    double movementx;
-    double movementy;
-};
-
-// Mouse message queue
-//--------------------
-struct mouse_message_queue_struct {
-    mouse_message *queue;
-    int32 lastIndex;
-    int32 current;
-    int32 last;
-};
-
-static mouse_message_queue_struct mouse_message_queue = {NULL, 0, 0, 0};
 
 // x86 Virtual CMEM emulation
 // Note: x86 CPU emulation is still experimental and is not available in QB64 yet.
@@ -5944,8 +5911,6 @@ extern uint8 stop_program;
 int32 global_counter = 0;
 extern double last_line;
 void end(void);
-
-void sub__echo(qbs *message);
 
 void unlockvWatchHandle() {
     if (vwatch > 0)
@@ -17420,298 +17385,6 @@ int32 func_freefile() {
     return gfs_fileno_freefile();
 }
 
-void sub__mousehide() {
-    // GLFW_TODO: We should extend sub__mousehide to accept a parameter to show/hide the cursor instead of always hiding it
-#ifdef QB64_GUI
-    OPTIONAL_GLUT();
-    GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Hidden);
-#endif
-}
-
-void sub__mouseshow(qbs *qbsStyle, int32 passed) {
-    if (is_error_pending())
-        return;
-
-#ifdef QB64_GUI
-    OPTIONAL_GLUT();
-
-    // GLFW_TODO: We should extend sub__mouseshow to accept a parameter to show/hide the cursor instead of always showing it
-    GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode::Normal);
-
-    std::string style;
-    if (passed && qbsStyle) {
-        style.assign((char *)qbsStyle->chr, qbsStyle->len);
-        std::transform(style.begin(), style.end(), style.begin(), ::toupper);
-    } else {
-        style = "DEFAULT";
-    }
-
-    if (style == "DEFAULT" || style == "ARROW") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::Arrow);
-    } else if (style == "LINK" || style == "HELP" || style == "POINTINGHAND") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::PointingHand);
-    } else if (style == "TEXT" || style == "IBEAM") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::IBeam);
-    } else if (style == "CROSSHAIR") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::Crosshair);
-    } else if (style == "VERTICAL" || style == "RESIZENS") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNS);
-    } else if (style == "HORIZONTAL" || style == "RESIZEEW") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeEW);
-    } else if (style == "TOPLEFT_BOTTOMRIGHT" || style == "RESIZENESW") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNESW);
-    } else if (style == "TOPRIGHT_BOTTOMLEFT" || style == "RESIZENWSE") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeNWSE);
-    } else if (style == "WAIT" || style == "NOTALLOWED") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::NotAllowed);
-    } else if (style == "CYCLE" || style == "MOVE" || style == "RESIZEALL") {
-        GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor::ResizeAll);
-    } else {
-        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
-    }
-#endif
-}
-
-int32_t func__mousehidden() {
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(QB_FALSE);
-    // GLFW_TODO: We need a better way to query the current cursor mode
-    auto cursor_mode = GLUTEmu_MouseGetCursorMode();
-    return QB_BOOL(cursor_mode == GLUTEnum_MouseCursorMode::Hidden || cursor_mode == GLUTEnum_MouseCursorMode::Disabled);
-#else
-    return QB_FALSE;
-#endif
-}
-
-float func__mousemovementx() {
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    return queue->queue[queue->current].movementx;
-}
-
-float func__mousemovementy() {
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    return queue->queue[queue->current].movementy;
-}
-
-void sub__mousemove(float x, float y) {
-#ifdef QB64_GUI
-    NEEDS_GLUT();
-
-    int32 x2, y2, sx, sy;
-    if (display_page->text) {
-        sx = fontwidth[display_page->font] * display_page->width;
-        sy = fontheight[display_page->font] * display_page->height;
-        if (x < 0.5)
-            goto error;
-        if (y < 0.5)
-            goto error;
-        if (x > ((float)display_page->width) + 0.5)
-            goto error;
-        if (y > ((float)display_page->height) + 0.5)
-            goto error;
-        x -= 0.5;
-        y -= 0.5;
-        x = x * (float)fontwidth[display_page->font];
-        y = y * (float)fontheight[display_page->font];
-        x2 = qbr_float_to_long(x);
-        y2 = qbr_float_to_long(y);
-        if (x2 < 0)
-            x2 = 0;
-        if (y2 < 0)
-            y2 = 0;
-        if (x2 > sx - 1)
-            x2 = sx - 1;
-        if (y2 > sy - 1)
-            y2 = sy - 1;
-    } else {
-        sx = display_page->width;
-        sy = display_page->height;
-        x2 = qbr_float_to_long(x);
-        y2 = qbr_float_to_long(y);
-        if (x2 < 0)
-            goto error;
-        if (y2 < 0)
-            goto error;
-        if (x2 > sx - 1)
-            goto error;
-        if (y2 > sy - 1)
-            goto error;
-    }
-
-    // x2,y2 are pixel co-ordinates
-    // adjust for fullscreen position as necessary:
-    x2 *= environment_2d__screen_x_scale;
-    y2 *= environment_2d__screen_y_scale;
-    x2 += environment_2d__screen_x1;
-    y2 += environment_2d__screen_y1;
-
-    GLUTEmu_MouseMove(x2, y2);
-    return;
-
-error:
-    error(5);
-#endif
-}
-
-float func__mousex() {
-
-    static int32 x, x2;
-    static float f;
-
-#ifdef QB64_WINDOWS
-    if (read_page->console) {
-        return consolemousex;
-    }
-#endif
-
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    x = queue->queue[queue->current].x;
-
-    // calculate pixel offset of mouse within SCREEN using environment variables
-    x -= environment_2d__screen_x1;
-    x = qbr_float_to_long((((float)x + 0.5f) / environment_2d__screen_x_scale) - 0.5f);
-    if (x < 0)
-        x = 0;
-    if (x >= environment_2d__screen_width)
-        x = environment_2d__screen_width - 1;
-
-    // restrict range to the current display page's range to avoid causing errors
-    x2 = display_page->width;
-    if (display_page->text)
-        x2 *= fontwidth[display_page->font];
-    if (x >= x2)
-        x = x2 - 1;
-
-    if (display_page->text) {
-        f = x;
-        x2 = fontwidth[display_page->font];
-        f = f / (float)x2 + 0.5f;
-        x2 = qbr_float_to_long(f);
-        if (x2 > x)
-            f -= 0.001f;
-        if (x2 < x)
-            f += 0.001f;
-        return std::floor(f + 0.5);
-    }
-
-    return x;
-}
-
-float func__mousey() {
-
-    static int32 y, y2;
-    static float f;
-
-#ifdef QB64_WINDOWS
-    if (read_page->console) {
-        return consolemousey;
-    }
-#endif
-
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    y = queue->queue[queue->current].y;
-
-    // calculate pixel offset of mouse within SCREEN using environment variables
-    y -= environment_2d__screen_y1;
-    y = qbr_float_to_long((((float)y + 0.5f) / environment_2d__screen_y_scale) - 0.5f);
-    if (y < 0)
-        y = 0;
-    if (y >= environment_2d__screen_height)
-        y = environment_2d__screen_height - 1;
-
-    // restrict range to the current display page's range to avoid causing errors
-    y2 = display_page->height;
-    if (display_page->text)
-        y2 *= fontheight[display_page->font];
-    if (y >= y2)
-        y = y2 - 1;
-
-    if (display_page->text) {
-        f = y;
-        y2 = fontheight[display_page->font];
-        f = f / (float)y2 + 0.5f;
-        y2 = qbr_float_to_long(f);
-        if (y2 > y)
-            f -= 0.001f;
-        if (y2 < y)
-            f += 0.001f;
-        return std::floor(f + 0.5);
-    }
-
-    return y;
-}
-
-int32 func__mouseinput() {
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    if (queue->current == queue->last)
-        return 0;
-    int32 newIndex = queue->current + 1;
-    if (newIndex > queue->lastIndex)
-        newIndex = 0;
-    queue->current = newIndex;
-    return -1;
-}
-
-int32 func__mousebutton(int32 i) {
-    if (i < 1) {
-        error(5);
-        return 0;
-    }
-#ifdef QB64_WINDOWS
-    if (read_page->console) { // console may support up to 5 mouse buttons according to the documentation.
-        if (i == 1)
-            return consolebutton & 1;
-        if (i == 2)
-            return consolebutton & 2;
-        if (i == 3)
-            return consolebutton & 4;
-        if (i == 4)
-            return consolebutton & 8;
-        if (i == 5)
-            return consolebutton & 16;
-        return 0;
-    }
-#endif
-
-    if (i > 3)
-        return 0; // current SDL only supports 3 mouse buttons!
-    // swap indexes 2&3
-    if (i == 2) {
-        i = 3;
-    } else {
-        if (i == 3)
-            i = 2;
-    }
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    if (queue->queue[queue->current].buttons & (1 << (i - 1)))
-        return -1;
-    return 0;
-}
-
-int32 func__mousewheel() {
-    static uint32 x;
-
-#ifdef QB64_WINDOWS
-    if (read_page->console) {
-        if (consolebutton < -0x100)
-            return -1;
-        if (consolebutton > 0x100)
-            return 1;
-        return 0;
-    }
-#endif
-
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    x = queue->queue[queue->current].buttons;
-    if ((x & (8 + 16)) == (8 + 16))
-        return 0; // cancelled out change
-    if (x & 8)
-        return -1; // up
-    if (x & 16)
-        return 1; // down
-    return 0;     // no change
-}
-
 extern uint16 call_absolute_offsets[256];
 
 void call_absolute(int32 args, uint16 offset) {
@@ -17739,7 +17412,7 @@ void call_int(int32 i) {
 
         if (cpu.ax == 0) {
             cpu.ax = 0xFFFF; // mouse installed
-            cpu.bx = 2;
+            cpu.bx = 3;      // three-button mouse (left, right, middle)
             return;
         }
 
@@ -17753,43 +17426,27 @@ void call_int(int32 i) {
         }
         if (cpu.ax == 3) {
             // return the current mouse status
-            // buttons
+            uint16_t buttons;
+            double mx, my;
 
-            mouse_message_queue_struct *queue = &mouse_message_queue;
+            mouse_get_int33_status(&buttons, &mx, &my);
 
-            // buttons
-            cpu.bx = queue->queue[queue->last].buttons & 1;
-            if (queue->queue[queue->last].buttons & 4)
-                cpu.bx += 2;
+            // button bit layout: bit 0 = left, bit 1 = right, bit 2 = middle
+            cpu.bx = buttons & 7;
 
-            // x,y offsets
-            static float mx, my;
+            cpu.cx = (uint16_t)mx;
+            cpu.dx = (uint16_t)my;
 
-            // temp override current message index to the most recent event
-            static int32 current_mouse_message_backup;
-            current_mouse_message_backup = queue->current;
-            queue->current = queue->last;
-
-            mx = func__mousex();
-            my = func__mousey();
-
-            // restore "current" message index
-            queue->current = current_mouse_message_backup;
-
-            cpu.cx = mx;
-            cpu.dx = my;
-            // double x-axis value for modes 1,7,13
+            // double x-axis value for modes 1, 7, 13
             if ((display_page->compatible_mode == 1) || (display_page->compatible_mode == 7) || (display_page->compatible_mode == 13))
                 cpu.cx *= 2;
             if (display_page->text) {
                 // note: a range from 0 to columns*8-1 is returned regardless of the number of actual pixels
-                cpu.cx = (mx - 0.5) * 8.0;
+                cpu.cx = (uint16_t)((mx - 0.5) * 8.0);
                 if (cpu.cx >= (display_page->width * 8))
                     cpu.cx = (display_page->width * 8) - 1;
                 // note: a range from 0 to rows*8-1 is returned regardless of the number of actual pixels
-                // obsolete line of code:
-                // cpu.dx=(((float)cpu.dx)/((float)(display_page->height*fontheight[display_page->font])))*((float)(display_page->height*8));//(mouse_y/height_in_pixels)*(rows*8)
-                cpu.dx = (my - 0.5) * 8.0;
+                cpu.dx = (uint16_t)((my - 0.5) * 8.0);
                 if (cpu.dx >= (display_page->height * 8))
                     cpu.dx = (display_page->height * 8) - 1;
             }
@@ -24414,53 +24071,6 @@ int32 func_strig(int32 i, int32 controller, int32 passed) {
     return 0;
 }
 
-int32 func__console() {
-    if (is_error_pending())
-        return -1;
-    return console_image;
-}
-
-void sub__console(int32 onoff) { // on=1 off=2
-    if (!console)
-        return; // command does nothing if console unavailable
-    if (onoff == 1) {
-        // turn on
-        if (!console_active) {
-#ifdef QB64_WINDOWS
-            if (console_child) {
-                ShowWindow(GetConsoleWindow(), SW_SHOWNOACTIVATE);
-            }
-#endif
-            console_active = 1;
-        }
-    } else {
-        // turn off
-        if (console_active) {
-#ifdef QB64_WINDOWS
-            if (console_child) {
-                ShowWindow(GetConsoleWindow(), SW_HIDE);
-            }
-#endif
-            console_active = 0;
-        }
-    }
-}
-
-void sub__consoletitle(qbs *s) {
-#ifdef QB64_WINDOWS
-    char *title;
-    title = (char *)malloc(s->len + 1);
-    title[s->len] = '\0'; // add NULL terminator
-    memcpy(title, s->chr, s->len);
-    if (console) {
-        if (console_active) {
-            SetConsoleTitleA(title);
-            Sleep(40);
-        }
-    }
-#endif
-}
-
 mem_block func__memimage(int32 i, int32 passed) {
 
     static mem_block b;
@@ -26142,282 +25752,7 @@ void GLUT_DISPLAY_REQUEST() {
 
 } // GLUT_DISPLAY_REQUEST
 
-void GLUT_MouseButton_Up(int button, int x, int y) {
-#    ifdef QB64_GUI
-    int32 i;
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-
-    i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0;
-    if (i == queue->current) {
-        int32 nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
-    }
-    queue->queue[i].x = x;
-    queue->queue[i].y = y;
-    queue->queue[i].movementx = 0;
-    queue->queue[i].movementy = 0;
-    queue->queue[i].buttons = queue->queue[queue->last].buttons;
-    if (queue->queue[i].buttons & (1 << (button - 1)))
-        queue->queue[i].buttons ^= (1 << (button - 1));
-    queue->last = i;
-
-    if (device_last) { // core devices required?
-        if ((button >= 1) && (button <= 3)) {
-            button--;
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32 eventIndex = createDeviceEvent(d);
-            setDeviceEventButtonValue(d, eventIndex, button, 0);
-            commitDeviceEvent(d);
-
-        } // valid range
-    } // core devices required
-
-#    endif
-}
-
-void GLUT_MouseButton_Down(int button, int x, int y) {
-#    ifdef QB64_GUI
-
-    int32 i;
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-
-    i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0;
-    if (i == queue->current) {
-        int32 nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
-    }
-    queue->queue[i].x = x;
-    queue->queue[i].y = y;
-    queue->queue[i].movementx = 0;
-    queue->queue[i].movementy = 0;
-    queue->queue[i].buttons = queue->queue[queue->last].buttons;
-    queue->queue[i].buttons |= (1 << (button - 1));
-    queue->last = i;
-
-    if (device_last) { // core devices required?
-        if ((button >= 1) && (button <= 3)) {
-            button--;
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32 eventIndex = createDeviceEvent(d);
-            setDeviceEventButtonValue(d, eventIndex, button, 1);
-            commitDeviceEvent(d);
-
-            // 1-3
-        } else {
-            // not 1-3
-            // mouse wheel?
-            if ((button >= 4) && (button <= 5)) {
-                static float f;
-                if (button == 4)
-                    f = -1;
-                else
-                    f = 1;
-                static device_struct *d;
-                d = &devices[2]; // mouse
-
-                int32 eventIndex = createDeviceEvent(d);
-                setDeviceEventWheelValue(d, eventIndex, 2, f);
-                commitDeviceEvent(d);
-
-                eventIndex = createDeviceEvent(d);
-                setDeviceEventWheelValue(d, eventIndex, 2, 0);
-                commitDeviceEvent(d);
-
-            } // 4-5
-        } // not 1-3
-    } // core devices required
-#    endif
-}
-
-void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers) {
-#    ifdef QB64_GUI
-    int qbMouseButton;
-
-    if (button == GLUTEmu_MouseButton::Left) {
-        qbMouseButton = 1; // QB64 mouse button 1
-    } else if (button == GLUTEmu_MouseButton::Middle) {
-        qbMouseButton = 2; // QB64 mouse button 3
-    } else if (button == GLUTEmu_MouseButton::Right) {
-        qbMouseButton = 3; // QB64 mouse button 2
-    } else {
-        qbMouseButton = int(button) + 3; // Extended buttons 6+ (4 and 5 are mouse wheel)
-    }
-    switch (action) {
-    case GLUTEmu_ButtonAction::Pressed:
-    case GLUTEmu_ButtonAction::Repeated:
-        GLUT_MouseButton_Down(qbMouseButton, x, y);
-        break;
-
-    case GLUTEmu_ButtonAction::Released:
-        GLUT_MouseButton_Up(qbMouseButton, x, y);
-        break;
-    }
-#    else
-    (void)x;
-    (void)y;
-    (void)button;
-    (void)action;
-    (void)mode;
-    (void)modifiers;
-#    endif
-}
-
-void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode) {
-#    ifdef QB64_GUI
-    (void)xOffset;
-    // GLFW_TODO: xOffset is not used currently, but we should make use of it in the future. xOffset and yOffset provides fractional values, so this needs to be
-    // fixed in a way where we can pass the exact values to the user.
-    auto iScroll = int(yOffset);
-    if (iScroll > 0) {
-        while (iScroll) {
-            GLUT_MouseButton_Down(4, x, y);
-            GLUT_MouseButton_Up(4, x, y);
-            --iScroll;
-        }
-    } else if (iScroll < 0) {
-        while (iScroll) {
-            GLUT_MouseButton_Down(5, x, y);
-            GLUT_MouseButton_Up(5, x, y);
-            ++iScroll;
-        }
-    }
-#    else
-    (void)x;
-    (void)y;
-    (void)xOffset;
-    (void)yOffset;
-    (void)mode;
-#    endif
-}
-
-void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode) {
-    int32 i, last_i;
-
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-
-    // message #1
-    last_i = queue->last;
-    i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0; // wrap around
-    if (i == queue->current) {
-        int32 nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
-    }
-
-    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-        queue->queue[i].x = 0;
-        queue->queue[i].y = 0;
-        queue->queue[i].movementx = x;
-        queue->queue[i].movementy = y;
-    } else {
-        queue->queue[i].x = x;
-        queue->queue[i].y = y;
-        queue->queue[i].movementx = x - queue->queue[last_i].x;
-        queue->queue[i].movementy = y - queue->queue[last_i].y;
-    }
-
-    queue->queue[i].buttons = queue->queue[last_i].buttons;
-    queue->last = i;
-
-    if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-        // message #2 (clears movement values to avoid confusion)
-        last_i = queue->last;
-        i = queue->last + 1;
-        if (i > queue->lastIndex)
-            i = 0;
-        if (i == queue->current) {
-            int32 nextIndex = queue->last + 1;
-            if (nextIndex > queue->lastIndex)
-                nextIndex = 0;
-            queue->current = nextIndex;
-        }
-        queue->queue[i].x = 0;
-        queue->queue[i].y = 0;
-        queue->queue[i].movementx = 0;
-        queue->queue[i].movementy = 0;
-        queue->queue[i].buttons = queue->queue[last_i].buttons;
-        queue->last = i;
-    }
-
-    if (device_last) { // core devices required?
-        if (GLUTEnum_MouseCursorMode::Disabled == mode) {
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32 eventIndex = createDeviceEvent(d);
-            setDeviceEventWheelValue(d, eventIndex, 0, x);
-            setDeviceEventWheelValue(d, eventIndex, 1, y);
-            commitDeviceEvent(d);
-
-            eventIndex = createDeviceEvent(d);
-            setDeviceEventWheelValue(d, eventIndex, 0, 0);
-            setDeviceEventWheelValue(d, eventIndex, 1, 0);
-            commitDeviceEvent(d);
-        } else {
-            static device_struct *d;
-            d = &devices[2]; // mouse
-
-            int32 eventIndex = createDeviceEvent(d);
-            static float fx, fy;
-            static int32 z;
-            fx = x;
-            fx -= x_offset;
-            z = x_monitor - x_offset * 2;
-            if (fx < 0)
-                fx = 0;
-            if (fx >= z)
-                fx = z - 1;
-            fx = fx / (float)(z - 1); // 0 to 1
-            fx *= 2.0;                // 0 to 2
-            fx -= 1.0;                //-1 to 1
-            fy = y;
-            fy -= y_offset;
-            z = y_monitor - y_offset * 2;
-            if (fy < 0)
-                fy = 0;
-            if (fy >= z)
-                fy = z - 1;
-            fy = fy / (float)(z - 1); // 0 to 1
-            fy *= 2.0;                // 0 to 2
-            fy -= 1.0;                //-1 to 1
-            setDeviceEventAxisValue(d, eventIndex, 0, fx);
-            setDeviceEventAxisValue(d, eventIndex, 1, fy);
-            commitDeviceEvent(d);
-        }
-    } // core devices required
-}
-
 #endif
-
-void sub__echo(qbs *message) {
-    if (is_error_pending())
-        return;
-
-    int32 prevDest = func__dest();
-    sub__dest(func__console());
-
-    makefit(message);
-    qbs_print(message, 0);
-    qbs_print(nothingstring, 1);
-
-    sub__dest(prevDest);
-
-} // echo
 
 qbs *func__readfile(qbs *filespec) {
     FILE *file;
@@ -26575,11 +25910,6 @@ int main(int argc, char *argv[]) {
 
     hardware_img_handles = list_new_threadsafe(sizeof(hardware_img_struct));
     hardware_graphics_command_handles = list_new(sizeof(hardware_graphics_command_struct));
-
-    // setup default mouse message queue
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    queue->lastIndex = 65535;
-    queue->queue = (mouse_message *)calloc(1, sizeof(mouse_message) * (queue->lastIndex + 1));
 
     if (screen_hide_startup)
         screen_hide = 1;
@@ -26750,8 +26080,8 @@ int main(int argc, char *argv[]) {
         keydown(VK + QBVK_NUMLOCK);
     }
     if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock)) {
-        keyboard_set_bindkey(QBVK_SCROLLOCK);
-        keydown(VK + QBVK_SCROLLOCK);
+        keyboard_set_bindkey(QBVK_SCROLLLOCK);
+        keydown(VK + QBVK_SCROLLLOCK);
     }
     update_shift_state();
     keyhit_next = keyhit_nextfree; // skip hitkey events generated by above code
@@ -26825,9 +26155,9 @@ int main(int argc, char *argv[]) {
     i++;
     devices[i].type = DEVICETYPE_MOUSE;
     devices[i].name = strdup("[MOUSE][BUTTON][AXIS][WHEEL]"); // TODO: when re-writing game_controller.cpp use std::string
-    devices[i].lastbutton = 3;
+    devices[i].lastbutton = Mouse_MaxSupportedButtons;        // buttons 1-8 (left, middle, right, +5 extras)
     devices[i].lastaxis = 2;
-    devices[i].lastwheel = 3;
+    devices[i].lastwheel = 4; // wheels 0/1 = raw motion, 2/3 = vertical/horizontal scroll
     devices[i].description = "Mouse";
     setupDevice(&devices[i]);
 
@@ -27849,209 +27179,7 @@ void display() {
     }
 */
 
-#define OS_EVENT_PRE_PROCESSING 1
-#define OS_EVENT_POST_PROCESSING 2
-#define OS_EVENT_RETURN_IMMEDIATELY 3
-
-static void reportKeyState(int code, int down) {
-    static device_struct *d;
-    d = &devices[1]; // keyboard
-
-    // don't add message if state already matches what we're reporting
-    if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != down) {
-        int32 eventIndex = createDeviceEvent(d);
-        setDeviceEventButtonValue(d, eventIndex, code, down);
-        commitDeviceEvent(d);
-    }
-}
-
-#ifdef QB64_WINDOWS
-
-// Windows only reports one WM_KEYUP event when both shift keys are held. To
-// fix that somewhat we're manually check on each window message and reporting
-// the keyup ourselves.
-static void checkShiftKeys() {
-    static int rightShift = 0, leftShift = 0;
-
-    // GetAsyncKeyState() indicates the key state in the most significant bit
-    if (rightShift != !!(GetAsyncKeyState(VK_RSHIFT) & 0x8000)) {
-        rightShift = !rightShift;
-        reportKeyState(0x36, rightShift);
-    }
-
-    if (leftShift != !!(GetAsyncKeyState(VK_LSHIFT) & 0x8000)) {
-        leftShift = !leftShift;
-        reportKeyState(0x2A, leftShift);
-    }
-}
-
-extern "C" LRESULT qb64_os_event_windows(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, int *qb64_os_event_info) {
-    if (*qb64_os_event_info == OS_EVENT_PRE_PROCESSING) {
-        if (func__hasfocus())
-            checkShiftKeys();
-
-        if (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) {
-            if (device_last) { // core devices required?
-                /*
-                    16-23        The scan code. The value depends on the OEM.
-                    24        Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key
-                   keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-                */
-                uint32_t code = (lParam >> 16) & 0x1FF;
-
-                reportKeyState(code, 1);
-            }
-        }
-
-        if (uMsg == WM_KEYUP || uMsg == WM_SYSKEYUP) {
-            if (device_last) { // core devices required?
-                uint32_t code = (lParam >> 16) & 0x1FF;
-
-                reportKeyState(code, 0);
-            }
-        }
-    }
-    if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
-    }
-    return 0;
-}
-#endif
-
-void qb64_custom_event_relative_mouse_movement(int deltaX, int deltaY) {
-    mouse_message_queue_struct *queue = &mouse_message_queue;
-    // message #1
-    int32_t i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0;
-    if (i == queue->current) {
-        int32_t nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
-    }
-    queue->queue[i].x = queue->queue[queue->last].x;
-    queue->queue[i].y = queue->queue[queue->last].y;
-    queue->queue[i].movementx = deltaX;
-    queue->queue[i].movementy = deltaY;
-    queue->queue[i].buttons = queue->queue[queue->last].buttons;
-    queue->last = i;
-    // message #2 (clears movement values to avoid confusion)
-    i = queue->last + 1;
-    if (i > queue->lastIndex)
-        i = 0;
-    if (i == queue->current) {
-        int32_t nextIndex = queue->last + 1;
-        if (nextIndex > queue->lastIndex)
-            nextIndex = 0;
-        queue->current = nextIndex;
-    }
-    queue->queue[i].x = queue->queue[queue->last].x;
-    queue->queue[i].y = queue->queue[queue->last].y;
-    queue->queue[i].movementx = 0;
-    queue->queue[i].movementy = 0;
-    queue->queue[i].buttons = queue->queue[queue->last].buttons;
-    queue->last = i;
-}
-
 void GLUT_EXIT_FUNC() {
     GLUTEmu_WindowSetShouldClose(false);
     exit_value |= 1;
-}
-
-void sub__consolefont(qbs *FontName, int FontSize) {
-#ifdef QB64_WINDOWS
-#    if WINVER >= 0x0600 // this block is not compatible with XP
-    SECURITY_ATTRIBUTES SecAttribs = {sizeof(SECURITY_ATTRIBUTES), 0, 1};
-    HANDLE cl_conout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &SecAttribs, OPEN_EXISTING, 0, 0);
-    static int OneTimePause;
-    if (!OneTimePause) { // a slight delay so the console can be properly created and registered with Windows, before we try to change fonts with it.
-        Sleep(500);
-        OneTimePause = 1; // after the first pause, the console should be created, so we don't need any more delays in the future.
-    }
-    CONSOLE_FONT_INFOEX info = {0};
-    info.cbSize = sizeof(info);
-    info.dwFontSize.Y = FontSize; // leave X as zero
-    info.FontWeight = FW_NORMAL;
-    if (FontName->len > 0) { // if we don't pass a font name, don't change the existing one.
-        const size_t cSize = FontName->len;
-        wchar_t *wc = new wchar_t[32];
-        mbstowcs(wc, (char *)FontName->chr, cSize);
-        wcscpy(info.FaceName, wc);
-        delete[] wc;
-    }
-
-    SetCurrentConsoleFontEx(cl_conout, NULL, &info);
-#    endif
-#endif
-}
-
-void sub__console_cursor(int32 visible, int32 cursorsize, int32 passed) {
-#ifdef QB64_WINDOWS
-    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-
-    GetConsoleCursorInfo(consoleHandle, &info); // get the original info, so we reuse it, unless the user called for a change.
-
-    if (visible == 1)
-        info.bVisible = TRUE; // cursor is set to show
-    if (visible == 2)
-        info.bVisible = FALSE; // set to hide
-    if (passed && cursorsize >= 0 && cursorsize <= 100)
-        info.dwSize = cursorsize; // the user passed the cursor size, of a suitable size
-
-    SetConsoleCursorInfo(consoleHandle, &info);
-#endif
-}
-
-int32 func__getconsoleinput() {
-#ifdef QB64_WINDOWS
-    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-    INPUT_RECORD irInputRecord;
-    DWORD dwEventsRead, fdwMode, dwMode;
-    CONSOLE_SCREEN_BUFFER_INFO cl_bufinfo;
-
-    GetConsoleMode(hStdin, (LPDWORD)&dwMode);
-    fdwMode = ENABLE_EXTENDED_FLAGS;
-    SetConsoleMode(hStdin, fdwMode);
-    fdwMode = dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-    SetConsoleMode(hStdin, fdwMode);
-
-    DWORD numEvents = 0;
-    GetNumberOfConsoleInputEvents(hStdin, &numEvents);
-    if (numEvents) {
-        ReadConsoleInputA(hStdin, &irInputRecord, 1, &dwEventsRead);
-        switch (irInputRecord.EventType) {
-        case KEY_EVENT: // keyboard input
-            consolekey = irInputRecord.Event.KeyEvent.wVirtualScanCode;
-            if (!irInputRecord.Event.KeyEvent.bKeyDown)
-                consolekey = -consolekey; // positive/negative return of scan codes.
-            return 1;
-        case MOUSE_EVENT: // mouse input
-            consolemousex = irInputRecord.Event.MouseEvent.dwMousePosition.X + 1;
-            consolemousey = irInputRecord.Event.MouseEvent.dwMousePosition.Y - cl_bufinfo.srWindow.Top + 1;
-            consolebutton = irInputRecord.Event.MouseEvent.dwButtonState; // button state for all buttons
-            // SetConsoleMode(hStdin, dwMode);
-            return 2;
-        }
-    }
-#endif
-    return 0; // no or unhandled input
-}
-
-int32 func__cinp(int32 toggle, int32 passed) {
-#ifdef QB64_WINDOWS
-    int32 temp = consolekey;
-    consolekey = 0; // reset the console key, now that we've read it
-    if (passed == 0)
-        toggle = 1; // default return of positive/negative scan code values
-    if (toggle) {
-        return temp;
-    } else {
-        if (temp >= 0)
-            return temp;
-        return -temp + 128;
-    }
-#else
-    return 0;
-#endif
 }

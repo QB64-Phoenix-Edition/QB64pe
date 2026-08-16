@@ -290,8 +290,8 @@ typedef enum {
     // Key state modifier keys
     QBVK_NUMLOCK = 300,
     QBVK_CAPSLOCK = 301,
-    QBVK_SCROLLOCK = 302,
-    // If more modifiers are added, the window defocus code in qb64_os_event_linux must be altered
+    QBVK_SCROLLLOCK = 302,
+    // If more modifier keys are added, update keyboard_get_device_code() in keyboard.cpp
     QBVK_RSHIFT = 303,
     QBVK_LSHIFT = 304,
     QBVK_RCTRL = 305,

@@ -41,10 +41,6 @@
 #include <unordered_map>
 #include <vector>
 
-extern const uint32_t palette_256[];          // used by func__loadimage
-extern const uint8_t charset8x8[256][8][8];   // used by func__saveimage
-extern const uint8_t charset8x16[256][16][8]; // used by func__saveimage
-
 /// @brief Pixel scaler algorithms
 enum class ImageScaler { NONE = 0, SXBR2, SXBR3, SXBR4, MMPX2, HQ2XA, HQ2XB, HQ3XA, HQ3XB };
 /// @brief This is the scaling factors for ImageScaler enum

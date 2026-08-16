@@ -7,7 +7,6 @@
 #include "qbs.h"
 #include "rounding.h"
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 #include <ctime>
 #include <thread>

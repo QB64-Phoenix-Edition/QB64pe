@@ -10,23 +10,13 @@
 #include <cstring>
 #include <limits>
 
-// External functions. These should be moved here in the future.
-void flush_old_hardware_commands();
-void validatepage(int32_t pageNumber);
-
-// Global variables. These should be cleaned up and moved here in the future.
+// REFACTOR_TODO: These should be cleaned up and moved here in the future.
 extern list *hardware_img_handles;
 extern int32_t HARDWARE_IMG_HANDLE_OFFSET;
 extern list *hardware_graphics_command_handles;
 extern int64_t display_frame_order_next;
 extern int32_t last_hardware_command_added;
 extern int32_t first_hardware_command;
-extern int32_t nextimg;
-extern int32_t *page;
-extern img_struct *img;
-extern img_struct *write_page;
-extern img_struct *read_page;
-extern img_struct *display_page;
 extern uint8_t *cblend;
 extern uint8_t *ablend;
 extern uint8_t *ablend127;

@@ -6,6 +6,7 @@
 #include "keyboard.h"
 #include "logging.h"
 #include "main-thread.h"
+#include "mouse.h"
 #include "thread.h"
 #include "window.h"
 #include <cstdint>
@@ -20,9 +21,6 @@ extern void MAIN_LOOP(void *);
 extern void GLUT_EXIT_FUNC();
 extern void GLUT_DISPLAY_REQUEST();
 extern void GLUT_IDLE_FUNC();
-extern void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers);
-extern void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode);
-extern void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode);
 
 // Performs all of the FreeGLUT initialization except for calling glutMainLoop()
 static void initialize_glut() {
@@ -69,6 +67,9 @@ static void initialize_glut() {
     // GLFW_TODO: Mouse enter/leave handling
 
     GLUTEmu_DropSetFilesFunction(GLUT_DROPFILES_FUNC);
+
+    // GLFW_TODO: Plug TermEmu_Update into GLUTEmu's main loop
+    // GLUTEmu_SystemSetPollFunction(TermEmu_Update);
 }
 
 static bool glut_is_started;

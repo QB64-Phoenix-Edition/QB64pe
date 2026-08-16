@@ -1186,6 +1186,10 @@ class GLUTEmu {
         }
     }
 
+    void SystemSetPollFunction(GLUTEmu_CallbackSystemPoll callback) {
+        systemPollFunction = callback;
+    }
+
     void KeyboardSetButtonFunction(GLUTEmu_CallbackKeyboardButton function) {
         if (window != nullptr) {
             keyboardButtonFunction = function;
@@ -1491,6 +1495,9 @@ class GLUTEmu {
                         } else {
                             glfwWaitEventsTimeout(1.0);
                         }
+
+                        if (systemPollFunction != nullptr)
+                            systemPollFunction();
 
                         MessageProcess();
 
@@ -2130,6 +2137,7 @@ class GLUTEmu {
     GLUTEmu_CallbackWindowFocused windowFocusedFunction;
     GLUTEmu_CallbackWindowRefresh windowRefreshFunction;
     GLUTEmu_CallbackWindowIdle windowIdleFunction;
+    GLUTEmu_CallbackSystemPoll systemPollFunction;
     GLUTEmu_CallbackKeyboardButton keyboardButtonFunction;
     GLUTEmu_CallbackKeyboardCharacter keyboardCharacterFunction;
     GLUTEmu_CallbackMousePosition mousePositionFunction;
@@ -2430,6 +2438,10 @@ void GLUTEmu_WindowSetRefreshFunction(GLUTEmu_CallbackWindowRefresh func) {
 
 void GLUTEmu_WindowSetIdleFunction(GLUTEmu_CallbackWindowIdle func) {
     GLUTEmu::Instance().WindowSetIdleFunction(func);
+}
+
+void GLUTEmu_SystemSetPollFunction(GLUTEmu_CallbackSystemPoll func) {
+    GLUTEmu::Instance().SystemSetPollFunction(func);
 }
 
 void GLUTEmu_KeyboardSetButtonFunction(GLUTEmu_CallbackKeyboardButton func) {

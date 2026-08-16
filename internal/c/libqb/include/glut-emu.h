@@ -208,6 +208,7 @@ enum class GLUTEnum_MouseCursorMode : int {
 };
 
 enum class GLUTEmu_MouseButton : int {
+    None = GLFW_MOUSE_BUTTON_1 - 1,
     Left = GLFW_MOUSE_BUTTON_LEFT,
     Right = GLFW_MOUSE_BUTTON_RIGHT,
     Middle = GLFW_MOUSE_BUTTON_MIDDLE,
@@ -228,6 +229,7 @@ typedef void (*GLUTEmu_CallbackWindowMinimized)(int width, int height, bool mini
 typedef void (*GLUTEmu_CallbackWindowFocused)(bool focused);
 typedef void (*GLUTEmu_CallbackWindowRefresh)();
 typedef void (*GLUTEmu_CallbackWindowIdle)();
+typedef void (*GLUTEmu_CallbackSystemPoll)();
 typedef void (*GLUTEmu_CallbackKeyboardButton)(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
 typedef void (*GLUTEmu_CallbackKeyboardCharacter)(char32_t codepoint, int modifiers);
 typedef void (*GLUTEmu_CallbackMousePosition)(double x, double y, GLUTEnum_MouseCursorMode mode);
@@ -286,6 +288,7 @@ void GLUTEmu_WindowSetMinimizedFunction(GLUTEmu_CallbackWindowMinimized func);
 void GLUTEmu_WindowSetFocusedFunction(GLUTEmu_CallbackWindowFocused func);
 void GLUTEmu_WindowSetRefreshFunction(GLUTEmu_CallbackWindowRefresh func);
 void GLUTEmu_WindowSetIdleFunction(GLUTEmu_CallbackWindowIdle func);
+void GLUTEmu_SystemSetPollFunction(GLUTEmu_CallbackSystemPoll func);
 void GLUTEmu_KeyboardSetButtonFunction(GLUTEmu_CallbackKeyboardButton func);
 void GLUTEmu_KeyboardSetCharacterFunction(GLUTEmu_CallbackKeyboardCharacter func);
 bool GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier modifier);

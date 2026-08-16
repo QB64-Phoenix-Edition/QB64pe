@@ -197,16 +197,50 @@ struct hardware_graphics_command_struct {
 #define HARDWARE_GRAPHICS_COMMAND__MAPTRIANGLE3D 5
 #define HARDWARE_GRAPHICS_COMMAND__CLEAR_DEPTHBUFFER 6
 
+struct Image_ColorBGRA {
+    union {
+        struct {
+            uint8_t b, g, r, a;
+        };
+
+        uint32_t bgra;
+    };
+};
+
+struct Image_ColorRGBA {
+    union {
+        struct {
+            uint8_t r, g, b, a;
+        };
+
+        uint32_t rgba;
+    };
+};
+
 // REFACTOR_TODO: These should be eventually moved inside graphics.cpp with proper getters/setters
 extern img_struct *img;
 extern int32_t nextimg;
 extern int32_t *page;
 extern img_struct *write_page;
+extern img_struct *read_page;
+extern img_struct *display_page;
+extern uint32_t palette_256[];
+
+// REFACTOR_TODO: These should be eventually moved inside font.cpp with proper getters/setters
+extern int32_t *font;
+extern int32_t *fontwidth;
+extern int32_t *fontheight;
+extern int32_t *fontflags;
+extern int32_t lastfont;
+extern uint8_t charset8x8[256][8][8];
+extern uint8_t charset8x16[256][16][8];
 
 // REFACTOR_TODO: The following functions should be eventually moved inside graphics.cpp
 void set_view(int32_t new_mode);
-void validatepage(int32_t n);
+void flush_old_hardware_commands();
+void validatepage(int32_t pageNumber);
 void display();
+
 int32_t func__display();
 int32_t func__newimage(int32_t x, int32_t y, int32_t bpp, int32_t passed);
 int32_t func__copyimage(int32_t i, int32_t mode, int32_t passed);
@@ -467,4 +501,34 @@ static inline img_struct *Image_GetDescriptor(int32_t imageHandle) {
         }
     }
     return &img[imageHandle];
+}
+
+/// @brief Checks if an image is a console page. This function is used to determine if input/output should be routed through the terminal backend instead of the
+/// GUI backend.
+/// @param image The image to check. This cannot be NULL.
+/// @return true if the image is a console page, false otherwise.
+static inline bool Image_IsConsolePage(const img_struct *image) {
+    return image && image->console;
+}
+
+/// @brief Checks if an image is a console page. This function is used to determine if input/output should be routed through the terminal backend instead of the
+/// GUI backend.
+/// @param imageHandle The image handle to check.
+/// @return true if the image handle corresponds to a console page, false otherwise.
+static inline bool Image_IsConsolePage(int32_t imageHandle) {
+    return Image_IsConsolePage(Image_GetDescriptor(imageHandle));
+}
+
+/// @brief Checks if the currently active destination page is a console page. This function is used to determine if input/output should be routed through the
+/// terminal backend instead of the GUI backend.
+/// @return true if the currently active destination page is a console page, false otherwise.
+static inline bool Image_IsDestinationConsolePage() {
+    return Image_IsConsolePage(write_page);
+}
+
+/// @brief Checks if the currently active source page is a console page. This function is used to determine if input/output should be routed through the
+/// terminal backend instead of the GUI backend.
+/// @return true if the currently active source page is a console page, false otherwise.
+static inline bool Image_IsSourceConsolePage() {
+    return Image_IsConsolePage(read_page);
 }

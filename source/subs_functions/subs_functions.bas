@@ -580,7 +580,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__mousemove"
     id.args = 2
-    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
+    id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
     id.hr_syntax = "_MOUSEMOVE x, y"
     regid
 
@@ -1837,7 +1837,7 @@ SUB reginternal
     id.n = "_MouseX"
     id.subfunc = 1
     id.callname = "func__mousex"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEX"
     regid
@@ -1846,7 +1846,7 @@ SUB reginternal
     id.n = "_MouseY"
     id.subfunc = 1
     id.callname = "func__mousey"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEY"
     regid
@@ -1855,7 +1855,7 @@ SUB reginternal
     id.n = "_MouseMovementX"
     id.subfunc = 1
     id.callname = "func__mousemovementx"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEMOVEMENTX"
     regid
@@ -1864,7 +1864,7 @@ SUB reginternal
     id.n = "_MouseMovementY"
     id.subfunc = 1
     id.callname = "func__mousemovementy"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEMOVEMENTY"
     regid
@@ -1883,9 +1883,11 @@ SUB reginternal
     id.n = "_MouseWheel"
     id.subfunc = 1
     id.callname = "func__mousewheel"
-    id.ret = LONGTYPE - ISPOINTER
-    id.args = 0
-    id.hr_syntax = "_MOUSEWHEEL"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?]"
+    id.hr_syntax = "_MOUSEWHEEL [axis]"
     regid
 
     clearid
@@ -3339,7 +3341,6 @@ SUB reginternal
     'id.specialformat = "[{#|LPRINT}][?][,?]" 'new!
     id.hr_syntax = "WIDTH [columns%][, rows%] or WIDTH {file_number|device}, columnwidth%"
     regid
-
 
     clearid
     id.n = "Screen"

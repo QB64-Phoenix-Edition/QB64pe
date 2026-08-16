@@ -3,6 +3,7 @@
 #include "cmem.h"
 #include "error_handle.h"
 #include "event.h"
+#include "game_controller.h"
 #include "key-events.h"
 #include "keyboard.h"
 #include "logging.h"
@@ -32,6 +33,42 @@ extern int32_t sleep_break;
 extern uint8_t port60h_event[256];
 extern int32_t port60h_events;
 extern uint16_t codepage437_to_unicode16[];
+
+// Returns the _DEVICES keyboard button index for a physical key.
+// The high bit (0x100) is set for extended keys so that right-side modifiers,
+// the arrow/navigation block, and numpad Enter/Divide are separate from their
+// non-extended counterparts.
+static uint16_t keyboard_get_device_code(uint32_t x, uint8_t scancode) {
+    bool extended = false;
+
+    if (x >= QBKC_HOME && x <= QBKC_DELETE) {
+        // Standalone Insert/Delete/Home/End/PgUp/PgDn/arrow keys
+        extended = true;
+    } else if (x == VK + QBVK_RCTRL || x == VK + QBVK_RALT || x == VK + QBVK_LSUPER || x == VK + QBVK_RSUPER || x == VK + QBVK_MENU) {
+        // Windows/Super/Menu keys and right-side Ctrl/Alt are extended
+        extended = true;
+    } else if (x == VK + QBVK_KP_ENTER || x == VK + QBVK_KP_DIVIDE) {
+        // Numpad Enter and Numpad Divide are extended
+        extended = true;
+    }
+
+    return scancode | (extended ? 0x100u : 0u);
+}
+
+static void Keyboard_ReportDeviceEvent(uint32_t code, bool down) {
+    if (!device_last)
+        return;
+
+    device_struct *d = &devices[1]; // keyboard device
+    if (code >= (uint32_t)d->lastbutton)
+        return;
+
+    if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != down) {
+        int32_t eventIndex = createDeviceEvent(d);
+        setDeviceEventButtonValue(d, eventIndex, code, down ? 1 : 0);
+        commitDeviceEvent(d);
+    }
+}
 
 static uint32_t bindkey = 0;
 static uint32_t *keyheld_buffer = (uint32_t *)malloc(sizeof(uint32_t));
@@ -236,7 +273,7 @@ static constexpr int32_t keyboard_scancode_lookup_table[]={
     /* ?       */  191 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  192 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  193 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    
+
     /* ?       */  194 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  195 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  196 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -506,8 +543,8 @@ static constexpr int32_t keyboard_scancode_lookup_table[]={
     /* ?       */  204 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  205 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  206 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
-    
-    
+
+
     /* ?       */  207 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  208 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  209 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -574,7 +611,7 @@ static constexpr int32_t keyboard_scancode_lookup_table[]={
     /* -d      */  525 ,      0x4A,      0x2D,      0x2D,    0x8E00,    0x4A00,      0x2D,         0,         0,      0x2D,
     /* +e      */  526 ,      0x4E,      0x2B,      0x2B,    0x9000,    0x4E00,      0x2B,         0,         0,      0x2B,
     /* enter   */  527 ,      0x1C,      0x0D,      0x0D,      0x0A,    0xA600,      0x0D,         0,         0,      0x0D,
-    
+
     /* ctrl    */  000 ,         0,         0,         0,         0,         0,         0,         0,         0,      0x1D,
     /* Lshift  */  000 ,      0x2A,         0,         0,         0,         0,         0,         0,         0,         0,
     /* Rshift  */  000 ,      0x36,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -614,7 +651,7 @@ static constexpr KeyMapEntry kDirectKeyMap[] = {
     {GLUTEmu_KeyboardKey::Home, QBKC_HOME},
     {GLUTEmu_KeyboardKey::End, QBKC_END},
     {GLUTEmu_KeyboardKey::CapsLock, VK + QBVK_CAPSLOCK},
-    {GLUTEmu_KeyboardKey::ScrollLock, VK + QBVK_SCROLLOCK},
+    {GLUTEmu_KeyboardKey::ScrollLock, VK + QBVK_SCROLLLOCK},
     {GLUTEmu_KeyboardKey::NumLock, VK + QBVK_NUMLOCK},
     {GLUTEmu_KeyboardKey::PrintScreen, VK + QBVK_PRINT},
     {GLUTEmu_KeyboardKey::Pause, VK + QBVK_PAUSE},
@@ -988,7 +1025,7 @@ static constexpr inline bool keyboard_try_get_modifier_data(uint32_t key, uint8_
         *scancode = 58;
         *flagsMask = 64;
         return true;
-    case VK + QBVK_SCROLLOCK:
+    case VK + QBVK_SCROLLLOCK:
         *scancode = 70;
         *flagsMask = 0;
         return true;
@@ -1326,6 +1363,8 @@ void keyup(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
 
+    const uint32_t originalX = x;
+
     keyheld_remove(x);
 
     if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
@@ -1344,8 +1383,11 @@ void keyup(uint32_t x) {
     // numlock = 0;
 
     if (x <= 255) {
-        if (keyboard_scancode_has_variant(x, 0))
-            scancodeup(keyboard_scancode_get_scancode(x));
+        if (keyboard_scancode_has_variant(x, 0)) {
+            const uint8_t scancode = keyboard_scancode_get_scancode(x);
+            scancodeup(scancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), false);
+        }
         goto key_handled;
     } // x<=255
 
@@ -1365,8 +1407,11 @@ void keyup(uint32_t x) {
         static int32_t r;
     numpadkey:
         r = (x >> 8) + 256;
-        if (keyboard_scancode_has_variant(r, 0))
-            scancodeup(keyboard_scancode_get_scancode(r));
+        if (keyboard_scancode_has_variant(r, 0)) {
+            const uint8_t scancode = keyboard_scancode_get_scancode(r);
+            scancodeup(scancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), false);
+        }
 
         if (x == QBKC_INSERT) { // INSERT lock emulation
             update_shift_state();
@@ -1381,6 +1426,7 @@ void keyup(uint32_t x) {
         if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
             (void)modifierFlagsMask;
             scancodeup(modifierScancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, modifierScancode), false);
             update_shift_state();
         }
     }
@@ -1391,6 +1437,8 @@ key_handled:;
 void keydown(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
+
+    const uint32_t originalX = x;
 
     static int32_t glyph;
     glyph = keydown_glyph;
@@ -1403,14 +1451,14 @@ void keydown(uint32_t x) {
 
     // SCROLL lock tracking
     static int32_t scroll_lock_held;
-    if (x == (VK + QBVK_SCROLLOCK))
-        scroll_lock_held = keyheld(VK + QBVK_SCROLLOCK);
+    if (x == (VK + QBVK_SCROLLLOCK))
+        scroll_lock_held = keyheld(VK + QBVK_SCROLLLOCK);
 
     keyheld_add(x);
 
     // note: On early keyboards without a Pause key (before the introduction of 101-key keyboards) the Pause function was assigned to Ctrl+NumLock, and the
     // Break function to Ctrl+ScrLock; these key-combinations still work with most programs, even on modern PCs with modern keyboards. CTRL+BREAK handling
-    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLOCK)) && keyboard_is_ctrl_held()) || ((x == (VK + QBVK_F15)) && keyboard_is_ctrl_held())) {
+    if ((x == (VK + QBVK_BREAK)) || ((x == (VK + QBVK_SCROLLLOCK)) && keyboard_is_ctrl_held()) || ((x == (VK + QBVK_F15)) && keyboard_is_ctrl_held())) {
         if (exit_blocked) {
             exit_value |= 2;
             goto key_handled;
@@ -1712,7 +1760,9 @@ void keydown(uint32_t x) {
         static int32_t b1, b2, z, o;
         b1 = x;
         if ((b2 = keyboard_scancode_get_scancode(x))) { // table entry exists
-            scancodedown(b2);
+            const uint8_t scancode = static_cast<uint8_t>(b2);
+            scancodedown(scancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), true);
 
             // check for relevant table modifiers
             keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
@@ -1760,7 +1810,9 @@ void keydown(uint32_t x) {
         b2 = x >> 8;
         r = (x >> 8) + 256;
         if (keyboard_scancode_has_variant(r, 0)) {
-            scancodedown(keyboard_scancode_get_scancode(r));
+            const uint8_t scancode = keyboard_scancode_get_scancode(r);
+            scancodedown(scancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), true);
             // check relevant modifiers
             keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
 
@@ -1809,8 +1861,9 @@ void keydown(uint32_t x) {
         int32_t modifierFlagsMask;
         if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
             scancodedown(modifierScancode);
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, modifierScancode), true);
 
-            if (x == (VK + QBVK_SCROLLOCK)) {
+            if (x == (VK + QBVK_SCROLLLOCK)) {
                 if (scroll_lock_held == 0) { // nullify effects of key repeats
                     ctrl = keyboard_is_ctrl_held();
                     if (ctrl == 0) {
@@ -1887,7 +1940,7 @@ void update_shift_state() {
         x |= 4;
     if (keyheld(VK + QBVK_PAUSE))
         x |= 8;
-    if (keyheld(VK + QBVK_SCROLLOCK))
+    if (keyheld(VK + QBVK_SCROLLLOCK))
         x |= 16;
     // if (keyheld(VK+QBVK_NUMLOCK)) x|=32;
     // if (keyheld(VK+QBVK_CAPSLOCK)) x|=64;

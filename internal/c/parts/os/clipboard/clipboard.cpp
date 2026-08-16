@@ -28,9 +28,6 @@
 // Comment the following bypass custom clipboard code in func__clipboard() and sub__clipboard()
 #define QB64_USE_CUSTOM_CLIPBOARD_CODE 1
 
-extern const uint8_t charset8x8[256][8][8];   // used by sub__clipboardimage()
-extern const uint8_t charset8x16[256][16][8]; // used by sub__clipboardimage()
-
 // This is used as a fallback internal clipboard should any text clipboard functions below fail
 static std::string g_InternalClipboard;
 

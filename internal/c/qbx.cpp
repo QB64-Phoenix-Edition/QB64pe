@@ -5,6 +5,7 @@
 #include "clipboard.h"
 #include "command.h"
 #include "compression.h"
+#include "console.h"
 #include "datetime.h"
 #include "encoding.h"
 #include "environ.h"
@@ -25,6 +26,7 @@
 #include "keyboard.h"
 #include "logging.h"
 #include "memblock.h"
+#include "mouse.h"
 #include "printer.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
@@ -33,10 +35,7 @@
 #include "shell.h"
 #include "window.h"
 
-extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
-extern void sub__consolefont(qbs *FontName, int FontSize);
-extern void sub__console_cursor(int32 visible, int32 cursorsize, int32 passed);
-extern int32 func__getconsoleinput();
+#include <atomic>
 
 extern void unlockvWatchHandle();
 extern int32 vWatchHandle();
@@ -74,7 +73,6 @@ extern int32 func__scaledheight();
 
 extern void sub__fps(double fps, int32 passed);
 
-extern void sub__echo(qbs *message);
 extern qbs *func__readfile(qbs *filespec);
 extern void sub__writefile(qbs *filespec, qbs *contents);
 extern void sub__assert(int32 expression, qbs *assert_message, int32 passed);
@@ -84,13 +82,8 @@ extern qbs *func__embedded(qbs *handle);
 extern void sub__glrender(int32 method);
 extern void sub__displayorder(int32 method1, int32 method2, int32 method3, int32 method4);
 
-extern int64 GetTicks();
-
 extern mem_block func__memimage(int32, int32);
 
-extern void sub__consoletitle(qbs *);
-extern void sub__console(int32);
-extern int32 func__console();
 extern void sub__controlchr(int32);
 extern int32 func__controlchr();
 extern void sub__blink(int32);
@@ -105,7 +98,6 @@ extern void key_on();
 extern void key_off();
 extern void key_list();
 extern void key_assign(int32 i, qbs *str);
-extern void sub__mousemove(float x, float y);
 extern qbs *func__os();
 extern qbs *func__compdate();
 extern qbs *func__comptime();
@@ -113,8 +105,6 @@ extern qbs *func__compvers();
 extern void sub__mapunicode(int32 unicode_code, int32 ascii_code);
 extern int32 func__mapunicode(int32 ascii_code);
 extern int32 func_lpos(int32);
-extern float func__mousemovementx();
-extern float func__mousemovementy();
 extern void sub__screenprint(qbs *txt);
 extern void sub__screenclick(int32 x, int32 y, int32 button, int32 passed);
 extern int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2, int32 passed);
@@ -261,14 +251,6 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
 extern int32 func_freefile();
-extern void sub__mousehide();
-extern void sub__mouseshow(qbs *qbsStyle, int32 passed);
-extern int32 func__mousehidden();
-extern float func__mousex();
-extern float func__mousey();
-extern int32 func__mouseinput();
-extern int32 func__mousebutton(int32 i);
-extern int32 func__mousewheel();
 
 extern void call_absolute(int32 args, uint16 offset);
 extern void sub__blend(int32 i, int32 passed);
@@ -448,23 +430,23 @@ void swap_block(void *a, void *b, uint32 bytes) {
     }
 }
 
-extern int32 disableEvents;
+static std::atomic<bool> disableEvents = false;
 
 ptrszint check_lbound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
-    disableEvents = 1;
+    disableEvents = true;
     ret = func_lbound((ptrszint *)(*array), index, num_indexes);
     clear_error();
-    disableEvents = 0;
+    disableEvents = false;
     return ret;
 }
 
 ptrszint check_ubound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
-    disableEvents = 1;
+    disableEvents = true;
     ret = func_ubound((ptrszint *)(*array), index, num_indexes);
     clear_error();
-    disableEvents = 0;
+    disableEvents = false;
     return ret;
 }
 
