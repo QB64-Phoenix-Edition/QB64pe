@@ -737,45 +737,43 @@ static constexpr inline int TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey ke
     return -1;
 }
 
-static constexpr inline int TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
+static constexpr inline int TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isCapsLock, bool forceBase) {
     if (key < GLUTEmu_KeyboardKey::A || key > GLUTEmu_KeyboardKey::Z) {
         return -1;
     }
 
     const int offset = int(key) - int(GLUTEmu_KeyboardKey::A);
 
-    if (isControl && !isAlt) {
-        int ctrlValue = offset + 1;
-        return isShift ? (ctrlValue - 1 + 'A') : (ctrlValue - 1 + 'a');
+    if (forceBase) {
+        return 'a' + offset;
     }
 
     return (isShift ^ isCapsLock ? 'A' : 'a') + offset;
 }
 
-static constexpr inline int TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+static constexpr inline int TranslateDigit(GLUTEmu_KeyboardKey key, bool isShift, bool forceBase) {
     if (key < GLUTEmu_KeyboardKey::Zero || key > GLUTEmu_KeyboardKey::Nine) {
         return -1;
     }
 
     const int offset = int(key) - int(GLUTEmu_KeyboardKey::Zero);
-    int translated = '0' + offset;
+
+    if (forceBase) {
+        return '0' + offset;
+    }
 
     if (isShift) {
-        translated = kShiftedDigits[offset];
+        return kShiftedDigits[offset];
     }
 
-    if (isControl && !isAlt && key == GLUTEmu_KeyboardKey::Six) {
-        translated = kCtrlCaretAscii;
-    }
-
-    return translated;
+    return '0' + offset;
 }
 
-static constexpr inline int TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt) {
+static constexpr inline int TranslatePunctuation(GLUTEmu_KeyboardKey key, bool isShift, bool forceBase) {
     for (const auto &entry : kPunctuationMap) {
         if (entry.key == key) {
-            if (isControl && !isAlt && entry.control != -1) {
-                return entry.control;
+            if (forceBase) {
+                return entry.normal;
             }
 
             return isShift ? entry.shifted : entry.normal;
@@ -785,13 +783,13 @@ static constexpr inline int TranslatePunctuation(GLUTEmu_KeyboardKey key, bool i
     return -1;
 }
 
-static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock) {
-    int translated = TranslateLetter(key, isShift, isControl, isAlt, isCapsLock);
+static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isCapsLock, bool forceBase) {
+    int translated = TranslateLetter(key, isShift, isCapsLock, forceBase);
     if (translated != -1) {
         return translated;
     }
 
-    translated = TranslateDigit(key, isShift, isControl, isAlt);
+    translated = TranslateDigit(key, isShift, forceBase);
     if (translated != -1) {
         return translated;
     }
@@ -800,10 +798,12 @@ static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool 
         return ' ';
     }
 
-    return TranslatePunctuation(key, isShift, isControl, isAlt);
+    return TranslatePunctuation(key, isShift, forceBase);
 }
 
-static constexpr inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
+static inline bool keyboard_is_altgr_combo();
+
+static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
     int translated = TranslateDirectKey(key);
     if (translated != -1) {
         return translated;
@@ -814,23 +814,41 @@ static constexpr inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, 
         return translated;
     }
 
-    return TranslatePrintableKey(key, isShift, isControl, isAlt, isCapsLock);
+    // When Ctrl or plain Alt is held, use the base (unshifted) key value.
+    const bool forceBase = isControl || (isAlt && !keyboard_is_altgr_combo());
+
+    return TranslatePrintableKey(key, isShift, isCapsLock, forceBase);
 }
 
 static constexpr int kGlfwKeyLast = int(GLUTEmu_KeyboardKey::Last);
 static uint32_t s_pressedKeyCodepoint[kGlfwKeyLast + 1] = {};
+static int s_pressedKeyKeyCode[kGlfwKeyLast + 1] = {};
+
+// For keys GLFW reports as GLFW_KEY_UNKNOWN but that still produce a character.
+static uint32_t s_unknownCharCodepoint = 0;
+
+// Track whether a deferred key press was an AltGr combination, so the
+// character callback can force the base o=0 scancode variant even if the
+// AltGr modifier keys are released before the callback fires.
+static bool s_pendingCharKeyIsAltGr = false;
+static bool s_forceNextKeydownAsAltGr = false;
 
 static GLUTEmu_KeyboardKey s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
 static int s_pendingCharKeyModifiers = 0;
 
-static constexpr inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isControl, bool isAlt) {
-    if (isControl && !isAlt)
-        return false;
-
+static inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isControl, bool isAlt) {
     if (TranslateDirectKey(key) != -1)
         return false;
 
     if (TranslateKeypadDigitOrDecimal(key, false) != -1)
+        return false;
+
+    // Ctrl by itself (or Ctrl with Shift/CapsLock) should use the base key.
+    if (isControl && !isAlt)
+        return false;
+
+    // Plain Alt (including Ctrl+Left Alt, but not AltGr) should use the base key.
+    if (isAlt && !keyboard_is_altgr_combo())
         return false;
 
     return true;
@@ -849,10 +867,15 @@ static inline void FlushPendingCharKey() {
     const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
 
     const int qbKey = TranslateKey(s_pendingCharKey, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
-    if (qbKey != -1)
+    if (qbKey != -1) {
+        const int keyInt = int(s_pendingCharKey);
+        if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
+            s_pressedKeyKeyCode[keyInt] = qbKey;
         keydown(qbKey);
+    }
 
     s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    s_pendingCharKeyIsAltGr = false;
 }
 
 static int32_t keyheld(uint32_t x);
@@ -912,7 +935,9 @@ static inline int32_t keyboard_is_super_held() {
 }
 
 static inline bool keyboard_is_altgr_combo() {
-    return (keyheld(VK + QBVK_LALT) == 0) && keyheld(VK + QBVK_RALT);
+    // AltGr is Right Alt on Linux, and Left Ctrl + Right Alt on Windows.
+    // It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
+    return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_RALT);
 }
 
 static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, int32_t *alt) {
@@ -1444,6 +1469,9 @@ void keydown(uint32_t x) {
     glyph = keydown_glyph;
     keydown_glyph = 0;
 
+    const bool forceAltGr = s_forceNextKeydownAsAltGr;
+    s_forceNextKeydownAsAltGr = false;
+
     // INSERT lock emulation
     static int32_t insert_held;
     if (x == QBKC_INSERT)
@@ -1773,10 +1801,8 @@ void keydown(uint32_t x) {
                 o = 2;
             if (alt)
                 o = 3;
-            if (glyph) {
-                if (keyboard_is_altgr_combo())
-                    o = 0; // assume alt-gr combo-key
-            }
+            if (glyph && (keyboard_is_altgr_combo() || forceAltGr))
+                o = 0; // assume alt-gr combo-key
             z = keyboard_scancode_get_variant(x, o);
             if (!z)
                 goto key_handled; // not possible
@@ -2066,8 +2092,16 @@ void sub__numlock(int32_t options) {
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     (void)modifiers;
 
-    if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown)
+    s_forceNextKeydownAsAltGr = s_pendingCharKeyIsAltGr;
+    s_pendingCharKeyIsAltGr = false;
+
+    if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown) {
+        // GLFW cannot map this physical key, but it produced a character, so process it.
+        s_unknownCharCodepoint = uint32_t(codepoint);
+        keydown_unicode(uint32_t(codepoint));
+        s_forceNextKeydownAsAltGr = false;
         return;
+    }
 
     const int keyInt = int(s_pendingCharKey);
     if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
@@ -2075,6 +2109,7 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
 
     s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
     keydown_unicode(uint32_t(codepoint));
+    s_forceNextKeydownAsAltGr = false;
 }
 
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
@@ -2090,24 +2125,45 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
 
     if (action == GLUTEmu_ButtonAction::Released) {
-        const int keyInt = int(key);
-        if (keyInt >= 0 && keyInt <= kGlfwKeyLast && s_pressedKeyCodepoint[keyInt]) {
-            keyup_unicode(s_pressedKeyCodepoint[keyInt]);
-            s_pressedKeyCodepoint[keyInt] = 0;
-        } else {
-            const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
-            if (qbKey != -1)
-                keyup(qbKey);
+        if (key == GLUTEmu_KeyboardKey::Unknown && s_unknownCharCodepoint) {
+            keyup_unicode(s_unknownCharCodepoint);
+            s_unknownCharCodepoint = 0;
+            s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+            return;
         }
+
+        const int keyInt = int(key);
+        if (keyInt >= 0 && keyInt <= kGlfwKeyLast) {
+            if (s_pressedKeyCodepoint[keyInt]) {
+                keyup_unicode(s_pressedKeyCodepoint[keyInt]);
+                s_pressedKeyCodepoint[keyInt] = 0;
+                return;
+            }
+
+            if (s_pressedKeyKeyCode[keyInt]) {
+                keyup(s_pressedKeyKeyCode[keyInt]);
+                s_pressedKeyKeyCode[keyInt] = 0;
+                return;
+            }
+        }
+
+        const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
+        if (qbKey != -1)
+            keyup(qbKey);
         return;
     }
 
     if (ShouldDeferToCharCallback(key, isControl, isAlt)) {
         s_pendingCharKey = key;
         s_pendingCharKeyModifiers = modifiers;
+        s_pendingCharKeyIsAltGr = keyboard_is_altgr_combo();
     } else {
         const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
-        if (qbKey != -1)
+        if (qbKey != -1) {
+            const int keyInt = int(key);
+            if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
+                s_pressedKeyKeyCode[keyInt] = qbKey;
             keydown(qbKey);
+        }
     }
 }
