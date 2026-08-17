@@ -55,6 +55,41 @@ static uint16_t keyboard_get_device_code(uint32_t x, uint8_t scancode) {
     return scancode | (extended ? 0x100u : 0u);
 }
 
+// Same as above, but driven by the raw GLFW physical key token. This makes
+// sure _DEVICES sees every physical key press/release, even for keys GLFW
+// cannot map to a US token (GLFW_KEY_UNKNOWN) or keys that produce a character
+// outside the CP437 table (x | UC).
+static uint16_t keyboard_get_device_code_for_glfw(GLUTEmu_KeyboardKey key, uint8_t scancode) {
+    bool extended = false;
+
+    switch (key) {
+    case GLUTEmu_KeyboardKey::Right:
+    case GLUTEmu_KeyboardKey::Left:
+    case GLUTEmu_KeyboardKey::Down:
+    case GLUTEmu_KeyboardKey::Up:
+    case GLUTEmu_KeyboardKey::PageUp:
+    case GLUTEmu_KeyboardKey::PageDown:
+    case GLUTEmu_KeyboardKey::Home:
+    case GLUTEmu_KeyboardKey::End:
+    case GLUTEmu_KeyboardKey::Insert:
+    case GLUTEmu_KeyboardKey::Delete:
+    case GLUTEmu_KeyboardKey::RightControl:
+    case GLUTEmu_KeyboardKey::RightAlt:
+    case GLUTEmu_KeyboardKey::LeftSuper:
+    case GLUTEmu_KeyboardKey::RightSuper:
+    case GLUTEmu_KeyboardKey::Menu:
+    case GLUTEmu_KeyboardKey::KPEnter:
+    case GLUTEmu_KeyboardKey::KPDivide:
+    case GLUTEmu_KeyboardKey::PrintScreen:
+        extended = true;
+        break;
+    default:
+        break;
+    }
+
+    return scancode | (extended ? 0x100u : 0u);
+}
+
 static void Keyboard_ReportDeviceEvent(uint32_t code, bool down) {
     if (!device_last)
         return;
@@ -803,10 +838,76 @@ static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool 
 
 static inline bool keyboard_is_altgr_combo();
 
-static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber) {
+// Forward declaration; the definition is below.
+static constexpr inline uint32_t unicode_to_cp437(uint32_t x);
+
+static char32_t keyboard_utf8_first_codepoint(const char *s) {
+    if (!s || !*s)
+        return 0;
+
+    const uint8_t *p = reinterpret_cast<const uint8_t *>(s);
+    const uint8_t b0 = p[0];
+
+    if (b0 < 0x80)
+        return b0;
+
+    if ((b0 & 0xE0) == 0xC0 && (p[1] & 0xC0) == 0x80)
+        return (static_cast<char32_t>(b0 & 0x1F) << 6) | (p[1] & 0x3F);
+
+    if ((b0 & 0xF0) == 0xE0 && (p[1] & 0xC0) == 0x80 && (p[2] & 0xC0) == 0x80)
+        return (static_cast<char32_t>(b0 & 0x0F) << 12) | (static_cast<char32_t>(p[1] & 0x3F) << 6) | (p[2] & 0x3F);
+
+    if ((b0 & 0xF8) == 0xF0 && (p[1] & 0xC0) == 0x80 && (p[2] & 0xC0) == 0x80 && (p[3] & 0xC0) == 0x80)
+        return (static_cast<char32_t>(b0 & 0x07) << 18) | (static_cast<char32_t>(p[1] & 0x3F) << 12) | (static_cast<char32_t>(p[2] & 0x3F) << 6) |
+               (p[3] & 0x3F);
+
+    return 0;
+}
+
+// Use GLFW's localized key name to get the layout-specific base character for a
+// physical key. This is needed so Ctrl/Alt combinations produce the correct
+// _KEYHIT on non-US layouts (e.g. the physical Q key on AZERTY is 'a').
+static int keyboard_get_layout_base_key(GLUTEmu_KeyboardKey key, int scancode) {
+    const char *name = glfwGetKeyName(static_cast<int>(key), scancode);
+    if (!name || !name[0])
+        return -1;
+
+    char32_t cp = keyboard_utf8_first_codepoint(name);
+    if (cp == 0)
+        return -1;
+
+    // GLFW may return an uppercase letter (Windows GetKeyNameText does).
+    // Force the unshifted base for ASCII letters.
+    if (cp >= 'A' && cp <= 'Z')
+        cp += ('a' - 'A');
+
+    if (cp <= 127)
+        return static_cast<int>(cp);
+
+    // Try to map a non-ASCII base character (e.g. 'é', '²') into the CP437
+    // table so keydown() can use the existing scancode lookup.
+    const uint32_t cp437 = unicode_to_cp437(cp);
+    if (cp437)
+        return static_cast<int>(cp437);
+
+    return -1;
+}
+
+static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isControl, bool isAlt, bool isCapsLock, bool useKeypadNumber, int scancode = -1) {
     int translated = TranslateDirectKey(key);
     if (translated != -1) {
         return translated;
+    }
+
+    // Plain Alt + numpad should behave like Alt + the corresponding top-row
+    // digit/period, not like Alt + navigation (main's quirk). This makes the
+    // Alt column of the ASCII table produce a sensible INKEY$.
+    const bool plainAlt = isAlt && !keyboard_is_altgr_combo();
+    if (plainAlt) {
+        if (key >= GLUTEmu_KeyboardKey::KP0 && key <= GLUTEmu_KeyboardKey::KP9)
+            return '0' + (int(key) - int(GLUTEmu_KeyboardKey::KP0));
+        if (key == GLUTEmu_KeyboardKey::KPDecimal)
+            return '.';
     }
 
     translated = TranslateKeypadDigitOrDecimal(key, useKeypadNumber);
@@ -817,7 +918,18 @@ static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isCon
     // When Ctrl or plain Alt is held, use the base (unshifted) key value.
     const bool forceBase = isControl || (isAlt && !keyboard_is_altgr_combo());
 
-    return TranslatePrintableKey(key, isShift, isCapsLock, forceBase);
+    int result = TranslatePrintableKey(key, isShift, isCapsLock, forceBase);
+
+    // For Ctrl/Alt base keys, try to use the layout-specific character from
+    // GLFW so non-US keyboards (e.g. AZERTY) produce the correct _KEYHIT.
+    // Keep the physical-token fallback if GLFW cannot name the key.
+    if (forceBase && result > 0 && result <= 255 && scancode != -1) {
+        const int layoutKey = keyboard_get_layout_base_key(key, scancode);
+        if (layoutKey != -1)
+            result = layoutKey;
+    }
+
+    return result;
 }
 
 static constexpr int kGlfwKeyLast = int(GLUTEmu_KeyboardKey::Last);
@@ -835,6 +947,7 @@ static bool s_forceNextKeydownAsAltGr = false;
 
 static GLUTEmu_KeyboardKey s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
 static int s_pendingCharKeyModifiers = 0;
+static bool s_ignoreNextCharCallback = false;
 
 static inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isControl, bool isAlt) {
     if (TranslateDirectKey(key) != -1)
@@ -876,6 +989,7 @@ static inline void FlushPendingCharKey() {
 
     s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
     s_pendingCharKeyIsAltGr = false;
+    s_ignoreNextCharCallback = false;
 }
 
 static int32_t keyheld(uint32_t x);
@@ -2092,8 +2206,18 @@ void sub__numlock(int32_t options) {
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     (void)modifiers;
 
+    if (!func__hasfocus()) {
+        return;
+    }
+
     s_forceNextKeydownAsAltGr = s_pendingCharKeyIsAltGr;
     s_pendingCharKeyIsAltGr = false;
+
+    if (s_ignoreNextCharCallback) {
+        s_ignoreNextCharCallback = false;
+        s_forceNextKeydownAsAltGr = false;
+        return;
+    }
 
     if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown) {
         // GLFW cannot map this physical key, but it produced a character, so process it.
@@ -2113,7 +2237,12 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
 }
 
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
-    (void)scancode;
+    const bool isPressed = (action != GLUTEmu_ButtonAction::Released);
+    const uint8_t scancode8 = static_cast<uint8_t>(scancode);
+
+    if (!func__hasfocus()) {
+        return;
+    }
 
     FlushPendingCharKey();
 
@@ -2122,13 +2251,15 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     const bool isControl = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Control);
     const bool isAlt = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Alt);
     const bool isCapsLock = bool(modifiers & GLUTEmu_KeyboardKeyModifier::CapsLock);
-    const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
+    const bool useKeypadNumber = isNumLock && !isShift;
 
     if (action == GLUTEmu_ButtonAction::Released) {
         if (key == GLUTEmu_KeyboardKey::Unknown && s_unknownCharCodepoint) {
             keyup_unicode(s_unknownCharCodepoint);
             s_unknownCharCodepoint = 0;
             s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+            if (scancode8)
+                Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
             return;
         }
 
@@ -2137,19 +2268,25 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             if (s_pressedKeyCodepoint[keyInt]) {
                 keyup_unicode(s_pressedKeyCodepoint[keyInt]);
                 s_pressedKeyCodepoint[keyInt] = 0;
+                if (scancode8)
+                    Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
                 return;
             }
 
             if (s_pressedKeyKeyCode[keyInt]) {
                 keyup(s_pressedKeyKeyCode[keyInt]);
                 s_pressedKeyKeyCode[keyInt] = 0;
+                if (scancode8)
+                    Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
                 return;
             }
         }
 
-        const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
+        const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber, scancode);
         if (qbKey != -1)
             keyup(qbKey);
+        if (scancode8)
+            Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
         return;
     }
 
@@ -2157,13 +2294,44 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
         s_pendingCharKey = key;
         s_pendingCharKeyModifiers = modifiers;
         s_pendingCharKeyIsAltGr = keyboard_is_altgr_combo();
+        s_ignoreNextCharCallback = false;
     } else {
-        const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
+        s_ignoreNextCharCallback = true;
+
+        const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber, scancode);
         if (qbKey != -1) {
             const int keyInt = int(key);
             if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
                 s_pressedKeyKeyCode[keyInt] = qbKey;
             keydown(qbKey);
         }
+    }
+
+    if (scancode8)
+        Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), true);
+}
+
+void GLUT_KEYBOARD_FOCUS_FUNC(bool focused) {
+    if (focused) {
+        return;
+    }
+
+    // Release all held keys so they don't stick after an Alt-Tab or focus loss.
+    const int32_t count = keyheld_n;
+    for (int32_t i = count - 1; i >= 0; --i) {
+        keyup(keyheld_buffer[i]);
+    }
+
+    // Clear any deferred/pending character state.
+    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    s_pendingCharKeyModifiers = 0;
+    s_pendingCharKeyIsAltGr = false;
+    s_ignoreNextCharCallback = false;
+    s_unknownCharCodepoint = 0;
+
+    // Clear per-key release tracking.
+    for (int i = 0; i <= kGlfwKeyLast; ++i) {
+        s_pressedKeyCodepoint[i] = 0;
+        s_pressedKeyKeyCode[i] = 0;
     }
 }

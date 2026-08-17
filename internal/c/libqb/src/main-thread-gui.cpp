@@ -22,6 +22,11 @@ extern void GLUT_EXIT_FUNC();
 extern void GLUT_DISPLAY_REQUEST();
 extern void GLUT_IDLE_FUNC();
 
+static void GLUT_WINDOW_FOCUS_FUNC(bool focused) {
+    GLUT_KEYBOARD_FOCUS_FUNC(focused);
+    GLUT_MOUSE_FOCUS_FUNC(focused);
+}
+
 // Performs all of the FreeGLUT initialization except for calling glutMainLoop()
 static void initialize_glut() {
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::FramebufferSamples, 4);
@@ -54,7 +59,7 @@ static void initialize_glut() {
     GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_RESIZE_FUNC);
     GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
     //   GLFW_TODO: Maximize/Minimize handling
-    //   GLFW_TODO: Focus handling
+    GLUTEmu_WindowSetFocusedFunction(GLUT_WINDOW_FOCUS_FUNC);
     GLUTEmu_WindowSetRefreshFunction(GLUT_DISPLAY_REQUEST);
     GLUTEmu_WindowSetIdleFunction(GLUT_IDLE_FUNC);
 
@@ -64,7 +69,7 @@ static void initialize_glut() {
     GLUTEmu_MouseSetButtonFunction(GLUT_MOUSE_BUTTON_FUNC);
     GLUTEmu_MouseSetPositionFunction(GLUT_MOUSE_POSITION_FUNC);
     GLUTEmu_MouseSetScrollFunction(GLUT_MOUSE_SCROLL_FUNC);
-    // GLFW_TODO: Mouse enter/leave handling
+    GLUTEmu_MouseSetNotifyFunction(GLUT_MOUSE_NOTIFY_FUNC);
 
     GLUTEmu_DropSetFilesFunction(GLUT_DROPFILES_FUNC);
 
