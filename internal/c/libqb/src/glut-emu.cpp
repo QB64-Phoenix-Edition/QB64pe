@@ -80,10 +80,21 @@ class GLUTEmu {
       public:
         std::string newTitle;
 
-        MessageWindowSetTitle(std::string_view title) : Message(true), newTitle(title) {}
+        MessageWindowSetTitle(std::string_view title) : Message(false), newTitle(title) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetTitle(newTitle);
+        }
+    };
+
+    class MessageWindowGetTitle : public Message {
+      public:
+        std::string title;
+
+        MessageWindowGetTitle() : Message(true) {}
+
+        void Execute() override {
+            title = GLUTEmu::Instance().WindowGetTitle();
         }
     };
 
@@ -2178,14 +2189,19 @@ void GLUTEmu_WindowSetTitle(std::string_view title) {
     if (GLUTEmu::Instance().MessageIsMainThread() || (!GLUTEmu::Instance().WindowIsCreated() && !GLUTEmu::Instance().MainLoopIsRunning())) {
         GLUTEmu::Instance().WindowSetTitle(title);
     } else {
-        GLUTEmu::MessageWindowSetTitle msg(title);
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetTitle(title));
     }
 }
 
-std::string_view GLUTEmu_WindowGetTitle() {
-    return GLUTEmu::Instance().WindowGetTitle();
+std::string GLUTEmu_WindowGetTitle() {
+    if (GLUTEmu::Instance().MessageIsMainThread() || (!GLUTEmu::Instance().WindowIsCreated() && !GLUTEmu::Instance().MainLoopIsRunning())) {
+        return std::string(GLUTEmu::Instance().WindowGetTitle());
+    } else {
+        GLUTEmu::MessageWindowGetTitle msg;
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
+        return msg.title;
+    }
 }
 
 void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle) {

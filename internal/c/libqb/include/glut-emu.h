@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <cuchar>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -244,7 +245,7 @@ template <typename T> void GLUTEmu_WindowSetHint(GLUTEmu_WindowHint hint, const 
 bool GLUTEmu_WindowCreate(int width, int height);
 bool GLUTEmu_WindowIsCreated();
 void GLUTEmu_WindowSetTitle(std::string_view title);
-std::string_view GLUTEmu_WindowGetTitle();
+std::string GLUTEmu_WindowGetTitle();
 void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle);
 void GLUTEmu_WindowFullScreen(bool fullscreen);
 bool GLUTEmu_WindowIsFullscreen();

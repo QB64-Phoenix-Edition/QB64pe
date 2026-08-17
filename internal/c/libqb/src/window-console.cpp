@@ -202,7 +202,7 @@ int32_t func__screenhide() {
     return -screen_hide;
 }
 
-void sub__title([[maybe_unused]] qbs *title) {
+void sub__title(qbs *title) {
     sub__consoletitle(title);
 }
 
@@ -247,8 +247,8 @@ uintptr_t func__windowhandle() {
 
     if (!generic_window_handle) {
         char pszConsoleTitle[1024];
-        GetConsoleTitle(pszConsoleTitle, 1024);
-        generic_window_handle = FindWindow(NULL, pszConsoleTitle);
+        GetConsoleTitleA(pszConsoleTitle, 1024);
+        generic_window_handle = FindWindowA(NULL, pszConsoleTitle);
     }
 
     return reinterpret_cast<uintptr_t>(generic_window_handle);
