@@ -1,6 +1,7 @@
 #ifndef INCLUDE_LIBQB_BUFFER_H
 #define INCLUDE_LIBQB_BUFFER_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 struct libqb_buffer_entry {

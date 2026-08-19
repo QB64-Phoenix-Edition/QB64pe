@@ -1,17 +1,10 @@
-#ifndef INCLUDE_LIBQB_DATETIME_H
-#define INCLUDE_LIBQB_DATETIME_H
+#pragma once
 
+#include "libqb-common.h"
 #include "qbs.h"
-#include <stdint.h>
+#include <cstdint>
 
-#if defined(QB64_LINUX) || defined(QB64_WINDOWS)
-// Initializes the clock returned by 'GetTicks()' so that it starts from zero
-// Should be called at the very beginning of the program
 void clock_init();
-#else
-static inline void clock_init() {}
-#endif
-
 int64_t GetTicks();
 
 double func_timer(double accuracy, int32_t passed);
@@ -28,5 +21,3 @@ void sub_time(qbs *str);
 
 qbs *func_date();
 void sub_date(qbs *date);
-
-#endif

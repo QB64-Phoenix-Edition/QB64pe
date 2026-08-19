@@ -1,9 +1,11 @@
+#include "common.h"
+
 #include "audio.h"
 #include "bitops.h"
 #include "clipboard.h"
 #include "command.h"
-#include "common.h"
 #include "compression.h"
+#include "console.h"
 #include "datetime.h"
 #include "encoding.h"
 #include "environ.h"
@@ -20,25 +22,20 @@
 #include "hashing.h"
 #include "hexoctbin.h"
 #include "image.h"
-#include "libqb.h"
+#include "key-events.h"
+#include "keyboard.h"
 #include "logging.h"
 #include "memblock.h"
+#include "mouse.h"
+#include "printer.h"
 #include "qbmath.h"
 #include "qbs-mk-cv.h"
 #include "qbs.h"
 #include "rounding.h"
 #include "shell.h"
+#include "window.h"
 
-extern int32 func__cinp(int32 toggle, int32 passed); // Console INP scan code reader
-extern int func__capslock();
-extern int func__scrolllock();
-extern int func__numlock();
-extern void sub__capslock(int32 options);
-extern void sub__scrolllock(int32 options);
-extern void sub__numlock(int32 options);
-extern void sub__consolefont(qbs *FontName, int FontSize);
-extern void sub__console_cursor(int32 visible, int32 cursorsize, int32 passed);
-extern int32 func__getconsoleinput();
+#include <atomic>
 
 extern void unlockvWatchHandle();
 extern int32 vWatchHandle();
@@ -55,20 +52,7 @@ extern int32 sub_gl_called;
 
 #ifdef QB64_GUI
 #    ifdef DEPENDENCY_GL
-
 #        include "parts/core/gl_header_for_parsing/temp/gl_helper_code.h"
-
-double pi_as_double = 3.14159265358979;
-
-void gluPerspective(double fovy, double aspect, double zNear, double zFar) {
-    double xmin, xmax, ymin, ymax;
-    ymax = zNear * std::tan(fovy * pi_as_double / 360.0);
-    ymin = -ymax;
-    xmin = ymin * aspect;
-    xmax = ymax * aspect;
-    glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
-}
-
 #    endif
 #endif
 
@@ -89,50 +73,22 @@ extern int32 func__scaledheight();
 
 extern void sub__fps(double fps, int32 passed);
 
-extern void sub__resize(int32 on_off, int32 stretch_smooth);
-extern int32 func__resize();
-extern int32 func__resizewidth();
-extern int32 func__resizeheight();
-
-extern void sub__title(qbs *title);
-extern void sub__echo(qbs *message);
 extern qbs *func__readfile(qbs *filespec);
 extern void sub__writefile(qbs *filespec, qbs *contents);
 extern void sub__assert(int32 expression, qbs *assert_message, int32 passed);
-extern void sub__finishdrop();
-extern int32 func__filedrop();
-extern void sub__filedrop(int32 on_off = NULL);
-extern int32 func__totaldroppedfiles();
-extern qbs *func__droppedfile(int32 fileIndex, int32 passed);
 
 extern qbs *func__embedded(qbs *handle);
 
 extern void sub__glrender(int32 method);
 extern void sub__displayorder(int32 method1, int32 method2, int32 method3, int32 method4);
 
-extern int64 GetTicks();
-
 extern mem_block func__memimage(int32, int32);
 
-extern void sub__consoletitle(qbs *);
-extern void sub__screenshow();
-extern void sub__screenhide();
-extern int32 func__screenhide();
-extern int32 func_windowexists();
-extern int32 func_screenicon();
-extern int32_t func__desktopwidth();
-extern int32_t func__desktopheight();
-extern void sub_screenicon();
-extern void sub__console(int32);
-extern int32 func__console();
 extern void sub__controlchr(int32);
 extern int32 func__controlchr();
 extern void sub__blink(int32);
 extern int32 func__blink();
-extern int32 func__hasfocus();
 extern void set_foreground_window(ptrszint i);
-extern qbs *func__title();
-extern uintptr_t func__windowhandle();
 extern int32 func_stick(int32 i, int32 axis_group, int32 passed);
 extern int32 func_strig(int32 i, int32 controller, int32 passed);
 extern void sub_paletteusing(void *element, int32 bits);
@@ -142,21 +98,13 @@ extern void key_on();
 extern void key_off();
 extern void key_list();
 extern void key_assign(int32 i, qbs *str);
-extern int32 func__screeny();
-extern int32 func__screenx();
-extern void sub__screenmove(int32 x, int32 y, int32 passed);
-extern void sub__mousemove(float x, float y);
 extern qbs *func__os();
 extern qbs *func__compdate();
 extern qbs *func__comptime();
 extern qbs *func__compvers();
 extern void sub__mapunicode(int32 unicode_code, int32 ascii_code);
 extern int32 func__mapunicode(int32 ascii_code);
-extern int32 func__keydown(int32 x);
-extern int32 func__keyhit();
 extern int32 func_lpos(int32);
-extern float func__mousemovementx();
-extern float func__mousemovementy();
 extern void sub__screenprint(qbs *txt);
 extern void sub__screenclick(int32 x, int32 y, int32 button, int32 passed);
 extern int32 func__screenimage(int32 x1, int32 y1, int32 x2, int32 y2, int32 passed);
@@ -164,10 +112,6 @@ extern void sub_lock(int32 i, int64 start, int64 end, int32 passed);
 extern void sub_unlock(int32 i, int64 start, int64 end, int32 passed);
 void chain_restorescreenstate(int32);
 void chain_savescreenstate(int32);
-extern void sub__fullscreen(int32 method, int32 passed);
-extern void sub__allowfullscreen(int32 method, int32 smooth);
-extern int32 func__fullscreen();
-extern int32 func__fullscreensmooth();
 extern int32 func__exit();
 extern void revert_input_check();
 extern int32 func__openhost(qbs *);
@@ -212,8 +156,6 @@ extern int32 func_peek(int32 offset);
 extern void sub_poke(int32 offset, int32 value);
 extern void more_return_points();
 extern qbs *func_varptr_helper(uint8 type, uint16 offset);
-extern qbs *qbs_inkey();
-extern void sub__keyclear(int32 buf, int32 passed);
 extern void lineclip(int32 x1, int32 y1, int32 x2, int32 y2, int32 xmin, int32 ymin, int32 xmax, int32 ymax);
 extern void qbg_palette(uint32 attribute, uint32 col, int32 passed);
 extern void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 passed);
@@ -309,14 +251,6 @@ extern qbs *func_input(int32 n, int32 i, int32 passed);
 extern int32 func__statusCode(int32 handle);
 
 extern int32 func_freefile();
-extern void sub__mousehide();
-extern void sub__mouseshow(qbs *style, int32 passed);
-extern int32 func__mousehidden();
-extern float func__mousex();
-extern float func__mousey();
-extern int32 func__mouseinput();
-extern int32 func__mousebutton(int32 i);
-extern int32 func__mousewheel();
 
 extern void call_absolute(int32 args, uint16 offset);
 extern void sub__blend(int32 i, int32 passed);
@@ -363,7 +297,7 @@ extern int32 sleep_break;
 extern int64 exit_code;
 extern int32 lock_mainloop; // 0=unlocked, 1=lock requested, 2=locked
 extern int64 device_event_index;
-extern int32 exit_ok;
+extern int32_t exit_ok;
 int32 timer_event_occurred = 0; // inc/dec as each GOSUB to QBMAIN ()
                                 // begins/ends
 int32 timer_event_id = 0;
@@ -496,23 +430,23 @@ void swap_block(void *a, void *b, uint32 bytes) {
     }
 }
 
-extern int32 disableEvents;
+static std::atomic<bool> disableEvents = false;
 
 ptrszint check_lbound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
-    disableEvents = 1;
+    disableEvents = true;
     ret = func_lbound((ptrszint *)(*array), index, num_indexes);
     clear_error();
-    disableEvents = 0;
+    disableEvents = false;
     return ret;
 }
 
 ptrszint check_ubound(ptrszint *array, int32 index, int32 num_indexes) {
     static ptrszint ret;
-    disableEvents = 1;
+    disableEvents = true;
     ret = func_ubound((ptrszint *)(*array), index, num_indexes);
     clear_error();
-    disableEvents = 0;
+    disableEvents = false;
     return ret;
 }
 
@@ -564,9 +498,6 @@ inline uint16 varseg_dblock_check(uint8 *off) {
 
 #include "../temp/global.txt"
 #include "../temp/regsf.txt"
-
-extern int32 ScreenResize;
-extern int32 ScreenResizeScale;
 
 // set_dynamic_info is called immediately when
 // main() begins, to set global, static variables
@@ -965,36 +896,40 @@ int32 device_last = 0;   // last used device
 int32 device_max = 1000; // number of allocated indexes
 device_struct *devices = (device_struct *)calloc(1000 + 1, sizeof(device_struct));
 
+static constexpr size_t kDeviceAxisWheelSize = sizeof(double);
+
 // device_struct helper functions
 uint8 getDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex);
+    return *(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize +
+             objectIndex);
 }
 
 void setDeviceEventButtonValue(device_struct *device, int32 eventIndex, int32 objectIndex, uint8 value) {
-    *(device->events + eventIndex * device->event_size + device->lastaxis * 4 + device->lastwheel * 4 + objectIndex) = value;
+    *(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize + objectIndex) =
+        value;
 }
 
-float getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4);
+double getDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(double *)(device->events + eventIndex * device->event_size + objectIndex * kDeviceAxisWheelSize);
 }
 
-void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size + objectIndex * 4) = value;
+void setDeviceEventAxisValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
+    *(double *)(device->events + eventIndex * device->event_size + objectIndex * kDeviceAxisWheelSize) = value;
 }
 
-float getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
-    return *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4);
+double getDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex) {
+    return *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + objectIndex * kDeviceAxisWheelSize);
 }
 
-void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, float value) {
-    *(float *)(device->events + eventIndex * device->event_size + device->lastaxis * 4 + objectIndex * 4) = value;
+void setDeviceEventWheelValue(device_struct *device, int32 eventIndex, int32 objectIndex, double value) {
+    *(double *)(device->events + eventIndex * device->event_size + device->lastaxis * kDeviceAxisWheelSize + objectIndex * kDeviceAxisWheelSize) = value;
 }
 
 void setupDevice(device_struct *device) {
-    int32 size = device->lastaxis * 4 + device->lastwheel * 4 + device->lastbutton;
-    size += 8; // for appended ordering index
-    size += 7;
-    size = size - (size & 7); // align to closest 8-byte boundary
+    int32 size = (int32)(device->lastaxis * kDeviceAxisWheelSize + device->lastwheel * kDeviceAxisWheelSize) + device->lastbutton;
+    size += (int32)sizeof(int64_t); // for appended ordering index
+    size += (int32)sizeof(int64_t) - 1;
+    size = size - (size & ((int32)sizeof(int64_t) - 1)); // align to int64_t boundary
     device->event_size = size;
     device->events = (uint8 *)calloc(2, device->event_size); // create initial 'current' and 'previous' events
     device->max_events = 2;
@@ -1022,7 +957,8 @@ int32 createDeviceEvent(device_struct *device) {
     }
     // copy previous event data into new event
     memmove(device->events + device->queued_events * device->event_size, device->events + (device->queued_events - 1) * device->event_size, device->event_size);
-    *(int64 *)(device->events + (device->queued_events * device->event_size) + (device->event_size - 8)) = device_event_index++; // set global event index
+    *(int64 *)(device->events + (device->queued_events * device->event_size) + (device->event_size - (int32)sizeof(int64_t))) =
+        device_event_index++; // set global event index
     int32 eventIndex = device->queued_events;
     return eventIndex;
 }
@@ -1061,7 +997,7 @@ int32 func__deviceinput(int32 i, int32 passed) {
         for (i = 1; i <= device_last; i++) {
             d = &devices[i];
             if (d->queued_events > 2) {
-                index = *(int64 *)((d->events + d->event_size * 2) + (d->event_size - 8));
+                index = *(int64 *)((d->events + d->event_size * 2) + (d->event_size - (int32)sizeof(int64_t)));
                 if ((i2 == -1) || (index < lowest_index)) {
                     i2 = i;
                     lowest_index = index;
@@ -1131,7 +1067,7 @@ int32 func__buttonchange(int32 i, int32 passed) {
     return 0;
 }
 
-float func__axis(int32 i, int32 passed) {
+double func__axis(int32 i, int32 passed) {
     if (device_selected < 1 || device_selected > device_last) {
         error(5);
         return 0;
@@ -1147,7 +1083,7 @@ float func__axis(int32 i, int32 passed) {
     return getDeviceEventAxisValue(d, 1, i - 1);
 }
 
-float func__wheel(int32 i, int32 passed) {
+double func__wheel(int32 i, int32 passed) {
     if (device_selected < 1 || device_selected > device_last) {
         error(5);
         return 0;
@@ -1291,56 +1227,6 @@ void sub_strig(int32 i, int32 controller, int32 option, int32 passed) {
             onstrig[i].active = 2;
             if (onstrig[i].state)
                 onstrig[i].state = 1;
-        }
-    } // i
-}
-
-onkey_struct *onkey = (onkey_struct *)calloc(32, sizeof(onkey_struct));
-int32 onkey_inprogress = 0;
-
-void onkey_setup(int32 i, uint32 id, int64 pass) {
-    // note: pass is ignored by ids not requiring a pass value
-    if (is_error_pending())
-        return;
-    if ((i < 1) || (i > 31)) {
-        error(5);
-        return;
-    }
-    onkey[i].state = 0;
-    onkey[i].pass = pass;
-    onkey[i].id = id; // id must be set last because it is the trigger variable
-}
-
-void sub_key(int32 i, int32 option) {
-    // ref: "(?){ON|OFF|STOP}"
-    if (is_error_pending())
-        return;
-    if ((i < 0) || (i > 31)) {
-        error(5);
-        return;
-    }
-    static int32 i1, i2;
-    i1 = i;
-    i2 = i;
-    if (!i) {
-        i1 = i;
-        i2 = 31;
-    } // set all keys!
-    for (i = i1; i <= i2; i++) {
-        // ref: uint8 active;//0=OFF, 1=ON, 2=STOP
-        if (option == 1) { // ON
-            onkey[i].active = 1;
-            if (onkey[i].state)
-                qbevent = 1;
-        }
-        if (option == 2) { // OFF
-            onkey[i].active = 0;
-            onkey[i].state = 0;
-        }
-        if (option == 3) { // STOP
-            onkey[i].active = 2;
-            if (onkey[i].state)
-                onkey[i].state = 1;
         }
     } // i
 }

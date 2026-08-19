@@ -275,7 +275,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]" 'dest is default
     id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
-    id.hr_syntax = "_MEMIMAGE or _MEMIMAGE(imageHandle)"
+    id.hr_syntax = "_MEMIMAGE[(imageHandle&)]"
     regid
 
     clearid
@@ -286,7 +286,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "?[,?]"
     id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
-    id.hr_syntax = "_MEMSOUND(soundHandle)"
+    id.hr_syntax = "_MEMSOUND(soundHandle&)"
     regid
 
     clearid '_MEMCOPY a, aoffset, bytes TO b, boffset
@@ -459,7 +459,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.specialformat = "[?]"
-    id.hr_syntax = "_DEVICEINPUT or _DEVICEINPUT(device_number%)"
+    id.hr_syntax = "_DEVICEINPUT[(device_number&)]"
     regid
 
     clearid
@@ -523,7 +523,7 @@ SUB reginternal
     id.callname = "func__axis"
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.specialformat = "[?]"
     id.hr_syntax = "_AXIS(axis_number%)"
     regid
@@ -534,7 +534,7 @@ SUB reginternal
     id.callname = "func__wheel"
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.specialformat = "[?]"
     id.hr_syntax = "_WHEEL(wheelNumber%)"
     regid
@@ -580,7 +580,7 @@ SUB reginternal
     id.subfunc = 2
     id.callname = "sub__mousemove"
     id.args = 2
-    id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
+    id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
     id.hr_syntax = "_MOUSEMOVE x, y"
     regid
 
@@ -672,7 +672,10 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__windowhandle"
     id.ret = UOFFSETTYPE - ISPOINTER
-    id.hr_syntax = "_WINDOWHANDLE"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?]"
+    id.hr_syntax = "_WINDOWHANDLE[(handleType&)]"
     regid
 
     clearid
@@ -831,6 +834,16 @@ SUB reginternal
     id.callname = "func__hasfocus"
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_WINDOWHASFOCUS"
+    regid
+
+    clearid
+    id.n = "_WindowSizeLimit"
+    id.subfunc = 2
+    id.callname = "sub__windowsizelimit"
+    id.args = 4
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[(?,?)][-(?,?)]"
+    id.hr_syntax = "_WINDOWSIZELIMIT [(minWidth, minHeight)] [- (maxWidth, maxHeight)]"
     regid
 
     clearid
@@ -993,7 +1006,7 @@ SUB reginternal
     id.args = 1
     id.specialformat = "[?]"
     id.ret = STRINGTYPE - ISPOINTER
-    id.hr_syntax = "_ERRORMESSAGE$ or _ERRORMESSAGE$(errorCode%)"
+    id.hr_syntax = "_ERRORMESSAGE$[(errorCode&)]"
     regid
 
     clearid
@@ -1138,7 +1151,7 @@ SUB reginternal
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
-    id.hr_syntax = "_DROPPEDFILE$ or _DROPPEDFILE$(index&)"
+    id.hr_syntax = "_DROPPEDFILE$[(index&)]"
     regid
 
     clearid
@@ -1471,7 +1484,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_FONTWIDTH or _FONTWIDTH(fontHandle&)"
+    id.hr_syntax = "_FONTWIDTH[(fontHandle&)]"
     regid
 
     clearid
@@ -1482,7 +1495,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_FONTHEIGHT or _FONTHEIGHT(fontHandle&)"
+    id.hr_syntax = "_FONTHEIGHT[(fontHandle&)]"
     regid
 
     clearid
@@ -1809,10 +1822,32 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_MouseCursor"
+    id.subfunc = 2
+    id.callname = "sub__mousecursor"
+    id.args = 3
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "?[,(?,?)]"
+    id.hr_syntax = "_MOUSECURSOR imageHandle& [, (hotspotX&, hotspotY&)]"
+    regid
+
+    clearid
     id.n = "_MouseHide"
     id.subfunc = 2
     id.callname = "sub__mousehide"
-    id.hr_syntax = "_MOUSEHIDE"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[{_Hide|_Disable}]"
+    id.hr_syntax = "_MOUSEHIDE [_DISABLE]"
+    regid
+
+    clearid
+    id.n = "_MouseDisabled"
+    id.subfunc = 1
+    id.callname = "func__mousedisabled"
+    id.ret = LONGTYPE - ISPOINTER
+    id.args = 0
+    id.hr_syntax = "_MOUSEDISABLED"
     regid
 
     clearid
@@ -1837,7 +1872,7 @@ SUB reginternal
     id.n = "_MouseX"
     id.subfunc = 1
     id.callname = "func__mousex"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEX"
     regid
@@ -1846,7 +1881,7 @@ SUB reginternal
     id.n = "_MouseY"
     id.subfunc = 1
     id.callname = "func__mousey"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEY"
     regid
@@ -1855,7 +1890,7 @@ SUB reginternal
     id.n = "_MouseMovementX"
     id.subfunc = 1
     id.callname = "func__mousemovementx"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEMOVEMENTX"
     regid
@@ -1864,7 +1899,7 @@ SUB reginternal
     id.n = "_MouseMovementY"
     id.subfunc = 1
     id.callname = "func__mousemovementy"
-    id.ret = SINGLETYPE - ISPOINTER
+    id.ret = DOUBLETYPE - ISPOINTER
     id.args = 0
     id.hr_syntax = "_MOUSEMOVEMENTY"
     regid
@@ -1883,9 +1918,11 @@ SUB reginternal
     id.n = "_MouseWheel"
     id.subfunc = 1
     id.callname = "func__mousewheel"
-    id.ret = LONGTYPE - ISPOINTER
-    id.args = 0
-    id.hr_syntax = "_MOUSEWHEEL"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?]"
+    id.hr_syntax = "_MOUSEWHEEL [axis]"
     regid
 
     clearid
@@ -3221,6 +3258,14 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_Uptime"
+    id.subfunc = 1
+    id.callname = "GLUTEmu_TimeGet"
+    id.ret = DOUBLETYPE - ISPOINTER
+    id.hr_syntax = "_UPTIME"
+    regid
+
+    clearid
     id.n = "Rnd"
     id.subfunc = 1
     id.callname = "func_rnd"
@@ -3331,7 +3376,6 @@ SUB reginternal
     'id.specialformat = "[{#|LPRINT}][?][,?]" 'new!
     id.hr_syntax = "WIDTH [columns%][, rows%] or WIDTH {file_number|device}, columnwidth%"
     regid
-
 
     clearid
     id.n = "Screen"
@@ -3772,6 +3816,15 @@ SUB reginternal
     id.args = 0
     id.ret = LONGTYPE - ISPOINTER
     id.hr_syntax = "_DESKTOPWIDTH"
+    regid
+
+    clearid
+    id.n = "_DesktopRefreshRate"
+    id.subfunc = 1
+    id.callname = "func__desktoprefreshrate"
+    id.args = 0
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_DESKTOPREFRESHRATE"
     regid
 
     clearid

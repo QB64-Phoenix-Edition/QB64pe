@@ -59,10 +59,10 @@ extern int32_t onstrig_inprogress;
 
 uint8_t getDeviceEventButtonValue(device_struct *device, int32_t eventIndex, int32_t objectIndex);
 void setDeviceEventButtonValue(device_struct *device, int32_t eventIndex, int32_t objectIndex, uint8_t value);
-float getDeviceEventAxisValue(device_struct *device, int32_t eventIndex, int32_t objectIndex);
-void setDeviceEventAxisValue(device_struct *device, int32_t eventIndex, int32_t objectIndex, float value);
-float getDeviceEventWheelValue(device_struct *device, int32_t eventIndex, int32_t objectIndex);
-void setDeviceEventWheelValue(device_struct *device, int32_t eventIndex, int32_t objectIndex, float value);
+double getDeviceEventAxisValue(device_struct *device, int32_t eventIndex, int32_t objectIndex);
+void setDeviceEventAxisValue(device_struct *device, int32_t eventIndex, int32_t objectIndex, double value);
+double getDeviceEventWheelValue(device_struct *device, int32_t eventIndex, int32_t objectIndex);
+void setDeviceEventWheelValue(device_struct *device, int32_t eventIndex, int32_t objectIndex, double value);
 void setupDevice(device_struct *device);
 int32_t createDeviceEvent(device_struct *device);
 void commitDeviceEvent(device_struct *device);

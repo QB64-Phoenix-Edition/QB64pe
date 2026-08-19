@@ -1,3 +1,15 @@
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT "OPTION _EXPLICIT inactive."
+    PRINT "OPTION _EXPLICITARRAY inactive."
+    PRINT "$ASSERTS inactive."
+    PRINT "$CONSOLE active (w/o ONLY option)."
+    PRINT "$DEBUG inactive."
+    PRINT "DEPENDENCY_SOCKETS inactive."
+    SYSTEM
+$END IF
+
 '--- this will set _ASSERTS_ = 1
 '$ASSERTS
 '--- this will set _ASSERTS_ = 1 and _CONSOLE_ = 1
@@ -64,4 +76,3 @@ $END IF
 '======================================
 
 SYSTEM
-

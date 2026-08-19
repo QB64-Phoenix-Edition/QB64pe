@@ -1,7 +1,8 @@
+$CONSOLE:ONLY
 
-_LogError "Error 1"
-_LogWarn "Warn 1"
-_LogInfo "Info 1"
-_LogTrace "Trace 2"
+_LOGERROR "Error 1"
+_LOGWARN "Warn 1"
+_LOGINFO "Info 1"
+_LOGTRACE "Trace 2"
 
-System
+SYSTEM

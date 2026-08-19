@@ -1,11 +1,19 @@
-$CONSOLE
-_Dest _Console
-
-' _WindowHandle only returns an actual handle on Windows
-$IF WIN THEN
-Print _WindowHandle <> 0
-$ELSE
-Print _WindowHandle = 0
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT _TRUE
+    PRINT _TRUE
+    PRINT _TRUE
+    PRINT _TRUE
+    SYSTEM
 $END IF
 
-System
+$CONSOLE
+_DEST _CONSOLE
+
+PRINT _WINDOWHANDLE <> 0
+PRINT _WINDOWHANDLE(0) <> 0
+PRINT _WINDOWHANDLE(1) <> 0
+PRINT _WINDOWHANDLE(2) <> 0
+
+SYSTEM

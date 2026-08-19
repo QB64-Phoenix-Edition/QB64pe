@@ -7,17 +7,17 @@
 #include <string.h>
 
 #ifdef QB64_WINDOWS
-#include <windows.h>
+#    include <windows.h>
 #elif defined(QB64_LINUX) || defined(QB64_MACOSX)
-#include <pthread.h>
+#    include <pthread.h>
 #endif
 
 #include "command.h"
 #include "error_handle.h"
-#include "logging.h"
 #include "event.h"
 #include "gui.h"
-#include "glut-thread.h"
+#include "logging.h"
+#include "main-thread.h"
 
 uint32_t new_error;
 uint32_t error_occurred;
@@ -135,8 +135,7 @@ void libqb_check_stack() {
     }
 
     const uintptr_t current_stack = reinterpret_cast<uintptr_t>(&stack_marker);
-    if (!stack_error_reported && stack_bounds_available && current_stack > stack_lower_bound &&
-        current_stack - stack_lower_bound < STACK_REPORT_RESERVE) {
+    if (!stack_error_reported && stack_bounds_available && current_stack > stack_lower_bound && current_stack - stack_lower_bound < STACK_REPORT_RESERVE) {
         stack_error_reported = true;
         error(QB_ERROR_OUT_OF_STACK_SPACE);
     }
@@ -403,25 +402,25 @@ void error(int32_t error_number) {
     // all of them through the same allocation-free location formatter.
     const char *critical_message = NULL;
     switch (error_number) {
-        case QB_ERROR_DIVISION_BY_ZERO:
-            critical_message = "Division by zero";
-            break;
-        case 256:
-            critical_message = "Out of stack space";
-            break;
-        case 259:
-            critical_message = "Cannot find dynamic library file";
-            break;
-        case 260:
-        case 261:
-            critical_message = "Sub/Function does not exist in dynamic library";
-            break;
-        case 270:
-            critical_message = "_GL command called outside of SUB _GL's scope";
-            break;
-        case 271:
-            critical_message = "END/SYSTEM called within SUB _GL's scope";
-            break;
+    case QB_ERROR_DIVISION_BY_ZERO:
+        critical_message = "Division by zero";
+        break;
+    case 256:
+        critical_message = "Out of stack space";
+        break;
+    case 259:
+        critical_message = "Cannot find dynamic library file";
+        break;
+    case 260:
+    case 261:
+        critical_message = "Sub/Function does not exist in dynamic library";
+        break;
+    case 270:
+        critical_message = "_GL command called outside of SUB _GL's scope";
+        break;
+    case 271:
+        critical_message = "END/SYSTEM called within SUB _GL's scope";
+        break;
     }
 
     if (critical_message) {

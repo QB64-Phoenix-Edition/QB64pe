@@ -11,14 +11,12 @@
 #endif
 
 #include "command.h"
+#include "console.h"
 #include "datetime.h"
 #include "error_handle.h"
 #include "qbs.h"
 #include "shell.h"
-
-// FIXME
-extern int32_t console;
-extern int32_t console_active;
+#include "window.h"
 
 int32_t shell_call_in_progress = 0;
 
@@ -163,10 +161,6 @@ static int32_t cmd_command(qbs *str2) {
     return s;
 }
 #endif
-
-// FIXME: Move this elsewhere
-extern int32_t full_screen;
-extern int32_t full_screen_set;
 
 int64_t func_shell(qbs *str) {
     if (is_error_pending())
@@ -724,7 +718,7 @@ void sub_shell(qbs *str, int32_t passed) {
                 freopen("stdout.buf", "w", stdout);
                 freopen("stderr.buf", "w", stderr);
             */
-            system((char *)strz->chr);
+            [[maybe_unused]] auto systemResult = system((char *)strz->chr);
             /*
                 freopen("CON", "w", stdout);
                 freopen("CON", "w", stderr);
@@ -914,7 +908,7 @@ void sub_shell(qbs *str, int32_t passed) {
 
         qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
         shell_call_in_progress = 1;
-        system((char *)strz->chr);
+        [[maybe_unused]] auto systemResult = system((char *)strz->chr);
         shell_call_in_progress = 0;
 
 #endif
@@ -929,7 +923,7 @@ void sub_shell(qbs *str, int32_t passed) {
             AllocConsole();
         qbs_set(strz, qbs_new_txt_len("cmd\0", 4));
         shell_call_in_progress = 1;
-        system((char *)strz->chr);
+        [[maybe_unused]] auto systemResult = system((char *)strz->chr);
         shell_call_in_progress = 0;
         if (!use_console)
             FreeConsole();
@@ -1150,7 +1144,7 @@ void sub_shell2(qbs *str, int32_t passed) { // HIDE
 
     qbs_set(strz, qbs_add(str, qbs_new_txt_len("\0", 1)));
     shell_call_in_progress = 1;
-    system((char *)strz->chr);
+    [[maybe_unused]] auto systemResult = system((char *)strz->chr);
     shell_call_in_progress = 0;
     return;
 

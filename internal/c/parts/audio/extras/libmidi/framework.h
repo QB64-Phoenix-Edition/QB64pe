@@ -4,6 +4,7 @@
 #pragma once
 
 #include "libqb-common.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
