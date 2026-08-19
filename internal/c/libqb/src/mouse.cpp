@@ -143,7 +143,7 @@ void sub__mousecursor(int32_t imageHandle, int32_t hotspotX, int32_t hotspotY, i
 #ifndef DEPENDENCY_CONSOLE_ONLY
     OPTIONAL_GLUT();
 
-    if (!(passed & 2)) {
+    if (!(passed & 1)) {
         hotspotX = 0;
         hotspotY = 0;
     }
