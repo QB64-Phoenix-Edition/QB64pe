@@ -275,7 +275,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]" 'dest is default
     id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
-    id.hr_syntax = "_MEMIMAGE or _MEMIMAGE(imageHandle)"
+    id.hr_syntax = "_MEMIMAGE[(imageHandle&)]"
     regid
 
     clearid
@@ -286,7 +286,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "?[,?]"
     id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
-    id.hr_syntax = "_MEMSOUND(soundHandle)"
+    id.hr_syntax = "_MEMSOUND(soundHandle&)"
     regid
 
     clearid '_MEMCOPY a, aoffset, bytes TO b, boffset
@@ -459,7 +459,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.ret = LONGTYPE - ISPOINTER
     id.specialformat = "[?]"
-    id.hr_syntax = "_DEVICEINPUT or _DEVICEINPUT(device_number%)"
+    id.hr_syntax = "_DEVICEINPUT[(device_number&)]"
     regid
 
     clearid
@@ -672,7 +672,10 @@ SUB reginternal
     id.subfunc = 1
     id.callname = "func__windowhandle"
     id.ret = UOFFSETTYPE - ISPOINTER
-    id.hr_syntax = "_WINDOWHANDLE"
+    id.args = 1
+    id.arg = MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[?]"
+    id.hr_syntax = "_WINDOWHANDLE[(handleType&)]"
     regid
 
     clearid
@@ -1003,7 +1006,7 @@ SUB reginternal
     id.args = 1
     id.specialformat = "[?]"
     id.ret = STRINGTYPE - ISPOINTER
-    id.hr_syntax = "_ERRORMESSAGE$ or _ERRORMESSAGE$(errorCode%)"
+    id.hr_syntax = "_ERRORMESSAGE$[(errorCode&)]"
     regid
 
     clearid
@@ -1148,7 +1151,7 @@ SUB reginternal
     id.args = 1
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
-    id.hr_syntax = "_DROPPEDFILE$ or _DROPPEDFILE$(index&)"
+    id.hr_syntax = "_DROPPEDFILE$[(index&)]"
     regid
 
     clearid
@@ -1481,7 +1484,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_FONTWIDTH or _FONTWIDTH(fontHandle&)"
+    id.hr_syntax = "_FONTWIDTH[(fontHandle&)]"
     regid
 
     clearid
@@ -1492,7 +1495,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
     id.ret = LONGTYPE - ISPOINTER
-    id.hr_syntax = "_FONTHEIGHT or _FONTHEIGHT(fontHandle&)"
+    id.hr_syntax = "_FONTHEIGHT[(fontHandle&)]"
     regid
 
     clearid

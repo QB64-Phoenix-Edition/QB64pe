@@ -52,5 +52,5 @@ void sub__finishdrop();
 int32_t func__totaldroppedfiles();
 qbs *func__droppedfile(int32_t fileIndex, int32_t passed);
 
-uintptr_t func__windowhandle();
+uintptr_t func__windowhandle(int32_t type = 0, int32_t passed = 0);
 int32_t func_windowexists();

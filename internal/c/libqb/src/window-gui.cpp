@@ -401,14 +401,12 @@ qbs *func__droppedfile(int32_t fileIndex, int32_t passed) {
     return result;
 }
 
-uintptr_t func__windowhandle() {
-    static const void *generic_window_handle = nullptr;
-
-    if (!generic_window_handle) {
-        generic_window_handle = GLUTEmu_WindowGetNativeHandle(0);
+uintptr_t func__windowhandle(int32_t type, int32_t passed) {
+    if (!passed) {
+        type = 0;
     }
 
-    return reinterpret_cast<uintptr_t>(generic_window_handle);
+    return reinterpret_cast<uintptr_t>(GLUTEmu_WindowGetNativeHandle(type));
 }
 
 int32_t func_windowexists() {

@@ -17,11 +17,14 @@
 #include "glut-emu.h"
 #if defined(QB64_WINDOWS)
 #    define GLFW_EXPOSE_NATIVE_WIN32
+#    define GLFW_EXPOSE_NATIVE_WGL
 #elif defined(QB64_MACOSX)
 #    define GLFW_EXPOSE_NATIVE_COCOA
+#    define GLFW_EXPOSE_NATIVE_NSGL
 #elif defined(QB64_LINUX)
 #    include <X11/XKBlib.h>
 #    define GLFW_EXPOSE_NATIVE_X11
+#    define GLFW_EXPOSE_NATIVE_GLX
 #endif
 #include <GLFW/glfw3native.h>
 
@@ -1071,7 +1074,22 @@ class GLUTEmu {
 #else
                 return reinterpret_cast<const void *>(glfwGetX11Display());
 #endif
-                break;
+
+            case 2:
+#if defined(QB64_WINDOWS)
+                return reinterpret_cast<const void *>(glfwGetWGLContext(window));
+#elif defined(QB64_MACOSX)
+                return reinterpret_cast<const void *>(glfwGetNSGLContext(window));
+#else
+                return reinterpret_cast<const void *>(glfwGetGLXContext(window));
+#endif
+
+            case 3:
+#if defined(QB64_LINUX)
+                return reinterpret_cast<const void *>(glfwGetGLXWindow(window));
+#else
+                return nullptr;
+#endif
 
             default:
 #if defined(QB64_WINDOWS)

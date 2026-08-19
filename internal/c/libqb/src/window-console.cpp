@@ -248,7 +248,7 @@ qbs *func__droppedfile([[maybe_unused]] int32_t fileIndex, [[maybe_unused]] int3
     return qbs_new_txt("");
 }
 
-uintptr_t func__windowhandle() {
+uintptr_t func__windowhandle([[maybe_unused]] int32_t type, [[maybe_unused]] int32_t passed) {
 #ifdef QB64_WINDOWS
     static const void *generic_window_handle = nullptr;
 
