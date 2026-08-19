@@ -275,6 +275,24 @@ void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
     }
 }
 
+void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY, int32_t passed) {
+    if (is_error_pending() || full_screen) {
+        return;
+    }
+
+    OPTIONAL_GLUT();
+
+    if (!passed) {
+        GLUTEmu_WindowSetSizeLimits(-1, -1, -1, -1);
+    } else if ((passed & 1) && (passed & 2)) {
+        GLUTEmu_WindowSetSizeLimits(minX, minY, maxX, maxY);
+    } else if (passed & 1) {
+        GLUTEmu_WindowSetMinimumSizeLimits(minX, minY);
+    } else if (passed & 2) {
+        GLUTEmu_WindowSetMaximumSizeLimits(maxX, maxY);
+    }
+}
+
 void sub__screenshow() {
     screen_hide = 0;
 

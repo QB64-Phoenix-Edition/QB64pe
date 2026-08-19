@@ -187,6 +187,13 @@ void sub__screenmove([[maybe_unused]] int32_t x, [[maybe_unused]] int32_t y, int
     }
 }
 
+void sub__windowsizelimit([[maybe_unused]] int32_t minX, [[maybe_unused]] int32_t minY, [[maybe_unused]] int32_t maxX, [[maybe_unused]] int32_t maxY,
+                          [[maybe_unused]] int32_t passed) {
+    if (is_error_pending() || full_screen) {
+        return;
+    }
+}
+
 void sub__screenshow() {
     screen_hide = 0;
 }

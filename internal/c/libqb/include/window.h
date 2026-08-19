@@ -40,6 +40,7 @@ int32_t func__hasfocus();
 int32_t func__screenx();
 int32_t func__screeny();
 void sub__screenmove(int32_t x, int32_t y, int32_t passed);
+void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY, int32_t passed);
 void sub__screenshow();
 void sub__screenhide();
 int32_t func__screenhide();

@@ -645,6 +645,8 @@ class GLUTEmu {
                     isWindowMousePassthrough = (glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE);
                     windowOpacity = glfwGetWindowOpacity(window);
 
+                    glfwSetWindowSizeLimits(window, windowMinWidthLimit, windowMinHeightLimit, windowMaxWidthLimit, windowMaxHeightLimit);
+
                     libqb_log_trace("Window created (%u x %u)", width, height);
 
                     return true;
@@ -1566,23 +1568,9 @@ class GLUTEmu {
     GLUTEmu &operator=(GLUTEmu &&) = delete;
 
   private:
-    GLUTEmu()
-        : monitor(nullptr), monitorScaleX(1.0f), monitorScaleY(1.0f), window(nullptr), windowX(0), windowY(0), windowWidth(0), windowHeight(0),
-          windowScaleX(1.0f), windowScaleY(1.0f), isWindowFullscreen(false), isWindowMaximized(false), isWindowMinimized(false), isWindowFocused(false),
-          isWindowHidden(false), isWindowFloating(false), windowOpacity(1.0f), isWindowBordered(true), isWindowMousePassthrough(false), windowedX(0),
-          windowedY(0), windowedWidth(0), windowedHeight(0), windowMinWidthLimit(GLFW_DONT_CARE), windowMinHeightLimit(GLFW_DONT_CARE),
-          windowMaxWidthLimit(GLFW_DONT_CARE), windowMaxHeightLimit(GLFW_DONT_CARE), framebufferWidth(0), framebufferHeight(0), screenMode(0, 0, 0),
-          cursor(nullptr), cursorMode(GLUTEnum_MouseCursorMode::Normal), keyboardModifiers(0), windowCloseFunction(nullptr), windowResizedFunction(nullptr),
-          windowFramebufferResizedFunction(nullptr), windowMaximizedFunction(nullptr), windowMinimizedFunction(nullptr), windowFocusedFunction(nullptr),
-          windowRefreshFunction(nullptr), windowIdleFunction(nullptr), keyboardButtonFunction(nullptr), keyboardCharacterFunction(nullptr),
-          mousePositionFunction(nullptr), mouseButtonFunction(nullptr), mouseNotifyFunction(nullptr), mouseScrollFunction(nullptr), dropFilesFunction(nullptr),
-          isMainLoopRunning(false) {
+    GLUTEmu() {
         mainThreadId = std::this_thread::get_id();
         msgQueueMutex = libqb_mutex_new();
-
-#if defined(QB64_MACOSX) || defined(QB64_LINUX)
-        keyboardScrollLockState = false;
-#endif
 
 #ifdef QB64_WINDOWS
         // Set the Windows multimedia timer resolution to 1ms, matching FreeGLUT's behavior.
@@ -2112,52 +2100,52 @@ class GLUTEmu {
         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor;                          // current monitor
-    float monitorScaleX, monitorScaleY;            // current monitor content scale for DPI scaling
-    GLFWwindow *window;                            // current window
-    std::string windowTitle;                       // current window title
-    int windowX, windowY;                          // current window position (in pixel coordinates)
-    int windowWidth, windowHeight;                 // current window size (in pixel coordinates)
-    float windowScaleX, windowScaleY;              // window scaling factors
-    bool isWindowFullscreen;                       // whether the window is in fullscreen mode
-    bool isWindowMaximized;                        // whether the window is currently maximized
-    bool isWindowMinimized;                        // whether the window is currently minimized
-    bool isWindowFocused;                          // whether the window is currently focused
-    bool isWindowHidden;                           // whether the window is currently hidden
-    bool isWindowFloating;                         // whether the window is currently floating
-    float windowOpacity;                           // current window opacity
-    bool isWindowBordered;                         // whether the window is currently bordered
-    bool isWindowMousePassthrough;                 // whether the window is currently allowing mouse passthrough
-    int windowedX, windowedY;                      // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth, windowedHeight;             // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidthLimit, windowMinHeightLimit; // current window size limits (in screen coordinates, -1 for no limit)
-    int windowMaxWidthLimit, windowMaxHeightLimit; // current window size limits (in screen coordinates, -1 for no limit)
-    int framebufferWidth, framebufferHeight;       // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode;          // current screen mode (width, height, refresh rate)
-    GLFWcursor *cursor;                            // current mouse cursor
-    GLUTEnum_MouseCursorMode cursorMode;           // current mouse cursor mode (normal, hidden, disabled, captured)
-    int keyboardModifiers;                         // current keyboard modifiers
+    GLFWmonitor *monitor = nullptr;                   // current monitor
+    float monitorScaleX = 1.0f, monitorScaleY = 1.0f; // current monitor content scale for DPI scaling
+    GLFWwindow *window = nullptr;                     // current window
+    std::string windowTitle;                          // current window title
+    int windowX = 0, windowY = 0;                     // current window position (in pixel coordinates)
+    int windowWidth = 0, windowHeight = 0;            // current window size (in pixel coordinates)
+    float windowScaleX = 1.0f, windowScaleY = 1.0f;   // window scaling factors
+    bool isWindowFullscreen = false;                  // whether the window is in fullscreen mode
+    bool isWindowMaximized = false;                   // whether the window is currently maximized
+    bool isWindowMinimized = false;                   // whether the window is currently minimized
+    bool isWindowFocused = false;                     // whether the window is currently focused
+    bool isWindowHidden = false;                      // whether the window is currently hidden
+    bool isWindowFloating = false;                    // whether the window is currently floating
+    float windowOpacity = 1.0f;                       // current window opacity
+    bool isWindowBordered = true;                     // whether the window is currently bordered
+    bool isWindowMousePassthrough = false;            // whether the window is currently allowing mouse passthrough
+    int windowedX = 0, windowedY = 0;                 // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth = 0, windowedHeight = 0;        // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidthLimit = GLFW_DONT_CARE, windowMinHeightLimit = GLFW_DONT_CARE; // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidthLimit = GLFW_DONT_CARE, windowMaxHeightLimit = GLFW_DONT_CARE; // current window size limits (in screen coordinates, -1 for no limit)
+    int framebufferWidth = 0, framebufferHeight = 0;                                 // current framebuffer size (in pixel coordinates)
+    std::tuple<int, int, int> screenMode = {0, 0, 0};                                // current screen mode (width, height, refresh rate)
+    GLFWcursor *cursor = nullptr;                                                    // current mouse cursor
+    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal;          // current mouse cursor mode (normal, hidden, disabled, captured)
+    int keyboardModifiers = 0;                                                       // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
-    bool keyboardScrollLockState; // scroll Lock state for macOS and Linux
+    bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
 #endif
-    GLUTEmu_CallbackWindowClose windowCloseFunction;
-    GLUTEmu_CallbackWindowResized windowResizedFunction;
-    GLUTEmu_CallbackWindowFramebufferResized windowFramebufferResizedFunction;
-    GLUTEmu_CallbackWindowMaximized windowMaximizedFunction;
-    GLUTEmu_CallbackWindowMinimized windowMinimizedFunction;
-    GLUTEmu_CallbackWindowFocused windowFocusedFunction;
-    GLUTEmu_CallbackWindowRefresh windowRefreshFunction;
-    GLUTEmu_CallbackWindowIdle windowIdleFunction;
-    GLUTEmu_CallbackSystemPoll systemPollFunction;
-    GLUTEmu_CallbackKeyboardButton keyboardButtonFunction;
-    GLUTEmu_CallbackKeyboardCharacter keyboardCharacterFunction;
-    GLUTEmu_CallbackMousePosition mousePositionFunction;
-    GLUTEmu_CallbackMouseButton mouseButtonFunction;
-    GLUTEmu_CallbackMouseNotify mouseNotifyFunction;
-    GLUTEmu_CallbackMouseScroll mouseScrollFunction;
-    GLUTEmu_CallbackDropFiles dropFilesFunction;
+    GLUTEmu_CallbackWindowClose windowCloseFunction = nullptr;
+    GLUTEmu_CallbackWindowResized windowResizedFunction = nullptr;
+    GLUTEmu_CallbackWindowFramebufferResized windowFramebufferResizedFunction = nullptr;
+    GLUTEmu_CallbackWindowMaximized windowMaximizedFunction = nullptr;
+    GLUTEmu_CallbackWindowMinimized windowMinimizedFunction = nullptr;
+    GLUTEmu_CallbackWindowFocused windowFocusedFunction = nullptr;
+    GLUTEmu_CallbackWindowRefresh windowRefreshFunction = nullptr;
+    GLUTEmu_CallbackWindowIdle windowIdleFunction = nullptr;
+    GLUTEmu_CallbackSystemPoll systemPollFunction = nullptr;
+    GLUTEmu_CallbackKeyboardButton keyboardButtonFunction = nullptr;
+    GLUTEmu_CallbackKeyboardCharacter keyboardCharacterFunction = nullptr;
+    GLUTEmu_CallbackMousePosition mousePositionFunction = nullptr;
+    GLUTEmu_CallbackMouseButton mouseButtonFunction = nullptr;
+    GLUTEmu_CallbackMouseNotify mouseNotifyFunction = nullptr;
+    GLUTEmu_CallbackMouseScroll mouseScrollFunction = nullptr;
+    GLUTEmu_CallbackDropFiles dropFilesFunction = nullptr;
+    std::atomic_bool isMainLoopRunning = false;
     std::thread::id mainThreadId;
-    std::atomic_bool isMainLoopRunning;
     libqb_mutex *msgQueueMutex;
     std::queue<Message *> msgQueue;
 };

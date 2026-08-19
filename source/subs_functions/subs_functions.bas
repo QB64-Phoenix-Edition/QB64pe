@@ -834,6 +834,16 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_WindowSizeLimit"
+    id.subfunc = 2
+    id.callname = "sub__windowsizelimit"
+    id.args = 4
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "[(?,?)][-(?,?)]"
+    id.hr_syntax = "_WINDOWSIZELIMIT [(minWidth, minHeight)] [- (maxWidth, maxHeight)]"
+    regid
+
+    clearid
     id.n = "_Clipboard"
     id.musthave = "$"
     id.subfunc = 2

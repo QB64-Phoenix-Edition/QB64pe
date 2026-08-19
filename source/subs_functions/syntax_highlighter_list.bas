@@ -140,7 +140,7 @@ listOfKeywords$ = listOfKeywords$ +_
 
 ' [W] - Keywords alphabetical (1st line = QB64, 2nd line = QB4.5, 3rd line = OpenGL)
 listOfKeywords$ = listOfKeywords$ +_
-"_WAVE@_WHEEL@_WIDTH@_WINDOWHANDLE@_WINDOWHASFOCUS@_WRITEFILE@" +_
+"_WAVE@_WHEEL@_WIDTH@_WINDOWHANDLE@_WINDOWHASFOCUS@_WINDOWSIZELIMIT@_WRITEFILE@" +_
 "WAIT@WEND@WHILE@WIDTH@WINDOW@WRITE@" +_
 ""
 
