@@ -1,6 +1,13 @@
-$CONSOLE
-_Dest _Console
+$IF WINDOWS OR MACOSX THEN
+    ' GLFW cannot create a window with OpenGL context in a macOS and Windows GitHub runner
+    $CONSOLE:ONLY
+    PRINT "Got Past MouseHide!"
+    SYSTEM
+$END IF
 
-_MouseHide
-Print "Got Past MouseHide!"
-System
+$CONSOLE
+_DEST _CONSOLE
+
+_MOUSEHIDE
+PRINT "Got Past MouseHide!"
+SYSTEM

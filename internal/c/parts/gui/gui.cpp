@@ -66,8 +66,13 @@ static void gui_free_tokens(char **tokens) {
 
 class gui_modal_guard {
   public:
-    gui_modal_guard() { gui_modal_lock_begin(); }
-    ~gui_modal_guard() { gui_modal_lock_end(); }
+    gui_modal_guard() {
+        gui_modal_lock_begin();
+    }
+
+    ~gui_modal_guard() {
+        gui_modal_lock_end();
+    }
 
     gui_modal_guard(const gui_modal_guard &) = delete;
     gui_modal_guard &operator=(const gui_modal_guard &) = delete;

@@ -19,34 +19,26 @@
 #    define INC_COMMON_CPP
 #    include "os.h"
 
-#    define QB64_GL1
-#    define QB64_GLUT
-
-#    ifdef DEPENDENCY_CONSOLE_ONLY
-#        undef QB64_GLUT
-#    else
+#    ifndef DEPENDENCY_CONSOLE_ONLY
 #        define QB64_GUI
 #    endif
 
-// core
 #    ifdef QB64_GUI
-#        ifdef QB64_GLUT
-#            include <GL/glew.h>
-#            ifdef QB64_MACOSX
-// note: MacOSX uses Apple's GLUT not FreeGLUT
-#                include <GLUT/glut.h>
-#                include <OpenGL/gl.h>
-#                include <OpenGL/glext.h>
-#                include <OpenGL/glu.h>
-#            else
-#                define CORE_FREEGLUT
-#                include <GL/freeglut.h>
-#                include <GL/glext.h>
-#            endif
+#        include <glad/gl.h>
+#        ifdef QB64_MACOSX
+#            include <OpenGL/gl.h>
+#            include <OpenGL/glext.h>
+#            include <OpenGL/glu.h>
+#        else
+#            include <GL/gl.h>
+#            include <GL/glext.h>
+#            include <GL/glu.h>
 #        endif
 #    endif
 
 #    ifdef QB64_WINDOWS
+
+#        include <winsock2.h>
 
 #        ifndef QB64_GUI
 #            undef int64 // definition of int64 from os.h conflicts with a definition within windows.h, temporarily undefine then redefine
@@ -121,27 +113,17 @@ struct ontimer_struct {
     double last_time; // the last time this event was triggered
 };
 
-struct onkey_struct {
-    uint32 id;                // the event ID to trigger (0=no event)
-    int64 pass;               // the value to pass to the triggered event (only applicable to ON ... CALL ...(x)
-    uint8 active;             // 0=OFF, 1=ON, 2=STOP
-    uint8 state;              // 0=untriggered,1=triggered,2=in progress(TIMER only),2+=multiple events queued(KEY only)
-    uint32 keycode;           // 32-bit code, same as what _KEYHIT returns
-    uint32 keycode_alternate; // an alternate keycode which may also trigger event
-    uint8 key_scancode;
-    uint8 key_flags;
-    // flags:
-    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key,32 NumLock key,64 Caps Lock key, 128 Extended keys on a 101-key keyboard
-    // To specify multiple shift states, add the values together. For example, a value of 12 specifies that the user-defined key is used in combination with the
-    // Ctrl and Alt keys.
-    qbs *text;
-};
-
 struct byte_element_struct {
     uint64 offset;
     int32 length;
 };
 
 #    include "memblock.h"
+
+#    ifndef QB64_WINDOWS
+static inline void ZeroMemory(void *ptr, size_t bytes) {
+    ::memset(ptr, 0, bytes);
+}
+#    endif
 
 #endif // INC_COMMON_CPP

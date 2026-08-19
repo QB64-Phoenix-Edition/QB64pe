@@ -100,7 +100,7 @@ static void onAxisMoved(struct Gamepad_device *device, unsigned int axisID, floa
             if (d->type == 1) {
                 if (d->handle_int == device->deviceID) {
 
-                    float f;
+                    double f;
                     f = value;
                     /*
                     if (f==-32768) f=-32767;
