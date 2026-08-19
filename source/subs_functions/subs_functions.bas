@@ -1822,6 +1822,16 @@ SUB reginternal
     regid
 
     clearid
+    id.n = "_MouseCursor"
+    id.subfunc = 2
+    id.callname = "sub__mousecursor"
+    id.args = 3
+    id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
+    id.specialformat = "?[,(?,?)]"
+    id.hr_syntax = "_MOUSECURSOR imageHandle& [, (hotspotX&, hotspotY&)]"
+    regid
+
+    clearid
     id.n = "_MouseHide"
     id.subfunc = 2
     id.callname = "sub__mousehide"

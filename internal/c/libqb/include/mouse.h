@@ -22,6 +22,7 @@ void mouse_get_int33_status(uint16_t *buttons, double *x, double *y);
 
 void sub__mousehide(int32_t disable = 0);
 void sub__mouseshow(qbs *qbsStyle, int32_t passed);
+void sub__mousecursor(int32_t imageHandle, int32_t hotspotX, int32_t hotspotY, int32_t passed);
 int32_t func__mousehidden();
 int32_t func__mousedisabled();
 double func__mousemovementx();

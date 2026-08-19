@@ -136,6 +136,27 @@ void sub__mouseshow(qbs *qbsStyle, int32_t passed) {
 #endif
 }
 
+void sub__mousecursor(int32_t imageHandle, int32_t hotspotX, int32_t hotspotY, int32_t passed) {
+    if (is_error_pending())
+        return;
+
+#ifndef DEPENDENCY_CONSOLE_ONLY
+    OPTIONAL_GLUT();
+
+    if (!(passed & 2)) {
+        hotspotX = 0;
+        hotspotY = 0;
+    }
+
+    GLUTEmu_MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
+#else
+    (void)imageHandle;
+    (void)hotspotX;
+    (void)hotspotY;
+    (void)passed;
+#endif
+}
+
 int32_t func__mousehidden() {
 #ifndef DEPENDENCY_CONSOLE_ONLY
     OPTIONAL_GLUT(QB_FALSE);
