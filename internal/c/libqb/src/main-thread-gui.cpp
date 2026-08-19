@@ -37,6 +37,7 @@ static void initialize_glut() {
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::Win32ShowDefault, !screen_hide);
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::Win32KeyboardMenu, false);
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::macOSCocoaGraphicsSwitching, true);
+    GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::WindowResizable, ScreenResize != 0);
 
     if (!GLUTEmu_WindowCreate(640, 400)) {
         gui_alert("Failed to initialize window");
