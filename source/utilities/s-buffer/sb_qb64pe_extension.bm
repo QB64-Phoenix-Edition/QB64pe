@@ -110,3 +110,85 @@ SUB WriteBuffers (sbName$)
     END IF
 END SUB
 
+' This is the directory that the user's main source file lives, and thus the
+' path where all other debug paths are made relative too (so when the debugger
+' is run from that location, paths can be resolved).
+FUNCTION DebugPathBase$
+    IF LEN(path.source$) THEN
+        DebugPathBase$ = path.source$
+    ELSE
+        'path.source$ is empty when the source was given without a directory
+        DebugPathBase$ = getfilepath$(_FULLPATH$(sourcefile$))
+    END IF
+END FUNCTION
+
+' Resolves the path used for a source file in embedded debug info (#line entries).
+'
+' When AbsoluteDebugPaths is set, all paths are resolved to be absolute paths
+' to that file on this machine. This is the simplest form to ensure the path
+' will always be resolved correctly by a debugger, but it is not portable (the
+' absolute paths won't be correct on another machine).
+'
+' When not set, we resolve all file paths for the user's program relative to
+' the main source location.  Internal files remain relative to the QB64-PE
+' source (and we can detect them via the 'internal' or 'libraries' location
+' they will have). A debugger can then be given those locations to look at for
+' resolving the source files.
+FUNCTION ResolveDebugPath$ (path$, isInternal As Long)
+    DIM fixedPath AS STRING
+
+    'The auto-included support files are named with "\" separators no matter the
+    'platform, and $INCLUDE paths come straight from the user, so neither is
+    'guaranteed to use the separator a debugger (or MakeRelativePath$) expects
+    fixedPath = path$
+    PATH_SLASH_CORRECT fixedPath
+
+    IF AbsoluteDebugPaths THEN
+        ResolveDebugPath$ = _FULLPATH$(fixedPath)
+    ELSEIF isInternal THEN
+        ResolveDebugPath$ = fixedPath
+    ELSE
+        ResolveDebugPath$ = MakeRelativePath$(DebugPathBase$, _FULLPATH$(fixedPath))
+    END IF
+END FUNCTION
+
+SUB AddCppLine (buf As LONG)
+    DIM incName AS STRING
+    DIM lineNum AS LONG
+    DIM isInternal AS LONG
+
+    IF inclinenumber(inclevel) THEN
+        lineNum = inclinenumber(inclevel)
+        incName = incname$(inclevel)
+        isInternal = incIsInternal(inclevel)
+    ELSE
+        lineNum = linenumber
+        incName = sourcefile$
+        isInternal = _FALSE
+    END IF
+
+    incName = ResolveDebugPath$(incName, isInternal)
+
+    'line 0 is out of range for the C preprocessor, which we can end up with
+    'before the first line of the program has been read
+    IF lineNum < 1 THEN lineNum = 1
+
+    WriteBufLine buf, "#line " + _TOSTR$(lineNum) + " " + CHR$(34) + GetEscapedPath$(incName) + CHR$(34)
+END SUB
+
+SUB WriteBufLineCpp (buf As Long, s as String)
+    IF NOT SBufCppLineStatus(buf) THEN
+        AddCppLine buf
+    ELSE
+        SBufCppLineStatus(buf) = _FALSE
+    END IF
+    WriteBufLine buf, s
+END SUB
+
+SUB WriteBufRawDataCpp (buf AS LONG, s AS STRING)
+    IF NOT SBufCppLineStatus(buf) THEN
+        AddCppLine buf
+        SBufCppLineStatus(buf) = _TRUE
+    END IF
+    WriteBufRawData buf, s
+END SUB
