@@ -4,4 +4,5 @@
 '--- Avoid direct access, use the provided SUBs and FUNCTIONs.
 '-----
 REDIM SHARED SBufN(0 TO 99) AS STRING 'init for 100 buffers
+REDIM SHARED SBufCppLineStatus(0 TO 99) AS _Byte ' Tracks whether to emit a #line, used for buffers writing C++ code
 

@@ -120,3 +120,57 @@ FUNCTION FixDirectoryName$ (dir_name AS STRING)
     END IF
 END FUNCTION
 
+'
+' Expresses targetPath$ as a path relative to baseDir$, walking up with ".."
+' where needed. Both arguments must already be absolute/normalized (Ex. via
+' _FULLPATH$).
+'
+' Returns targetPath$ relative to baseDir$, or targetPath$ unchanged if the two
+' share no common ancestor (Ex. different drive letters)
+FUNCTION MakeRelativePath$ (baseDir$, targetPath$)
+    base$ = baseDir$
+    IF LEN(base$) > 0 AND RIGHT$(base$, 1) <> pathsep$ THEN base$ = base$ + pathsep$
+
+    targetDir$ = getfilepath$(targetPath$)
+    targetFile$ = MID$(targetPath$, LEN(targetDir$) + 1)
+    target$ = targetDir$
+    IF LEN(target$) > 0 AND RIGHT$(target$, 1) <> pathsep$ THEN target$ = target$ + pathsep$
+
+    bPos = 1: tPos = 1: matched = 0
+    DO
+        bNext = INSTR(bPos, base$, pathsep$)
+        tNext = INSTR(tPos, target$, pathsep$)
+        IF bNext = 0 OR tNext = 0 THEN EXIT DO
+        bSeg$ = MID$(base$, bPos, bNext - bPos)
+        tSeg$ = MID$(target$, tPos, tNext - tPos)
+        IF os$ = "WIN" THEN
+            IF UCASE$(bSeg$) <> UCASE$(tSeg$) THEN EXIT DO
+        ELSE
+            IF bSeg$ <> tSeg$ THEN EXIT DO
+        END IF
+        bPos = bNext + 1: tPos = tNext + 1: matched = -1
+    LOOP
+
+    IF matched = 0 AND LEN(base$) > 0 AND LEN(target$) > 0 THEN
+        'no shared ancestor (e.g. different drive letters) -- fall back to the absolute path
+        MakeRelativePath$ = targetPath$
+        EXIT FUNCTION
+    END IF
+
+    upCount = 0
+    DO
+        bNext = INSTR(bPos, base$, pathsep$)
+        IF bNext = 0 THEN EXIT DO
+        upCount = upCount + 1: bPos = bNext + 1
+    LOOP
+
+    remainder$ = MID$(target$, tPos) + targetFile$
+
+    result$ = ""
+    FOR upIdx = 1 TO upCount
+        result$ = result$ + ".." + pathsep$
+    NEXT
+
+    MakeRelativePath$ = result$ + remainder$
+END FUNCTION
+
