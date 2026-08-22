@@ -103,7 +103,7 @@ void sub__consolefont(qbs *FontName, int32_t FontSize) {
         Sleep(500);
         OneTimePause = 1; // after the first pause, the console should be created, so we don't need any more delays in the future.
     }
-    CONSOLE_FONT_INFOEX info = {0};
+    CONSOLE_FONT_INFOEX info{};
     info.cbSize = sizeof(info);
     info.dwFontSize.Y = FontSize; // leave X as zero
     info.FontWeight = FW_NORMAL;

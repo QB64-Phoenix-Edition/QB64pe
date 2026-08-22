@@ -247,22 +247,22 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetWindowAspectRatio : public Message {
+    class MessageWindowSetAspectRatio : public Message {
       public:
         int width, height;
 
-        MessageSetWindowAspectRatio(int width, int height) : Message(false), width(width), height(height) {}
+        MessageWindowSetAspectRatio(int width, int height) : Message(false), width(width), height(height) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetAspectRatio(width, height);
         }
     };
 
-    class MessageSetWindowSizeLimits : public Message {
+    class MessageWindowSetSizeLimits : public Message {
       public:
         int minWidth, minHeight, maxWidth, maxHeight;
 
-        MessageSetWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
+        MessageWindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
             : Message(false), minWidth(minWidth), minHeight(minHeight), maxWidth(maxWidth), maxHeight(maxHeight) {}
 
         void Execute() override {
@@ -270,22 +270,22 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetWindowMinimumSizeLimits : public Message {
+    class MessageWindowSetMinimumSizeLimits : public Message {
       public:
         int minWidth, minHeight;
 
-        MessageSetWindowMinimumSizeLimits(int minWidth, int minHeight) : Message(false), minWidth(minWidth), minHeight(minHeight) {}
+        MessageWindowSetMinimumSizeLimits(int minWidth, int minHeight) : Message(false), minWidth(minWidth), minHeight(minHeight) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
         }
     };
 
-    class MessageSetWindowMaximumSizeLimits : public Message {
+    class MessageWindowSetMaximumSizeLimits : public Message {
       public:
         int maxWidth, maxHeight;
 
-        MessageSetWindowMaximumSizeLimits(int maxWidth, int maxHeight) : Message(false), maxWidth(maxWidth), maxHeight(maxHeight) {}
+        MessageWindowSetMaximumSizeLimits(int maxWidth, int maxHeight) : Message(false), maxWidth(maxWidth), maxHeight(maxHeight) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
@@ -325,25 +325,38 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetStandardCursor : public Message {
+    class MessageKeyboardGetKeyName : public Message {
+      public:
+        GLUTEmu_KeyboardKey key;
+        int scancode;
+        const char *keyName;
+
+        MessageKeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) : Message(true), key(key), scancode(scancode), keyName(nullptr) {}
+
+        void Execute() override {
+            keyName = GLUTEmu::Instance().KeyboardGetKeyName(key, scancode);
+        }
+    };
+
+    class MessageMouseSetStandardCursor : public Message {
       public:
         GLUTEmu_MouseStandardCursor style;
         bool responseValue;
 
-        MessageSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(true), style(style), responseValue(false) {}
+        MessageMouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(true), style(style), responseValue(false) {}
 
         void Execute() override {
             responseValue = GLUTEmu::Instance().MouseSetStandardCursor(style);
         }
     };
 
-    class MessageSetCustomCursor : public Message {
+    class MessageMouseSetCustomCursor : public Message {
       public:
         int32_t imageHandle;
         int hotspotX, hotspotY;
         bool responseValue;
 
-        MessageSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
+        MessageMouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
             : Message(true), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY), responseValue(false) {}
 
         void Execute() override {
@@ -351,11 +364,11 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetCursorMode : public Message {
+    class MessageMouseSetCursorMode : public Message {
       public:
         GLUTEnum_MouseCursorMode mode;
 
-        MessageSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(true), mode(mode) {}
+        MessageMouseSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(true), mode(mode) {}
 
         void Execute() override {
             GLUTEmu::Instance().MouseSetCursorMode(mode);
@@ -1291,6 +1304,16 @@ class GLUTEmu {
 #endif
 
         return false;
+    }
+
+    const char *KeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) const {
+        if (window != nullptr) {
+            return glfwGetKeyName(static_cast<int>(key), scancode);
+        } else {
+            libqb_log_error("Window not created, cannot get key name");
+        }
+
+        return nullptr;
     }
 
     bool MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
@@ -2378,7 +2401,7 @@ void GLUTEmu_WindowSetAspectRatio(int width, int height) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetAspectRatio(width, height);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowAspectRatio(width, height));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetAspectRatio(width, height));
     }
 }
 
@@ -2386,7 +2409,7 @@ void GLUTEmu_WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int 
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetSizeLimits(minWidth, minHeight, maxWidth, maxHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowSizeLimits(minWidth, minHeight, maxWidth, maxHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetSizeLimits(minWidth, minHeight, maxWidth, maxHeight));
     }
 }
 
@@ -2394,7 +2417,7 @@ void GLUTEmu_WindowSetMinimumSizeLimits(int minWidth, int minHeight) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMinimumSizeLimits(minWidth, minHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetMinimumSizeLimits(minWidth, minHeight));
     }
 }
 
@@ -2402,7 +2425,7 @@ void GLUTEmu_WindowSetMaximumSizeLimits(int maxWidth, int maxHeight) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMaximumSizeLimits(maxWidth, maxHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetMaximumSizeLimits(maxWidth, maxHeight));
     }
 }
 
@@ -2486,11 +2509,22 @@ bool GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey) {
     return GLUTEmu::Instance().KeyboardToggleLockKeyState(lockKey);
 }
 
+const char *GLUTEmu_KeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) {
+    if (GLUTEmu::Instance().MessageIsMainThread()) {
+        return GLUTEmu::Instance().KeyboardGetKeyName(key, scancode);
+    } else {
+        GLUTEmu::MessageKeyboardGetKeyName msg(key, scancode);
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
+        return msg.keyName;
+    }
+}
+
 bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetStandardCursor(style);
     }
-    GLUTEmu::MessageSetStandardCursor msg(style);
+    GLUTEmu::MessageMouseSetStandardCursor msg(style);
     GLUTEmu::Instance().MessageQueue(&msg);
     msg.WaitForResponse();
     return msg.responseValue;
@@ -2500,7 +2534,7 @@ bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspot
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
     }
-    GLUTEmu::MessageSetCustomCursor msg(imageHandle, hotspotX, hotspotY);
+    GLUTEmu::MessageMouseSetCustomCursor msg(imageHandle, hotspotX, hotspotY);
     GLUTEmu::Instance().MessageQueue(&msg);
     msg.WaitForResponse();
     return msg.responseValue;
@@ -2510,7 +2544,7 @@ void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().MouseSetCursorMode(mode);
     } else {
-        GLUTEmu::MessageSetCursorMode msg(mode);
+        GLUTEmu::MessageMouseSetCursorMode msg(mode);
         GLUTEmu::Instance().MessageQueue(&msg);
         msg.WaitForResponse();
     }

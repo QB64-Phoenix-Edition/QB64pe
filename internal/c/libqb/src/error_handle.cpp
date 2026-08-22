@@ -98,7 +98,7 @@ void libqb_check_stack() {
     static thread_local uintptr_t stack_lower_bound;
     static thread_local bool stack_error_reported;
 
-    uint8_t stack_marker;
+    uint8_t stack_marker = 0;
 
     if (!stack_bounds_checked) {
 #ifdef QB64_WINDOWS

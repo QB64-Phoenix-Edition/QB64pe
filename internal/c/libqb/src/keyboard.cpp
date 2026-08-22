@@ -3,116 +3,32 @@
 #include "cmem.h"
 #include "error_handle.h"
 #include "event.h"
+#include "font.h"
 #include "game_controller.h"
 #include "key-events.h"
 #include "keyboard.h"
 #include "logging.h"
 #include "main-thread.h"
+#include "ring-buffer.h"
 #include "window.h"
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 // GLFW_TODO: Get rid of this after refactoring platform-specific code out of this file.
 #ifdef QB64_WINDOWS
 #    include <windows.h>
 #endif
 
-// TODO: Most of these variables should be moved to keyboard.cpp and wrapped
-extern int64_t keyhit[8192]; // keyhit cyclic buffer. keyhit specific internal flags: (stored in high 32-bits). &4294967296->numpad was used
-extern int32_t keyhit_nextfree;
-extern int32_t keyhit_next; // note: if full, the oldest message is discarded to make way for the new message
-extern int32_t asciicode_reading;
-
-extern int32_t keydown_glyph;
 extern int32_t exit_blocked;
 extern int32_t exit_value;
 extern uint8_t close_program;
 extern uint8_t suspend_program;
 extern int32_t force_display_update;
 extern int32_t sleep_break;
-extern uint8_t port60h_event[256];
-extern int32_t port60h_events;
-extern uint16_t codepage437_to_unicode16[];
-
-// Returns the _DEVICES keyboard button index for a physical key.
-// The high bit (0x100) is set for extended keys so that right-side modifiers,
-// the arrow/navigation block, and numpad Enter/Divide are separate from their
-// non-extended counterparts.
-static uint16_t keyboard_get_device_code(uint32_t x, uint8_t scancode) {
-    bool extended = false;
-
-    if (x >= QBKC_HOME && x <= QBKC_DELETE) {
-        // Standalone Insert/Delete/Home/End/PgUp/PgDn/arrow keys
-        extended = true;
-    } else if (x == VK + QBVK_RCTRL || x == VK + QBVK_RALT || x == VK + QBVK_LSUPER || x == VK + QBVK_RSUPER || x == VK + QBVK_MENU) {
-        // Windows/Super/Menu keys and right-side Ctrl/Alt are extended
-        extended = true;
-    } else if (x == VK + QBVK_KP_ENTER || x == VK + QBVK_KP_DIVIDE) {
-        // Numpad Enter and Numpad Divide are extended
-        extended = true;
-    }
-
-    return scancode | (extended ? 0x100u : 0u);
-}
-
-// Same as above, but driven by the raw GLFW physical key token. This makes
-// sure _DEVICES sees every physical key press/release, even for keys GLFW
-// cannot map to a US token (GLFW_KEY_UNKNOWN) or keys that produce a character
-// outside the CP437 table (x | UC).
-static uint16_t keyboard_get_device_code_for_glfw(GLUTEmu_KeyboardKey key, uint8_t scancode) {
-    bool extended = false;
-
-    switch (key) {
-    case GLUTEmu_KeyboardKey::Right:
-    case GLUTEmu_KeyboardKey::Left:
-    case GLUTEmu_KeyboardKey::Down:
-    case GLUTEmu_KeyboardKey::Up:
-    case GLUTEmu_KeyboardKey::PageUp:
-    case GLUTEmu_KeyboardKey::PageDown:
-    case GLUTEmu_KeyboardKey::Home:
-    case GLUTEmu_KeyboardKey::End:
-    case GLUTEmu_KeyboardKey::Insert:
-    case GLUTEmu_KeyboardKey::Delete:
-    case GLUTEmu_KeyboardKey::RightControl:
-    case GLUTEmu_KeyboardKey::RightAlt:
-    case GLUTEmu_KeyboardKey::LeftSuper:
-    case GLUTEmu_KeyboardKey::RightSuper:
-    case GLUTEmu_KeyboardKey::Menu:
-    case GLUTEmu_KeyboardKey::KPEnter:
-    case GLUTEmu_KeyboardKey::KPDivide:
-    case GLUTEmu_KeyboardKey::PrintScreen:
-        extended = true;
-        break;
-    default:
-        break;
-    }
-
-    return scancode | (extended ? 0x100u : 0u);
-}
-
-static void Keyboard_ReportDeviceEvent(uint32_t code, bool down) {
-    if (!device_last)
-        return;
-
-    device_struct *d = &devices[1]; // keyboard device
-    if (code >= (uint32_t)d->lastbutton)
-        return;
-
-    if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != down) {
-        int32_t eventIndex = createDeviceEvent(d);
-        setDeviceEventButtonValue(d, eventIndex, code, down ? 1 : 0);
-        commitDeviceEvent(d);
-    }
-}
-
-static uint32_t bindkey = 0;
-static uint32_t *keyheld_buffer = (uint32_t *)malloc(sizeof(uint32_t));
-static uint32_t *keyheld_bind_buffer = (uint32_t *)malloc(sizeof(uint32_t));
-static int32_t keyheld_n = 0;
-static int32_t keyheld_size = 0;
 
 // clang-format off
-static constexpr int32_t keyboard_scancode_lookup_table[]={
+static constexpr int32_t keyboard_scancode_lookup_table[] = {
     //DESCRIPTION OFFSET  SCANCODE      ASCII      SHIFT       CTRL        ALT        NUM       CAPS SHIFT+CAPS  SHIFT+NUM
     /* ?       */    0 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */    1 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -579,7 +495,6 @@ static constexpr int32_t keyboard_scancode_lookup_table[]={
     /* ?       */  205 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  206 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
 
-
     /* ?       */  207 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  208 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
     /* ?       */  209 ,         0,         0,         0,         0,         0,         0,         0,         0,         0,
@@ -663,13 +578,6 @@ struct KeyMapEntry {
     int qbKey;
 };
 
-struct PunctuationMapEntry {
-    GLUTEmu_KeyboardKey key;
-    int normal;
-    int shifted;
-    int control;
-};
-
 static constexpr KeyMapEntry kDirectKeyMap[] = {
     {GLUTEmu_KeyboardKey::Escape, QBVK_ESCAPE},
     {GLUTEmu_KeyboardKey::Enter, QBVK_RETURN},
@@ -719,6 +627,13 @@ static constexpr KeyMapEntry kDirectKeyMap[] = {
     {GLUTEmu_KeyboardKey::Menu, VK + QBVK_MENU},
 };
 
+struct PunctuationMapEntry {
+    GLUTEmu_KeyboardKey key;
+    int normal;
+    int shifted;
+    int control;
+};
+
 static constexpr PunctuationMapEntry kPunctuationMap[] = {
     {GLUTEmu_KeyboardKey::Minus, '-', '_', 31},        {GLUTEmu_KeyboardKey::Equal, '=', '+', -1},       {GLUTEmu_KeyboardKey::LeftBracket, '[', '{', 27},
     {GLUTEmu_KeyboardKey::RightBracket, ']', '}', 29}, {GLUTEmu_KeyboardKey::Backslash, '\\', '|', 28},  {GLUTEmu_KeyboardKey::Semicolon, ';', ':', -1},
@@ -728,11 +643,7 @@ static constexpr PunctuationMapEntry kPunctuationMap[] = {
 
 static constexpr char kShiftedDigits[] = ")!@#$%^&*(";
 static constexpr int kScancodeEntryWidth = 10;
-static constexpr int32_t kCtrlCaretAscii = 30;
-static constexpr int32_t kKeyhitRingMask = 0x1FFF;
 static constexpr int64_t kKeyhitFlagNumpad = 4294967296ll;
-static constexpr int32_t kPort60hEventCapacity = 256;
-static constexpr int32_t kPort60hEventMaxIndex = 255;
 static constexpr int32_t kScancodeReleaseBias = 128;
 static constexpr uint32_t kAsciiMask = 0xFF00;
 static constexpr uint32_t kFullwidthAsciiStart = 0x0000FF01;
@@ -746,8 +657,26 @@ static constexpr int32_t kBiosKeyboardDataOffset = 0x400;
 static constexpr int32_t kBiosShiftStatusOffset = 0x417;
 static constexpr int32_t kBiosExtendedShiftStatusOffset = 0x418;
 static constexpr int32_t kBiosKeyboardStatusFlagsOffset = 0x496;
+static constexpr int kGlfwKeyLast = int(GLUTEmu_KeyboardKey::Last);
+
 static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
+static int32_t asciicode_reading = 0;
+static int32_t keydown_glyph = 0;
+static RingBuffer<int64_t, 8192, true> keyhit_buffer;
+static RingBuffer<uint8_t, 256, true> port60h_buffer;
+static uint8_t last_port60h_value = 0;
+static uint32_t bindkey = 0;
+static std::vector<uint32_t> keyheld_buffer;
+static std::vector<uint32_t> keyheld_bind_buffer;
+static uint32_t s_pressedKeyCodepoint[kGlfwKeyLast + 1] = {};
+static int s_pressedKeyKeyCode[kGlfwKeyLast + 1] = {};
+static uint32_t s_unknownCharCodepoint = 0;
+static bool s_pendingCharKeyIsAltGr = false;
+static bool s_forceNextKeydownAsAltGr = false;
+static GLUTEmu_KeyboardKey s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+static int s_pendingCharKeyModifiers = 0;
+static bool s_ignoreNextCharCallback = false;
 
 static constexpr inline int TranslateDirectKey(GLUTEmu_KeyboardKey key) {
     for (const auto &entry : kDirectKeyMap) {
@@ -836,12 +765,82 @@ static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool 
     return TranslatePunctuation(key, isShift, forceBase);
 }
 
+void keyboard_clear_keyhit_buffer() {
+    keyhit_buffer.Clear();
+}
+
+bool keyboard_pop_port60h_event(uint8_t *out) {
+    return port60h_buffer.Pop(*out);
+}
+
+void keyboard_set_last_port60h_value(uint8_t v) {
+    last_port60h_value = v;
+}
+
+uint8_t keyboard_get_last_port60h_value() {
+    return last_port60h_value;
+}
+
+// This makes sure _DEVICES sees every physical key press/release, even for keys GLFW cannot map to a US token (GLFW_KEY_UNKNOWN) or keys that produce a
+// character outside the CP437 table (x | UC).
+static constexpr inline uint16_t keyboard_get_device_code_for_glfw(GLUTEmu_KeyboardKey key, uint8_t scancode) {
+    bool extended = false;
+
+    switch (key) {
+    case GLUTEmu_KeyboardKey::Right:
+    case GLUTEmu_KeyboardKey::Left:
+    case GLUTEmu_KeyboardKey::Down:
+    case GLUTEmu_KeyboardKey::Up:
+    case GLUTEmu_KeyboardKey::PageUp:
+    case GLUTEmu_KeyboardKey::PageDown:
+    case GLUTEmu_KeyboardKey::Home:
+    case GLUTEmu_KeyboardKey::End:
+    case GLUTEmu_KeyboardKey::Insert:
+    case GLUTEmu_KeyboardKey::Delete:
+    case GLUTEmu_KeyboardKey::RightControl:
+    case GLUTEmu_KeyboardKey::RightAlt:
+    case GLUTEmu_KeyboardKey::LeftSuper:
+    case GLUTEmu_KeyboardKey::RightSuper:
+    case GLUTEmu_KeyboardKey::Menu:
+    case GLUTEmu_KeyboardKey::KPEnter:
+    case GLUTEmu_KeyboardKey::KPDivide:
+    case GLUTEmu_KeyboardKey::PrintScreen:
+        extended = true;
+        break;
+    default:
+        break;
+    }
+
+    return scancode | (extended ? 0x100u : 0u);
+}
+
+static void Keyboard_ReportDeviceEvent(uint32_t code, bool down) {
+    if (!device_last)
+        return;
+
+    device_struct *d = &devices[1]; // keyboard device
+    if (code >= (uint32_t)d->lastbutton)
+        return;
+
+    if (getDeviceEventButtonValue(d, d->queued_events - 1, code) != down) {
+        int32_t eventIndex = createDeviceEvent(d);
+        setDeviceEventButtonValue(d, eventIndex, code, down ? 1 : 0);
+        commitDeviceEvent(d);
+    }
+}
+
 static inline bool keyboard_is_altgr_combo();
 
-// Forward declaration; the definition is below.
-static constexpr inline uint32_t unicode_to_cp437(uint32_t x);
+static constexpr inline uint32_t unicode_to_cp437(uint32_t x) {
+    for (int32_t i = 0; i <= 255; i++) {
+        if (x == codepage437_to_unicode16[i])
+            return i;
+    }
 
-static char32_t keyboard_utf8_first_codepoint(const char *s) {
+    return 0;
+}
+
+static inline char32_t keyboard_utf8_first_codepoint(const char *s) {
     if (!s || !*s)
         return 0;
 
@@ -868,7 +867,7 @@ static char32_t keyboard_utf8_first_codepoint(const char *s) {
 // physical key. This is needed so Ctrl/Alt combinations produce the correct
 // _KEYHIT on non-US layouts (e.g. the physical Q key on AZERTY is 'a').
 static int keyboard_get_layout_base_key(GLUTEmu_KeyboardKey key, int scancode) {
-    const char *name = glfwGetKeyName(static_cast<int>(key), scancode);
+    auto name = GLUTEmu_KeyboardGetKeyName(key, scancode);
     if (!name || !name[0])
         return -1;
 
@@ -885,7 +884,7 @@ static int keyboard_get_layout_base_key(GLUTEmu_KeyboardKey key, int scancode) {
         return static_cast<int>(cp);
 
     // Try to map a non-ASCII base character (e.g. 'é', '²') into the CP437
-    // table so keydown() can use the existing scancode lookup.
+    // table so keyboard_keydown() can use the existing scancode lookup.
     const uint32_t cp437 = unicode_to_cp437(cp);
     if (cp437)
         return static_cast<int>(cp437);
@@ -932,23 +931,6 @@ static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isCon
     return result;
 }
 
-static constexpr int kGlfwKeyLast = int(GLUTEmu_KeyboardKey::Last);
-static uint32_t s_pressedKeyCodepoint[kGlfwKeyLast + 1] = {};
-static int s_pressedKeyKeyCode[kGlfwKeyLast + 1] = {};
-
-// For keys GLFW reports as GLFW_KEY_UNKNOWN but that still produce a character.
-static uint32_t s_unknownCharCodepoint = 0;
-
-// Track whether a deferred key press was an AltGr combination, so the
-// character callback can force the base o=0 scancode variant even if the
-// AltGr modifier keys are released before the callback fires.
-static bool s_pendingCharKeyIsAltGr = false;
-static bool s_forceNextKeydownAsAltGr = false;
-
-static GLUTEmu_KeyboardKey s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
-static int s_pendingCharKeyModifiers = 0;
-static bool s_ignoreNextCharCallback = false;
-
 static inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isControl, bool isAlt) {
     if (TranslateDirectKey(key) != -1)
         return false;
@@ -984,7 +966,7 @@ static inline void FlushPendingCharKey() {
         const int keyInt = int(s_pendingCharKey);
         if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
             s_pressedKeyKeyCode[keyInt] = qbKey;
-        keydown(qbKey);
+        keyboard_keydown(qbKey);
     }
 
     s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
@@ -1061,12 +1043,8 @@ static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, 
 }
 
 static inline void keyboard_push_keyhit_value(int32_t value, int64_t keyhitFlag) {
-    int32_t nextKeyhit = (keyhit_nextfree + 1) & kKeyhitRingMask;
-    if (nextKeyhit == keyhit_next) { // remove oldest message when cyclic buffer is full
-        keyhit_next = (keyhit_next + 1) & kKeyhitRingMask;
-    }
-    keyhit[keyhit_nextfree] = static_cast<int64_t>(static_cast<uint32_t>(value)) | keyhitFlag;
-    keyhit_nextfree = nextKeyhit;
+    int64_t v = static_cast<int64_t>(static_cast<uint32_t>(value)) | keyhitFlag;
+    keyhit_buffer.Push(v);
 }
 
 static inline void keyboard_push_bios_keystroke(int32_t b1, int32_t b2) {
@@ -1222,21 +1200,10 @@ static constexpr inline bool keyboard_is_onkey_extended_key(uint32_t key) {
 }
 
 int32_t func__keyhit() {
-    /*
-        //keyhit cyclic buffer
-        int64_t keyhit[8192];
-        //    keyhit specific internal flags: (stored in high 32-bits)
-        //    &4294967296->numpad was used
-        int32_t keyhit_nextfree=0;
-        int32_t keyhit_next=0;
-        //note: if full, the oldest message is discarded to make way for the new message
-    */
-    if (keyhit_next != keyhit_nextfree) {
-        int32_t x = *(int32_t *)&keyhit[keyhit_next];
-        keyhit_next = (keyhit_next + 1) & kKeyhitRingMask;
-        return x;
+    int64_t x = 0;
+    if (keyhit_buffer.Pop(x)) {
+        return static_cast<int32_t>(x);
     }
-
     return 0;
 }
 
@@ -1295,13 +1262,12 @@ void sub__keyclear(int32_t buf, int32_t passed) {
 
     if ((buf == 2 && passed) || !passed) {
         // _KEYHIT buffer
-        keyhit_nextfree = 0;
-        keyhit_next = 0;
+        keyhit_buffer.Clear();
     }
 
     if ((buf == 3 && passed) || !passed) {
         // INP(&H60) buffer
-        port60h_events = 0;
+        port60h_buffer.Clear();
     }
 
     // GLFW_TODO: We should really have a $CONSOLE:ONLY version of the functions in the TU
@@ -1315,7 +1281,7 @@ void keyboard_set_bindkey(uint32_t key) {
 }
 
 static int32_t keyheld(uint32_t x) {
-    for (int32_t i = 0; i < keyheld_n; i++) {
+    for (size_t i = 0; i < keyheld_buffer.size(); i++) {
         if (keyheld_buffer[i] == x)
             return 1;
     }
@@ -1369,67 +1335,49 @@ static int32_t keyheld(uint32_t x) {
 }
 
 static inline void keyheld_add(uint32_t x) {
-    for (int32_t i = 0; i < keyheld_n; i++) {
+    for (size_t i = 0; i < keyheld_buffer.size(); i++) {
         if (keyheld_buffer[i] == x)
             return;
     } // already in buffer
 
-    if (keyheld_n == keyheld_size) {
-        keyheld_size++;
-        keyheld_buffer = (uint32_t *)realloc(keyheld_buffer, keyheld_size * 4);
-        keyheld_bind_buffer = (uint32_t *)realloc(keyheld_bind_buffer, keyheld_size * 4);
-    } // expand buffer
-
-    keyheld_buffer[keyheld_n] = x; // add entry
-    keyheld_bind_buffer[keyheld_n] = bindkey;
+    keyheld_buffer.push_back(x);
+    keyheld_bind_buffer.push_back(bindkey);
     bindkey = 0; // add binded key (0=none)
-    keyheld_n++; // note: inc. must occur after setting entry (threading reasons)
 }
 
 static inline void keyheld_remove(uint32_t x) {
-    for (int32_t i = 0; i < keyheld_n; i++) {
+    for (size_t i = 0; i < keyheld_buffer.size(); i++) {
         if (keyheld_buffer[i] == x) { // exists
-            memmove(&keyheld_buffer[i], &keyheld_buffer[i + 1], (keyheld_n - i - 1) * 4);
-            memmove(&keyheld_bind_buffer[i], &keyheld_bind_buffer[i + 1], (keyheld_n - i - 1) * 4);
-            keyheld_n--; // note: dec. must occur after memmove (threading reasons)
+            keyheld_buffer[i] = keyheld_buffer.back();
+            keyheld_buffer.pop_back();
+
+            keyheld_bind_buffer[i] = keyheld_bind_buffer.back();
+            keyheld_bind_buffer.pop_back();
             return;
         }
     }
 }
 
 static inline void scancodedown(uint8_t scancode) {
-    if (port60h_events) {
-        if (port60h_event[port60h_events - 1] == scancode)
-            return; // avoid duplicate entries in buffer (eg. from key-repeats)
+    if (!scancode)
+        return;
+    // Avoid duplicate entries from key repeats
+    if (auto const *last = port60h_buffer.PeekBack()) {
+        if (*last == scancode)
+            return;
     }
-    if (port60h_events == kPort60hEventCapacity) {
-        memmove(port60h_event, port60h_event + 1, kPort60hEventMaxIndex);
-        port60h_events = kPort60hEventMaxIndex;
-    }
-    port60h_event[port60h_events] = scancode;
-    port60h_events++;
+    port60h_buffer.Push(scancode);
 }
 
 static inline void scancodeup(uint8_t scancode) {
-    if (port60h_events) {
-        if (port60h_event[port60h_events - 1] == (scancode + kScancodeReleaseBias))
-            return; // avoid duplicate entries in buffer
+    if (!scancode)
+        return;
+    uint8_t releaseCode = scancode + kScancodeReleaseBias;
+    if (auto const *last = port60h_buffer.PeekBack()) {
+        if (*last == releaseCode)
+            return;
     }
-    if (port60h_events == kPort60hEventCapacity) {
-        memmove(port60h_event, port60h_event + 1, kPort60hEventMaxIndex);
-        port60h_events = kPort60hEventMaxIndex;
-    }
-    port60h_event[port60h_events] = scancode + kScancodeReleaseBias;
-    port60h_events++;
-}
-
-static constexpr inline uint32_t unicode_to_cp437(uint32_t x) {
-    for (int32_t i = 0; i <= 255; i++) {
-        if (x == codepage437_to_unicode16[i])
-            return i;
-    }
-
-    return 0;
+    port60h_buffer.Push(releaseCode);
 }
 
 static inline void keydown_unicode(uint32_t x) {
@@ -1437,14 +1385,14 @@ static inline void keydown_unicode(uint32_t x) {
 
     // note: UNICODE 0-127 map directly to ASCII 0-127
     if (x <= 127) {
-        keydown(x);
+        keyboard_keydown(x);
         return;
     }
 
     // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
     auto x2 = unicode_to_cp437(x);
     if (x2) {
-        keydown(x2);
+        keyboard_keydown(x2);
         return;
     }
 
@@ -1453,30 +1401,30 @@ static inline void keydown_unicode(uint32_t x) {
     // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
     // role is already fulfilled by U+3000 "ideographic space."
     if ((x >= kFullwidthAsciiStart) && (x <= kFullwidthAsciiEnd)) {
-        keydown(x - kFullwidthAsciiStart + 0x21);
+        keyboard_keydown(x - kFullwidthAsciiStart + 0x21);
         return;
     }
 
     if (x == kIdeographicSpace) {
-        keydown(32);
+        keyboard_keydown(32);
         return;
     }
 
     x |= UC;
-    keydown(x);
+    keyboard_keydown(x);
 }
 
 static inline void keyup_unicode(uint32_t x) {
     // note: UNICODE 0-127 map directly to ASCII 0-127
     if (x <= 127) {
-        keyup(x);
+        keyboard_keyup(x);
         return;
     }
 
     // note: some UNICODE values map directly to CP437 values found in the extended ASCII set
     auto x2 = unicode_to_cp437(x);
     if (x2) {
-        keyup(x2);
+        keyboard_keyup(x2);
         return;
     }
 
@@ -1485,24 +1433,22 @@ static inline void keyup_unicode(uint32_t x) {
     // This is useful for typesetting Latin characters in a CJK  environment. U+FF00 does not correspond to a fullwidth ASCII 20 (space character), since that
     // role is already fulfilled by U+3000 "ideographic space."
     if ((x >= kFullwidthAsciiStart) && (x <= kFullwidthAsciiEnd)) {
-        keyup(x - kFullwidthAsciiStart + 0x21);
+        keyboard_keyup(x - kFullwidthAsciiStart + 0x21);
         return;
     }
 
     if (x == kIdeographicSpace) {
-        keyup(32);
+        keyboard_keyup(32);
         return;
     }
 
     x |= UC;
-    keyup(x);
+    keyboard_keyup(x);
 }
 
-void keyup(uint32_t x) {
+void keyboard_keyup(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
-
-    const uint32_t originalX = x;
 
     keyheld_remove(x);
 
@@ -1521,63 +1467,33 @@ void keyup(uint32_t x) {
     // static int32_t numlock;
     // numlock = 0;
 
-    if (x <= 255) {
-        if (keyboard_scancode_has_variant(x, 0)) {
-            const uint8_t scancode = keyboard_scancode_get_scancode(x);
-            scancodeup(scancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), false);
-        }
+    if (x <= 255)
         goto key_handled;
-    } // x<=255
 
-    // NUMPAD?
-    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER))) {
-        // if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_PERIOD)))
-        //     numlock = 1;
-        x = (x - (VK + QBVK_KP0) + 256) * 256;
-        goto numpadkey;
-    }
-    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0)))) {
-        x = (x - (QBK + 0) + 256) * 256;
-        goto numpadkey;
-    }
-
+    if ((x >= (VK + QBVK_KP0)) && (x <= (VK + QBVK_KP_ENTER)))
+        goto key_handled;
+    if ((x >= (QBK + 0)) && (x <= (QBK + 0 + (QBVK_KP_PERIOD - QBVK_KP0))))
+        goto key_handled;
     if (x <= 65535) {
-        static int32_t r;
-    numpadkey:
-        r = (x >> 8) + 256;
-        if (keyboard_scancode_has_variant(r, 0)) {
-            const uint8_t scancode = keyboard_scancode_get_scancode(r);
-            scancodeup(scancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), false);
-        }
-
-        if (x == QBKC_INSERT) { // INSERT lock emulation
-            update_shift_state();
-        }
-
+        if (x == QBKC_INSERT)
+            keyboard_update_shift_state();
         goto key_handled;
-    } // x<=65536
+    }
 
     { // scope
         uint8_t modifierScancode;
         int32_t modifierFlagsMask;
         if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
-            (void)modifierFlagsMask;
-            scancodeup(modifierScancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, modifierScancode), false);
-            update_shift_state();
+            keyboard_update_shift_state();
         }
     }
 
 key_handled:;
 }
 
-void keydown(uint32_t x) {
+void keyboard_keydown(uint32_t x) {
     if (!x)
         x = QBK + QBK_CHR0;
-
-    const uint32_t originalX = x;
 
     static int32_t glyph;
     glyph = keydown_glyph;
@@ -1869,8 +1785,8 @@ void keydown(uint32_t x) {
 
                             for (i2 = 0; i2 < onkey[i].text->len; i2++) {
                                 block_onkey = 1;
-                                keydown(onkey[i].text->chr[i2]);
-                                keyup(onkey[i].text->chr[i2]);
+                                keyboard_keydown(onkey[i].text->chr[i2]);
+                                keyboard_keyup(onkey[i].text->chr[i2]);
                                 block_onkey = 0;
                             } // i2
                             goto key_handled;
@@ -1902,10 +1818,6 @@ void keydown(uint32_t x) {
         static int32_t b1, b2, z, o;
         b1 = x;
         if ((b2 = keyboard_scancode_get_scancode(x))) { // table entry exists
-            const uint8_t scancode = static_cast<uint8_t>(b2);
-            scancodedown(scancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), true);
-
             // check for relevant table modifiers
             keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
             o = 0;
@@ -1950,9 +1862,6 @@ void keydown(uint32_t x) {
         b2 = x >> 8;
         r = (x >> 8) + 256;
         if (keyboard_scancode_has_variant(r, 0)) {
-            const uint8_t scancode = keyboard_scancode_get_scancode(r);
-            scancodedown(scancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, scancode), true);
             // check relevant modifiers
             keyboard_get_modifier_triplet(&shift, &ctrl, &alt);
 
@@ -1965,7 +1874,7 @@ void keydown(uint32_t x) {
                         } else {
                             keyheld_add(QBK + QBK_INSERT_MODE);
                         }
-                        update_shift_state();
+                        keyboard_update_shift_state();
                     }
                 }
             }
@@ -2000,9 +1909,6 @@ void keydown(uint32_t x) {
         uint8_t modifierScancode;
         int32_t modifierFlagsMask;
         if (keyboard_try_get_modifier_data(x, &modifierScancode, &modifierFlagsMask)) {
-            scancodedown(modifierScancode);
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code(originalX, modifierScancode), true);
-
             if (x == (VK + QBVK_SCROLLLOCK)) {
                 if (scroll_lock_held == 0) { // nullify effects of key repeats
                     ctrl = keyboard_is_ctrl_held();
@@ -2017,7 +1923,7 @@ void keydown(uint32_t x) {
                 }
             }
 
-            update_shift_state();
+            keyboard_update_shift_state();
         }
     }
 
@@ -2025,7 +1931,7 @@ key_handled:
     sleep_break = 1;
 }
 
-void update_shift_state() {
+void keyboard_update_shift_state() {
     int32_t x;
     /*
         0:417h                   Shift Status
@@ -2215,6 +2121,229 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     s_forceNextKeydownAsAltGr = false;
 }
 
+static constexpr uint8_t glfw_key_to_dos_scancode(GLUTEmu_KeyboardKey key) {
+    switch (key) {
+    case GLUTEmu_KeyboardKey::Escape:
+        return 0x01;
+    case GLUTEmu_KeyboardKey::One:
+        return 0x02;
+    case GLUTEmu_KeyboardKey::Two:
+        return 0x03;
+    case GLUTEmu_KeyboardKey::Three:
+        return 0x04;
+    case GLUTEmu_KeyboardKey::Four:
+        return 0x05;
+    case GLUTEmu_KeyboardKey::Five:
+        return 0x06;
+    case GLUTEmu_KeyboardKey::Six:
+        return 0x07;
+    case GLUTEmu_KeyboardKey::Seven:
+        return 0x08;
+    case GLUTEmu_KeyboardKey::Eight:
+        return 0x09;
+    case GLUTEmu_KeyboardKey::Nine:
+        return 0x0A;
+    case GLUTEmu_KeyboardKey::Zero:
+        return 0x0B;
+    case GLUTEmu_KeyboardKey::Minus:
+        return 0x0C;
+    case GLUTEmu_KeyboardKey::Equal:
+        return 0x0D;
+    case GLUTEmu_KeyboardKey::Backspace:
+        return 0x0E;
+    case GLUTEmu_KeyboardKey::Tab:
+        return 0x0F;
+    case GLUTEmu_KeyboardKey::Q:
+        return 0x10;
+    case GLUTEmu_KeyboardKey::W:
+        return 0x11;
+    case GLUTEmu_KeyboardKey::E:
+        return 0x12;
+    case GLUTEmu_KeyboardKey::R:
+        return 0x13;
+    case GLUTEmu_KeyboardKey::T:
+        return 0x14;
+    case GLUTEmu_KeyboardKey::Y:
+        return 0x15;
+    case GLUTEmu_KeyboardKey::U:
+        return 0x16;
+    case GLUTEmu_KeyboardKey::I:
+        return 0x17;
+    case GLUTEmu_KeyboardKey::O:
+        return 0x18;
+    case GLUTEmu_KeyboardKey::P:
+        return 0x19;
+    case GLUTEmu_KeyboardKey::LeftBracket:
+        return 0x1A;
+    case GLUTEmu_KeyboardKey::RightBracket:
+        return 0x1B;
+    case GLUTEmu_KeyboardKey::Enter:
+        return 0x1C;
+    case GLUTEmu_KeyboardKey::LeftControl:
+        return 0x1D;
+    case GLUTEmu_KeyboardKey::RightControl:
+        return 0x1D;
+    case GLUTEmu_KeyboardKey::A:
+        return 0x1E;
+    case GLUTEmu_KeyboardKey::S:
+        return 0x1F;
+    case GLUTEmu_KeyboardKey::D:
+        return 0x20;
+    case GLUTEmu_KeyboardKey::F:
+        return 0x21;
+    case GLUTEmu_KeyboardKey::G:
+        return 0x22;
+    case GLUTEmu_KeyboardKey::H:
+        return 0x23;
+    case GLUTEmu_KeyboardKey::J:
+        return 0x24;
+    case GLUTEmu_KeyboardKey::K:
+        return 0x25;
+    case GLUTEmu_KeyboardKey::L:
+        return 0x26;
+    case GLUTEmu_KeyboardKey::Semicolon:
+        return 0x27;
+    case GLUTEmu_KeyboardKey::Apostrophe:
+        return 0x28;
+    case GLUTEmu_KeyboardKey::GraveAccent:
+        return 0x29;
+    case GLUTEmu_KeyboardKey::LeftShift:
+        return 0x2A;
+    case GLUTEmu_KeyboardKey::Backslash:
+        return 0x2B;
+    case GLUTEmu_KeyboardKey::Z:
+        return 0x2C;
+    case GLUTEmu_KeyboardKey::X:
+        return 0x2D;
+    case GLUTEmu_KeyboardKey::C:
+        return 0x2E;
+    case GLUTEmu_KeyboardKey::V:
+        return 0x2F;
+    case GLUTEmu_KeyboardKey::B:
+        return 0x30;
+    case GLUTEmu_KeyboardKey::N:
+        return 0x31;
+    case GLUTEmu_KeyboardKey::M:
+        return 0x32;
+    case GLUTEmu_KeyboardKey::Comma:
+        return 0x33;
+    case GLUTEmu_KeyboardKey::Period:
+        return 0x34;
+    case GLUTEmu_KeyboardKey::Slash:
+        return 0x35;
+    case GLUTEmu_KeyboardKey::RightShift:
+        return 0x36;
+    case GLUTEmu_KeyboardKey::KPMultiply:
+        return 0x37;
+    case GLUTEmu_KeyboardKey::LeftAlt:
+        return 0x38;
+    case GLUTEmu_KeyboardKey::RightAlt:
+        return 0x38;
+    case GLUTEmu_KeyboardKey::Space:
+        return 0x39;
+    case GLUTEmu_KeyboardKey::CapsLock:
+        return 0x3A;
+    case GLUTEmu_KeyboardKey::F1:
+        return 0x3B;
+    case GLUTEmu_KeyboardKey::F2:
+        return 0x3C;
+    case GLUTEmu_KeyboardKey::F3:
+        return 0x3D;
+    case GLUTEmu_KeyboardKey::F4:
+        return 0x3E;
+    case GLUTEmu_KeyboardKey::F5:
+        return 0x3F;
+    case GLUTEmu_KeyboardKey::F6:
+        return 0x40;
+    case GLUTEmu_KeyboardKey::F7:
+        return 0x41;
+    case GLUTEmu_KeyboardKey::F8:
+        return 0x42;
+    case GLUTEmu_KeyboardKey::F9:
+        return 0x43;
+    case GLUTEmu_KeyboardKey::F10:
+        return 0x44;
+    case GLUTEmu_KeyboardKey::NumLock:
+        return 0x45;
+    case GLUTEmu_KeyboardKey::ScrollLock:
+        return 0x46;
+    case GLUTEmu_KeyboardKey::Pause:
+        return 0x46;
+    case GLUTEmu_KeyboardKey::KP7:
+        return 0x47;
+    case GLUTEmu_KeyboardKey::Home:
+        return 0x47;
+    case GLUTEmu_KeyboardKey::KP8:
+        return 0x48;
+    case GLUTEmu_KeyboardKey::Up:
+        return 0x48;
+    case GLUTEmu_KeyboardKey::KP9:
+        return 0x49;
+    case GLUTEmu_KeyboardKey::PageUp:
+        return 0x49;
+    case GLUTEmu_KeyboardKey::KPSubtract:
+        return 0x4A;
+    case GLUTEmu_KeyboardKey::KP4:
+        return 0x4B;
+    case GLUTEmu_KeyboardKey::Left:
+        return 0x4B;
+    case GLUTEmu_KeyboardKey::KP5:
+        return 0x4C;
+    case GLUTEmu_KeyboardKey::KP6:
+        return 0x4D;
+    case GLUTEmu_KeyboardKey::Right:
+        return 0x4D;
+    case GLUTEmu_KeyboardKey::KPAdd:
+        return 0x4E;
+    case GLUTEmu_KeyboardKey::KP1:
+        return 0x4F;
+    case GLUTEmu_KeyboardKey::End:
+        return 0x4F;
+    case GLUTEmu_KeyboardKey::KP2:
+        return 0x50;
+    case GLUTEmu_KeyboardKey::Down:
+        return 0x50;
+    case GLUTEmu_KeyboardKey::KP3:
+        return 0x51;
+    case GLUTEmu_KeyboardKey::PageDown:
+        return 0x51;
+    case GLUTEmu_KeyboardKey::KP0:
+        return 0x52;
+    case GLUTEmu_KeyboardKey::Insert:
+        return 0x52;
+    case GLUTEmu_KeyboardKey::KPDecimal:
+        return 0x53;
+    case GLUTEmu_KeyboardKey::Delete:
+        return 0x53;
+    case GLUTEmu_KeyboardKey::KPDivide:
+        return 0x35;
+    case GLUTEmu_KeyboardKey::F11:
+        return 0x57;
+    case GLUTEmu_KeyboardKey::F12:
+        return 0x58;
+    case GLUTEmu_KeyboardKey::KPEqual:
+        return 0x59;
+    case GLUTEmu_KeyboardKey::LeftSuper:
+        return 0x5B;
+    case GLUTEmu_KeyboardKey::RightSuper:
+        return 0x5C;
+    case GLUTEmu_KeyboardKey::Menu:
+        return 0x5D;
+    case GLUTEmu_KeyboardKey::KPEnter:
+        return 0x1C;
+    case GLUTEmu_KeyboardKey::PrintScreen:
+        return 0x37;
+    case GLUTEmu_KeyboardKey::F13:
+        return 0x64;
+    case GLUTEmu_KeyboardKey::F14:
+        return 0x65;
+    case GLUTEmu_KeyboardKey::F15:
+        return 0x66;
+    default:
+        return 0;
+    }
+}
+
 void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers) {
     const bool isPressed = (action != GLUTEmu_ButtonAction::Released);
     const uint8_t scancode8 = static_cast<uint8_t>(scancode);
@@ -2224,6 +2353,16 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     }
 
     FlushPendingCharKey();
+
+    const uint8_t dosScancode = glfw_key_to_dos_scancode(key);
+    if (isPressed) {
+        scancodedown(dosScancode);
+    } else {
+        scancodeup(dosScancode);
+    }
+    if (scancode8) {
+        Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), isPressed);
+    }
 
     const bool isNumLock = bool(modifiers & GLUTEmu_KeyboardKeyModifier::NumLock);
     const bool isShift = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Shift);
@@ -2237,8 +2376,6 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             keyup_unicode(s_unknownCharCodepoint);
             s_unknownCharCodepoint = 0;
             s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
-            if (scancode8)
-                Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
             return;
         }
 
@@ -2247,25 +2384,19 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             if (s_pressedKeyCodepoint[keyInt]) {
                 keyup_unicode(s_pressedKeyCodepoint[keyInt]);
                 s_pressedKeyCodepoint[keyInt] = 0;
-                if (scancode8)
-                    Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
                 return;
             }
 
             if (s_pressedKeyKeyCode[keyInt]) {
-                keyup(s_pressedKeyKeyCode[keyInt]);
+                keyboard_keyup(s_pressedKeyKeyCode[keyInt]);
                 s_pressedKeyKeyCode[keyInt] = 0;
-                if (scancode8)
-                    Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
                 return;
             }
         }
 
         const int qbKey = TranslateKey(key, isShift, isControl, isAlt, isCapsLock, useKeypadNumber, scancode);
         if (qbKey != -1)
-            keyup(qbKey);
-        if (scancode8)
-            Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), false);
+            keyboard_keyup(qbKey);
         return;
     }
 
@@ -2282,12 +2413,9 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             const int keyInt = int(key);
             if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
                 s_pressedKeyKeyCode[keyInt] = qbKey;
-            keydown(qbKey);
+            keyboard_keydown(qbKey);
         }
     }
-
-    if (scancode8)
-        Keyboard_ReportDeviceEvent(keyboard_get_device_code_for_glfw(key, scancode8), true);
 }
 
 void GLUT_KEYBOARD_FOCUS_FUNC(bool focused) {
@@ -2296,9 +2424,10 @@ void GLUT_KEYBOARD_FOCUS_FUNC(bool focused) {
     }
 
     // Release all held keys so they don't stick after an Alt-Tab or focus loss.
-    const int32_t count = keyheld_n;
-    for (int32_t i = count - 1; i >= 0; --i) {
-        keyup(keyheld_buffer[i]);
+    // Copy the buffer because keyboard_keyup modifies it via keyheld_remove
+    std::vector<uint32_t> buffer_copy = keyheld_buffer;
+    for (size_t i = 0; i < buffer_copy.size(); i++) {
+        keyboard_keyup(buffer_copy[i]);
     }
 
     // Clear any deferred/pending character state.
