@@ -1,5 +1,6 @@
 #include "libqb-common.h"
 
+#include "completion.h"
 #include "glut-emu.h"
 #include "gui.h"
 #include "keyboard.h"
@@ -80,6 +81,23 @@ static bool glut_is_started;
 // True only on the initial thread that owns GLUT. thread_local avoids any
 // platform-specific thread-ID API and works on Windows, Linux and macOS.
 static thread_local bool current_thread_owns_glut;
+static struct completion glut_thread_starter;
+static struct completion *glut_thread_initialized;
+
+void libqb_start_glut_thread() {
+    if (glut_is_started)
+        return;
+
+    struct completion init;
+    completion_init(&init);
+
+    glut_thread_initialized = &init;
+
+    completion_finish(&glut_thread_starter);
+
+    completion_wait(&init);
+    completion_clear(&init);
+}
 
 // Checks whether the GLUT thread is running
 bool libqb_is_glut_up() {
@@ -93,8 +111,12 @@ bool libqb_is_glut_thread() {
 void libqb_glut_presetup() {
     current_thread_owns_glut = true;
 
-    initialize_glut(); // Initialize GLUT always
-    glut_is_started = true;
+    if (!screen_hide) {
+        initialize_glut(); // Initialize GLUT if the screen isn't hidden
+        glut_is_started = true;
+    } else {
+        completion_init(&glut_thread_starter);
+    }
 }
 
 void libqb_start_main_thread() {
@@ -102,6 +124,19 @@ void libqb_start_main_thread() {
     // initial thread.
     struct libqb_thread *main_loop = libqb_thread_new();
     libqb_thread_start(main_loop, MAIN_LOOP, NULL);
+
+    // This happens for $SCREENHIDE programs. This thread waits on the
+    // `glut_thread_starter` completion, which will get completed if a
+    // _ScreenShow is used.
+    if (!glut_is_started) {
+        completion_wait(&glut_thread_starter);
+
+        initialize_glut();
+        glut_is_started = true;
+
+        if (glut_thread_initialized)
+            completion_finish(glut_thread_initialized);
+    }
 
     GLUTEmu_MainLoop();
 }

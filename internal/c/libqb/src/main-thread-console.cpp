@@ -16,6 +16,8 @@ void libqb_start_main_thread() {
     MAIN_LOOP(NULL);
 }
 
+void libqb_start_glut_thread() {}
+
 bool libqb_is_glut_up() {
     return false;
 }

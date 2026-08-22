@@ -650,6 +650,15 @@ class GLUTEmu {
 
                     WindowSetSizeLimits(windowMinWidth, windowMinHeight, windowMaxWidth, windowMaxHeight);
 
+                    switch (std::get<0>(cachedWindowPosition)) {
+                    case 1:
+                        WindowMove(std::get<1>(cachedWindowPosition), std::get<2>(cachedWindowPosition));
+                        break;
+                    case -1:
+                        WindowCenter();
+                        break;
+                    }
+
                     libqb_log_trace("Window created (%u x %u)", width, height);
 
                     return true;
@@ -967,7 +976,8 @@ class GLUTEmu {
 
             libqb_log_trace("Window moved to (%d, %d)", x, y);
         } else {
-            libqb_log_error("Window not created, cannot move");
+            cachedWindowPosition = {1, x, y};
+            libqb_log_info("Window not created, cached position (%d, %d)", x, y);
         }
     }
 
@@ -992,7 +1002,8 @@ class GLUTEmu {
 
             libqb_log_trace("Window centered");
         } else {
-            libqb_log_error("Window not created, cannot center");
+            cachedWindowPosition = {-1, 0, 0};
+            libqb_log_info("Window not created, cached center request");
         }
     }
 
@@ -2117,29 +2128,31 @@ class GLUTEmu {
         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor = nullptr;                                         // current monitor
-    float monitorScaleX = 1.0f, monitorScaleY = 1.0f;                       // current monitor content scale for DPI scaling
-    GLFWwindow *window = nullptr;                                           // current window
-    std::string windowTitle;                                                // current window title
-    int windowX = 0, windowY = 0;                                           // current window position (in pixel coordinates)
-    int windowWidth = 0, windowHeight = 0;                                  // current window size (in pixel coordinates)
-    float windowScaleX = 1.0f, windowScaleY = 1.0f;                         // window scaling factors
-    bool isWindowFullscreen = false;                                        // whether the window is in fullscreen mode
-    bool isWindowMaximized = false;                                         // whether the window is currently maximized
-    bool isWindowMinimized = false;                                         // whether the window is currently minimized
-    bool isWindowFocused = false;                                           // whether the window is currently focused
-    bool isWindowHidden = false;                                            // whether the window is currently hidden
-    bool isWindowFloating = false;                                          // whether the window is currently floating
-    float windowOpacity = 1.0f;                                             // current window opacity
-    bool isWindowBordered = true;                                           // whether the window is currently bordered
-    bool isWindowMousePassthrough = false;                                  // whether the window is currently allowing mouse passthrough
-    int windowedX = 0, windowedY = 0;                                       // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth = 0, windowedHeight = 0;                              // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidth = -1, windowMinHeight = -1;                          // current window size limits (in screen coordinates, -1 for no limit)
-    int windowMaxWidth = -1, windowMaxHeight = -1;                          // current window size limits (in screen coordinates, -1 for no limit)
-    int framebufferWidth = 0, framebufferHeight = 0;                        // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode = {0, 0, 0};                       // current screen mode (width, height, refresh rate)
-    GLFWcursor *cursor = nullptr;                                           // current mouse cursor
+    GLFWmonitor *monitor = nullptr;                   // current monitor
+    float monitorScaleX = 1.0f, monitorScaleY = 1.0f; // current monitor content scale for DPI scaling
+    GLFWwindow *window = nullptr;                     // current window
+    std::string windowTitle;                          // current window title
+    int windowX = 0, windowY = 0;                     // current window position (in pixel coordinates)
+    int windowWidth = 0, windowHeight = 0;            // current window size (in pixel coordinates)
+    float windowScaleX = 1.0f, windowScaleY = 1.0f;   // window scaling factors
+    bool isWindowFullscreen = false;                  // whether the window is in fullscreen mode
+    bool isWindowMaximized = false;                   // whether the window is currently maximized
+    bool isWindowMinimized = false;                   // whether the window is currently minimized
+    bool isWindowFocused = false;                     // whether the window is currently focused
+    bool isWindowHidden = false;                      // whether the window is currently hidden
+    bool isWindowFloating = false;                    // whether the window is currently floating
+    float windowOpacity = 1.0f;                       // current window opacity
+    bool isWindowBordered = true;                     // whether the window is currently bordered
+    bool isWindowMousePassthrough = false;            // whether the window is currently allowing mouse passthrough
+    int windowedX = 0, windowedY = 0;                 // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth = 0, windowedHeight = 0;        // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidth = -1, windowMinHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidth = -1, windowMaxHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
+
+    int framebufferWidth = 0, framebufferHeight = 0;            // current framebuffer size (in pixel coordinates)
+    std::tuple<int, int, int> screenMode = {0, 0, 0};           // current screen mode (width, height, refresh rate)
+    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0}; // window position in pixels, {0, 0, 0}: default, {1, x, y}: user, {-1, 0, 0}: centered
+    GLFWcursor *cursor = nullptr;                               // current mouse cursor
     GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal; // current mouse cursor mode (normal, hidden, disabled, captured)
     int keyboardModifiers = 0;                                              // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)

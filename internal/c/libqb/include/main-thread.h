@@ -8,6 +8,10 @@ void libqb_glut_presetup();
 // Starts the "main thread", including handling all the GLUT setup.
 void libqb_start_main_thread();
 
+// Used to support _ScreenShow, which can start the GLUT thread after the
+// program is started
+void libqb_start_glut_thread();
+
 // Indicates whether GLUT is currently running (and thus whether we're able to
 // do any GLUT-related stuff
 bool libqb_is_glut_up();

@@ -265,7 +265,7 @@ void sub__screenmove(int32_t x, int32_t y, int32_t passed) {
         return;
     }
 
-    NEEDS_GLUT();
+    // We will allow this to pass through even if GLUTEmu is not ready, so that the window position can be cached and applied when GLUTEmu creates the window.
 
     if (passed == 2) {
         GLUTEmu_WindowMove(x, y);
@@ -279,7 +279,7 @@ void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY
         return;
     }
 
-    OPTIONAL_GLUT();
+    // We will allow this to pass through even if GLUTEmu is not ready, so that the window limits can be cached and applied when GLUTEmu creates the window.
 
     if (display_page && display_page->text) {
         int32_t fw = fontwidth[display_page->font];
@@ -302,6 +302,8 @@ void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY
 }
 
 void sub__screenshow() {
+    libqb_start_glut_thread();
+
     screen_hide = 0;
 
     GLUTEmu_WindowHide(false);
@@ -310,6 +312,9 @@ void sub__screenshow() {
 void sub__screenhide() {
     if (screen_hide)
         return;
+
+    // This is probably unnecessary, no conditions allow for screen_hide==0 without GLUT running, but it doesn't hurt anything.
+    libqb_start_glut_thread();
 
     GLUTEmu_WindowHide(true);
 
