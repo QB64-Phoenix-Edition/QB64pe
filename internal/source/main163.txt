@@ -1,323 +1,164 @@
-qbs* FUNC_READSETTING(qbs*_FUNC_READSETTING_STRING_FILE,qbs*_FUNC_READSETTING_STRING___SECTION,qbs*_FUNC_READSETTING_STRING___KEY){
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs* FUNC_READCHUNK(qbs*_FUNC_READCHUNK_STRING_A,qbs*_FUNC_READCHUNK_STRING_LAST_CHARACTER){
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs *tqbs;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 ptrszint tmp_long;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 int32 tmp_fileno;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 #include "data163.txt"
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 mem_lock *sf_mem_lock;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 new_mem_lock();
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 sf_mem_lock->type=3;
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 libqb_check_stack();
+#line 57 "subs_functions/extensions/opengl/opengl_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 58 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-if(!qbevent)break;evnt(28181,158,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,159,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,160,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,161,"ini.bm");}while(r);
-do{
-SUB_INILOAD(_FUNC_READSETTING_STRING_FILE);
+#line 58 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_rtrim(_FUNC_READCHUNK_STRING_A)));
+#line 58 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,163,"ini.bm");}while(r);
-S_37997:;
-if ((*__LONG_INICODE)||is_error_pending()){
-if(qbevent){evnt(28181,164,"ini.bm");if(r)goto S_37997;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,164,"ini.bm");}while(r);
-}
-S_38000:;
-if ((qbs_cleanup(qbs_tmp_base,(-(*__ULONG_CURRENTINIFILELOF== 0 ))|(-(((int32)(qbs_ltrim(qbs_rtrim(__STRING_INIWHOLEFILE)))->len)== 0 ))))||is_error_pending()){
-if(qbevent){evnt(28181,166,"ini.bm");if(r)goto S_38000;}
-do{
-*__LONG_INICODE= 17 ;
-if(!qbevent)break;evnt(28181,166,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,166,"ini.bm");}while(r);
-}
-do{
-if(!qbevent)break;evnt(28181,168,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,169,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,170,"ini.bm");}while(r);
-do{
-qbs_set(_FUNC_READSETTING_STRING_SECTION,FUNC_INIFORMATSECTION(_FUNC_READSETTING_STRING___SECTION));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,172,"ini.bm");}while(r);
-S_38008:;
-if ((*__LONG_INICODE)||is_error_pending()){
-if(qbevent){evnt(28181,173,"ini.bm");if(r)goto S_38008;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,173,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INISECTIONDATA,FUNC_INIGETSECTION(_FUNC_READSETTING_STRING_SECTION));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,176,"ini.bm");}while(r);
-S_38012:;
-if (((-(*__LONG_INICODE> 0 ))&(-(*__LONG_INICODE!= 17 )))||is_error_pending()){
-if(qbevent){evnt(28181,177,"ini.bm");if(r)goto S_38012;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,177,"ini.bm");}while(r);
-}
-S_38015:;
-if ((qbs_cleanup(qbs_tmp_base,(-(__STRING_INISECTIONDATA->len== 0 ))&(qbs_notequal(_FUNC_READSETTING_STRING_SECTION,qbs_new_txt_len("[]",2)))))||is_error_pending()){
-if(qbevent){evnt(28181,179,"ini.bm");if(r)goto S_38015;}
-do{
-*__LONG_INICODE= 14 ;
-if(!qbevent)break;evnt(28181,179,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,179,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INILASTSECTION,_FUNC_READSETTING_STRING_SECTION);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,181,"ini.bm");}while(r);
-do{
-*__ULONG_INIPOSITION= 0 ;
-if(!qbevent)break;evnt(28181,183,"ini.bm");}while(r);
-do{
-qbs_set(_FUNC_READSETTING_STRING_KEY,qbs_ltrim(qbs_rtrim(_FUNC_READSETTING_STRING___KEY)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,185,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_INILASTKEY,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,186,"ini.bm");}while(r);
-S_38023:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_READSETTING_STRING_KEY,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28181,187,"ini.bm");if(r)goto S_38023;}
-do{
-*__LONG_INICODE= 12 ;
-if(!qbevent)break;evnt(28181,187,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,187,"ini.bm");}while(r);
-}
-S_38027:;
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_left(_FUNC_READSETTING_STRING_KEY, 1 ),qbs_new_txt_len(";",1)))|(qbs_equal(qbs_left(_FUNC_READSETTING_STRING_KEY, 1 ),qbs_new_txt_len("'",1)))|(-(func_instr(NULL,_FUNC_READSETTING_STRING_KEY,qbs_new_txt_len("[",1),0)> 0 ))|(-(func_instr(NULL,_FUNC_READSETTING_STRING_KEY,qbs_new_txt_len("]",1),0)> 0 ))|(-(func_instr(NULL,_FUNC_READSETTING_STRING_KEY,qbs_new_txt_len("=",1),0)> 0 ))))||is_error_pending()){
-if(qbevent){evnt(28181,189,"ini.bm");if(r)goto S_38027;}
-do{
-*__LONG_INICODE= 12 ;
-if(!qbevent)break;evnt(28181,190,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,191,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INILASTKEY,_FUNC_READSETTING_STRING_KEY);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,194,"ini.bm");}while(r);
-S_38032:;
-if ((-(*__ULONG_INIPOSITION> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,196,"ini.bm");if(r)goto S_38032;}
-do{
-*_FUNC_READSETTING_ULONG_EQUAL=*__ULONG_INIPOSITION;
-if(!qbevent)break;evnt(28181,196,"ini.bm");}while(r);
-do{
-goto LABEL_KEYFOUND;
-if(!qbevent)break;evnt(28181,196,"ini.bm");}while(r);
-}
-LABEL_CHECKKEY:;
-if(qbevent){evnt(28181,197,"ini.bm");r=0;}
-do{
-*__ULONG_INIPOSITION=func_instr(*__ULONG_INIPOSITION+ 1 ,qbs_lcase(__STRING_INISECTIONDATA),qbs_lcase(_FUNC_READSETTING_STRING_KEY),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,198,"ini.bm");}while(r);
-S_38037:;
-if ((-(*__ULONG_INIPOSITION> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,200,"ini.bm");if(r)goto S_38037;}
-S_38038:;
-fornext_value3670=*__ULONG_INIPOSITION- 1 ;
-fornext_finalvalue3670= 1 ;
-fornext_step3670= -1 ;
-if (fornext_step3670<0) fornext_step_negative3670=1; else fornext_step_negative3670=0;
-if (is_error_pending()) goto fornext_error3670;
-goto fornext_entrylabel3670;
+#line 58 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,58,"opengl_methods.bas");}while(r);
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38018:;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3660= 1 ;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_finalvalue3660=_FUNC_READCHUNK_STRING_A->len;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_step3660= 1 ;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step3660<0) fornext_step_negative3660=1; else fornext_step_negative3660=0;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (is_error_pending()) goto fornext_error3660;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+goto fornext_entrylabel3660;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
 while(1){
-fornext_value3670=fornext_step3670+(*_FUNC_READSETTING_LONG_I);
-fornext_entrylabel3670:
-*_FUNC_READSETTING_LONG_I=fornext_value3670;
-if (fornext_step_negative3670){
-if (fornext_value3670<fornext_finalvalue3670) break;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3660=fornext_step3660+(*_FUNC_READCHUNK_LONG_X);
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_entrylabel3660:
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_FUNC_READCHUNK_LONG_X=fornext_value3660;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step_negative3660){
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3660<fornext_finalvalue3660) break;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
 }else{
-if (fornext_value3670>fornext_finalvalue3670) break;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3660>fornext_finalvalue3660) break;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
 }
-fornext_error3670:;
-if(qbevent){evnt(28181,202,"ini.bm");if(r)goto S_38038;}
-S_38039:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)== 10 )))||is_error_pending()){
-if(qbevent){evnt(28181,203,"ini.bm");if(r)goto S_38039;}
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_error3660:;
+#line 59 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,59,"opengl_methods.bas");if(r)goto S_38018;}
+#line 60 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto fornext_exit_3669;
-if(!qbevent)break;evnt(28181,203,"ini.bm");}while(r);
-}
-S_38042:;
-if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)!= 10 ))&(-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)!= 32 ))))||is_error_pending()){
-if(qbevent){evnt(28181,204,"ini.bm");if(r)goto S_38042;}
-do{
-goto LABEL_CHECKKEY;
-if(!qbevent)break;evnt(28181,206,"ini.bm");}while(r);
-}
-fornext_continue_3669:;
-}
-fornext_exit_3669:;
-S_38046:;
-fornext_value3672=*__ULONG_INIPOSITION+_FUNC_READSETTING_STRING_KEY->len;
-fornext_finalvalue3672=__STRING_INISECTIONDATA->len;
-fornext_step3672= 1 ;
-if (fornext_step3672<0) fornext_step_negative3672=1; else fornext_step_negative3672=0;
-if (is_error_pending()) goto fornext_error3672;
-goto fornext_entrylabel3672;
-while(1){
-fornext_value3672=fornext_step3672+(*_FUNC_READSETTING_LONG_I);
-fornext_entrylabel3672:
-*_FUNC_READSETTING_LONG_I=fornext_value3672;
+#line 60 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_FUNC_READCHUNK_LONG_C=qbs_asc(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X);
+#line 60 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative3672){
-if (fornext_value3672<fornext_finalvalue3672) break;
-}else{
-if (fornext_value3672>fornext_finalvalue3672) break;
-}
-fornext_error3672:;
-if(qbevent){evnt(28181,211,"ini.bm");if(r)goto S_38046;}
-S_38047:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)==qbs_asc(qbs_new_txt_len("=",1)))))||is_error_pending()){
-if(qbevent){evnt(28181,212,"ini.bm");if(r)goto S_38047;}
+#line 60 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,60,"opengl_methods.bas");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38020:;
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (((-(*_FUNC_READCHUNK_LONG_C== 32 ))|(-(*_FUNC_READCHUNK_LONG_C== 44 ))|(-(*_FUNC_READCHUNK_LONG_C== 40 ))|(-(*_FUNC_READCHUNK_LONG_C== 41 )))||is_error_pending()){
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,61,"opengl_methods.bas");if(r)goto S_38020;}
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto fornext_exit_3671;
-if(!qbevent)break;evnt(28181,212,"ini.bm");}while(r);
-}
-S_38050:;
-if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)!=qbs_asc(qbs_new_txt_len("=",1))))&(-(qbs_asc(__STRING_INISECTIONDATA,*_FUNC_READSETTING_LONG_I)!= 32 ))))||is_error_pending()){
-if(qbevent){evnt(28181,213,"ini.bm");if(r)goto S_38050;}
-do{
-goto LABEL_CHECKKEY;
-if(!qbevent)break;evnt(28181,215,"ini.bm");}while(r);
-}
-fornext_continue_3671:;
-}
-fornext_exit_3671:;
-do{
-*_FUNC_READSETTING_ULONG_EQUAL=func_instr(*__ULONG_INIPOSITION,__STRING_INISECTIONDATA,qbs_new_txt_len("=",1),0|1);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,func_chr(*_FUNC_READCHUNK_LONG_C));
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,220,"ini.bm");}while(r);
-LABEL_KEYFOUND:;
-if(qbevent){evnt(28181,221,"ini.bm");r=0;}
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,61,"opengl_methods.bas");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-*_FUNC_READSETTING_ULONG_FOUNDLF=func_instr(*__ULONG_INIPOSITION,__STRING_INISECTIONDATA,__STRING_INILF,0|1);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,qbs_left(_FUNC_READCHUNK_STRING_A,*_FUNC_READCHUNK_LONG_X- 1 ));
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,222,"ini.bm");}while(r);
-S_38056:;
-if ((-(*_FUNC_READSETTING_ULONG_FOUNDLF> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,224,"ini.bm");if(r)goto S_38056;}
-S_38057:;
-if ((-(*_FUNC_READSETTING_ULONG_EQUAL>*_FUNC_READSETTING_ULONG_FOUNDLF))||is_error_pending()){
-if(qbevent){evnt(28181,225,"ini.bm");if(r)goto S_38057;}
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,61,"opengl_methods.bas");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto LABEL_CHECKKEY;
-if(!qbevent)break;evnt(28181,225,"ini.bm");}while(r);
-}
-}else{
-do{
-*_FUNC_READSETTING_ULONG_FOUNDLF=__STRING_INISECTIONDATA->len+ 1 ;
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_A,qbs_ltrim(qbs_right(_FUNC_READCHUNK_STRING_A,_FUNC_READCHUNK_STRING_A->len-*_FUNC_READCHUNK_LONG_X)));
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,227,"ini.bm");}while(r);
-S_38062:;
-if ((-(*_FUNC_READSETTING_ULONG_EQUAL== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,228,"ini.bm");if(r)goto S_38062;}
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,61,"opengl_methods.bas");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto LABEL_CHECKKEY;
-if(!qbevent)break;evnt(28181,228,"ini.bm");}while(r);
-}
-}
-do{
-qbs_set(_FUNC_READSETTING_STRING_TEMPVALUE,qbs_ltrim(qbs_rtrim(func_mid(__STRING_INISECTIONDATA,*_FUNC_READSETTING_ULONG_EQUAL+ 1 ,*_FUNC_READSETTING_ULONG_FOUNDLF-*_FUNC_READSETTING_ULONG_EQUAL- 1 ,0|1))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,231,"ini.bm");}while(r);
-S_38067:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_READSETTING_STRING_TEMPVALUE->len> 0 )))||is_error_pending()){
-if(qbevent){evnt(28181,233,"ini.bm");if(r)goto S_38067;}
-S_38068:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_READSETTING_STRING_TEMPVALUE, 1 ),func_chr( 34 ))))||is_error_pending()){
-if(qbevent){evnt(28181,234,"ini.bm");if(r)goto S_38068;}
-do{
-qbs_set(_FUNC_READSETTING_STRING_TEMPVALUE,func_mid(_FUNC_READSETTING_STRING_TEMPVALUE, 2 ,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,235,"ini.bm");}while(r);
-do{
-*_FUNC_READSETTING_ULONG_QUOTE=func_instr(NULL,_FUNC_READSETTING_STRING_TEMPVALUE,func_chr( 34 ),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,236,"ini.bm");}while(r);
-S_38071:;
-if ((-(*_FUNC_READSETTING_ULONG_QUOTE> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,237,"ini.bm");if(r)goto S_38071;}
-do{
-qbs_set(_FUNC_READSETTING_STRING_TEMPVALUE,qbs_left(_FUNC_READSETTING_STRING_TEMPVALUE,*_FUNC_READSETTING_ULONG_QUOTE- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,238,"ini.bm");}while(r);
-}
-}else{
-S_38075:;
-if ((*__LONG_INIALLOWBASICCOMMENTS)||is_error_pending()){
-if(qbevent){evnt(28181,241,"ini.bm");if(r)goto S_38075;}
-do{
-*_FUNC_READSETTING_ULONG_COMMENT=func_instr(NULL,_FUNC_READSETTING_STRING_TEMPVALUE,qbs_new_txt_len("'",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,241,"ini.bm");}while(r);
-}
-S_38078:;
-if ((-(*_FUNC_READSETTING_ULONG_COMMENT== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,242,"ini.bm");if(r)goto S_38078;}
-do{
-*_FUNC_READSETTING_ULONG_COMMENT=func_instr(NULL,_FUNC_READSETTING_STRING_TEMPVALUE,qbs_new_txt_len(";",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,242,"ini.bm");}while(r);
-}
-S_38081:;
-if ((-(*_FUNC_READSETTING_ULONG_COMMENT> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,243,"ini.bm");if(r)goto S_38081;}
-do{
-qbs_set(_FUNC_READSETTING_STRING_TEMPVALUE,qbs_ltrim(qbs_rtrim(qbs_left(_FUNC_READSETTING_STRING_TEMPVALUE,*_FUNC_READSETTING_ULONG_COMMENT- 1 ))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,244,"ini.bm");}while(r);
-}
-}
-}else{
-do{
-*__LONG_INICODE= 2 ;
-if(!qbevent)break;evnt(28181,248,"ini.bm");}while(r);
-}
-}else{
-do{
-*__LONG_INICODE= 3 ;
-if(!qbevent)break;evnt(28181,251,"ini.bm");}while(r);
-do{
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 goto exit_subfunc;
-if(!qbevent)break;evnt(28181,252,"ini.bm");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,61,"opengl_methods.bas");}while(r);
+#line 61 "subs_functions/extensions/opengl/opengl_methods.bas"
 }
+#line 62 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_continue_3659:;
+#line 62 "subs_functions/extensions/opengl/opengl_methods.bas"
+}
+#line 62 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_exit_3659:;
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(_FUNC_READSETTING_STRING_READSETTING,_FUNC_READSETTING_STRING_TEMPVALUE);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_READCHUNK,_FUNC_READCHUNK_STRING_A);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,255,"ini.bm");}while(r);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,63,"opengl_methods.bas");}while(r);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_INILASTSECTION,FUNC_INICURRENTSECTION());
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_LAST_CHARACTER,qbs_new_txt_len("",0));
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,256,"ini.bm");}while(r);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,63,"opengl_methods.bas");}while(r);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(_FUNC_READCHUNK_STRING_A,qbs_new_txt_len("",0));
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 63 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,63,"opengl_methods.bas");}while(r);
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 exit_subfunc:;
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 free_mem_lock(sf_mem_lock);
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 #include "free163.txt"
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_READSETTING_STRING_READSETTING);return _FUNC_READSETTING_STRING_READSETTING;
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_maketmp(_FUNC_READCHUNK_STRING_READCHUNK);return _FUNC_READCHUNK_STRING_READCHUNK;
+#line 64 "subs_functions/extensions/opengl/opengl_methods.bas"
 }

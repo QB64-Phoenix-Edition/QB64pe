@@ -1,449 +1,1260 @@
-void SUB_WRITESETTING(qbs*_SUB_WRITESETTING_STRING_FILE,qbs*_SUB_WRITESETTING_STRING___SECTION,qbs*_SUB_WRITESETTING_STRING___KEY,qbs*_SUB_WRITESETTING_STRING___VALUE){
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
+void SUB_GL_INCLUDE_CONTENT(){
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs *tqbs;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 ptrszint tmp_long;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 int32 tmp_fileno;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 #include "data165.txt"
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 mem_lock *sf_mem_lock;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 new_mem_lock();
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 sf_mem_lock->type=3;
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 libqb_check_stack();
+#line 331 "subs_functions/extensions/opengl/opengl_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-do{
-if(!qbevent)break;evnt(28181,292,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,293,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,294,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,295,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,297,"ini.bm");}while(r);
-do{
-*__LONG_INICODE= 0 ;
-if(!qbevent)break;evnt(28181,299,"ini.bm");}while(r);
-do{
-qbs_set(_SUB_WRITESETTING_STRING_SECTION,FUNC_INIFORMATSECTION(_SUB_WRITESETTING_STRING___SECTION));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,302,"ini.bm");}while(r);
-S_38127:;
-if ((*__LONG_INICODE)||is_error_pending()){
-if(qbevent){evnt(28181,303,"ini.bm");if(r)goto S_38127;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,303,"ini.bm");}while(r);
-}
-do{
-qbs_set(_SUB_WRITESETTING_STRING_KEY,qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___KEY)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,305,"ini.bm");}while(r);
-S_38131:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_KEY,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28181,306,"ini.bm");if(r)goto S_38131;}
-do{
-*__LONG_INICODE= 12 ;
-if(!qbevent)break;evnt(28181,306,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,306,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INILASTKEY,_SUB_WRITESETTING_STRING_KEY);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,307,"ini.bm");}while(r);
-do{
-qbs_set(_SUB_WRITESETTING_STRING_VALUE,qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,309,"ini.bm");}while(r);
-S_38137:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_ltrim(qbs_str((long double)(qbs_val<long double>(_SUB_WRITESETTING_STRING_VALUE)))),_SUB_WRITESETTING_STRING_VALUE)))||is_error_pending()){
-if(qbevent){evnt(28181,310,"ini.bm");if(r)goto S_38137;}
-S_38138:;
-if ((~(*__LONG_INIDISABLEADDQUOTES))||is_error_pending()){
-if(qbevent){evnt(28181,311,"ini.bm");if(r)goto S_38138;}
-S_38139:;
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_SUB_WRITESETTING_STRING_VALUE,func_chr( 32 ),0)))||is_error_pending()){
-if(qbevent){evnt(28181,313,"ini.bm");if(r)goto S_38139;}
-do{
-qbs_set(_SUB_WRITESETTING_STRING_VALUE,qbs_add(qbs_add(func_chr( 34 ),_SUB_WRITESETTING_STRING_VALUE),func_chr( 34 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,313,"ini.bm");}while(r);
-}
-}
-}
-do{
-qbs_set(_SUB_WRITESETTING_STRING_TEMPVALUE,FUNC_READSETTING(_SUB_WRITESETTING_STRING_FILE,_SUB_WRITESETTING_STRING_SECTION,_SUB_WRITESETTING_STRING_KEY));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,318,"ini.bm");}while(r);
-do{
-*__ULONG_INIPOSITION=func_instr(NULL,__STRING_INIWHOLEFILE,__STRING_INISECTIONDATA,0)+*__ULONG_INIPOSITION- 1 ;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,321,"ini.bm");}while(r);
-S_38146:;
-if (((-(*__LONG_INICODE== 1 ))|(-(*__LONG_INICODE== 17 )))||is_error_pending()){
-if(qbevent){evnt(28181,323,"ini.bm");if(r)goto S_38146;}
-S_38147:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_FILE,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28181,325,"ini.bm");if(r)goto S_38147;}
-do{
-qbs_set(_SUB_WRITESETTING_STRING_FILE,__STRING_CURRENTINIFILENAME);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,325,"ini.bm");}while(r);
-}
-S_38150:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_FILE,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28181,326,"ini.bm");if(r)goto S_38150;}
-do{
-*__LONG_INICODE= 21 ;
-if(!qbevent)break;evnt(28181,326,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,326,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_CURRENTINIFILENAME,_SUB_WRITESETTING_STRING_FILE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,328,"ini.bm");}while(r);
-S_38155:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_WRITESETTING_STRING_SECTION,qbs_new_txt_len("[]",2))))||is_error_pending()){
-if(qbevent){evnt(28181,330,"ini.bm");if(r)goto S_38155;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(_SUB_WRITESETTING_STRING_SECTION,__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,331,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,334,"ini.bm");}while(r);
-do{
-*__LONG_INICODE= 0 ;
-if(!qbevent)break;evnt(28181,336,"ini.bm");}while(r);
-do{
-SUB_INICOMMIT();
-if(!qbevent)break;evnt(28181,337,"ini.bm");}while(r);
-do{
-SUB_INILOAD(_SUB_WRITESETTING_STRING_FILE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,338,"ini.bm");}while(r);
-S_38162:;
-if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,339,"ini.bm");if(r)goto S_38162;}
-do{
-*__LONG_INICODE= 11 ;
-if(!qbevent)break;evnt(28181,339,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INILASTSECTION,_SUB_WRITESETTING_STRING_SECTION);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,340,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,341,"ini.bm");}while(r);
-}
-S_38168:;
-if (((-(*__LONG_INICODE== 0 ))|(-(*__LONG_INICODE== 2 )))||is_error_pending()){
-if(qbevent){evnt(28181,344,"ini.bm");if(r)goto S_38168;}
-S_38169:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_lcase(__STRING_INILASTSECTION),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION))))||is_error_pending()){
-if(qbevent){evnt(28181,345,"ini.bm");if(r)goto S_38169;}
-S_38170:;
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)),_SUB_WRITESETTING_STRING_TEMPVALUE))&(-(((int32)(qbs_ltrim(qbs_rtrim(_SUB_WRITESETTING_STRING___VALUE)))->len)> 0 ))))||is_error_pending()){
-if(qbevent){evnt(28181,346,"ini.bm");if(r)goto S_38170;}
-do{
-*__LONG_INICODE= 8 ;
-if(!qbevent)break;evnt(28181,348,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,349,"ini.bm");}while(r);
-}
-do{
-if(!qbevent)break;evnt(28181,352,"ini.bm");}while(r);
-do{
-*_SUB_WRITESETTING_ULONG_NEXTLINE=func_instr(*__ULONG_INIPOSITION+ 1 ,__STRING_INIWHOLEFILE,__STRING_INILF,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,353,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_ININEWFILE,qbs_left(__STRING_INIWHOLEFILE,*__ULONG_INIPOSITION- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,356,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,357,"ini.bm");}while(r);
-S_38178:;
-if ((-(*_SUB_WRITESETTING_ULONG_NEXTLINE> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,359,"ini.bm");if(r)goto S_38178;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_NEXTLINE,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,360,"ini.bm");}while(r);
-}
-do{
-SUB_INICOMMIT();
-if(!qbevent)break;evnt(28181,363,"ini.bm");}while(r);
-do{
-*__LONG_INICODE= 4 ;
-if(!qbevent)break;evnt(28181,365,"ini.bm");}while(r);
-}
-S_38184:;
-}else{
-if ((-(*__LONG_INICODE== 3 ))|(-(*__LONG_INICODE== 14 ))){
-if(qbevent){evnt(28181,367,"ini.bm");if(r)goto S_38184;}
-do{
-*__LONG_INICODE= 0 ;
-if(!qbevent)break;evnt(28181,368,"ini.bm");}while(r);
-S_38186:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_lcase(__STRING_INILASTSECTION),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION))))||is_error_pending()){
-if(qbevent){evnt(28181,369,"ini.bm");if(r)goto S_38186;}
-do{
-if(!qbevent)break;evnt(28181,371,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,372,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28181,373,"ini.bm");}while(r);
-do{
-*_SUB_WRITESETTING_ULONG_BEGINSECTION= 0 ;
-if(!qbevent)break;evnt(28181,375,"ini.bm");}while(r);
-do{
-*_SUB_WRITESETTING_ULONG_ENDSECTION= 0 ;
-if(!qbevent)break;evnt(28181,376,"ini.bm");}while(r);
-LABEL_CHECKSECTION:;
-if(qbevent){evnt(28181,378,"ini.bm");r=0;}
-do{
-*_SUB_WRITESETTING_ULONG_BEGINSECTION=func_instr(*_SUB_WRITESETTING_ULONG_BEGINSECTION+ 1 ,qbs_lcase(__STRING_INIWHOLEFILE),qbs_lcase(_SUB_WRITESETTING_STRING_SECTION),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,379,"ini.bm");}while(r);
-S_38193:;
-if ((-(*_SUB_WRITESETTING_ULONG_BEGINSECTION== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,380,"ini.bm");if(r)goto S_38193;}
-do{
-goto LABEL_CREATESECTION;
-if(!qbevent)break;evnt(28181,380,"ini.bm");}while(r);
-}
-S_38196:;
-fornext_value3686=*_SUB_WRITESETTING_ULONG_BEGINSECTION- 1 ;
-fornext_finalvalue3686= 1 ;
-fornext_step3686= -1 ;
-if (fornext_step3686<0) fornext_step_negative3686=1; else fornext_step_negative3686=0;
-if (is_error_pending()) goto fornext_error3686;
-goto fornext_entrylabel3686;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38275:;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3698= 1 ;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_finalvalue3698=*__LONG_GL_DEFINES_LAST;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_step3698= 1 ;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step3698<0) fornext_step_negative3698=1; else fornext_step_negative3698=0;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (is_error_pending()) goto fornext_error3698;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+goto fornext_entrylabel3698;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
 while(1){
-fornext_value3686=fornext_step3686+(*_SUB_WRITESETTING_ULONG_I);
-fornext_entrylabel3686:
-*_SUB_WRITESETTING_ULONG_I=fornext_value3686;
-if (fornext_step_negative3686){
-if (fornext_value3686<fornext_finalvalue3686) break;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3698=fornext_step3698+(*_SUB_GL_INCLUDE_CONTENT_LONG_D);
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_entrylabel3698:
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_SUB_GL_INCLUDE_CONTENT_LONG_D=fornext_value3698;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step_negative3698){
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3698<fornext_finalvalue3698) break;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
 }else{
-if (fornext_value3686>fornext_finalvalue3686) break;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3698>fornext_finalvalue3698) break;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
 }
-fornext_error3686:;
-if(qbevent){evnt(28181,383,"ini.bm");if(r)goto S_38196;}
-S_38197:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)== 10 )))||is_error_pending()){
-if(qbevent){evnt(28181,384,"ini.bm");if(r)goto S_38197;}
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_error3698:;
+#line 334 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,334,"opengl_methods.bas");if(r)goto S_38275;}
+#line 335 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38276:;
+#line 335 "subs_functions/extensions/opengl/opengl_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(((qbs*)(((uint64*)(__ARRAY_STRING_GL_DEFINES[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_STRING_GL_DEFINES[4],__ARRAY_STRING_GL_DEFINES[5])])))!= 95 )))||is_error_pending()){
+#line 335 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,335,"opengl_methods.bas");if(r)goto S_38276;}
+#line 336 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto fornext_exit_3685;
-if(!qbevent)break;evnt(28181,384,"ini.bm");}while(r);
-}
-S_38200:;
-if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)!= 10 ))&(-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)!= 32 ))))||is_error_pending()){
-if(qbevent){evnt(28181,385,"ini.bm");if(r)goto S_38200;}
-do{
-goto LABEL_CHECKSECTION;
-if(!qbevent)break;evnt(28181,387,"ini.bm");}while(r);
-}
-fornext_continue_3685:;
-}
-fornext_exit_3685:;
-do{
-*_SUB_WRITESETTING_ULONG_BRACKET1=func_instr(*_SUB_WRITESETTING_ULONG_BEGINSECTION+ 1 ,__STRING_INIWHOLEFILE,qbs_new_txt_len("[",1),0|1);
+#line 336 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_STRING_GL_DEFINES[4],__ARRAY_STRING_GL_DEFINES[5]);
+#line 336 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_GL_DEFINES[0]))[tmp_long])),qbs_add(qbs_new_txt_len("_",1),((qbs*)(((uint64*)(__ARRAY_STRING_GL_DEFINES[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_STRING_GL_DEFINES[4],__ARRAY_STRING_GL_DEFINES[5])]))));
+#line 336 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,393,"ini.bm");}while(r);
-S_38205:;
-if ((-(*_SUB_WRITESETTING_ULONG_BRACKET1> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,394,"ini.bm");if(r)goto S_38205;}
-S_38206:;
-fornext_value3688=*_SUB_WRITESETTING_ULONG_BRACKET1- 1 ;
-fornext_finalvalue3688= 1 ;
-fornext_step3688= -1 ;
-if (fornext_step3688<0) fornext_step_negative3688=1; else fornext_step_negative3688=0;
-if (is_error_pending()) goto fornext_error3688;
-goto fornext_entrylabel3688;
+#line 336 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,336,"opengl_methods.bas");}while(r);
+#line 337 "subs_functions/extensions/opengl/opengl_methods.bas"
+}
+#line 338 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 338 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_CONSTLAST=*__LONG_CONSTLAST+ 1 ;
+#line 338 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,338,"opengl_methods.bas");}while(r);
+#line 339 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38280:;
+#line 339 "subs_functions/extensions/opengl/opengl_methods.bas"
+if ((-(*__LONG_CONSTLAST>*__LONG_CONSTMAX))||is_error_pending()){
+#line 339 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,339,"opengl_methods.bas");if(r)goto S_38280;}
+#line 340 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 340 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_CONSTMAX=*__LONG_CONSTMAX* 2 ;
+#line 340 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,340,"opengl_methods.bas");}while(r);
+#line 341 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_STRING_CONSTNAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING_CONSTNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING_CONSTNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING_CONSTNAME[0];
+preserve_old_flags=__ARRAY_STRING_CONSTNAME[2];
+preserve_old_total=__ARRAY_STRING_CONSTNAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_CONSTNAME[0]=preserve_new_ptr;
+__ARRAY_STRING_CONSTNAME[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTNAME[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAME[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAME[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_CONSTNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING_CONSTNAME[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING_CONSTNAME[0]) error(257);
+__ARRAY_STRING_CONSTNAME[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTNAME[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAME[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAME[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+__ARRAY_STRING_CONSTNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING_CONSTNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING_CONSTNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING_CONSTNAME[7]=alloc_new_desc[7];
+}
+#line 341 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,341,"opengl_methods.bas");}while(r);
+#line 342 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_STRING_CONSTCNAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING_CONSTCNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING_CONSTCNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING_CONSTCNAME[0];
+preserve_old_flags=__ARRAY_STRING_CONSTCNAME[2];
+preserve_old_total=__ARRAY_STRING_CONSTCNAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_CONSTCNAME[0]=preserve_new_ptr;
+__ARRAY_STRING_CONSTCNAME[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTCNAME[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_CONSTCNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING_CONSTCNAME[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING_CONSTCNAME[0]) error(257);
+__ARRAY_STRING_CONSTCNAME[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTCNAME[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+__ARRAY_STRING_CONSTCNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING_CONSTCNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING_CONSTCNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING_CONSTCNAME[7]=alloc_new_desc[7];
+}
+#line 342 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,342,"opengl_methods.bas");}while(r);
+#line 343 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_STRING_CONSTNAMESYMBOL[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING_CONSTNAMESYMBOL)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING_CONSTNAMESYMBOL[2]&1){
+preserve_old_ptr=__ARRAY_STRING_CONSTNAMESYMBOL[0];
+preserve_old_flags=__ARRAY_STRING_CONSTNAMESYMBOL[2];
+preserve_old_total=__ARRAY_STRING_CONSTNAMESYMBOL[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_CONSTNAMESYMBOL[0]=preserve_new_ptr;
+__ARRAY_STRING_CONSTNAMESYMBOL[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTNAMESYMBOL[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAMESYMBOL[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAMESYMBOL[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_CONSTNAMESYMBOL[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING_CONSTNAMESYMBOL[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING_CONSTNAMESYMBOL[0]) error(257);
+__ARRAY_STRING_CONSTNAMESYMBOL[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTNAMESYMBOL[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAMESYMBOL[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTNAMESYMBOL[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+__ARRAY_STRING_CONSTNAMESYMBOL[4]=alloc_new_desc[4];
+__ARRAY_STRING_CONSTNAMESYMBOL[5]=alloc_new_desc[5];
+__ARRAY_STRING_CONSTNAMESYMBOL[6]=alloc_new_desc[6];
+__ARRAY_STRING_CONSTNAMESYMBOL[7]=alloc_new_desc[7];
+}
+#line 343 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,343,"opengl_methods.bas");}while(r);
+#line 344 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_LONG_CONSTTYPE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_CONSTTYPE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_CONSTTYPE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_CONSTTYPE[0];
+preserve_old_flags=__ARRAY_LONG_CONSTTYPE[2];
+preserve_old_total=__ARRAY_LONG_CONSTTYPE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_CONSTTYPE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTTYPE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTTYPE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_CONSTTYPE[0]) error(257);
+memset((void*)(__ARRAY_LONG_CONSTTYPE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTTYPE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTTYPE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_CONSTTYPE[0]) error(257);
+}
+}
+__ARRAY_LONG_CONSTTYPE[2]|=1;
+__ARRAY_LONG_CONSTTYPE[4]=alloc_new_desc[4];
+__ARRAY_LONG_CONSTTYPE[5]=alloc_new_desc[5];
+__ARRAY_LONG_CONSTTYPE[6]=alloc_new_desc[6];
+__ARRAY_LONG_CONSTTYPE[7]=alloc_new_desc[7];
+}
+#line 344 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,344,"opengl_methods.bas");}while(r);
+#line 345 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_INTEGER64_CONSTINTEGER[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_INTEGER64_CONSTINTEGER)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_INTEGER64_CONSTINTEGER[2]&1){
+preserve_old_ptr=__ARRAY_INTEGER64_CONSTINTEGER[0];
+preserve_old_flags=__ARRAY_INTEGER64_CONSTINTEGER[2];
+preserve_old_total=__ARRAY_INTEGER64_CONSTINTEGER[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_INTEGER64_CONSTINTEGER[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_INTEGER64_CONSTINTEGER[0]=preserve_new_ptr;
+}else{
+__ARRAY_INTEGER64_CONSTINTEGER[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_INTEGER64_CONSTINTEGER[0]) error(257);
+memset((void*)(__ARRAY_INTEGER64_CONSTINTEGER[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_INTEGER64_CONSTINTEGER[0]=preserve_new_ptr;
+}else{
+__ARRAY_INTEGER64_CONSTINTEGER[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_INTEGER64_CONSTINTEGER[0]) error(257);
+}
+}
+__ARRAY_INTEGER64_CONSTINTEGER[2]|=1;
+__ARRAY_INTEGER64_CONSTINTEGER[4]=alloc_new_desc[4];
+__ARRAY_INTEGER64_CONSTINTEGER[5]=alloc_new_desc[5];
+__ARRAY_INTEGER64_CONSTINTEGER[6]=alloc_new_desc[6];
+__ARRAY_INTEGER64_CONSTINTEGER[7]=alloc_new_desc[7];
+}
+#line 345 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,345,"opengl_methods.bas");}while(r);
+#line 346 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_UINTEGER64_CONSTUINTEGER[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_UINTEGER64_CONSTUINTEGER)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_UINTEGER64_CONSTUINTEGER[2]&1){
+preserve_old_ptr=__ARRAY_UINTEGER64_CONSTUINTEGER[0];
+preserve_old_flags=__ARRAY_UINTEGER64_CONSTUINTEGER[2];
+preserve_old_total=__ARRAY_UINTEGER64_CONSTUINTEGER[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_UINTEGER64_CONSTUINTEGER[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_UINTEGER64_CONSTUINTEGER[0]=preserve_new_ptr;
+}else{
+__ARRAY_UINTEGER64_CONSTUINTEGER[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_UINTEGER64_CONSTUINTEGER[0]) error(257);
+memset((void*)(__ARRAY_UINTEGER64_CONSTUINTEGER[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_UINTEGER64_CONSTUINTEGER[0]=preserve_new_ptr;
+}else{
+__ARRAY_UINTEGER64_CONSTUINTEGER[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_UINTEGER64_CONSTUINTEGER[0]) error(257);
+}
+}
+__ARRAY_UINTEGER64_CONSTUINTEGER[2]|=1;
+__ARRAY_UINTEGER64_CONSTUINTEGER[4]=alloc_new_desc[4];
+__ARRAY_UINTEGER64_CONSTUINTEGER[5]=alloc_new_desc[5];
+__ARRAY_UINTEGER64_CONSTUINTEGER[6]=alloc_new_desc[6];
+__ARRAY_UINTEGER64_CONSTUINTEGER[7]=alloc_new_desc[7];
+}
+#line 346 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,346,"opengl_methods.bas");}while(r);
+#line 347 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_FLOAT_CONSTFLOAT[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_FLOAT_CONSTFLOAT)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_FLOAT_CONSTFLOAT[2]&1){
+preserve_old_ptr=__ARRAY_FLOAT_CONSTFLOAT[0];
+preserve_old_flags=__ARRAY_FLOAT_CONSTFLOAT[2];
+preserve_old_total=__ARRAY_FLOAT_CONSTFLOAT[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(32);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_FLOAT_CONSTFLOAT[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*32);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_FLOAT_CONSTFLOAT[0]=preserve_new_ptr;
+}else{
+__ARRAY_FLOAT_CONSTFLOAT[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_FLOAT_CONSTFLOAT[0]) error(257);
+memset((void*)(__ARRAY_FLOAT_CONSTFLOAT[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*32);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_FLOAT_CONSTFLOAT[0]=preserve_new_ptr;
+}else{
+__ARRAY_FLOAT_CONSTFLOAT[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_FLOAT_CONSTFLOAT[0]) error(257);
+}
+}
+__ARRAY_FLOAT_CONSTFLOAT[2]|=1;
+__ARRAY_FLOAT_CONSTFLOAT[4]=alloc_new_desc[4];
+__ARRAY_FLOAT_CONSTFLOAT[5]=alloc_new_desc[5];
+__ARRAY_FLOAT_CONSTFLOAT[6]=alloc_new_desc[6];
+__ARRAY_FLOAT_CONSTFLOAT[7]=alloc_new_desc[7];
+}
+#line 347 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,347,"opengl_methods.bas");}while(r);
+#line 348 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_STRING_CONSTSTRING[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING_CONSTSTRING)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING_CONSTSTRING[2]&1){
+preserve_old_ptr=__ARRAY_STRING_CONSTSTRING[0];
+preserve_old_flags=__ARRAY_STRING_CONSTSTRING[2];
+preserve_old_total=__ARRAY_STRING_CONSTSTRING[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+__ARRAY_STRING_CONSTSTRING[0]=preserve_new_ptr;
+__ARRAY_STRING_CONSTSTRING[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTSTRING[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTSTRING[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTSTRING[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+}
+tmp_long=preserve_old_total;
+while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
+free((void*)(preserve_old_ptr));
+__ARRAY_STRING_CONSTSTRING[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING_CONSTSTRING[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING_CONSTSTRING[0]) error(257);
+__ARRAY_STRING_CONSTSTRING[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (__ARRAY_STRING_CONSTSTRING[2]&4){
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTSTRING[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((uint64*)(__ARRAY_STRING_CONSTSTRING[0]))[tmp_long]=(uint64)qbs_new(0,0);
+}
+}
+__ARRAY_STRING_CONSTSTRING[4]=alloc_new_desc[4];
+__ARRAY_STRING_CONSTSTRING[5]=alloc_new_desc[5];
+__ARRAY_STRING_CONSTSTRING[6]=alloc_new_desc[6];
+__ARRAY_STRING_CONSTSTRING[7]=alloc_new_desc[7];
+}
+#line 348 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,348,"opengl_methods.bas");}while(r);
+#line 349 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_LONG_CONSTSUBFUNC[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_CONSTSUBFUNC)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_CONSTSUBFUNC[2]&1){
+preserve_old_ptr=__ARRAY_LONG_CONSTSUBFUNC[0];
+preserve_old_flags=__ARRAY_LONG_CONSTSUBFUNC[2];
+preserve_old_total=__ARRAY_LONG_CONSTSUBFUNC[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_CONSTSUBFUNC[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTSUBFUNC[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTSUBFUNC[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_CONSTSUBFUNC[0]) error(257);
+memset((void*)(__ARRAY_LONG_CONSTSUBFUNC[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTSUBFUNC[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTSUBFUNC[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_CONSTSUBFUNC[0]) error(257);
+}
+}
+__ARRAY_LONG_CONSTSUBFUNC[2]|=1;
+__ARRAY_LONG_CONSTSUBFUNC[4]=alloc_new_desc[4];
+__ARRAY_LONG_CONSTSUBFUNC[5]=alloc_new_desc[5];
+__ARRAY_LONG_CONSTSUBFUNC[6]=alloc_new_desc[6];
+__ARRAY_LONG_CONSTSUBFUNC[7]=alloc_new_desc[7];
+}
+#line 349 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,349,"opengl_methods.bas");}while(r);
+#line 350 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+if (__ARRAY_LONG_CONSTDEFINED[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_CONSTDEFINED)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_CONSTDEFINED[2]&1){
+preserve_old_ptr=__ARRAY_LONG_CONSTDEFINED[0];
+preserve_old_flags=__ARRAY_LONG_CONSTDEFINED[2];
+preserve_old_total=__ARRAY_LONG_CONSTDEFINED[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*__LONG_CONSTMAX)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_CONSTDEFINED[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTDEFINED[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTDEFINED[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_CONSTDEFINED[0]) error(257);
+memset((void*)(__ARRAY_LONG_CONSTDEFINED[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_CONSTDEFINED[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_CONSTDEFINED[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_CONSTDEFINED[0]) error(257);
+}
+}
+__ARRAY_LONG_CONSTDEFINED[2]|=1;
+__ARRAY_LONG_CONSTDEFINED[4]=alloc_new_desc[4];
+__ARRAY_LONG_CONSTDEFINED[5]=alloc_new_desc[5];
+__ARRAY_LONG_CONSTDEFINED[6]=alloc_new_desc[6];
+__ARRAY_LONG_CONSTDEFINED[7]=alloc_new_desc[7];
+}
+#line 350 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,350,"opengl_methods.bas");}while(r);
+#line 351 "subs_functions/extensions/opengl/opengl_methods.bas"
+}
+#line 352 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 352 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_SUB_GL_INCLUDE_CONTENT_LONG_I=*__LONG_CONSTLAST;
+#line 352 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,352,"opengl_methods.bas");}while(r);
+#line 353 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 353 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_STRING_CONSTNAME[4],__ARRAY_STRING_CONSTNAME[5]);
+#line 353 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_CONSTNAME[0]))[tmp_long])),((qbs*)(((uint64*)(__ARRAY_STRING_GL_DEFINES[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_STRING_GL_DEFINES[4],__ARRAY_STRING_GL_DEFINES[5])])));
+#line 353 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 353 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,353,"opengl_methods.bas");}while(r);
+#line 354 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 354 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_STRING_CONSTCNAME[4],__ARRAY_STRING_CONSTCNAME[5]);
+#line 354 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[tmp_long])),((qbs*)(((uint64*)(__ARRAY_STRING_GL_DEFINES[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_STRING_GL_DEFINES[4],__ARRAY_STRING_GL_DEFINES[5])])));
+#line 354 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 354 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,354,"opengl_methods.bas");}while(r);
+#line 355 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 355 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_STRING_CONSTNAMESYMBOL[4],__ARRAY_STRING_CONSTNAMESYMBOL[5]);
+#line 355 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(__ARRAY_STRING_CONSTNAMESYMBOL[0]))[tmp_long])),qbs_new_txt_len("&&",2));
+#line 355 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 355 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,355,"opengl_methods.bas");}while(r);
+#line 356 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 356 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5]);
+#line 356 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[tmp_long]=*__LONG_INTEGER64TYPE-*__LONG_ISPOINTER;
+#line 356 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,356,"opengl_methods.bas");}while(r);
+#line 357 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 357 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_INTEGER64_CONSTINTEGER[4],__ARRAY_INTEGER64_CONSTINTEGER[5]);
+#line 357 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) ((int64*)(__ARRAY_INTEGER64_CONSTINTEGER[0]))[tmp_long]=((int64*)(__ARRAY_INTEGER64_GL_DEFINES_VALUE[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_D)-__ARRAY_INTEGER64_GL_DEFINES_VALUE[4],__ARRAY_INTEGER64_GL_DEFINES_VALUE[5])];
+#line 357 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,357,"opengl_methods.bas");}while(r);
+#line 358 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 358 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_LONG_CONSTSUBFUNC[4],__ARRAY_LONG_CONSTSUBFUNC[5]);
+#line 358 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_CONSTSUBFUNC[0]))[tmp_long]= 0 ;
+#line 358 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,358,"opengl_methods.bas");}while(r);
+#line 359 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 359 "subs_functions/extensions/opengl/opengl_methods.bas"
+tmp_long=array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_LONG_CONSTDEFINED[4],__ARRAY_LONG_CONSTDEFINED[5]);
+#line 359 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (!is_error_pending()) ((int32*)(__ARRAY_LONG_CONSTDEFINED[0]))[tmp_long]= 1 ;
+#line 359 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,359,"opengl_methods.bas");}while(r);
+#line 361 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 361 "subs_functions/extensions/opengl/opengl_methods.bas"
+SUB_HASHADD(((qbs*)(((uint64*)(__ARRAY_STRING_CONSTCNAME[0]))[array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_I)-__ARRAY_STRING_CONSTCNAME[4],__ARRAY_STRING_CONSTCNAME[5])])),&(pass3699= 1024ll ),_SUB_GL_INCLUDE_CONTENT_LONG_I);
+#line 361 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 361 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,361,"opengl_methods.bas");}while(r);
+#line 362 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_continue_3697:;
+#line 362 "subs_functions/extensions/opengl/opengl_methods.bas"
+}
+#line 362 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_exit_3697:;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+S_38303:;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3701= 1 ;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_finalvalue3701=*__LONG_GL_COMMANDS_LAST;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_step3701= 1 ;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step3701<0) fornext_step_negative3701=1; else fornext_step_negative3701=0;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (is_error_pending()) goto fornext_error3701;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+goto fornext_entrylabel3701;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
 while(1){
-fornext_value3688=fornext_step3688+(*_SUB_WRITESETTING_ULONG_I);
-fornext_entrylabel3688:
-*_SUB_WRITESETTING_ULONG_I=fornext_value3688;
-if (fornext_step_negative3688){
-if (fornext_value3688<fornext_finalvalue3688) break;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_value3701=fornext_step3701+(*_SUB_GL_INCLUDE_CONTENT_LONG_C);
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_entrylabel3701:
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_SUB_GL_INCLUDE_CONTENT_LONG_C=fornext_value3701;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_step_negative3701){
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3701<fornext_finalvalue3701) break;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
 }else{
-if (fornext_value3688>fornext_finalvalue3688) break;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if (fornext_value3701>fornext_finalvalue3701) break;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
 }
-fornext_error3688:;
-if(qbevent){evnt(28181,395,"ini.bm");if(r)goto S_38206;}
-S_38207:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_I)== 10 )))||is_error_pending()){
-if(qbevent){evnt(28181,396,"ini.bm");if(r)goto S_38207;}
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_error3701:;
+#line 366 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(qbevent){evnt(28630,366,"opengl_methods.bas");if(r)goto S_38303;}
+#line 367 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-*_SUB_WRITESETTING_ULONG_ENDSECTION=*_SUB_WRITESETTING_ULONG_I+ 1 -__STRING_INILF->len;
+#line 367 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,367,"opengl_methods.bas");}while(r);
+#line 376 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 376 "subs_functions/extensions/opengl/opengl_methods.bas"
+memcpy(((char*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+0))+ 0,((char*)__ARRAY_UDT_GL_COMMANDS[0])+(((array_check((*_SUB_GL_INCLUDE_CONTENT_LONG_C)-__ARRAY_UDT_GL_COMMANDS[4],__ARRAY_UDT_GL_COMMANDS[5]))*216+0))+ 0, 216);
+#line 376 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,376,"opengl_methods.bas");}while(r);
+#line 378 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 378 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_REGINTERNALSUBFUNC= 1 ;
+#line 378 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,378,"opengl_methods.bas");}while(r);
+#line 379 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 379 "subs_functions/extensions/opengl/opengl_methods.bas"
+SUB_CLEARID();
+#line 379 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,379,"opengl_methods.bas");}while(r);
+#line 380 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 380 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int16*)(((char*)__UDT_ID)+((0+810)))= 1 ;
+#line 380 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,380,"opengl_methods.bas");}while(r);
+#line 381 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 381 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+0))),256,1),qbs_rtrim(qbs_new_fixed((((uint8*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+0))),64,1)));
+#line 381 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,396,"ini.bm");}while(r);
+#line 381 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,381,"opengl_methods.bas");}while(r);
+#line 382 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto fornext_exit_3687;
-if(!qbevent)break;evnt(28181,396,"ini.bm");}while(r);
-}
-S_38211:;
-if ((-(*_SUB_WRITESETTING_ULONG_I<=*_SUB_WRITESETTING_ULONG_BEGINSECTION))||is_error_pending()){
-if(qbevent){evnt(28181,397,"ini.bm");if(r)goto S_38211;}
+#line 382 "subs_functions/extensions/opengl/opengl_methods.bas"
+*_SUB_GL_INCLUDE_CONTENT_LONG_S=*(int16*)(((char*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+64)));
+#line 382 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,382,"opengl_methods.bas");}while(r);
+#line 383 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-goto fornext_exit_3687;
-if(!qbevent)break;evnt(28181,397,"ini.bm");}while(r);
-}
-fornext_continue_3687:;
-}
-fornext_exit_3687:;
-}
-S_38216:;
-if ((-(*_SUB_WRITESETTING_ULONG_ENDSECTION> 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,401,"ini.bm");if(r)goto S_38216;}
+#line 383 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int16*)(((char*)__UDT_ID)+((0+548)))=*_SUB_GL_INCLUDE_CONTENT_LONG_S;
+#line 383 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,383,"opengl_methods.bas");}while(r);
+#line 384 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_left(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION- 1 ));
+#line 384 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+554))),256,1),qbs_rtrim(qbs_new_fixed((((uint8*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+66))),64,1)));
+#line 384 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,403,"ini.bm");}while(r);
+#line 384 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,384,"opengl_methods.bas");}while(r);
+#line 385 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,404,"ini.bm");}while(r);
-S_38219:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION,__STRING_INILF->len,0|1),__STRING_INILF)))||is_error_pending()){
-if(qbevent){evnt(28181,405,"ini.bm");if(r)goto S_38219;}
+#line 385 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int16*)(((char*)__UDT_ID)+((0+813)))=*(int16*)(((char*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+130)));
+#line 385 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,385,"opengl_methods.bas");}while(r);
+#line 386 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INILF));
+#line 386 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+817))),400,1),qbs_new_fixed((((uint8*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+132))),80,1));
+#line 386 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,405,"ini.bm");}while(r);
+#line 386 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,386,"opengl_methods.bas");}while(r);
+#line 387 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 387 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int32*)(((char*)__UDT_ID)+((0+2385)))=*(int32*)(((char*)_SUB_GL_INCLUDE_CONTENT_UDT_G)+((0+212)));
+#line 387 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,387,"opengl_methods.bas");}while(r);
+#line 388 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 388 "subs_functions/extensions/opengl/opengl_methods.bas"
+SUB_REGID();
+#line 388 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,388,"opengl_methods.bas");}while(r);
+#line 389 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 389 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_REGINTERNALSUBFUNC= 0 ;
+#line 389 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,389,"opengl_methods.bas");}while(r);
+#line 390 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_continue_3700:;
+#line 390 "subs_functions/extensions/opengl/opengl_methods.bas"
 }
+#line 390 "subs_functions/extensions/opengl/opengl_methods.bas"
+fornext_exit_3700:;
+#line 395 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,func_mid(__STRING_INIWHOLEFILE,*_SUB_WRITESETTING_ULONG_ENDSECTION,NULL,0)));
+#line 395 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_REGINTERNALSUBFUNC= 1 ;
+#line 395 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,395,"opengl_methods.bas");}while(r);
+#line 396 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 396 "subs_functions/extensions/opengl/opengl_methods.bas"
+SUB_CLEARID();
+#line 396 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,396,"opengl_methods.bas");}while(r);
+#line 397 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 397 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+0))),256,1),qbs_new_txt_len("_gluPerspective",15));
+#line 397 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,406,"ini.bm");}while(r);
-}else{
+#line 397 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,397,"opengl_methods.bas");}while(r);
+#line 398 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,__STRING_INIWHOLEFILE);
+#line 398 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int16*)(((char*)__UDT_ID)+((0+548)))= 2 ;
+#line 398 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,398,"opengl_methods.bas");}while(r);
+#line 399 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 399 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+554))),256,1),qbs_new_txt_len("gluPerspective",14));
+#line 399 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,409,"ini.bm");}while(r);
-S_38225:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_ININEWFILE,__STRING_INILF->len),__STRING_INILF)))||is_error_pending()){
-if(qbevent){evnt(28181,410,"ini.bm");if(r)goto S_38225;}
+#line 399 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,399,"opengl_methods.bas");}while(r);
+#line 400 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
+#line 400 "subs_functions/extensions/opengl/opengl_methods.bas"
+*(int16*)(((char*)__UDT_ID)+((0+813)))= 4 ;
+#line 400 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,400,"opengl_methods.bas");}while(r);
+#line 401 "subs_functions/extensions/opengl/opengl_methods.bas"
+do{
+#line 401 "subs_functions/extensions/opengl/opengl_methods.bas"
+qbs_set(qbs_new_fixed((((uint8*)__UDT_ID)+((0+817))),400,1),qbs_add(qbs_add(qbs_add(l2string(*__LONG_DOUBLETYPE-*__LONG_ISPOINTER),l2string(*__LONG_DOUBLETYPE-*__LONG_ISPOINTER)),l2string(*__LONG_DOUBLETYPE-*__LONG_ISPOINTER)),l2string(*__LONG_DOUBLETYPE-*__LONG_ISPOINTER)));
+#line 401 "subs_functions/extensions/opengl/opengl_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,411,"ini.bm");}while(r);
-}else{
+#line 401 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,401,"opengl_methods.bas");}while(r);
+#line 402 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,413,"ini.bm");}while(r);
-}
-}
+#line 402 "subs_functions/extensions/opengl/opengl_methods.bas"
+SUB_REGID();
+#line 402 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,402,"opengl_methods.bas");}while(r);
+#line 403 "subs_functions/extensions/opengl/opengl_methods.bas"
 do{
-SUB_INICOMMIT();
-if(!qbevent)break;evnt(28181,417,"ini.bm");}while(r);
-S_38232:;
-if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,419,"ini.bm");if(r)goto S_38232;}
-do{
-*__LONG_INICODE= 7 ;
-if(!qbevent)break;evnt(28181,419,"ini.bm");}while(r);
-}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,420,"ini.bm");}while(r);
-}else{
-LABEL_CREATESECTION:;
-if(qbevent){evnt(28181,422,"ini.bm");r=0;}
-do{
-qbs_set(__STRING_ININEWFILE,__STRING_INIWHOLEFILE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,423,"ini.bm");}while(r);
-S_38238:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_WRITESETTING_STRING_SECTION,qbs_new_txt_len("[]",2))))||is_error_pending()){
-if(qbevent){evnt(28181,424,"ini.bm");if(r)goto S_38238;}
-do{
-goto LABEL_WRITEATTOP;
-if(!qbevent)break;evnt(28181,424,"ini.bm");}while(r);
-}
-S_38241:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_right(__STRING_ININEWFILE,__STRING_INILF->len* 2 )),(qbs_add(__STRING_INILF,__STRING_INILF)))))||is_error_pending()){
-if(qbevent){evnt(28181,426,"ini.bm");if(r)goto S_38241;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,427,"ini.bm");}while(r);
-S_38243:;
-}else{
-if (qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(__STRING_ININEWFILE,__STRING_INILF->len),__STRING_INILF))){
-if(qbevent){evnt(28181,428,"ini.bm");if(r)goto S_38243;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,429,"ini.bm");}while(r);
-}else{
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(__STRING_ININEWFILE,__STRING_INILF),__STRING_INILF),_SUB_WRITESETTING_STRING_SECTION),__STRING_INILF),_SUB_WRITESETTING_STRING_KEY),qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,431,"ini.bm");}while(r);
-}
-}
-do{
-SUB_INICOMMIT();
-if(!qbevent)break;evnt(28181,434,"ini.bm");}while(r);
-S_38249:;
-if ((-(*__LONG_INICODE== 0 ))||is_error_pending()){
-if(qbevent){evnt(28181,436,"ini.bm");if(r)goto S_38249;}
-do{
-*__LONG_INICODE= 9 ;
-if(!qbevent)break;evnt(28181,436,"ini.bm");}while(r);
-}else{
-do{
-*__LONG_INICODE= 16 ;
-if(!qbevent)break;evnt(28181,436,"ini.bm");}while(r);
-}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,437,"ini.bm");}while(r);
-}
-LABEL_WRITEATTOP:;
-if(qbevent){evnt(28181,441,"ini.bm");r=0;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(qbs_add(qbs_add(_SUB_WRITESETTING_STRING_KEY,qbs_new_txt_len("=",1)),_SUB_WRITESETTING_STRING_VALUE),__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,442,"ini.bm");}while(r);
-S_38257:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(qbs_ltrim(__STRING_INIWHOLEFILE), 1 ),qbs_new_txt_len("[",1))))||is_error_pending()){
-if(qbevent){evnt(28181,443,"ini.bm");if(r)goto S_38257;}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INILF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,443,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_ININEWFILE,qbs_add(__STRING_ININEWFILE,__STRING_INIWHOLEFILE));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,444,"ini.bm");}while(r);
-do{
-SUB_INICOMMIT();
-if(!qbevent)break;evnt(28181,446,"ini.bm");}while(r);
-do{
-*__LONG_INICODE= 5 ;
-if(!qbevent)break;evnt(28181,448,"ini.bm");}while(r);
-}
-}
+#line 403 "subs_functions/extensions/opengl/opengl_methods.bas"
+*__LONG_REGINTERNALSUBFUNC= 0 ;
+#line 403 "subs_functions/extensions/opengl/opengl_methods.bas"
+if(!qbevent)break;evnt(28630,403,"opengl_methods.bas");}while(r);
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 exit_subfunc:;
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 free_mem_lock(sf_mem_lock);
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 #include "free165.txt"
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 cmem_sp=tmp_cmem_sp;
+#line 405 "subs_functions/extensions/opengl/opengl_methods.bas"
 }

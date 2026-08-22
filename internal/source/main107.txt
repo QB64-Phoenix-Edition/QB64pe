@@ -1,69 +1,80 @@
-qbs* FUNC_STRREPLACE(qbs*_FUNC_STRREPLACE_STRING_MYSTRING,qbs*_FUNC_STRREPLACE_STRING_FIND,qbs*_FUNC_STRREPLACE_STRING_REPLACEWITH){
+#line 28380 "qb64pe.bas"
+int32 FUNC_VERIFYNUMBER(qbs*_FUNC_VERIFYNUMBER_STRING_TEXT){
+#line 28380 "qb64pe.bas"
 qbs *tqbs;
+#line 28380 "qb64pe.bas"
 ptrszint tmp_long;
+#line 28380 "qb64pe.bas"
 int32 tmp_fileno;
+#line 28380 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 28380 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 28380 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 28380 "qb64pe.bas"
 #include "data107.txt"
+#line 28380 "qb64pe.bas"
 mem_lock *sf_mem_lock;
+#line 28380 "qb64pe.bas"
 new_mem_lock();
+#line 28380 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 28380 "qb64pe.bas"
 sf_mem_lock->type=3;
+#line 28380 "qb64pe.bas"
 libqb_check_stack();
+#line 28380 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 28381 "qb64pe.bas"
 do{
-if(!qbevent)break;evnt(28176,19,"strings.bas");}while(r);
+#line 28381 "qb64pe.bas"
+qbs_set(_FUNC_VERIFYNUMBER_STRING_T,qbs_ltrim(qbs_rtrim(_FUNC_VERIFYNUMBER_STRING_TEXT)));
+#line 28381 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28381 "qb64pe.bas"
+if(!qbevent)break;evnt(28381);}while(r);
+#line 28382 "qb64pe.bas"
 do{
-if(!qbevent)break;evnt(28176,20,"strings.bas");}while(r);
-S_36714:;
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_STRREPLACE_STRING_MYSTRING->len== 0 )))||is_error_pending()){
-if(qbevent){evnt(28176,21,"strings.bas");if(r)goto S_36714;}
+#line 28382 "qb64pe.bas"
+*_FUNC_VERIFYNUMBER_LONG_V=qbr(qbs_val<long double>(_FUNC_VERIFYNUMBER_STRING_T));
+#line 28382 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28382 "qb64pe.bas"
+if(!qbevent)break;evnt(28382);}while(r);
+#line 28383 "qb64pe.bas"
 do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28176,21,"strings.bas");}while(r);
+#line 28383 "qb64pe.bas"
+qbs_set(_FUNC_VERIFYNUMBER_STRING_T1,qbs__tostr((int32)(*_FUNC_VERIFYNUMBER_LONG_V),NULL,0));
+#line 28383 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28383 "qb64pe.bas"
+if(!qbevent)break;evnt(28383);}while(r);
+#line 28384 "qb64pe.bas"
+S_36940:;
+#line 28384 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_VERIFYNUMBER_STRING_T,_FUNC_VERIFYNUMBER_STRING_T1)))||is_error_pending()){
+#line 28384 "qb64pe.bas"
+if(qbevent){evnt(28384);if(r)goto S_36940;}
+#line 28384 "qb64pe.bas"
+do{
+#line 28384 "qb64pe.bas"
+*_FUNC_VERIFYNUMBER_LONG_VERIFYNUMBER= -1 ;
+#line 28384 "qb64pe.bas"
+if(!qbevent)break;evnt(28384);}while(r);
+#line 28384 "qb64pe.bas"
 }
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_MYSTRING);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,22,"strings.bas");}while(r);
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_B,qbs_lcase(_FUNC_STRREPLACE_STRING_FIND));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,23,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_BASEI= 1 ;
-if(!qbevent)break;evnt(28176,24,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,25,"strings.bas");}while(r);
-S_36721:;
-while((*_FUNC_STRREPLACE_LONG_I)||is_error_pending()){
-if(qbevent){evnt(28176,26,"strings.bas");if(r)goto S_36721;}
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_STRREPLACE_STRING_A,*_FUNC_STRREPLACE_LONG_I- 1 ),_FUNC_STRREPLACE_STRING_REPLACEWITH),qbs_right(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_A->len-*_FUNC_STRREPLACE_LONG_I-_FUNC_STRREPLACE_STRING_B->len+ 1 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,27,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_BASEI=*_FUNC_STRREPLACE_LONG_I+_FUNC_STRREPLACE_STRING_REPLACEWITH->len;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,28,"strings.bas");}while(r);
-do{
-*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,29,"strings.bas");}while(r);
-dl_continue_3442:;
-}
-dl_exit_3442:;
-do{
-qbs_set(_FUNC_STRREPLACE_STRING_STRREPLACE,_FUNC_STRREPLACE_STRING_A);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28176,31,"strings.bas");}while(r);
+#line 28385 "qb64pe.bas"
 exit_subfunc:;
+#line 28385 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
+#line 28385 "qb64pe.bas"
 #include "free107.txt"
+#line 28385 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 28385 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_STRREPLACE_STRING_STRREPLACE);return _FUNC_STRREPLACE_STRING_STRREPLACE;
+#line 28385 "qb64pe.bas"
+return *_FUNC_VERIFYNUMBER_LONG_VERIFYNUMBER;
+#line 28385 "qb64pe.bas"
 }

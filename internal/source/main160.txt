@@ -1,80 +1,78 @@
-void SUB_INICOMMIT(){
+#line 609 "utilities/elements.bas"
+qbs* FUNC_CREATEELEMENTSTRING(qbs*_FUNC_CREATEELEMENTSTRING_STRING_S){
+#line 609 "utilities/elements.bas"
 qbs *tqbs;
+#line 609 "utilities/elements.bas"
 ptrszint tmp_long;
+#line 609 "utilities/elements.bas"
 int32 tmp_fileno;
+#line 609 "utilities/elements.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 609 "utilities/elements.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 609 "utilities/elements.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 609 "utilities/elements.bas"
 #include "data160.txt"
+#line 609 "utilities/elements.bas"
 mem_lock *sf_mem_lock;
+#line 609 "utilities/elements.bas"
 new_mem_lock();
+#line 609 "utilities/elements.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 609 "utilities/elements.bas"
 sf_mem_lock->type=3;
+#line 609 "utilities/elements.bas"
 libqb_check_stack();
+#line 609 "utilities/elements.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 610 "utilities/elements.bas"
 do{
-if(!qbevent)break;evnt(28181,40,"ini.bm");}while(r);
+#line 610 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,610,"elements.bas");}while(r);
+#line 611 "utilities/elements.bas"
 do{
-if(!qbevent)break;evnt(28181,41,"ini.bm");}while(r);
-S_37869:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28181,43,"ini.bm");if(r)goto S_37869;}
-do{
-*__LONG_INICODE= 18 ;
-if(!qbevent)break;evnt(28181,43,"ini.bm");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28181,43,"ini.bm");}while(r);
-}
-do{
-qbs_set(__STRING_INIWHOLEFILE,__STRING_ININEWFILE);
+#line 611 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 ));
+#line 611 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,45,"ini.bm");}while(r);
+#line 611 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,611,"elements.bas");}while(r);
+#line 613 "utilities/elements.bas"
 do{
-*__ULONG_CURRENTINIFILELOF=__STRING_ININEWFILE->len;
+#line 613 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,FUNC_ESCAPESTRING(_FUNC_CREATEELEMENTSTRING_STRING_S)));
+#line 613 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,46,"ini.bm");}while(r);
-S_37875:;
-if ((~(*__LONG_INIDISABLEAUTOCOMMIT))||is_error_pending()){
-if(qbevent){evnt(28181,48,"ini.bm");if(r)goto S_37875;}
+#line 613 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,613,"elements.bas");}while(r);
+#line 615 "utilities/elements.bas"
 do{
-if(!qbevent)break;evnt(28181,49,"ini.bm");}while(r);
-do{
-*_SUB_INICOMMIT_INTEGER_FILENUM=func_freefile();
-if(!qbevent)break;evnt(28181,51,"ini.bm");}while(r);
-do{
-sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
+#line 615 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int32)(_FUNC_CREATEELEMENTSTRING_STRING_S->len),NULL,0)));
+#line 615 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,52,"ini.bm");}while(r);
-S_37879:;
-if ((qbs_cleanup(qbs_tmp_base,-(__STRING_INIWHOLEFILE->len<func_lof(*_SUB_INICOMMIT_INTEGER_FILENUM))))||is_error_pending()){
-if(qbevent){evnt(28181,54,"ini.bm");if(r)goto S_37879;}
+#line 615 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,615,"elements.bas");}while(r);
+#line 616 "utilities/elements.bas"
 do{
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-if(!qbevent)break;evnt(28181,55,"ini.bm");}while(r);
-do{
-sub_open(__STRING_CURRENTINIFILENAME, 4 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
+#line 616 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING,_FUNC_CREATEELEMENTSTRING_STRING_ELE);
+#line 616 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,56,"ini.bm");}while(r);
-do{
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-if(!qbevent)break;evnt(28181,56,"ini.bm");}while(r);
-do{
-sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,57,"ini.bm");}while(r);
-}
-do{
-sub_put2(*_SUB_INICOMMIT_INTEGER_FILENUM, 1 ,byte_element((uint64)__STRING_ININEWFILE->chr,__STRING_ININEWFILE->len,byte_element_3650),1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28181,60,"ini.bm");}while(r);
-do{
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-if(!qbevent)break;evnt(28181,61,"ini.bm");}while(r);
-}
+#line 616 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,616,"elements.bas");}while(r);
+#line 617 "utilities/elements.bas"
 exit_subfunc:;
+#line 617 "utilities/elements.bas"
 free_mem_lock(sf_mem_lock);
+#line 617 "utilities/elements.bas"
 #include "free160.txt"
+#line 617 "utilities/elements.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 617 "utilities/elements.bas"
 cmem_sp=tmp_cmem_sp;
+#line 617 "utilities/elements.bas"
+qbs_maketmp(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING);return _FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING;
+#line 617 "utilities/elements.bas"
 }

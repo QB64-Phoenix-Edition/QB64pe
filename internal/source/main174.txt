@@ -1,64 +1,66 @@
-void SUB_BUFTOFILE(int16*_SUB_BUFTOFILE_INTEGER_HANDLE,qbs*_SUB_BUFTOFILE_STRING_FILESPEC){
+#line 461 "utilities/ini-manager/ini.bm"
+void SUB_INISETFORCERELOAD(int8*_SUB_INISETFORCERELOAD_BYTE_STATE){
+#line 461 "utilities/ini-manager/ini.bm"
 qbs *tqbs;
+#line 461 "utilities/ini-manager/ini.bm"
 ptrszint tmp_long;
+#line 461 "utilities/ini-manager/ini.bm"
 int32 tmp_fileno;
+#line 461 "utilities/ini-manager/ini.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 461 "utilities/ini-manager/ini.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 461 "utilities/ini-manager/ini.bm"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 461 "utilities/ini-manager/ini.bm"
 #include "data174.txt"
+#line 461 "utilities/ini-manager/ini.bm"
 mem_lock *sf_mem_lock;
+#line 461 "utilities/ini-manager/ini.bm"
 new_mem_lock();
+#line 461 "utilities/ini-manager/ini.bm"
 sf_mem_lock=mem_lock_tmp;
+#line 461 "utilities/ini-manager/ini.bm"
 sf_mem_lock->type=3;
+#line 461 "utilities/ini-manager/ini.bm"
 libqb_check_stack();
+#line 461 "utilities/ini-manager/ini.bm"
 if (is_error_pending()) goto exit_subfunc;
+#line 462 "utilities/ini-manager/ini.bm"
 do{
-if(!qbevent)break;evnt(28182,115,"simplebuffer.bm");}while(r);
-S_38399:;
-if ((~(FUNC_CHECKHANDLE(_SUB_BUFTOFILE_INTEGER_HANDLE)))||is_error_pending()){
-if(qbevent){evnt(28182,117,"simplebuffer.bm");if(r)goto S_38399;}
+#line 462 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,462,"ini.bm");}while(r);
+#line 463 "utilities/ini-manager/ini.bm"
+S_38761:;
+#line 463 "utilities/ini-manager/ini.bm"
+if ((*_SUB_INISETFORCERELOAD_BYTE_STATE)||is_error_pending()){
+#line 463 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(28631,463,"ini.bm");if(r)goto S_38761;}
+#line 464 "utilities/ini-manager/ini.bm"
 do{
-error( 258 );
-if(!qbevent)break;evnt(28182,117,"simplebuffer.bm");}while(r);
+#line 464 "utilities/ini-manager/ini.bm"
+*__LONG_INIFORCERELOAD= -1 ;
+#line 464 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,464,"ini.bm");}while(r);
+#line 465 "utilities/ini-manager/ini.bm"
+}else{
+#line 466 "utilities/ini-manager/ini.bm"
 do{
-close_program=1;
-end();
-if(!qbevent)break;evnt(28182,117,"simplebuffer.bm");}while(r);
+#line 466 "utilities/ini-manager/ini.bm"
+*__LONG_INIFORCERELOAD= 0 ;
+#line 466 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,466,"ini.bm");}while(r);
+#line 467 "utilities/ini-manager/ini.bm"
 }
-do{
-*_SUB_BUFTOFILE_LONG_BUF=*_SUB_BUFTOFILE_INTEGER_HANDLE* 106 ;
-if(!qbevent)break;evnt(28182,118,"simplebuffer.bm");}while(r);
-do{
-*_SUB_BUFTOFILE_INTEGER_FF=func_freefile();
-if(!qbevent)break;evnt(28182,120,"simplebuffer.bm");}while(r);
-do{
-qbs_set(_SUB_BUFTOFILE_STRING_DAT,qbs_left(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_BUFTOFILE_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])),FUNC_GETBUFLEN(_SUB_BUFTOFILE_INTEGER_HANDLE)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,120,"simplebuffer.bm");}while(r);
-do{
-sub_open(_SUB_BUFTOFILE_STRING_FILESPEC, 4 ,NULL, 4 ,*_SUB_BUFTOFILE_INTEGER_FF,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,121,"simplebuffer.bm");}while(r);
-do{
-sub_close(*_SUB_BUFTOFILE_INTEGER_FF,1);
-if(!qbevent)break;evnt(28182,121,"simplebuffer.bm");}while(r);
-do{
-sub_open(_SUB_BUFTOFILE_STRING_FILESPEC, 2 ,NULL, 4 ,*_SUB_BUFTOFILE_INTEGER_FF,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,122,"simplebuffer.bm");}while(r);
-do{
-sub_put2(*_SUB_BUFTOFILE_INTEGER_FF,NULL,byte_element((uint64)_SUB_BUFTOFILE_STRING_DAT->chr,_SUB_BUFTOFILE_STRING_DAT->len,byte_element_3705),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,123,"simplebuffer.bm");}while(r);
-do{
-sub_close(*_SUB_BUFTOFILE_INTEGER_FF,1);
-if(!qbevent)break;evnt(28182,124,"simplebuffer.bm");}while(r);
-do{
-sub_mid(((qbs*)(((uint64*)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_BUFTOFILE_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])), 13 , 4 ,l2string( 0 ),1);
-if(!qbevent)break;evnt(28182,126,"simplebuffer.bm");}while(r);
+#line 468 "utilities/ini-manager/ini.bm"
 exit_subfunc:;
+#line 468 "utilities/ini-manager/ini.bm"
 free_mem_lock(sf_mem_lock);
+#line 468 "utilities/ini-manager/ini.bm"
 #include "free174.txt"
+#line 468 "utilities/ini-manager/ini.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 468 "utilities/ini-manager/ini.bm"
 cmem_sp=tmp_cmem_sp;
+#line 468 "utilities/ini-manager/ini.bm"
 }
