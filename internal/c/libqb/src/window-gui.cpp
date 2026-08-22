@@ -295,8 +295,6 @@ void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY
 void sub__screenshow() {
     screen_hide = 0;
 
-    // $SCREENHIDE programs will not have the window running
-    libqb_start_glut_thread();
     GLUTEmu_WindowHide(false);
 }
 
@@ -304,8 +302,6 @@ void sub__screenhide() {
     if (screen_hide)
         return;
 
-    // This is probably unnecessary, no conditions allow for screen_hide==0 without GLUT running, but it doesn't hurt anything.
-    libqb_start_glut_thread();
     GLUTEmu_WindowHide(true);
 
     screen_hide = 1;

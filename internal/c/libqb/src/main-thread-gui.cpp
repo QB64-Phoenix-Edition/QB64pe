@@ -81,10 +81,6 @@ static bool glut_is_started;
 // platform-specific thread-ID API and works on Windows, Linux and macOS.
 static thread_local bool current_thread_owns_glut;
 
-void libqb_start_glut_thread() {
-    // Do nothing, GLUT is always started now
-}
-
 // Checks whether the GLUT thread is running
 bool libqb_is_glut_up() {
     return glut_is_started;
