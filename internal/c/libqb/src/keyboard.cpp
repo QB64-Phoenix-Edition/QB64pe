@@ -2111,31 +2111,21 @@ void update_shift_state() {
 }
 
 int32_t func__capslock() {
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
+    OPTIONAL_GLUT(QB_FALSE);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock));
-#endif
-    return QB_FALSE;
 }
 
 int32_t func__scrolllock() {
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
+    OPTIONAL_GLUT(QB_FALSE);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock));
-#endif
-    return QB_FALSE;
 }
 
 int32_t func__numlock() {
-#ifdef QB64_GUI
-    OPTIONAL_GLUT(0);
+    OPTIONAL_GLUT(QB_FALSE);
     return QB_BOOL(GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock));
-#endif
-    return QB_FALSE;
 }
 
 void sub__capslock(int32_t options) {
-#ifdef QB64_GUI
     OPTIONAL_GLUT();
 
     auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock);
@@ -2152,13 +2142,9 @@ void sub__capslock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::CapsLock);
-#else
-    (void)options;
-#endif
 }
 
 void sub__scrolllock(int32_t options) {
-#ifdef QB64_GUI
     OPTIONAL_GLUT();
 
     auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock);
@@ -2175,13 +2161,9 @@ void sub__scrolllock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::ScrollLock);
-#else
-    (void)options;
-#endif
 }
 
 void sub__numlock(int32_t options) {
-#ifdef QB64_GUI
     OPTIONAL_GLUT();
 
     auto currentState = GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock);
@@ -2198,9 +2180,6 @@ void sub__numlock(int32_t options) {
 
     // _TOGGLE:
     GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier::NumLock);
-#else
-    (void)options;
-#endif
 }
 
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
