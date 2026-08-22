@@ -28,6 +28,13 @@ sure the test output ends with the last meaningful line.
 Tests can also have an optional `*.flags` file. The contents of this file will
 be provide as command line arguments to QB64-PE when compiling the test source.
 
+The tests run with `QB64PE_NOPROMPT=y` set, this ensures that any unhandled or
+critical errors do not prompt and wait for input (which would hang the test
+runner). To change this behavior tests can have an optional `*.noprompt` file,
+the contents of this file will be provided as the value of `QB64PE_NOPROMPT`
+when running the test executable. This is mostly useful for testing the
+'Continue' behavior.
+
 Tests are compiled from the directory the `.bas` file is in. That is, they are
 compiled as though the user `cd`'d into the directory the `.bas` file is in,
 and then ran the compiler from that starting location to compile the `.bas`. If

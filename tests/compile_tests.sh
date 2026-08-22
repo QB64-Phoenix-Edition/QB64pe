@@ -132,6 +132,14 @@ do
         checkLicense=y
     fi
 
+    # A .noprompt file overrides the QB64PE_NOPROMPT value used when running this
+    # test. The default stops the program at an unhandled error; a test that needs
+    # the 'continue' behavior can put "Continue" in this file to get it.
+    nopromptValue=y
+    if test -f "./tests/compile_tests/$category/$testName.noprompt"; then
+        nopromptValue=$(cat "./tests/compile_tests/$category/$testName.noprompt")
+    fi
+
     # If the "compile-from-base" file exists, then this test should be compiled
     # from the ./qb64pe directory instead of the test directory
     compileFromBase=
@@ -181,6 +189,7 @@ do
 
         pushd . > /dev/null
         cd "./tests/compile_tests/$category"
+        QB64PE_NOPROMPT="$nopromptValue" \
         QB64PE_LOG_HANDLERS=file \
         QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
         QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testName-log.txt" \
