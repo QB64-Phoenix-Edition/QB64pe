@@ -15,6 +15,7 @@ extern int32_t ScreenResizeScale;
 extern int32_t ScreenResize;
 extern int32_t full_screen;
 extern int32_t full_screen_set;
+extern int32_t screen_hide;
 
 void window_update_for_frame(int32_t frame_width, int32_t frame_height);
 void window_update_environment_size();

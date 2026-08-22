@@ -10,7 +10,6 @@
 #include <vector>
 
 extern int32_t force_display_update;
-extern int32_t screen_hide;
 
 int32_t environment__window_width = 0;
 int32_t environment__window_height = 0;
