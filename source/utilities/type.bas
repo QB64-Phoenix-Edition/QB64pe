@@ -2122,7 +2122,7 @@ SUB initialise_udt_varstrings (n$, udt, buf, base_offset)
                 array_offset = offset + array_i * elem_bytes
                 IF udtetype(element) AND ISSTRING THEN
                     IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                        WriteBufLine buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ") = qbs_new(0,0);"
+                        WriteBufLineCpp buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ") = qbs_new(0,0);"
                     END IF
                 ELSEIF udtetype(element) AND ISUDT THEN
                     initialise_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
@@ -2130,7 +2130,7 @@ SUB initialise_udt_varstrings (n$, udt, buf, base_offset)
             NEXT
         ELSEIF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ") = qbs_new(0,0);"
+                WriteBufLineCpp buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ") = qbs_new(0,0);"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             initialise_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
@@ -2151,7 +2151,7 @@ SUB free_udt_varstrings (n$, udt, buf, base_offset)
                 array_offset = offset + array_i * elem_bytes
                 IF udtetype(element) AND ISSTRING THEN
                     IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                        WriteBufLine buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ")));"
+                        WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ")));"
                     END IF
                 ELSEIF udtetype(element) AND ISUDT THEN
                     free_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
@@ -2159,7 +2159,7 @@ SUB free_udt_varstrings (n$, udt, buf, base_offset)
             NEXT
         ELSEIF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ")));"
+                WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ")));"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             free_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
@@ -2181,10 +2181,10 @@ SUB clear_udt_with_varstrings (n$, udt, buf, base_offset)
                 IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
                     FOR array_i = 0 TO udtearrayelements(element) - 1
                         array_offset = offset + array_i * elem_bytes
-                        WriteBufLine buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + "))->len=0;"
+                        WriteBufLineCpp buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + "))->len=0;"
                     NEXT
                 ELSE
-                    WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+                    WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
                 END IF
             ELSEIF udtetype(element) AND ISUDT THEN
                 FOR array_i = 0 TO udtearrayelements(element) - 1
@@ -2192,18 +2192,18 @@ SUB clear_udt_with_varstrings (n$, udt, buf, base_offset)
                     clear_udt_with_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
                 NEXT
             ELSE
-                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+                WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
             END IF
         ELSEIF udtetype(element) AND ISSTRING THEN
             IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLine buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + "))->len=0;"
+                WriteBufLineCpp buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + "))->len=0;"
             ELSE
-                WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+                WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
             END IF
         ELSEIF udtetype(element) AND ISUDT THEN
             clear_udt_with_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
         ELSE
-            WriteBufLine buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+            WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
         END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
@@ -2315,7 +2315,7 @@ END SUB
 
 SUB copy_full_udt (dst$, src$, buf, base_offset, udt)
     IF NOT udtxvariable(udt) THEN
-        WriteBufLine buf, "memcpy(" + dst$ + "+" + STR$(base_offset) + "," + src$ + "+" + STR$(base_offset) + "," + STR$(udtxsize(udt) \ 8) + ");"
+        WriteBufLineCpp buf, "memcpy(" + dst$ + "+" + STR$(base_offset) + "," + src$ + "+" + STR$(base_offset) + "," + STR$(udtxsize(udt) \ 8) + ");"
         EXIT SUB
     END IF
     offset = base_offset
@@ -2326,7 +2326,7 @@ SUB copy_full_udt (dst$, src$, buf, base_offset, udt)
             IF ((udtetype(element) AND ISSTRING) > 0) AND (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
                 FOR array_i = 0 TO udtearrayelements(element) - 1
                     array_offset = offset + array_i * elem_bytes
-                    WriteBufLine buf, "qbs_set(*(qbs**)(" + dst$ + "+" + STR$(array_offset) + "), *(qbs**)(" + src$ + "+" + STR$(array_offset) + "));"
+                    WriteBufLineCpp buf, "qbs_set(*(qbs**)(" + dst$ + "+" + STR$(array_offset) + "), *(qbs**)(" + src$ + "+" + STR$(array_offset) + "));"
                 NEXT
             ELSEIF ((udtetype(element) AND ISUDT) > 0) THEN
                 IF udtxvariable(udtetype(element) AND UDTMASK) THEN
@@ -2335,17 +2335,17 @@ SUB copy_full_udt (dst$, src$, buf, base_offset, udt)
                         copy_full_udt dst$, src$, buf, array_offset, udtetype(element) AND UDTMASK
                     NEXT
                 ELSE
-                    WriteBufLine buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
+                    WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
                 END IF
             ELSE
-                WriteBufLine buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
+                WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
             END IF
         ELSEIF ((udtetype(element) AND ISSTRING) > 0) AND (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-            WriteBufLine buf, "qbs_set(*(qbs**)(" + dst$ + "+" + STR$(offset) + "), *(qbs**)(" + src$ + "+" + STR$(offset) + "));"
+            WriteBufLineCpp buf, "qbs_set(*(qbs**)(" + dst$ + "+" + STR$(offset) + "), *(qbs**)(" + src$ + "+" + STR$(offset) + "));"
         ELSEIF ((udtetype(element) AND ISUDT) > 0) THEN
             copy_full_udt dst$, src$, buf, offset, udtetype(element) AND UDTMASK
         ELSE
-            WriteBufLine buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
+            WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + STR$(offset) + "),(" + src$ + "+" + STR$(offset) + ")," + STR$(udtesize(element) \ 8) + ");"
         END IF
         offset = offset + udtesize(element) \ 8
         element = udtenext(element)
@@ -2368,7 +2368,7 @@ SUB copy_full_udt_dyn (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
         ' members, and recursive handling for nested owner UDTs.
         AppendDynUDTOwnSetAt dst$, src$, udt, base_offset, base_offset, LTRIM$(STR$(UDTDynLayoutSize&(udt) \ 8)), "0", "0", dyn_acc$, layout_mode
         IF Error_Happened THEN EXIT SUB
-        IF dyn_acc$ <> "" THEN WriteBufLine buf, dyn_acc$
+        IF dyn_acc$ <> "" THEN WriteBufLineCpp buf, dyn_acc$
         EXIT SUB
     END IF
 
@@ -2378,7 +2378,7 @@ SUB copy_full_udt_dyn (dst$, src$, buf, base_offset, udt, layout_mode AS LONG)
     IF UDTDynHasMemberArrays%(udt, layout_mode) THEN
         AppendDynUDTDescCopy dst$, src$, udt, LTRIM$(STR$(base_offset)), LTRIM$(STR$(base_offset)), LTRIM$(STR$(UDTDynLayoutSize&(udt) \ 8)), dyn_acc$, layout_mode
         IF Error_Happened THEN EXIT SUB
-        IF dyn_acc$ <> "" THEN WriteBufLine buf, dyn_acc$
+        IF dyn_acc$ <> "" THEN WriteBufLineCpp buf, dyn_acc$
     END IF
 END SUB
 
@@ -2402,39 +2402,39 @@ SUB copy_dyn_udt_scalars (dst$, src$, buf, base_offset, udt, layout_mode AS LONG
                             static_copy$ = ""
                             AppendDynUDTOwnSetAt dst$, src$, nested_udt&, arr_off&, arr_off&, LTRIM$(STR$(inline_bytes&)), "0", "0", static_copy$, layout_mode
                             IF Error_Happened THEN EXIT SUB
-                            IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+                            IF static_copy$ <> "" THEN WriteBufLineCpp buf, static_copy$
                         ELSE
                             copy_dyn_udt_scalars dst$, src$, buf, arr_off&, nested_udt&, layout_mode
                             IF Error_Happened THEN EXIT SUB
                             static_copy$ = ""
                             AppendDynUDTDescCopy dst$, src$, nested_udt&, LTRIM$(STR$(arr_off&)), LTRIM$(STR$(arr_off&)), LTRIM$(STR$(inline_bytes&)), static_copy$, layout_mode
                             IF Error_Happened THEN EXIT SUB
-                            IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+                            IF static_copy$ <> "" THEN WriteBufLineCpp buf, static_copy$
                         END IF
                     NEXT
                 ELSE
-                    WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
+                    WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
                 END IF
             ELSE
-                WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
+                WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
             END IF
         ELSEIF ((udtetype(member_id&) AND ISSTRING) <> 0) AND ((udtetype(member_id&) AND ISFIXEDLENGTH) = 0) THEN
-            WriteBufLine buf, "qbs_set(*(qbs**)(" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "), *(qbs**)(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + "));"
+            WriteBufLineCpp buf, "qbs_set(*(qbs**)(" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "), *(qbs**)(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + "));"
         ELSEIF (udtetype(member_id&) AND ISUDT) <> 0 THEN
             nested_udt& = udtetype(member_id&) AND UDTMASK
             IF udtxvariable(nested_udt&) THEN
                 static_copy$ = ""
                 AppendDynUDTOwnSetAt dst$, src$, nested_udt&, copyoff&, copyoff&, LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)), "0", "0", static_copy$, layout_mode
                 IF Error_Happened THEN EXIT SUB
-                IF static_copy$ <> "" THEN WriteBufLine buf, static_copy$
+                IF static_copy$ <> "" THEN WriteBufLineCpp buf, static_copy$
             ELSEIF UDTDynHasMemberArrays%(nested_udt&, layout_mode) THEN
                 copy_dyn_udt_scalars dst$, src$, buf, copyoff&, nested_udt&, layout_mode
                 IF Error_Happened THEN EXIT SUB
             ELSE
-                WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
+                WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
             END IF
         ELSE
-            WriteBufLine buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
+            WriteBufLineCpp buf, "memcpy((" + dst$ + "+" + LTRIM$(STR$(copyoff&)) + "),(" + src$ + "+" + LTRIM$(STR$(copyoff&)) + ")," + LTRIM$(STR$(UDTDynMemberSize&(member_id&) \ 8)) + ");"
         END IF
         member_id& = udtenext(member_id&)
     LOOP

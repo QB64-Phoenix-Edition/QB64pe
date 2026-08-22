@@ -1,74 +1,48 @@
-int32 FUNC_ELEMENTGETSTRINGVALUE(qbs*_FUNC_ELEMENTGETSTRINGVALUE_STRING_ELE,qbs*_FUNC_ELEMENTGETSTRINGVALUE_STRING_VALUE){
+#line 200 "utilities/elements.bas"
+void SUB_REMOVEELEMENT(qbs*_SUB_REMOVEELEMENT_STRING_A,int32*_SUB_REMOVEELEMENT_LONG_I){
+#line 200 "utilities/elements.bas"
 qbs *tqbs;
+#line 200 "utilities/elements.bas"
 ptrszint tmp_long;
+#line 200 "utilities/elements.bas"
 int32 tmp_fileno;
+#line 200 "utilities/elements.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 200 "utilities/elements.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 200 "utilities/elements.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 200 "utilities/elements.bas"
 #include "data150.txt"
+#line 200 "utilities/elements.bas"
 mem_lock *sf_mem_lock;
+#line 200 "utilities/elements.bas"
 new_mem_lock();
+#line 200 "utilities/elements.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 200 "utilities/elements.bas"
 sf_mem_lock->type=3;
+#line 200 "utilities/elements.bas"
 libqb_check_stack();
+#line 200 "utilities/elements.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 201 "utilities/elements.bas"
 do{
-if(!qbevent)break;evnt(28165,553,"elements.bas");}while(r);
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,func_mid(_FUNC_ELEMENTGETSTRINGVALUE_STRING_ELE, 2 ,func_instr( 2 ,_FUNC_ELEMENTGETSTRINGVALUE_STRING_ELE,func_chr( 34 ),0|1)- 2 ,0|1));
+#line 201 "utilities/elements.bas"
+SUB_REMOVEELEMENTS(_SUB_REMOVEELEMENT_STRING_A,_SUB_REMOVEELEMENT_LONG_I,_SUB_REMOVEELEMENT_LONG_I,&(pass3605= 0 ));
+#line 201 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,559,"elements.bas");}while(r);
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,560,"elements.bas");}while(r);
-do{
-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I= 1 ;
-if(!qbevent)break;evnt(28165,561,"elements.bas");}while(r);
-S_37315:;
-while((qbs_cleanup(qbs_tmp_base,func_instr(*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,qbs_new_txt_len("\\",1),0|1)))||is_error_pending()){
-if(qbevent){evnt(28165,563,"elements.bas");if(r)goto S_37315;}
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,qbs_add(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,func_mid(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,func_instr(*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,qbs_new_txt_len("\\",1),0|1)-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,0|1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,564,"elements.bas");}while(r);
-do{
-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I=func_instr(*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,qbs_new_txt_len("\\",1),0|1)+ 1 ;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,565,"elements.bas");}while(r);
-S_37318:;
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I)==qbs_asc(qbs_new_txt_len("\\",1)))))||is_error_pending()){
-if(qbevent){evnt(28165,567,"elements.bas");if(r)goto S_37318;}
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,qbs_add(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,qbs_new_txt_len("\\",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,568,"elements.bas");}while(r);
-do{
-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I=*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I+ 1 ;
-if(!qbevent)break;evnt(28165,569,"elements.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,qbs_add(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,func_chr(qbr(qbs_val<long double>(qbs_add(qbs_new_txt_len("&O",2),func_mid(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I, 3 ,0|1)))))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,571,"elements.bas");}while(r);
-do{
-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I=*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I+ 3 ;
-if(!qbevent)break;evnt(28165,572,"elements.bas");}while(r);
-}
-ww_continue_4472:;
-}
-ww_exit_4472:;
-do{
-qbs_set(_FUNC_ELEMENTGETSTRINGVALUE_STRING_VALUE,qbs_add(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RES,func_mid(_FUNC_ELEMENTGETSTRINGVALUE_STRING_RAWSTRING,*_FUNC_ELEMENTGETSTRINGVALUE_LONG_I,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,576,"elements.bas");}while(r);
-do{
-*_FUNC_ELEMENTGETSTRINGVALUE_LONG_ELEMENTGETSTRINGVALUE=*__LONG_STRINGTYPE;
-if(!qbevent)break;evnt(28165,577,"elements.bas");}while(r);
+#line 201 "utilities/elements.bas"
+if(!qbevent)break;evnt(28629,201,"elements.bas");}while(r);
+#line 202 "utilities/elements.bas"
 exit_subfunc:;
+#line 202 "utilities/elements.bas"
 free_mem_lock(sf_mem_lock);
+#line 202 "utilities/elements.bas"
 #include "free150.txt"
+#line 202 "utilities/elements.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 202 "utilities/elements.bas"
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ELEMENTGETSTRINGVALUE_LONG_ELEMENTGETSTRINGVALUE;
+#line 202 "utilities/elements.bas"
 }

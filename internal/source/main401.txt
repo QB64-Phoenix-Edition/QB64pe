@@ -1,38 +1,156 @@
-qbs* FUNC_IDEYESNOBOX(qbs*_FUNC_IDEYESNOBOX_STRING_TITLESTR,qbs*_FUNC_IDEYESNOBOX_STRING_MESSAGESTR){
+#line 15631 "ide/ide_methods.bas"
+qbs* FUNC_IDEZGETROOT(){
+#line 15631 "ide/ide_methods.bas"
 qbs *tqbs;
+#line 15631 "ide/ide_methods.bas"
 ptrszint tmp_long;
+#line 15631 "ide/ide_methods.bas"
 int32 tmp_fileno;
+#line 15631 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 15631 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 15631 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 15631 "ide/ide_methods.bas"
 #include "data401.txt"
+#line 15631 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
+#line 15631 "ide/ide_methods.bas"
 new_mem_lock();
+#line 15631 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 15631 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
+#line 15631 "ide/ide_methods.bas"
 libqb_check_stack();
+#line 15631 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 15634 "ide/ide_methods.bas"
+S_61651:;
+#line 15634 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+#line 15634 "ide/ide_methods.bas"
+if(qbevent){evnt(28646,15634,"ide_methods.bas");if(r)goto S_61651;}
+#line 15635 "ide/ide_methods.bas"
 do{
-*_FUNC_IDEYESNOBOX_LONG_RESULT=FUNC_IDEMESSAGEBOX(_FUNC_IDEYESNOBOX_STRING_TITLESTR,_FUNC_IDEYESNOBOX_STRING_MESSAGESTR,qbs_new_txt_len("#Yes;#No",8));
+#line 15635 "ide/ide_methods.bas"
+sub_shell2(qbs_new_txt_len("cd >.\\internal\\temp\\root.txt",28),2);
+#line 15635 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,17115,"ide_methods.bas");}while(r);
-S_62783:;
-if ((-(*_FUNC_IDEYESNOBOX_LONG_RESULT== 1 ))||is_error_pending()){
-if(qbevent){evnt(28182,17116,"ide_methods.bas");if(r)goto S_62783;}
+#line 15635 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15635,"ide_methods.bas");}while(r);
+#line 15636 "ide/ide_methods.bas"
 do{
-qbs_set(_FUNC_IDEYESNOBOX_STRING_IDEYESNOBOX,qbs_new_txt_len("Y",1));
+#line 15636 "ide/ide_methods.bas"
+sub_open(qbs_new_txt_len(".\\internal\\temp\\root.txt",24), 3 ,NULL,NULL, 150 ,NULL,0);
+#line 15636 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,17116,"ide_methods.bas");}while(r);
+#line 15636 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15636,"ide_methods.bas");}while(r);
+#line 15637 "ide/ide_methods.bas"
+do{
+#line 15637 "ide/ide_methods.bas"
+tmp_fileno= 150 ;
+#line 15637 "ide/ide_methods.bas"
+if (is_error_pending()) goto skip6319;
+#line 15637 "ide/ide_methods.bas"
+sub_file_line_input_string(tmp_fileno,_FUNC_IDEZGETROOT_STRING_A);
+#line 15637 "ide/ide_methods.bas"
+if (is_error_pending()) goto skip6319;
+#line 15637 "ide/ide_methods.bas"
+skip6319:
+#line 15637 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15637 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15637,"ide_methods.bas");}while(r);
+#line 15638 "ide/ide_methods.bas"
+do{
+#line 15638 "ide/ide_methods.bas"
+qbs_set(_FUNC_IDEZGETROOT_STRING_IDEZGETROOT,_FUNC_IDEZGETROOT_STRING_A);
+#line 15638 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15638 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15638,"ide_methods.bas");}while(r);
+#line 15639 "ide/ide_methods.bas"
+do{
+#line 15639 "ide/ide_methods.bas"
+sub_close( 150 ,1);
+#line 15639 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15639,"ide_methods.bas");}while(r);
+#line 15640 "ide/ide_methods.bas"
+do{
+#line 15640 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 15640 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15640,"ide_methods.bas");}while(r);
+#line 15641 "ide/ide_methods.bas"
 }else{
+#line 15642 "ide/ide_methods.bas"
 do{
-qbs_set(_FUNC_IDEYESNOBOX_STRING_IDEYESNOBOX,qbs_new_txt_len("N",1));
+#line 15642 "ide/ide_methods.bas"
+sub_shell2(qbs_new_txt_len("pwd >./internal/temp/root.txt",29),2);
+#line 15642 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,17116,"ide_methods.bas");}while(r);
+#line 15642 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15642,"ide_methods.bas");}while(r);
+#line 15643 "ide/ide_methods.bas"
+do{
+#line 15643 "ide/ide_methods.bas"
+sub_open(qbs_new_txt_len("./internal/temp/root.txt",24), 3 ,NULL,NULL, 150 ,NULL,0);
+#line 15643 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15643 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15643,"ide_methods.bas");}while(r);
+#line 15644 "ide/ide_methods.bas"
+do{
+#line 15644 "ide/ide_methods.bas"
+tmp_fileno= 150 ;
+#line 15644 "ide/ide_methods.bas"
+if (is_error_pending()) goto skip6320;
+#line 15644 "ide/ide_methods.bas"
+sub_file_line_input_string(tmp_fileno,_FUNC_IDEZGETROOT_STRING_A);
+#line 15644 "ide/ide_methods.bas"
+if (is_error_pending()) goto skip6320;
+#line 15644 "ide/ide_methods.bas"
+skip6320:
+#line 15644 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15644 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15644,"ide_methods.bas");}while(r);
+#line 15645 "ide/ide_methods.bas"
+do{
+#line 15645 "ide/ide_methods.bas"
+qbs_set(_FUNC_IDEZGETROOT_STRING_IDEZGETROOT,_FUNC_IDEZGETROOT_STRING_A);
+#line 15645 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15645 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15645,"ide_methods.bas");}while(r);
+#line 15646 "ide/ide_methods.bas"
+do{
+#line 15646 "ide/ide_methods.bas"
+sub_close( 150 ,1);
+#line 15646 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15646,"ide_methods.bas");}while(r);
+#line 15647 "ide/ide_methods.bas"
+do{
+#line 15647 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 15647 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,15647,"ide_methods.bas");}while(r);
+#line 15648 "ide/ide_methods.bas"
 }
+#line 15650 "ide/ide_methods.bas"
 exit_subfunc:;
+#line 15650 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
+#line 15650 "ide/ide_methods.bas"
 #include "free401.txt"
+#line 15650 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 15650 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_IDEYESNOBOX_STRING_IDEYESNOBOX);return _FUNC_IDEYESNOBOX_STRING_IDEYESNOBOX;
+#line 15650 "ide/ide_methods.bas"
+qbs_maketmp(_FUNC_IDEZGETROOT_STRING_IDEZGETROOT);return _FUNC_IDEZGETROOT_STRING_IDEZGETROOT;
+#line 15650 "ide/ide_methods.bas"
 }

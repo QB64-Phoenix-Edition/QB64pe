@@ -1,34 +1,64 @@
-int32 FUNC_IDEHLEN(qbs*_FUNC_IDEHLEN_STRING_A){
+#line 11273 "ide/ide_methods.bas"
+void SUB_IDECHANGED(int32*_SUB_IDECHANGED_LONG_TOTALCHANGES){
+#line 11273 "ide/ide_methods.bas"
 qbs *tqbs;
+#line 11273 "ide/ide_methods.bas"
 ptrszint tmp_long;
+#line 11273 "ide/ide_methods.bas"
 int32 tmp_fileno;
+#line 11273 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 11273 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 11273 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 11273 "ide/ide_methods.bas"
 #include "data364.txt"
+#line 11273 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
+#line 11273 "ide/ide_methods.bas"
 new_mem_lock();
+#line 11273 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 11273 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
+#line 11273 "ide/ide_methods.bas"
 libqb_check_stack();
+#line 11273 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-S_57382:;
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,_FUNC_IDEHLEN_STRING_A,qbs_new_txt_len("#",1),0)))||is_error_pending()){
-if(qbevent){evnt(28182,12236,"ide_methods.bas");if(r)goto S_57382;}
+#line 11274 "ide/ide_methods.bas"
+S_56911:;
+#line 11274 "ide/ide_methods.bas"
+if ((-(*_SUB_IDECHANGED_LONG_TOTALCHANGES> 1 ))||is_error_pending()){
+#line 11274 "ide/ide_methods.bas"
+if(qbevent){evnt(28646,11274,"ide_methods.bas");if(r)goto S_56911;}
+#line 11274 "ide/ide_methods.bas"
 do{
-*_FUNC_IDEHLEN_LONG_IDEHLEN=_FUNC_IDEHLEN_STRING_A->len- 1 ;
+#line 11274 "ide/ide_methods.bas"
+qbs_set(_SUB_IDECHANGED_STRING_PL,qbs_new_txt_len("s",1));
+#line 11274 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,12236,"ide_methods.bas");}while(r);
-}else{
-do{
-*_FUNC_IDEHLEN_LONG_IDEHLEN=_FUNC_IDEHLEN_STRING_A->len;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,12236,"ide_methods.bas");}while(r);
+#line 11274 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,11274,"ide_methods.bas");}while(r);
+#line 11274 "ide/ide_methods.bas"
 }
+#line 11275 "ide/ide_methods.bas"
+do{
+#line 11275 "ide/ide_methods.bas"
+*_SUB_IDECHANGED_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Change Complete",15),qbs_add(qbs_add(qbs_add(qbs__tostr((int32)(*_SUB_IDECHANGED_LONG_TOTALCHANGES),NULL,0),qbs_new_txt_len(" substitution",13)),_SUB_IDECHANGED_STRING_PL),qbs_new_txt_len(".",1)),qbs_new_txt_len("",0));
+#line 11275 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11275 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,11275,"ide_methods.bas");}while(r);
+#line 11276 "ide/ide_methods.bas"
 exit_subfunc:;
+#line 11276 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
+#line 11276 "ide/ide_methods.bas"
 #include "free364.txt"
+#line 11276 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 11276 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_IDEHLEN_LONG_IDEHLEN;
+#line 11276 "ide/ide_methods.bas"
 }

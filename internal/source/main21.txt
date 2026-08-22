@@ -1,419 +1,838 @@
+#line 15739 "qb64pe.bas"
 int32 FUNC_PARSEUDTARRAYBOUNDSEX(qbs*_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,int32*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_EFFECTIVE_OPTIONBASE,int32*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_BOUND,int32*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT,int32*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT,qbs*_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR){
+#line 15739 "qb64pe.bas"
 qbs *tqbs;
+#line 15739 "qb64pe.bas"
 ptrszint tmp_long;
+#line 15739 "qb64pe.bas"
 int32 tmp_fileno;
+#line 15739 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 15739 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 15739 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 15739 "qb64pe.bas"
 #include "data21.txt"
+#line 15739 "qb64pe.bas"
 mem_lock *sf_mem_lock;
+#line 15739 "qb64pe.bas"
 new_mem_lock();
+#line 15739 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 15739 "qb64pe.bas"
 sf_mem_lock->type=3;
+#line 15739 "qb64pe.bas"
 libqb_check_stack();
+#line 15739 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 15740 "qb64pe.bas"
 do{
-if(!qbevent)break;evnt(15693);}while(r);
-do{
-if(!qbevent)break;evnt(15694);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N=FUNC_NUMELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15696);}while(r);
-S_18175:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N== 0 ))||is_error_pending()){
-if(qbevent){evnt(15697);if(r)goto S_18175;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Array bounds missing",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15697);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15697);}while(r);
-}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_BOUND= 0 ;
-if(!qbevent)break;evnt(15699);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT= 1 ;
-if(!qbevent)break;evnt(15700);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT= 0 ;
-if(!qbevent)break;evnt(15701);}while(r);
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15702);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B= 0 ;
-if(!qbevent)break;evnt(15704);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI= 1 ;
-if(!qbevent)break;evnt(15705);}while(r);
-S_18185:;
-fornext_value2677= 1 ;
-fornext_finalvalue2677=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N;
-fornext_step2677= 1 ;
-if (fornext_step2677<0) fornext_step_negative2677=1; else fornext_step_negative2677=0;
-if (is_error_pending()) goto fornext_error2677;
-goto fornext_entrylabel2677;
-while(1){
-fornext_value2677=fornext_step2677+(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I);
-fornext_entrylabel2677:
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I=fornext_value2677;
-if (fornext_step_negative2677){
-if (fornext_value2677<fornext_finalvalue2677) break;
-}else{
-if (fornext_value2677>fornext_finalvalue2677) break;
-}
-fornext_error2677:;
-if(qbevent){evnt(15706);if(r)goto S_18185;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,FUNC_GETELEMENT(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15707);}while(r);
-S_18187:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len("(",1))))||is_error_pending()){
-if(qbevent){evnt(15708);if(r)goto S_18187;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B+ 1 ;
-if(!qbevent)break;evnt(15708);}while(r);
-}
-S_18190:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len(")",1))))||is_error_pending()){
-if(qbevent){evnt(15709);if(r)goto S_18190;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B- 1 ;
-if(!qbevent)break;evnt(15709);}while(r);
-}
-S_18193:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B< 0 ))||is_error_pending()){
-if(qbevent){evnt(15710);if(r)goto S_18193;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15710);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15710);}while(r);
-}
-S_18197:;
-if ((qbs_cleanup(qbs_tmp_base,(((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B== 0 ))&(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len(",",1)))))|(-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I==*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N))))||is_error_pending()){
-if(qbevent){evnt(15711);if(r)goto S_18197;}
-S_18198:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I==*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N))||is_error_pending()){
-if(qbevent){evnt(15712);if(r)goto S_18198;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15713);}while(r);
-}else{
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI,&(pass2678=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I- 1 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15715);}while(r);
-}
-S_18203:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(15717);if(r)goto S_18203;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15717);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15717);}while(r);
-}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN=FUNC_NUMELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15719);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS= 0 ;
-if(!qbevent)break;evnt(15720);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2= 0 ;
-if(!qbevent)break;evnt(15721);}while(r);
-S_18210:;
-fornext_value2680= 1 ;
-fornext_finalvalue2680=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN;
-fornext_step2680= 1 ;
-if (fornext_step2680<0) fornext_step_negative2680=1; else fornext_step_negative2680=0;
-if (is_error_pending()) goto fornext_error2680;
-goto fornext_entrylabel2680;
-while(1){
-fornext_value2680=fornext_step2680+(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI);
-fornext_entrylabel2680:
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI=fornext_value2680;
-if (fornext_step_negative2680){
-if (fornext_value2680<fornext_finalvalue2680) break;
-}else{
-if (fornext_value2680>fornext_finalvalue2680) break;
-}
-fornext_error2680:;
-if(qbevent){evnt(15722);if(r)goto S_18210;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,FUNC_GETELEMENT(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15723);}while(r);
-S_18212:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,qbs_new_txt_len("(",1))))||is_error_pending()){
-if(qbevent){evnt(15724);if(r)goto S_18212;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2+ 1 ;
-if(!qbevent)break;evnt(15724);}while(r);
-}
-S_18215:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,qbs_new_txt_len(")",1))))||is_error_pending()){
-if(qbevent){evnt(15725);if(r)goto S_18215;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2- 1 ;
-if(!qbevent)break;evnt(15725);}while(r);
-}
-S_18218:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2< 0 ))||is_error_pending()){
-if(qbevent){evnt(15726);if(r)goto S_18218;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15726);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15726);}while(r);
-}
-S_18222:;
-if ((qbs_cleanup(qbs_tmp_base,(-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2== 0 ))&(qbs_equal(qbs_ucase(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2),qbs_new_txt_len("TO",2)))))||is_error_pending()){
-if(qbevent){evnt(15727);if(r)goto S_18222;}
-S_18223:;
-if ((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS)||is_error_pending()){
-if(qbevent){evnt(15728);if(r)goto S_18223;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15728);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15728);}while(r);
-}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI;
-if(!qbevent)break;evnt(15729);}while(r);
-}
-fornext_continue_2679:;
-}
-fornext_exit_2679:;
-S_18230:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2!= 0 ))||is_error_pending()){
-if(qbevent){evnt(15732);if(r)goto S_18230;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15732);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15732);}while(r);
-}
-S_18234:;
-if ((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS)||is_error_pending()){
-if(qbevent){evnt(15734);if(r)goto S_18234;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,&(pass2681= 1 ),&(pass2682=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS- 1 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15735);}while(r);
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,&(pass2683=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS+ 1 ),_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15736);}while(r);
-S_18237:;
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,qbs_new_txt_len("",0)))|(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,qbs_new_txt_len("",0)))))||is_error_pending()){
-if(qbevent){evnt(15737);if(r)goto S_18237;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15737);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15737);}while(r);
-}
-}else{
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,qbs__tostr((int64)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_EFFECTIVE_OPTIONBASE+ 0 ),NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15739);}while(r);
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
+#line 15740 "qb64pe.bas"
 if(!qbevent)break;evnt(15740);}while(r);
-}
+#line 15741 "qb64pe.bas"
 do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST= 0 ;
+#line 15741 "qb64pe.bas"
+if(!qbevent)break;evnt(15741);}while(r);
+#line 15743 "qb64pe.bas"
+do{
+#line 15743 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N=FUNC_NUMELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES);
+#line 15743 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15743 "qb64pe.bas"
 if(!qbevent)break;evnt(15743);}while(r);
+#line 15744 "qb64pe.bas"
+S_18215:;
+#line 15744 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N== 0 ))||is_error_pending()){
+#line 15744 "qb64pe.bas"
+if(qbevent){evnt(15744);if(r)goto S_18215;}
+#line 15744 "qb64pe.bas"
 do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST= 0 ;
-if(!qbevent)break;evnt(15744);}while(r);
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,qbs__trim(FUNC_EVALUATE_EXPRESSION(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,(void*)( ((char*)(_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_LOWER_NUM)) + ((0+0)) ))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15749);}while(r);
-S_18248:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT, 8 ),qbs_new_txt_len("ERROR - ",8))))||is_error_pending()){
-if(qbevent){evnt(15750);if(r)goto S_18248;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15751);}while(r);
-S_18250:;
-}else{
-if (-((*(int32*)(((char*)_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_LOWER_NUM)+((0+56)))&*__LONG_ISSTRING)== 0 )){
-if(qbevent){evnt(15752);if(r)goto S_18250;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST= -1 ;
-if(!qbevent)break;evnt(15753);}while(r);
-}else{
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15755);}while(r);
-}
-}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,qbs__trim(FUNC_EVALUATE_EXPRESSION(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,(void*)( ((char*)(_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_UPPER_NUM)) + ((0+0)) ))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15758);}while(r);
-S_18256:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT, 8 ),qbs_new_txt_len("ERROR - ",8))))||is_error_pending()){
-if(qbevent){evnt(15759);if(r)goto S_18256;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15760);}while(r);
-S_18258:;
-}else{
-if (-((*(int32*)(((char*)_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_UPPER_NUM)+((0+56)))&*__LONG_ISSTRING)== 0 )){
-if(qbevent){evnt(15761);if(r)goto S_18258;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST= -1 ;
-if(!qbevent)break;evnt(15762);}while(r);
-}else{
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15764);}while(r);
-}
-}
-S_18263:;
-if ((-((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST&*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST)== 0 ))||is_error_pending()){
-if(qbevent){evnt(15767);if(r)goto S_18263;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("TYPE member array bounds must be numeric constant",49));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15768);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15769);}while(r);
-}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER=qbr(qbs_val<long double>(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15772);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER=qbr(qbs_val<long double>(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15773);}while(r);
-S_18269:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER<*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER))||is_error_pending()){
-if(qbevent){evnt(15774);if(r)goto S_18269;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15774);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15774);}while(r);
-}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER+ 1 ;
-if(!qbevent)break;evnt(15776);}while(r);
-S_18274:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS<= 0 ))||is_error_pending()){
-if(qbevent){evnt(15777);if(r)goto S_18274;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15777);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15777);}while(r);
-}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_LOWER_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15779);}while(r);
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_ELEMENTS_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS))));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15780);}while(r);
-S_18280:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT== 0 ))||is_error_pending()){
-if(qbevent){evnt(15782);if(r)goto S_18280;}
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_BOUND=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER;
-if(!qbevent)break;evnt(15782);}while(r);
-}
-S_18283:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(15783);if(r)goto S_18283;}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_add(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len(";",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15783);}while(r);
-}
-do{
-qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_add(qbs_add(qbs_add(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_LOWER_TXT),qbs_new_txt_len(",",1)),_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_ELEMENTS_TXT));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15784);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT**_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS;
-if(!qbevent)break;evnt(15785);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT+ 1 ;
-if(!qbevent)break;evnt(15787);}while(r);
-do{
-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I+ 1 ;
-if(!qbevent)break;evnt(15788);}while(r);
-}
-fornext_continue_2676:;
-}
-fornext_exit_2676:;
-S_18292:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B!= 0 ))||is_error_pending()){
-if(qbevent){evnt(15792);if(r)goto S_18292;}
-do{
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15792);}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(15792);}while(r);
-}
-S_18296:;
-if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT== 0 ))||is_error_pending()){
-if(qbevent){evnt(15793);if(r)goto S_18296;}
-do{
+#line 15744 "qb64pe.bas"
 SUB_GIVE_ERROR(qbs_new_txt_len("Array bounds missing",20));
+#line 15744 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(15793);}while(r);
+#line 15744 "qb64pe.bas"
+if(!qbevent)break;evnt(15744);}while(r);
+#line 15744 "qb64pe.bas"
 do{
+#line 15744 "qb64pe.bas"
 goto exit_subfunc;
-if(!qbevent)break;evnt(15793);}while(r);
+#line 15744 "qb64pe.bas"
+if(!qbevent)break;evnt(15744);}while(r);
+#line 15744 "qb64pe.bas"
 }
+#line 15746 "qb64pe.bas"
 do{
+#line 15746 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_BOUND= 0 ;
+#line 15746 "qb64pe.bas"
+if(!qbevent)break;evnt(15746);}while(r);
+#line 15747 "qb64pe.bas"
+do{
+#line 15747 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT= 1 ;
+#line 15747 "qb64pe.bas"
+if(!qbevent)break;evnt(15747);}while(r);
+#line 15748 "qb64pe.bas"
+do{
+#line 15748 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT= 0 ;
+#line 15748 "qb64pe.bas"
+if(!qbevent)break;evnt(15748);}while(r);
+#line 15749 "qb64pe.bas"
+do{
+#line 15749 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len("",0));
+#line 15749 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15749 "qb64pe.bas"
+if(!qbevent)break;evnt(15749);}while(r);
+#line 15751 "qb64pe.bas"
+do{
+#line 15751 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B= 0 ;
+#line 15751 "qb64pe.bas"
+if(!qbevent)break;evnt(15751);}while(r);
+#line 15752 "qb64pe.bas"
+do{
+#line 15752 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI= 1 ;
+#line 15752 "qb64pe.bas"
+if(!qbevent)break;evnt(15752);}while(r);
+#line 15753 "qb64pe.bas"
+S_18225:;
+#line 15753 "qb64pe.bas"
+fornext_value2084= 1 ;
+#line 15753 "qb64pe.bas"
+fornext_finalvalue2084=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N;
+#line 15753 "qb64pe.bas"
+fornext_step2084= 1 ;
+#line 15753 "qb64pe.bas"
+if (fornext_step2084<0) fornext_step_negative2084=1; else fornext_step_negative2084=0;
+#line 15753 "qb64pe.bas"
+if (is_error_pending()) goto fornext_error2084;
+#line 15753 "qb64pe.bas"
+goto fornext_entrylabel2084;
+#line 15753 "qb64pe.bas"
+while(1){
+#line 15753 "qb64pe.bas"
+fornext_value2084=fornext_step2084+(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I);
+#line 15753 "qb64pe.bas"
+fornext_entrylabel2084:
+#line 15753 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I=fornext_value2084;
+#line 15753 "qb64pe.bas"
+if (fornext_step_negative2084){
+#line 15753 "qb64pe.bas"
+if (fornext_value2084<fornext_finalvalue2084) break;
+#line 15753 "qb64pe.bas"
+}else{
+#line 15753 "qb64pe.bas"
+if (fornext_value2084>fornext_finalvalue2084) break;
+#line 15753 "qb64pe.bas"
+}
+#line 15753 "qb64pe.bas"
+fornext_error2084:;
+#line 15753 "qb64pe.bas"
+if(qbevent){evnt(15753);if(r)goto S_18225;}
+#line 15754 "qb64pe.bas"
+do{
+#line 15754 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,FUNC_GETELEMENT(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I));
+#line 15754 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15754 "qb64pe.bas"
+if(!qbevent)break;evnt(15754);}while(r);
+#line 15755 "qb64pe.bas"
+S_18227:;
+#line 15755 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len("(",1))))||is_error_pending()){
+#line 15755 "qb64pe.bas"
+if(qbevent){evnt(15755);if(r)goto S_18227;}
+#line 15755 "qb64pe.bas"
+do{
+#line 15755 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B+ 1 ;
+#line 15755 "qb64pe.bas"
+if(!qbevent)break;evnt(15755);}while(r);
+#line 15755 "qb64pe.bas"
+}
+#line 15756 "qb64pe.bas"
+S_18230:;
+#line 15756 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len(")",1))))||is_error_pending()){
+#line 15756 "qb64pe.bas"
+if(qbevent){evnt(15756);if(r)goto S_18230;}
+#line 15756 "qb64pe.bas"
+do{
+#line 15756 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B- 1 ;
+#line 15756 "qb64pe.bas"
+if(!qbevent)break;evnt(15756);}while(r);
+#line 15756 "qb64pe.bas"
+}
+#line 15757 "qb64pe.bas"
+S_18233:;
+#line 15757 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B< 0 ))||is_error_pending()){
+#line 15757 "qb64pe.bas"
+if(qbevent){evnt(15757);if(r)goto S_18233;}
+#line 15757 "qb64pe.bas"
+do{
+#line 15757 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15757 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15757 "qb64pe.bas"
+if(!qbevent)break;evnt(15757);}while(r);
+#line 15757 "qb64pe.bas"
+do{
+#line 15757 "qb64pe.bas"
+goto exit_subfunc;
+#line 15757 "qb64pe.bas"
+if(!qbevent)break;evnt(15757);}while(r);
+#line 15757 "qb64pe.bas"
+}
+#line 15758 "qb64pe.bas"
+S_18237:;
+#line 15758 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B== 0 ))&(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E,qbs_new_txt_len(",",1)))))|(-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I==*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N))))||is_error_pending()){
+#line 15758 "qb64pe.bas"
+if(qbevent){evnt(15758);if(r)goto S_18237;}
+#line 15759 "qb64pe.bas"
+S_18238:;
+#line 15759 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I==*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_N))||is_error_pending()){
+#line 15759 "qb64pe.bas"
+if(qbevent){evnt(15759);if(r)goto S_18238;}
+#line 15760 "qb64pe.bas"
+do{
+#line 15760 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I));
+#line 15760 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15760 "qb64pe.bas"
+if(!qbevent)break;evnt(15760);}while(r);
+#line 15761 "qb64pe.bas"
+}else{
+#line 15762 "qb64pe.bas"
+do{
+#line 15762 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_INDEXES,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI,&(pass2085=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I- 1 )));
+#line 15762 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15762 "qb64pe.bas"
+if(!qbevent)break;evnt(15762);}while(r);
+#line 15763 "qb64pe.bas"
+}
+#line 15764 "qb64pe.bas"
+S_18243:;
+#line 15764 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 15764 "qb64pe.bas"
+if(qbevent){evnt(15764);if(r)goto S_18243;}
+#line 15764 "qb64pe.bas"
+do{
+#line 15764 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15764 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15764 "qb64pe.bas"
+if(!qbevent)break;evnt(15764);}while(r);
+#line 15764 "qb64pe.bas"
+do{
+#line 15764 "qb64pe.bas"
+goto exit_subfunc;
+#line 15764 "qb64pe.bas"
+if(!qbevent)break;evnt(15764);}while(r);
+#line 15764 "qb64pe.bas"
+}
+#line 15766 "qb64pe.bas"
+do{
+#line 15766 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN=FUNC_NUMELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR);
+#line 15766 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15766 "qb64pe.bas"
+if(!qbevent)break;evnt(15766);}while(r);
+#line 15767 "qb64pe.bas"
+do{
+#line 15767 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS= 0 ;
+#line 15767 "qb64pe.bas"
+if(!qbevent)break;evnt(15767);}while(r);
+#line 15768 "qb64pe.bas"
+do{
+#line 15768 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2= 0 ;
+#line 15768 "qb64pe.bas"
+if(!qbevent)break;evnt(15768);}while(r);
+#line 15769 "qb64pe.bas"
+S_18250:;
+#line 15769 "qb64pe.bas"
+fornext_value2087= 1 ;
+#line 15769 "qb64pe.bas"
+fornext_finalvalue2087=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN;
+#line 15769 "qb64pe.bas"
+fornext_step2087= 1 ;
+#line 15769 "qb64pe.bas"
+if (fornext_step2087<0) fornext_step_negative2087=1; else fornext_step_negative2087=0;
+#line 15769 "qb64pe.bas"
+if (is_error_pending()) goto fornext_error2087;
+#line 15769 "qb64pe.bas"
+goto fornext_entrylabel2087;
+#line 15769 "qb64pe.bas"
+while(1){
+#line 15769 "qb64pe.bas"
+fornext_value2087=fornext_step2087+(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI);
+#line 15769 "qb64pe.bas"
+fornext_entrylabel2087:
+#line 15769 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI=fornext_value2087;
+#line 15769 "qb64pe.bas"
+if (fornext_step_negative2087){
+#line 15769 "qb64pe.bas"
+if (fornext_value2087<fornext_finalvalue2087) break;
+#line 15769 "qb64pe.bas"
+}else{
+#line 15769 "qb64pe.bas"
+if (fornext_value2087>fornext_finalvalue2087) break;
+#line 15769 "qb64pe.bas"
+}
+#line 15769 "qb64pe.bas"
+fornext_error2087:;
+#line 15769 "qb64pe.bas"
+if(qbevent){evnt(15769);if(r)goto S_18250;}
+#line 15770 "qb64pe.bas"
+do{
+#line 15770 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,FUNC_GETELEMENT(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI));
+#line 15770 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15770 "qb64pe.bas"
+if(!qbevent)break;evnt(15770);}while(r);
+#line 15771 "qb64pe.bas"
+S_18252:;
+#line 15771 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,qbs_new_txt_len("(",1))))||is_error_pending()){
+#line 15771 "qb64pe.bas"
+if(qbevent){evnt(15771);if(r)goto S_18252;}
+#line 15771 "qb64pe.bas"
+do{
+#line 15771 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2+ 1 ;
+#line 15771 "qb64pe.bas"
+if(!qbevent)break;evnt(15771);}while(r);
+#line 15771 "qb64pe.bas"
+}
+#line 15772 "qb64pe.bas"
+S_18255:;
+#line 15772 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2,qbs_new_txt_len(")",1))))||is_error_pending()){
+#line 15772 "qb64pe.bas"
+if(qbevent){evnt(15772);if(r)goto S_18255;}
+#line 15772 "qb64pe.bas"
+do{
+#line 15772 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2- 1 ;
+#line 15772 "qb64pe.bas"
+if(!qbevent)break;evnt(15772);}while(r);
+#line 15772 "qb64pe.bas"
+}
+#line 15773 "qb64pe.bas"
+S_18258:;
+#line 15773 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2< 0 ))||is_error_pending()){
+#line 15773 "qb64pe.bas"
+if(qbevent){evnt(15773);if(r)goto S_18258;}
+#line 15773 "qb64pe.bas"
+do{
+#line 15773 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15773 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15773 "qb64pe.bas"
+if(!qbevent)break;evnt(15773);}while(r);
+#line 15773 "qb64pe.bas"
+do{
+#line 15773 "qb64pe.bas"
+goto exit_subfunc;
+#line 15773 "qb64pe.bas"
+if(!qbevent)break;evnt(15773);}while(r);
+#line 15773 "qb64pe.bas"
+}
+#line 15774 "qb64pe.bas"
+S_18262:;
+#line 15774 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2== 0 ))&(qbs_equal(qbs_ucase(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_E2),qbs_new_txt_len("TO",2)))))||is_error_pending()){
+#line 15774 "qb64pe.bas"
+if(qbevent){evnt(15774);if(r)goto S_18262;}
+#line 15775 "qb64pe.bas"
+S_18263:;
+#line 15775 "qb64pe.bas"
+if ((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS)||is_error_pending()){
+#line 15775 "qb64pe.bas"
+if(qbevent){evnt(15775);if(r)goto S_18263;}
+#line 15775 "qb64pe.bas"
+do{
+#line 15775 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15775 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15775 "qb64pe.bas"
+if(!qbevent)break;evnt(15775);}while(r);
+#line 15775 "qb64pe.bas"
+do{
+#line 15775 "qb64pe.bas"
+goto exit_subfunc;
+#line 15775 "qb64pe.bas"
+if(!qbevent)break;evnt(15775);}while(r);
+#line 15775 "qb64pe.bas"
+}
+#line 15776 "qb64pe.bas"
+do{
+#line 15776 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DI;
+#line 15776 "qb64pe.bas"
+if(!qbevent)break;evnt(15776);}while(r);
+#line 15777 "qb64pe.bas"
+}
+#line 15778 "qb64pe.bas"
+fornext_continue_2086:;
+#line 15778 "qb64pe.bas"
+}
+#line 15778 "qb64pe.bas"
+fornext_exit_2086:;
+#line 15779 "qb64pe.bas"
+S_18270:;
+#line 15779 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B2!= 0 ))||is_error_pending()){
+#line 15779 "qb64pe.bas"
+if(qbevent){evnt(15779);if(r)goto S_18270;}
+#line 15779 "qb64pe.bas"
+do{
+#line 15779 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15779 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15779 "qb64pe.bas"
+if(!qbevent)break;evnt(15779);}while(r);
+#line 15779 "qb64pe.bas"
+do{
+#line 15779 "qb64pe.bas"
+goto exit_subfunc;
+#line 15779 "qb64pe.bas"
+if(!qbevent)break;evnt(15779);}while(r);
+#line 15779 "qb64pe.bas"
+}
+#line 15781 "qb64pe.bas"
+S_18274:;
+#line 15781 "qb64pe.bas"
+if ((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS)||is_error_pending()){
+#line 15781 "qb64pe.bas"
+if(qbevent){evnt(15781);if(r)goto S_18274;}
+#line 15782 "qb64pe.bas"
+do{
+#line 15782 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,&(pass2088= 1 ),&(pass2089=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS- 1 )));
+#line 15782 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15782 "qb64pe.bas"
+if(!qbevent)break;evnt(15782);}while(r);
+#line 15783 "qb64pe.bas"
+do{
+#line 15783 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,FUNC_GETELEMENTS(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR,&(pass2090=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_TO_POS+ 1 ),_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DN));
+#line 15783 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15783 "qb64pe.bas"
+if(!qbevent)break;evnt(15783);}while(r);
+#line 15784 "qb64pe.bas"
+S_18277:;
+#line 15784 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,qbs_new_txt_len("",0)))|(qbs_equal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,qbs_new_txt_len("",0)))))||is_error_pending()){
+#line 15784 "qb64pe.bas"
+if(qbevent){evnt(15784);if(r)goto S_18277;}
+#line 15784 "qb64pe.bas"
+do{
+#line 15784 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15784 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15784 "qb64pe.bas"
+if(!qbevent)break;evnt(15784);}while(r);
+#line 15784 "qb64pe.bas"
+do{
+#line 15784 "qb64pe.bas"
+goto exit_subfunc;
+#line 15784 "qb64pe.bas"
+if(!qbevent)break;evnt(15784);}while(r);
+#line 15784 "qb64pe.bas"
+}
+#line 15785 "qb64pe.bas"
+}else{
+#line 15786 "qb64pe.bas"
+do{
+#line 15786 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,qbs__tostr((int64)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_EFFECTIVE_OPTIONBASE+ 0 ),NULL,0));
+#line 15786 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15786 "qb64pe.bas"
+if(!qbevent)break;evnt(15786);}while(r);
+#line 15787 "qb64pe.bas"
+do{
+#line 15787 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_EXPR);
+#line 15787 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15787 "qb64pe.bas"
+if(!qbevent)break;evnt(15787);}while(r);
+#line 15788 "qb64pe.bas"
+}
+#line 15790 "qb64pe.bas"
+do{
+#line 15790 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST= 0 ;
+#line 15790 "qb64pe.bas"
+if(!qbevent)break;evnt(15790);}while(r);
+#line 15791 "qb64pe.bas"
+do{
+#line 15791 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST= 0 ;
+#line 15791 "qb64pe.bas"
+if(!qbevent)break;evnt(15791);}while(r);
+#line 15796 "qb64pe.bas"
+do{
+#line 15796 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,qbs__trim(FUNC_EVALUATE_EXPRESSION(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR,(void*)( ((char*)(_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_LOWER_NUM)) + ((0+0)) ))));
+#line 15796 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15796 "qb64pe.bas"
+if(!qbevent)break;evnt(15796);}while(r);
+#line 15797 "qb64pe.bas"
+S_18288:;
+#line 15797 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT, 8 ),qbs_new_txt_len("ERROR - ",8))))||is_error_pending()){
+#line 15797 "qb64pe.bas"
+if(qbevent){evnt(15797);if(r)goto S_18288;}
+#line 15798 "qb64pe.bas"
+do{
+#line 15798 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR);
+#line 15798 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15798 "qb64pe.bas"
+if(!qbevent)break;evnt(15798);}while(r);
+#line 15799 "qb64pe.bas"
+S_18290:;
+#line 15799 "qb64pe.bas"
+}else{
+#line 15799 "qb64pe.bas"
+if (-((*(int32*)(((char*)_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_LOWER_NUM)+((0+56)))&*__LONG_ISSTRING)== 0 )){
+#line 15799 "qb64pe.bas"
+if(qbevent){evnt(15799);if(r)goto S_18290;}
+#line 15800 "qb64pe.bas"
+do{
+#line 15800 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST= -1 ;
+#line 15800 "qb64pe.bas"
+if(!qbevent)break;evnt(15800);}while(r);
+#line 15801 "qb64pe.bas"
+}else{
+#line 15802 "qb64pe.bas"
+do{
+#line 15802 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_EXPR);
+#line 15802 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15802 "qb64pe.bas"
+if(!qbevent)break;evnt(15802);}while(r);
+#line 15803 "qb64pe.bas"
+}
+#line 15803 "qb64pe.bas"
+}
+#line 15805 "qb64pe.bas"
+do{
+#line 15805 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,qbs__trim(FUNC_EVALUATE_EXPRESSION(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR,(void*)( ((char*)(_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_UPPER_NUM)) + ((0+0)) ))));
+#line 15805 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15805 "qb64pe.bas"
+if(!qbevent)break;evnt(15805);}while(r);
+#line 15806 "qb64pe.bas"
+S_18296:;
+#line 15806 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT, 8 ),qbs_new_txt_len("ERROR - ",8))))||is_error_pending()){
+#line 15806 "qb64pe.bas"
+if(qbevent){evnt(15806);if(r)goto S_18296;}
+#line 15807 "qb64pe.bas"
+do{
+#line 15807 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR);
+#line 15807 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15807 "qb64pe.bas"
+if(!qbevent)break;evnt(15807);}while(r);
+#line 15808 "qb64pe.bas"
+S_18298:;
+#line 15808 "qb64pe.bas"
+}else{
+#line 15808 "qb64pe.bas"
+if (-((*(int32*)(((char*)_FUNC_PARSEUDTARRAYBOUNDSEX_UDT_UDT_UPPER_NUM)+((0+56)))&*__LONG_ISSTRING)== 0 )){
+#line 15808 "qb64pe.bas"
+if(qbevent){evnt(15808);if(r)goto S_18298;}
+#line 15809 "qb64pe.bas"
+do{
+#line 15809 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST= -1 ;
+#line 15809 "qb64pe.bas"
+if(!qbevent)break;evnt(15809);}while(r);
+#line 15810 "qb64pe.bas"
+}else{
+#line 15811 "qb64pe.bas"
+do{
+#line 15811 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_EXPR);
+#line 15811 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15811 "qb64pe.bas"
+if(!qbevent)break;evnt(15811);}while(r);
+#line 15812 "qb64pe.bas"
+}
+#line 15812 "qb64pe.bas"
+}
+#line 15814 "qb64pe.bas"
+S_18303:;
+#line 15814 "qb64pe.bas"
+if ((-((*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_CONST&*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_UPPER_CONST)== 0 ))||is_error_pending()){
+#line 15814 "qb64pe.bas"
+if(qbevent){evnt(15814);if(r)goto S_18303;}
+#line 15815 "qb64pe.bas"
+do{
+#line 15815 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("TYPE member array bounds must be numeric constant",49));
+#line 15815 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15815 "qb64pe.bas"
+if(!qbevent)break;evnt(15815);}while(r);
+#line 15816 "qb64pe.bas"
+do{
+#line 15816 "qb64pe.bas"
+goto exit_subfunc;
+#line 15816 "qb64pe.bas"
+if(!qbevent)break;evnt(15816);}while(r);
+#line 15817 "qb64pe.bas"
+}
+#line 15819 "qb64pe.bas"
+do{
+#line 15819 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER=qbr(qbs_val<long double>(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_LOWER_TXT));
+#line 15819 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15819 "qb64pe.bas"
+if(!qbevent)break;evnt(15819);}while(r);
+#line 15820 "qb64pe.bas"
+do{
+#line 15820 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER=qbr(qbs_val<long double>(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_UPPER_TXT));
+#line 15820 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15820 "qb64pe.bas"
+if(!qbevent)break;evnt(15820);}while(r);
+#line 15821 "qb64pe.bas"
+S_18309:;
+#line 15821 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER<*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER))||is_error_pending()){
+#line 15821 "qb64pe.bas"
+if(qbevent){evnt(15821);if(r)goto S_18309;}
+#line 15821 "qb64pe.bas"
+do{
+#line 15821 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15821 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15821 "qb64pe.bas"
+if(!qbevent)break;evnt(15821);}while(r);
+#line 15821 "qb64pe.bas"
+do{
+#line 15821 "qb64pe.bas"
+goto exit_subfunc;
+#line 15821 "qb64pe.bas"
+if(!qbevent)break;evnt(15821);}while(r);
+#line 15821 "qb64pe.bas"
+}
+#line 15823 "qb64pe.bas"
+do{
+#line 15823 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_UPPER-*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER+ 1 ;
+#line 15823 "qb64pe.bas"
+if(!qbevent)break;evnt(15823);}while(r);
+#line 15824 "qb64pe.bas"
+S_18314:;
+#line 15824 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS<= 0 ))||is_error_pending()){
+#line 15824 "qb64pe.bas"
+if(qbevent){evnt(15824);if(r)goto S_18314;}
+#line 15824 "qb64pe.bas"
+do{
+#line 15824 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15824 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15824 "qb64pe.bas"
+if(!qbevent)break;evnt(15824);}while(r);
+#line 15824 "qb64pe.bas"
+do{
+#line 15824 "qb64pe.bas"
+goto exit_subfunc;
+#line 15824 "qb64pe.bas"
+if(!qbevent)break;evnt(15824);}while(r);
+#line 15824 "qb64pe.bas"
+}
+#line 15826 "qb64pe.bas"
+do{
+#line 15826 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_LOWER_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER))));
+#line 15826 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15826 "qb64pe.bas"
+if(!qbevent)break;evnt(15826);}while(r);
+#line 15827 "qb64pe.bas"
+do{
+#line 15827 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_ELEMENTS_TXT,qbs_ltrim(qbs_str((int32)(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS))));
+#line 15827 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15827 "qb64pe.bas"
+if(!qbevent)break;evnt(15827);}while(r);
+#line 15829 "qb64pe.bas"
+S_18320:;
+#line 15829 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT== 0 ))||is_error_pending()){
+#line 15829 "qb64pe.bas"
+if(qbevent){evnt(15829);if(r)goto S_18320;}
+#line 15829 "qb64pe.bas"
+do{
+#line 15829 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_LOWER_BOUND=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_LOWER;
+#line 15829 "qb64pe.bas"
+if(!qbevent)break;evnt(15829);}while(r);
+#line 15829 "qb64pe.bas"
+}
+#line 15830 "qb64pe.bas"
+S_18323:;
+#line 15830 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 15830 "qb64pe.bas"
+if(qbevent){evnt(15830);if(r)goto S_18323;}
+#line 15830 "qb64pe.bas"
+do{
+#line 15830 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_add(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_new_txt_len(";",1)));
+#line 15830 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15830 "qb64pe.bas"
+if(!qbevent)break;evnt(15830);}while(r);
+#line 15830 "qb64pe.bas"
+}
+#line 15831 "qb64pe.bas"
+do{
+#line 15831 "qb64pe.bas"
+qbs_set(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,qbs_add(qbs_add(qbs_add(_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DESCRIPTOR,_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_LOWER_TXT),qbs_new_txt_len(",",1)),_FUNC_PARSEUDTARRAYBOUNDSEX_STRING_DIM_ELEMENTS_TXT));
+#line 15831 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15831 "qb64pe.bas"
+if(!qbevent)break;evnt(15831);}while(r);
+#line 15832 "qb64pe.bas"
+do{
+#line 15832 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_ELEMENT_COUNT**_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIM_ELEMENTS;
+#line 15832 "qb64pe.bas"
+if(!qbevent)break;evnt(15832);}while(r);
+#line 15834 "qb64pe.bas"
+do{
+#line 15834 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT+ 1 ;
+#line 15834 "qb64pe.bas"
+if(!qbevent)break;evnt(15834);}while(r);
+#line 15835 "qb64pe.bas"
+do{
+#line 15835 "qb64pe.bas"
+*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_FIRSTI=*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_I+ 1 ;
+#line 15835 "qb64pe.bas"
+if(!qbevent)break;evnt(15835);}while(r);
+#line 15836 "qb64pe.bas"
+}
+#line 15837 "qb64pe.bas"
+fornext_continue_2083:;
+#line 15837 "qb64pe.bas"
+}
+#line 15837 "qb64pe.bas"
+fornext_exit_2083:;
+#line 15839 "qb64pe.bas"
+S_18332:;
+#line 15839 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_B!= 0 ))||is_error_pending()){
+#line 15839 "qb64pe.bas"
+if(qbevent){evnt(15839);if(r)goto S_18332;}
+#line 15839 "qb64pe.bas"
+do{
+#line 15839 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid array bounds",20));
+#line 15839 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15839 "qb64pe.bas"
+if(!qbevent)break;evnt(15839);}while(r);
+#line 15839 "qb64pe.bas"
+do{
+#line 15839 "qb64pe.bas"
+goto exit_subfunc;
+#line 15839 "qb64pe.bas"
+if(!qbevent)break;evnt(15839);}while(r);
+#line 15839 "qb64pe.bas"
+}
+#line 15840 "qb64pe.bas"
+S_18336:;
+#line 15840 "qb64pe.bas"
+if ((-(*_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_DIMENSION_COUNT== 0 ))||is_error_pending()){
+#line 15840 "qb64pe.bas"
+if(qbevent){evnt(15840);if(r)goto S_18336;}
+#line 15840 "qb64pe.bas"
+do{
+#line 15840 "qb64pe.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Array bounds missing",20));
+#line 15840 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15840 "qb64pe.bas"
+if(!qbevent)break;evnt(15840);}while(r);
+#line 15840 "qb64pe.bas"
+do{
+#line 15840 "qb64pe.bas"
+goto exit_subfunc;
+#line 15840 "qb64pe.bas"
+if(!qbevent)break;evnt(15840);}while(r);
+#line 15840 "qb64pe.bas"
+}
+#line 15842 "qb64pe.bas"
+do{
+#line 15842 "qb64pe.bas"
 *_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_PARSEUDTARRAYBOUNDSEX= -1 ;
-if(!qbevent)break;evnt(15795);}while(r);
+#line 15842 "qb64pe.bas"
+if(!qbevent)break;evnt(15842);}while(r);
+#line 15843 "qb64pe.bas"
 exit_subfunc:;
+#line 15843 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
+#line 15843 "qb64pe.bas"
 #include "free21.txt"
+#line 15843 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 15843 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
+#line 15843 "qb64pe.bas"
 return *_FUNC_PARSEUDTARRAYBOUNDSEX_LONG_PARSEUDTARRAYBOUNDSEX;
+#line 15843 "qb64pe.bas"
 }

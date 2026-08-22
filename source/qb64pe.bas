@@ -456,6 +456,7 @@ DIM SHARED dim2typepassback AS STRING 'passes back correct case sensitive versio
 DIM SHARED inclevel
 DIM SHARED incname(100) AS STRING 'must be full path as given
 DIM SHARED inclinenumber(100) AS LONG
+DIM SHARED incIsInternal(100) AS LONG 'TRUE if incname$(n) came from an internal/auto-include (support files, $USELIBRARY) rather than a user $INCLUDE
 DIM SHARED incerror AS STRING
 
 'Magic constant used to replace . in elements when it is not a UDT access
@@ -715,6 +716,18 @@ DIM SHARED uniquenumbern AS LONG
 
 
 DIM SHARED udt_allow_bare_array AS INTEGER
+
+
+'Assignment syntax guard state. These values are set only by assign() while the
+'right side of a normal assignment is being evaluated. The guard never decides
+'array/scalar identity from a name lookup alone; it uses the type returned by the
+'normal expression resolver, preserving valid scalar/array name coexistence.
+DIM SHARED asg_guard_on AS INTEGER
+DIM SHARED asg_lstate AS INTEGER
+DIM SHARED asg_lname AS STRING
+DIM SHARED asg_rkind AS INTEGER
+DIM SHARED asg_rname AS STRING
+DIM SHARED asg_rmember AS INTEGER
 
 'CLEAR , , 16384
 
@@ -3055,6 +3068,9 @@ DO
                 END IF
                 includingFromRoot = 1
             END IF
+            incIsInternalNow = (includingFromRoot <> 0)
+        ELSE
+            incIsInternalNow = incIsInternal(inclevel)
         END IF
 
         IF inclevel = 100 THEN
@@ -3114,7 +3130,7 @@ DO
         NEXT
         IF qberrorhappened <> -3 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
         qberrorhappened = 0
-        inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
+        inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0: incIsInternal(inclevel) = incIsInternalNow
     END IF 'fall through to next section...
     '--------------------
     DO WHILE inclevel
@@ -3213,7 +3229,7 @@ DIM SHARED DataBinBuf: DataBinBuf = OpenBuffer%("O", tmpdir$ + "data.bin")
 DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main0.txt")
 'Mark source-location tracking as explicitly controlled by this generated program.
 'This one-time clear keeps $ErrorLocation:OFF independent of the legacy evnt() path.
-WriteBufLine MainTxtBuf, "error_track_line(0,0,NULL);"
+WriteBufLineCpp MainTxtBuf, "error_track_line(0,0,NULL);"
 DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer%("O", tmpdir$ + "maindata.txt")
 DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer%("O", tmpdir$ + "vw_main_dispatch.txt")
 DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer%("O", tmpdir$ + "vw_main_skip.txt")
@@ -3270,7 +3286,7 @@ linenumber = 0
 reallinenumber = 0
 declaringlibrary = 0
 
-WriteBufLine MainTxtBuf, "S_0:;" 'note: REQUIRED by run statement
+WriteBufLineCpp MainTxtBuf, "S_0:;" 'note: REQUIRED by run statement
 
 IF UseGL THEN gl_include_content
 
@@ -3539,9 +3555,9 @@ DO
         IF a3u$ = "$CONSOLE:ONLY" THEN
             layout$ = SCase$("$Console:Only")
             SetDependency DEPENDENCY_CONSOLE_ONLY
-            IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
-            WriteBufLine MainTxtBuf, "sub__dest(func__console());"
-            WriteBufLine MainTxtBuf, "sub__source(func__console());"
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "do{"
+            WriteBufLineCpp MainTxtBuf, "sub__dest(func__console());"
+            WriteBufLineCpp MainTxtBuf, "sub__source(func__console());"
             GOTO finishedline2 '!!
         END IF
 
@@ -3819,8 +3835,8 @@ DO
             ExeIconSet = linenumber
             SetDependency DEPENDENCY_ICON
             WriteBufLine ExtDepBuf, "ICON: " + _FULLPATH$(ExeIconFile$)
-            IF CheckingOn THEN WriteBufLine MainTxtBuf, "do{"
-            WriteBufLine MainTxtBuf, "sub__icon(NULL,NULL,0);"
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "do{"
+            WriteBufLineCpp MainTxtBuf, "sub__icon(NULL,NULL,0);"
             GOTO finishedline2
         END IF
 
@@ -3915,12 +3931,12 @@ DO
             Labels(r).Data_Offset = linedataoffset
 
             layout$ = tlayout$
-            WriteBufLine MainTxtBuf, "LABEL_" + label$ + ":;"
+            WriteBufLineCpp MainTxtBuf, "LABEL_" + label$ + ":;"
 
 
             IF INSTR(label$, "p") THEN MID$(label$, INSTR(label$, "p"), 1) = "."
             IF RIGHT$(label$, 1) = "d" OR RIGHT$(label$, 1) = "s" THEN label$ = LEFT$(label$, LEN(label$) - 1)
-            WriteBufLine MainTxtBuf, "last_line=" + label$ + ";"
+            WriteBufLineCpp MainTxtBuf, "last_line=" + label$ + ";"
             inclinenump$ = ""
             IF inclinenumber(inclevel) THEN
                 inclinenump$ = "," + _TOSTR$(inclinenumber(inclevel))
@@ -3930,7 +3946,7 @@ DO
             END IF
             IF CheckingOn THEN
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
-                WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");r=0;}"
+                WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");r=0;}"
             END IF
             IF n = 1 THEN GOTO finishednonexec
             entireline$ = getelements(entireline$, 2, n): u$ = UCASE$(entireline$): n = n - 1
@@ -3979,7 +3995,7 @@ DO
 
                 IF LEN(layout$) THEN layout$ = layout$ + sp + tlayout$ + ":" ELSE layout$ = tlayout$ + ":"
 
-                WriteBufLine MainTxtBuf, "LABEL_" + a$ + ":;"
+                WriteBufLineCpp MainTxtBuf, "LABEL_" + a$ + ":;"
                 inclinenump$ = ""
                 IF inclinenumber(inclevel) THEN
                     inclinenump$ = "," + _TOSTR$(inclinenumber(inclevel))
@@ -3989,7 +4005,7 @@ DO
                 END IF
                 IF CheckingOn THEN
                     IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
-                    WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");r=0;}"
+                    WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");r=0;}"
                 END IF
                 entireline$ = RIGHT$(entireline$, LEN(entireline$) - x3): u$ = UCASE$(entireline$)
                 n = numelements(entireline$): IF n = 0 THEN GOTO finishednonexec
@@ -5423,7 +5439,7 @@ DO
                     WriteBufRawData RegTxtBuf, t$ + " " + removecast$(RTRIM$(id.callname)) + "("
                 END IF
                 IF declaringlibrary THEN GOTO declibjmp2
-                WriteBufRawData MainTxtBuf, t$ + " " + removecast$(RTRIM$(id.callname)) + "("
+                WriteBufRawDataCpp MainTxtBuf, t$ + " " + removecast$(RTRIM$(id.callname)) + "("
 
                 'create variable to return result
                 'if type wasn't specified, define it
@@ -5464,7 +5480,7 @@ DO
                     WriteBufRawData RegTxtBuf, "void " + removecast$(RTRIM$(id.callname)) + "("
                 END IF
                 IF declaringlibrary THEN GOTO declibjmp2
-                WriteBufRawData MainTxtBuf, "void " + removecast$(RTRIM$(id.callname)) + "("
+                WriteBufRawDataCpp MainTxtBuf, "void " + removecast$(RTRIM$(id.callname)) + "("
             END IF
             declibjmp2:
 
@@ -5511,7 +5527,7 @@ DO
                             WriteBufRawData RegTxtBuf, ","
 
                             IF declaringlibrary = 0 THEN
-                                WriteBufRawData MainTxtBuf, ","
+                                WriteBufRawDataCpp MainTxtBuf, ","
                             END IF
 
                         END IF
@@ -5634,7 +5650,7 @@ DO
                             r$ = refer$(_TOSTR$(currentid), id.t, 1)
                             IF Error_Happened THEN GOTO errmes
                             WriteBufRawData RegTxtBuf, "ptrszint*" + r$
-                            WriteBufRawData MainTxtBuf, "ptrszint*" + r$
+                            WriteBufRawDataCpp MainTxtBuf, "ptrszint*" + r$
                         ELSE
 
                             IF declaringlibrary THEN
@@ -5682,21 +5698,21 @@ DO
                             r$ = refer$(_TOSTR$(currentid), id.t, 1)
                             IF Error_Happened THEN GOTO errmes
                             WriteBufRawData RegTxtBuf, t$ + "*" + r$
-                            WriteBufRawData MainTxtBuf, t$ + "*" + r$
+                            WriteBufRawDataCpp MainTxtBuf, t$ + "*" + r$
                             IF t$ = "qbs" THEN
                                 u$ = _TOSTR$(uniquenumber)
-                                WriteBufLine DataTxtBuf, "qbs*oldstr" + u$ + "=NULL;"
-                                WriteBufLine DataTxtBuf, "if(" + r$ + "->tmp||" + r$ + "->fixed||" + r$ + "->readonly){"
-                                WriteBufLine DataTxtBuf, "oldstr" + u$ + "=" + r$ + ";"
+                                WriteBufLineCpp DataTxtBuf, "qbs*oldstr" + u$ + "=NULL;"
+                                WriteBufLineCpp DataTxtBuf, "if(" + r$ + "->tmp||" + r$ + "->fixed||" + r$ + "->readonly){"
+                                WriteBufLineCpp DataTxtBuf, "oldstr" + u$ + "=" + r$ + ";"
 
-                                WriteBufLine DataTxtBuf, "if (oldstr" + u$ + "->cmem_descriptor){"
-                                WriteBufLine DataTxtBuf, r$ + "=qbs_new_cmem(oldstr" + u$ + "->len,0);"
-                                WriteBufLine DataTxtBuf, "}else{"
-                                WriteBufLine DataTxtBuf, r$ + "=qbs_new(oldstr" + u$ + "->len,0);"
-                                WriteBufLine DataTxtBuf, "}"
+                                WriteBufLineCpp DataTxtBuf, "if (oldstr" + u$ + "->cmem_descriptor){"
+                                WriteBufLineCpp DataTxtBuf, r$ + "=qbs_new_cmem(oldstr" + u$ + "->len,0);"
+                                WriteBufLineCpp DataTxtBuf, "}else{"
+                                WriteBufLineCpp DataTxtBuf, r$ + "=qbs_new(oldstr" + u$ + "->len,0);"
+                                WriteBufLineCpp DataTxtBuf, "}"
 
-                                WriteBufLine DataTxtBuf, "memcpy(" + r$ + "->chr,oldstr" + u$ + "->chr,oldstr" + u$ + "->len);"
-                                WriteBufLine DataTxtBuf, "}"
+                                WriteBufLineCpp DataTxtBuf, "memcpy(" + r$ + "->chr,oldstr" + u$ + "->chr,oldstr" + u$ + "->len);"
+                                WriteBufLineCpp DataTxtBuf, "}"
 
                                 WriteBufLine FreeTxtBuf, "if(oldstr" + u$ + "){"
                                 WriteBufLine FreeTxtBuf, "if(oldstr" + u$ + "->fixed)qbs_set(oldstr" + u$ + "," + r$ + ");"
@@ -5725,20 +5741,20 @@ DO
 
             IF declaringlibrary THEN GOTO declibjmp4
 
-            WriteBufLine MainTxtBuf, "){"
-            WriteBufLine MainTxtBuf, "qbs *tqbs;"
-            WriteBufLine MainTxtBuf, "ptrszint tmp_long;"
-            WriteBufLine MainTxtBuf, "int32 tmp_fileno;"
-            WriteBufLine MainTxtBuf, "uint32 qbs_tmp_base=qbs_tmp_list_nexti;"
-            WriteBufLine MainTxtBuf, "uint8 *tmp_mem_static_pointer=mem_static_pointer;"
-            WriteBufLine MainTxtBuf, "uint32 tmp_cmem_sp=cmem_sp;"
-            WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "data" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
+            WriteBufLineCpp MainTxtBuf, "){"
+            WriteBufLineCpp MainTxtBuf, "qbs *tqbs;"
+            WriteBufLineCpp MainTxtBuf, "ptrszint tmp_long;"
+            WriteBufLineCpp MainTxtBuf, "int32 tmp_fileno;"
+            WriteBufLineCpp MainTxtBuf, "uint32 qbs_tmp_base=qbs_tmp_list_nexti;"
+            WriteBufLineCpp MainTxtBuf, "uint8 *tmp_mem_static_pointer=mem_static_pointer;"
+            WriteBufLineCpp MainTxtBuf, "uint32 tmp_cmem_sp=cmem_sp;"
+            WriteBufLineCpp MainTxtBuf, "#include " + CHR$(34) + "data" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
 
             'create new _MEM lock for this scope
-            WriteBufLine MainTxtBuf, "mem_lock *sf_mem_lock;" 'MUST not be static for recursion reasons
-            WriteBufLine MainTxtBuf, "new_mem_lock();"
-            WriteBufLine MainTxtBuf, "sf_mem_lock=mem_lock_tmp;"
-            WriteBufLine MainTxtBuf, "sf_mem_lock->type=3;"
+            WriteBufLineCpp MainTxtBuf, "mem_lock *sf_mem_lock;" 'MUST not be static for recursion reasons
+            WriteBufLineCpp MainTxtBuf, "new_mem_lock();"
+            WriteBufLineCpp MainTxtBuf, "sf_mem_lock=mem_lock_tmp;"
+            WriteBufLineCpp MainTxtBuf, "sf_mem_lock->type=3;"
 
             ' Native recursion can exhaust the C++ thread stack before error(256)
             ' is reached. Check every user SUB/FUNCTION entry while enough stack
@@ -5746,10 +5762,10 @@ DO
             ' the report includes a BASIC source position; stack exhaustion must
             ' still be caught when source tracking is disabled. The runtime helper
             ' uses platform-specific stack bounds behind one common interface.
-            WriteBufLine MainTxtBuf, "libqb_check_stack();"
+            WriteBufLineCpp MainTxtBuf, "libqb_check_stack();"
 
             IF GetRCStateVar(vWatchOn) THEN
-                WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
+                WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL+ 1 ;"
                 IF subfunc <> "SUB_VWATCH" THEN
                     inclinenump$ = ""
                     IF inclinenumber(inclevel) THEN
@@ -5758,18 +5774,18 @@ DO
                         inclinenump$ = "(" + thisincname$ + "," + STR$(inclinenumber(inclevel)) + ") "
                     END IF
 
-                    WriteBufLine MainTxtBuf, "qbs_set(__STRING_VWATCH_SUBNAME,qbs_new_txt_len(" + CHR$(34) + inclinenump$ + subfuncoriginalname$ + CHR$(34) + "," + _TOSTR$(LEN(inclinenump$ + subfuncoriginalname$)) + "));"
-                    WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base,0);"
-                    WriteBufLine MainTxtBuf, "qbs_set(__STRING_VWATCH_INTERNALSUBNAME,qbs_new_txt_len(" + CHR$(34) + subfunc + CHR$(34) + "," + _TOSTR$(LEN(subfunc)) + "));"
-                    WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base,0);"
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-2; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_set(__STRING_VWATCH_SUBNAME,qbs_new_txt_len(" + CHR$(34) + inclinenump$ + subfuncoriginalname$ + CHR$(34) + "," + _TOSTR$(LEN(inclinenump$ + subfuncoriginalname$)) + "));"
+                    WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qbs_tmp_base,0);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_set(__STRING_VWATCH_INTERNALSUBNAME,qbs_new_txt_len(" + CHR$(34) + subfunc + CHR$(34) + "," + _TOSTR$(LEN(subfunc)) + "));"
+                    WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qbs_tmp_base,0);"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-2; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                 END IF
             END IF
 
-            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto exit_subfunc;"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto exit_subfunc;"
 
             'statementn = statementn + 1
-            'if nochecks=0 then WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
+            'if nochecks=0 then WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
 
             dimstatic = staticsf
 
@@ -5907,60 +5923,60 @@ DO
 
                 staticarraylist = "": staticarraylistn = 0 'remove previously listed arrays
                 dimstatic = 0
-                WriteBufLine MainTxtBuf, "exit_subfunc:;"
+                WriteBufLineCpp MainTxtBuf, "exit_subfunc:;"
                 IF GetRCStateVar(vWatchOn) THEN
                     IF CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
                         vWatchAddLabel linenumber, 0
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                         vWatchAddLabel 0, -1
                     END IF
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL- 1 ;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_SUBLEVEL=*__LONG_VWATCH_SUBLEVEL- 1 ;"
 
                     IF inclinenumber(inclevel) = 0 AND firstLineNumberLabelvWatch > 0 THEN
-                        WriteBufLine MainTxtBuf, "goto VWATCH_SKIPSETNEXTLINE;"
-                        WriteBufLine MainTxtBuf, "VWATCH_SETNEXTLINE:;"
-                        WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
+                        WriteBufLineCpp MainTxtBuf, "goto VWATCH_SKIPSETNEXTLINE;"
+                        WriteBufLineCpp MainTxtBuf, "VWATCH_SETNEXTLINE:;"
+                        WriteBufLineCpp MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
                         FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
                             WHILE i > LEN(vWatchUsedLabels)
                                 vWatchUsedLabels = vWatchUsedLabels + SPACE$(1000)
                                 vWatchUsedSkipLabels = vWatchUsedSkipLabels + SPACE$(1000)
                             WEND
                             IF ASC(vWatchUsedLabels, i) = 1 THEN
-                                WriteBufLine MainTxtBuf, "    case " + _TOSTR$(i) + ":"
-                                WriteBufLine MainTxtBuf, "        goto VWATCH_LABEL_" + _TOSTR$(i) + ";"
-                                WriteBufLine MainTxtBuf, "        break;"
+                                WriteBufLineCpp MainTxtBuf, "    case " + _TOSTR$(i) + ":"
+                                WriteBufLineCpp MainTxtBuf, "        goto VWATCH_LABEL_" + _TOSTR$(i) + ";"
+                                WriteBufLineCpp MainTxtBuf, "        break;"
                             END IF
                         NEXT
-                        WriteBufLine MainTxtBuf, "    default:"
-                        WriteBufLine MainTxtBuf, "        *__LONG_VWATCH_GOTO=*__LONG_VWATCH_LINENUMBER;"
-                        WriteBufLine MainTxtBuf, "        goto VWATCH_SETNEXTLINE;"
-                        WriteBufLine MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, "    default:"
+                        WriteBufLineCpp MainTxtBuf, "        *__LONG_VWATCH_GOTO=*__LONG_VWATCH_LINENUMBER;"
+                        WriteBufLineCpp MainTxtBuf, "        goto VWATCH_SETNEXTLINE;"
+                        WriteBufLineCpp MainTxtBuf, "}"
 
-                        WriteBufLine MainTxtBuf, "VWATCH_SKIPLINE:;"
-                        WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
+                        WriteBufLineCpp MainTxtBuf, "VWATCH_SKIPLINE:;"
+                        WriteBufLineCpp MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
                         FOR i = firstLineNumberLabelvWatch TO lastLineNumberLabelvWatch
                             IF ASC(vWatchUsedSkipLabels, i) = 1 THEN
-                                WriteBufLine MainTxtBuf, "    case -" + _TOSTR$(i) + ":"
-                                WriteBufLine MainTxtBuf, "        goto VWATCH_SKIPLABEL_" + _TOSTR$(i) + ";"
-                                WriteBufLine MainTxtBuf, "        break;"
+                                WriteBufLineCpp MainTxtBuf, "    case -" + _TOSTR$(i) + ":"
+                                WriteBufLineCpp MainTxtBuf, "        goto VWATCH_SKIPLABEL_" + _TOSTR$(i) + ";"
+                                WriteBufLineCpp MainTxtBuf, "        break;"
                             END IF
                         NEXT
-                        WriteBufLine MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, "}"
 
-                        WriteBufLine MainTxtBuf, "VWATCH_SKIPSETNEXTLINE:;"
+                        WriteBufLineCpp MainTxtBuf, "VWATCH_SKIPSETNEXTLINE:;"
                     END IF
                     firstLineNumberLabelvWatch = 0
                 END IF
 
                 'release _MEM lock for this scope
-                WriteBufLine MainTxtBuf, "free_mem_lock(sf_mem_lock);"
+                WriteBufLineCpp MainTxtBuf, "free_mem_lock(sf_mem_lock);"
 
-                WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "free" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
-                WriteBufLine MainTxtBuf, "if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;"
-                WriteBufLine MainTxtBuf, "cmem_sp=tmp_cmem_sp;"
-                IF subfuncret$ <> "" THEN WriteBufLine MainTxtBuf, subfuncret$
+                WriteBufLineCpp MainTxtBuf, "#include " + CHR$(34) + "free" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
+                WriteBufLineCpp MainTxtBuf, "if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;"
+                WriteBufLineCpp MainTxtBuf, "cmem_sp=tmp_cmem_sp;"
+                IF subfuncret$ <> "" THEN WriteBufLineCpp MainTxtBuf, subfuncret$
 
-                WriteBufLine MainTxtBuf, "}" 'skeleton sub
+                WriteBufLineCpp MainTxtBuf, "}" 'skeleton sub
                 'ret???.txt
                 WriteBufLine RetTxtBuf, "}" 'end case
                 WriteBufLine RetTxtBuf, "}"
@@ -6149,9 +6165,9 @@ DO
         IF inclinenumber(inclevel) THEN
             thisincname$ = getfilepath$(incname$(inclevel))
             thisincname$ = MID$(incname$(inclevel), LEN(thisincname$) + 1)
-            WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
+            WriteBufLineCpp MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + "," + _TOSTR$(inclinenumber(inclevel)) + "," + CHR$(34) + thisincname$ + CHR$(34) + ");"
         ELSE
-            WriteBufLine MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
+            WriteBufLineCpp MainTxtBuf, "error_track_line(" + _TOSTR$(linenumber) + ",0,NULL);"
         END IF
     END IF
 
@@ -6190,13 +6206,13 @@ DO
                     simplenext:
                     IF controltype(controllevel) <> 2 THEN a$ = "NEXT without FOR": GOTO errmes
                     IF n <> 1 AND controlvalue(controllevel) <> currentid THEN a$ = "Incorrect variable after NEXT": GOTO errmes
-                    WriteBufLine MainTxtBuf, "fornext_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                    WriteBufLineCpp MainTxtBuf, "fornext_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
                     IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                         vWatchAddLabel linenumber, 0
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                     END IF
-                    WriteBufLine MainTxtBuf, "}"
-                    WriteBufLine MainTxtBuf, "fornext_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+                    WriteBufLineCpp MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, "fornext_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
                     controllevel = controllevel - 1
                     IF n = 1 THEN EXIT FOR
                     v$ = ""
@@ -6219,7 +6235,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "WHILE" THEN
-            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -6243,9 +6259,9 @@ DO
                 IF (typ AND ISSTRING) THEN a$ = "WHILE ERROR! Cannot accept a STRING type.": GOTO errmes
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
-                WriteBufLine MainTxtBuf, "while((" + e$ + ")||is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "while((" + e$ + ")||is_error_pending()){"
             ELSE
                 a$ = "WHILE ERROR! Expected expression after WHILE.": GOTO errmes
             END IF
@@ -6259,9 +6275,9 @@ DO
 
 
             IF controltype(controllevel) <> 5 THEN a$ = "WEND without WHILE": GOTO errmes
-            WriteBufLine MainTxtBuf, "ww_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
-            WriteBufLine MainTxtBuf, "}"
-            WriteBufLine MainTxtBuf, "ww_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "ww_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "ww_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
             controllevel = controllevel - 1
             l$ = SCase$("Wend")
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -6275,7 +6291,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "DO" THEN
-            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -6300,19 +6316,19 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "DO ERROR! Cannot accept a STRING type.": GOTO errmes
-                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "while((" + e$ + ")||is_error_pending()){" ELSE WriteBufLine MainTxtBuf, "while((!(" + e$ + "))||is_error_pending()){"
+                IF whileuntil = 1 THEN WriteBufLineCpp MainTxtBuf, "while((" + e$ + ")||is_error_pending()){" ELSE WriteBufLineCpp MainTxtBuf, "while((!(" + e$ + "))||is_error_pending()){"
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
                 controltype(controllevel) = 4
             ELSE
                 controltype(controllevel) = 3
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 ELSE
-                    WriteBufLine MainTxtBuf, "do{"
+                    WriteBufLineCpp MainTxtBuf, "do{"
                 END IF
             END IF
             controlid(controllevel) = uniquenumber
@@ -6326,7 +6342,7 @@ DO
             l$ = SCase$("Loop")
             IF controltype(controllevel) <> 3 AND controltype(controllevel) <> 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
             IF n >= 2 THEN
-                IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
                 IF controltype(controllevel) = 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
                 whileuntil = 0
                 IF secondelement$ = "WHILE" THEN whileuntil = 1: l$ = l$ + sp + SCase$("While")
@@ -6342,27 +6358,27 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "LOOP ERROR! Cannot accept a STRING type.": GOTO errmes
-                WriteBufLine MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                WriteBufLineCpp MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
-                IF whileuntil = 1 THEN WriteBufLine MainTxtBuf, "}while((" + e$ + ")&&(!is_error_pending()));" ELSE WriteBufLine MainTxtBuf, "}while((!(" + e$ + "))&&(!is_error_pending()));"
+                IF whileuntil = 1 THEN WriteBufLineCpp MainTxtBuf, "}while((" + e$ + ")&&(!is_error_pending()));" ELSE WriteBufLineCpp MainTxtBuf, "}while((!(" + e$ + "))&&(!is_error_pending()));"
             ELSE
-                WriteBufLine MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                WriteBufLineCpp MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
 
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
 
                 IF controltype(controllevel) = 4 THEN
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, "}"
                 ELSE
-                    WriteBufLine MainTxtBuf, "}while(1);" 'infinite loop!
+                    WriteBufLineCpp MainTxtBuf, "}while(1);" 'infinite loop!
                 END IF
             END IF
-            WriteBufLine MainTxtBuf, "dl_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "dl_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
             controllevel = controllevel - 1
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             IF n = 1 THEN GOTO finishednonexec '***no error causing code, event checking done by DO***
@@ -6380,7 +6396,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "FOR" THEN
-            IF CheckingOn THEN WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
 
             l$ = SCase$("For")
 
@@ -6471,15 +6487,15 @@ DO
             u$ = _TOSTR$(uniquenumber)
 
             IF subfunc = "" THEN
-                WriteBufLine DataTxtBuf, "static " + ctype$ + " fornext_value" + u$ + ";"
-                WriteBufLine DataTxtBuf, "static " + ctype$ + " fornext_finalvalue" + u$ + ";"
-                WriteBufLine DataTxtBuf, "static " + ctype$ + " fornext_step" + u$ + ";"
-                WriteBufLine DataTxtBuf, "static uint8 fornext_step_negative" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static " + ctype$ + " fornext_value" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static " + ctype$ + " fornext_finalvalue" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static " + ctype$ + " fornext_step" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static uint8 fornext_step_negative" + u$ + ";"
             ELSE
-                WriteBufLine DataTxtBuf, ctype$ + " fornext_value" + u$ + ";"
-                WriteBufLine DataTxtBuf, ctype$ + " fornext_finalvalue" + u$ + ";"
-                WriteBufLine DataTxtBuf, ctype$ + " fornext_step" + u$ + ";"
-                WriteBufLine DataTxtBuf, "uint8 fornext_step_negative" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, ctype$ + " fornext_value" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, ctype$ + " fornext_finalvalue" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, ctype$ + " fornext_step" + u$ + ";"
+                WriteBufLineCpp DataTxtBuf, "uint8 fornext_step_negative" + u$ + ";"
             END IF
 
             'calculate start
@@ -6488,7 +6504,7 @@ DO
             l$ = l$ + sp + "=" + sp + tlayout$
             e$ = evaluatetotyp$(e$, ctyp)
             IF Error_Happened THEN GOTO errmes
-            WriteBufLine MainTxtBuf, "fornext_value" + u$ + "=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, "fornext_value" + u$ + "=" + e$ + ";"
 
             'final
             e$ = fixoperationorder$(p2$)
@@ -6496,7 +6512,7 @@ DO
             l$ = l$ + sp + SCase$("To") + sp + tlayout$
             e$ = evaluatetotyp(e$, ctyp)
             IF Error_Happened THEN GOTO errmes
-            WriteBufLine MainTxtBuf, "fornext_finalvalue" + u$ + "=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, "fornext_finalvalue" + u$ + "=" + e$ + ";"
 
             'step
             e$ = fixoperationorder$(p3$)
@@ -6507,28 +6523,28 @@ DO
 
             IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
-                WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
 
-            WriteBufLine MainTxtBuf, "fornext_step" + u$ + "=" + e$ + ";"
-            WriteBufLine MainTxtBuf, "if (fornext_step" + u$ + "<0) fornext_step_negative" + u$ + "=1; else fornext_step_negative" + u$ + "=0;"
+            WriteBufLineCpp MainTxtBuf, "fornext_step" + u$ + "=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, "if (fornext_step" + u$ + "<0) fornext_step_negative" + u$ + "=1; else fornext_step_negative" + u$ + "=0;"
 
-            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto fornext_error" + u$ + ";"
-            WriteBufLine MainTxtBuf, "goto fornext_entrylabel" + u$ + ";"
-            WriteBufLine MainTxtBuf, "while(1){"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto fornext_error" + u$ + ";"
+            WriteBufLineCpp MainTxtBuf, "goto fornext_entrylabel" + u$ + ";"
+            WriteBufLineCpp MainTxtBuf, "while(1){"
             typbak = typ
-            WriteBufLine MainTxtBuf, "fornext_value" + u$ + "=fornext_step" + u$ + "+(" + refer$(v$, typ, 0) + ");"
+            WriteBufLineCpp MainTxtBuf, "fornext_value" + u$ + "=fornext_step" + u$ + "+(" + refer$(v$, typ, 0) + ");"
             IF Error_Happened THEN GOTO errmes
             typ = typbak
-            WriteBufLine MainTxtBuf, "fornext_entrylabel" + u$ + ":"
+            WriteBufLineCpp MainTxtBuf, "fornext_entrylabel" + u$ + ":"
             setrefer v$, typ, "fornext_value" + u$, 1
             IF Error_Happened THEN GOTO errmes
-            WriteBufLine MainTxtBuf, "if (fornext_step_negative" + u$ + "){"
-            WriteBufLine MainTxtBuf, "if (fornext_value" + u$ + "<fornext_finalvalue" + u$ + ") break;"
-            WriteBufLine MainTxtBuf, "}else{"
-            WriteBufLine MainTxtBuf, "if (fornext_value" + u$ + ">fornext_finalvalue" + u$ + ") break;"
-            WriteBufLine MainTxtBuf, "}"
-            WriteBufLine MainTxtBuf, "fornext_error" + u$ + ":;"
+            WriteBufLineCpp MainTxtBuf, "if (fornext_step_negative" + u$ + "){"
+            WriteBufLineCpp MainTxtBuf, "if (fornext_value" + u$ + "<fornext_finalvalue" + u$ + ") break;"
+            WriteBufLineCpp MainTxtBuf, "}else{"
+            WriteBufLineCpp MainTxtBuf, "if (fornext_value" + u$ + ">fornext_finalvalue" + u$ + ") break;"
+            WriteBufLineCpp MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "fornext_error" + u$ + ":;"
 
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
@@ -6575,7 +6591,7 @@ DO
                 t = controltype(i)
                 IF t = 1 THEN
                     IF controlstate(controllevel) = 2 THEN a$ = "IF-THEN already contains an ELSE statement": GOTO errmes
-                    WriteBufLine MainTxtBuf, "}else{"
+                    WriteBufLineCpp MainTxtBuf, "}else{"
                     controlstate(controllevel) = 2
                     IF lineelseused = 0 THEN lhscontrollevel = lhscontrollevel - 1
                     l$ = SCase$("Else")
@@ -6590,10 +6606,10 @@ DO
     IF n >= 3 THEN
         IF firstelement$ = "ELSEIF" THEN
             IF CheckingOn THEN
-                WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
             END IF
             FOR i = controllevel TO 1 STEP -1
@@ -6604,7 +6620,7 @@ DO
                     controlvalue(controllevel) = controlvalue(controllevel) + 1
                     e$ = getelement$(a$, n)
                     IF e$ <> "THEN" THEN a$ = "Expected ELSEIF expression THEN": GOTO errmes
-                    WriteBufLine MainTxtBuf, "}else{"
+                    WriteBufLineCpp MainTxtBuf, "}else{"
                     e$ = fixoperationorder$(getelements$(ca$, 2, n - 1))
                     IF Error_Happened THEN GOTO errmes
                     l$ = SCase$("ElseIf") + sp + tlayout$ + sp + SCase$("Then")
@@ -6617,9 +6633,9 @@ DO
                         a$ = "Expected ELSEIF LEN(stringexpression) THEN": GOTO errmes
                     END IF
                     IF stringprocessinghappened THEN
-                        WriteBufLine MainTxtBuf, "if (" + cleanupstringprocessingcall$ + e$ + ")){"
+                        WriteBufLineCpp MainTxtBuf, "if (" + cleanupstringprocessingcall$ + e$ + ")){"
                     ELSE
-                        WriteBufLine MainTxtBuf, "if (" + e$ + "){"
+                        WriteBufLineCpp MainTxtBuf, "if (" + e$ + "){"
                     END IF
                     lhscontrollevel = lhscontrollevel - 1
                     GOTO finishedline
@@ -6632,10 +6648,10 @@ DO
     IF n >= 3 THEN
         IF firstelement$ = "IF" THEN
             IF CheckingOn THEN
-                WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
             END IF
 
@@ -6669,9 +6685,9 @@ DO
             END IF
 
             IF stringprocessinghappened THEN
-                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + e$ + "))||is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + e$ + "))||is_error_pending()){"
             ELSE
-                WriteBufLine MainTxtBuf, "if ((" + e$ + ")||is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if ((" + e$ + ")||is_error_pending()){"
             END IF
 
             IF iftype = 1 THEN l$ = l$ + sp + SCase$("Then") 'note: 'GOTO' will be added when iftype=2
@@ -6695,9 +6711,9 @@ DO
             IF LEN(layout$) = 0 THEN layout$ = l$ ELSE layout$ = layout$ + sp + l$
         END IF
 
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "}"
         FOR i = 1 TO controlvalue(controllevel)
-            WriteBufLine MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "}"
         NEXT
         controllevel = controllevel - 1
         GOTO finishednonexec '***no error causing code, event checking done by IF***
@@ -6718,12 +6734,12 @@ DO
 
             IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
-                WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
 
-            WriteBufLine MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "}"
             FOR i = 1 TO controlvalue(controllevel)
-                WriteBufLine MainTxtBuf, "}"
+                WriteBufLineCpp MainTxtBuf, "}"
             NEXT
             controllevel = controllevel - 1
             GOTO finishednonexec '***no error causing code, event checking done by IF***
@@ -6736,10 +6752,10 @@ DO
     IF n >= 1 THEN
         IF firstelement$ = "SELECT" THEN
             IF CheckingOn THEN
-                WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
             END IF
 
@@ -6783,9 +6799,9 @@ DO
                 ELSE
                     IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLine DataTxtBuf, "static qbs *sc_" + _TOSTR$(u) + "=qbs_new(0,0);"
-                    WriteBufLine MainTxtBuf, "qbs_set(sc_" + _TOSTR$(u) + "," + e$ + ");"
-                    IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                    WriteBufLineCpp DataTxtBuf, "static qbs *sc_" + _TOSTR$(u) + "=qbs_new(0,0);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_set(sc_" + _TOSTR$(u) + "," + e$ + ");"
+                    IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                 END IF
 
             ELSE
@@ -6801,9 +6817,9 @@ DO
                         IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                         IF Error_Happened THEN GOTO errmes
 
-                        WriteBufLine DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
-                        WriteBufLine MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
-                        IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
+                        WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
+                        IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                     END IF
 
                 ELSE
@@ -6822,9 +6838,9 @@ DO
                     ELSE
                         IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLine DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
-                        WriteBufLine MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
-                        IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
+                        WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
+                        IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                     END IF
 
                 END IF
@@ -6835,8 +6851,8 @@ DO
             controlref(controllevel) = linenumber
             controltype(controllevel) = 10 + t
             controlid(controllevel) = u
-            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLine DataTxtBuf, "int32 sc_" + _TOSTR$(controlid(controllevel)) + "_var;"
-            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLine MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=0;"
+            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp DataTxtBuf, "int32 sc_" + _TOSTR$(controlid(controllevel)) + "_var;"
+            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=0;"
             GOTO finishedline
         END IF
     END IF
@@ -6850,22 +6866,22 @@ DO
             '19=CASE ELSE (awaiting END SELECT)
             IF controltype(controllevel) = 18 THEN
                 everycasenewcase = everycasenewcase + 1
-                WriteBufLine MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
+                WriteBufLineCpp MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
                 controllevel = controllevel - 1
-                IF EveryCaseSet(SelectCaseCounter) = 0 THEN WriteBufLine MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
-                WriteBufLine MainTxtBuf, "}"
+                IF EveryCaseSet(SelectCaseCounter) = 0 THEN WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
+                WriteBufLineCpp MainTxtBuf, "}"
             END IF
             IF controltype(controllevel) = 19 THEN
                 controllevel = controllevel - 1
-                IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLine MainTxtBuf, "} /* End of SELECT EVERYCASE ELSE */"
+                IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "} /* End of SELECT EVERYCASE ELSE */"
             END IF
 
-            WriteBufLine MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_end:;"
+            WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_end:;"
             IF controltype(controllevel) < 10 OR controltype(controllevel) > 17 THEN a$ = "END SELECT without SELECT CASE": GOTO errmes
 
             IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
-                WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
             END IF
 
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -6902,16 +6918,16 @@ DO
                 lhscontrollevel = lhscontrollevel - 1
                 controllevel = controllevel - 1
                 everycasenewcase = everycasenewcase + 1
-                WriteBufLine MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
+                WriteBufLineCpp MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
                 IF EveryCaseSet(SelectCaseCounter) = 0 THEN
-                    WriteBufLine MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
+                    WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
                 ELSE
-                    WriteBufLine MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=-1;"
+                    WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=-1;"
                 END IF
-                WriteBufLine MainTxtBuf, "}"
+                WriteBufLineCpp MainTxtBuf, "}"
                 'following line fixes problem related to RESUME after error
                 'statementn = statementn + 1
-                'if nochecks=0 then WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
+                'if nochecks=0 then WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
             END IF
 
             IF controltype(controllevel) <> 6 AND (controltype(controllevel) < 10 OR controltype(controllevel) > 17) THEN a$ = "CASE without SELECT CASE": GOTO errmes
@@ -6971,7 +6987,7 @@ DO
             'CASE ELSE
             IF n = 2 THEN
                 IF getelement$(a$, 2) = "C-EL" THEN
-                    IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLine MainTxtBuf, "if (sc_" + _TOSTR$(controlid(controllevel)) + "_var==0) {"
+                    IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "if (sc_" + _TOSTR$(controlid(controllevel)) + "_var==0) {"
                     controllevel = controllevel + 1: controltype(controllevel) = 19
                     controlref(controllevel) = controlref(controllevel - 1)
                     l$ = l$ + sp + SCase$("Else")
@@ -6981,10 +6997,10 @@ DO
             END IF
 
             IF CheckingOn THEN
-                WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
-                    WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                    WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
             END IF
 
@@ -7144,9 +7160,9 @@ DO
             NEXT
 
             IF stringprocessinghappened THEN
-                WriteBufLine MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + f12$ + "))||is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if ((" + cleanupstringprocessingcall$ + f12$ + "))||is_error_pending()){"
             ELSE
-                WriteBufLine MainTxtBuf, "if ((" + f12$ + ")||is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if ((" + f12$ + ")||is_error_pending()){"
             END IF
 
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -7173,11 +7189,11 @@ DO
     IF CheckingOn THEN
         IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
             vWatchAddLabel linenumber, 0
-            WriteBufLine MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+            WriteBufLineCpp MainTxtBuf, "do{*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
         ELSE
-            WriteBufLine MainTxtBuf, "do{"
+            WriteBufLineCpp MainTxtBuf, "do{"
         END IF
-        'WriteBufLine MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
+        'WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;"
     END IF
 
 
@@ -7217,7 +7233,7 @@ DO
                 l$ = l$ + tlayout$
                 e$ = evaluatetotyp(e$, -2)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "sub_paletteusing(" + e$ + "," + _TOSTR$(bits) + ");"
+                WriteBufLineCpp MainTxtBuf, "sub_paletteusing(" + e$ + "," + _TOSTR$(bits) + ");"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
             END IF 'using
@@ -7231,19 +7247,19 @@ DO
         IF secondelement$ = "OFF" THEN
             IF n > 2 THEN a$ = "Expected KEY OFF only": GOTO errmes
             l$ = l$ + SCase$("Off"): layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            WriteBufLine MainTxtBuf, "key_off();"
+            WriteBufLineCpp MainTxtBuf, "key_off();"
             GOTO finishedline
         END IF
         IF secondelement$ = "ON" THEN
             IF n > 2 THEN a$ = "Expected KEY ON only": GOTO errmes
             l$ = l$ + SCase$("On"): layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            WriteBufLine MainTxtBuf, "key_on();"
+            WriteBufLineCpp MainTxtBuf, "key_on();"
             GOTO finishedline
         END IF
         IF secondelement$ = "LIST" THEN
             IF n > 2 THEN a$ = "Expected KEY LIST only": GOTO errmes
             l$ = l$ + SCase$("List"): layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            WriteBufLine MainTxtBuf, "key_list();"
+            WriteBufLineCpp MainTxtBuf, "key_list();"
             GOTO finishedline
         END IF
         'search for comma to indicate assignment
@@ -7267,7 +7283,7 @@ DO
         l$ = l$ + tlayout$ + sp2 + "," + sp
         e$ = evaluatetotyp(e$, 32&)
         IF Error_Happened THEN GOTO errmes
-        WriteBufRawData MainTxtBuf, "key_assign(" + e$ + ","
+        WriteBufRawDataCpp MainTxtBuf, "key_assign(" + e$ + ","
         'string
         e$ = getelements$(ca$, i, n)
         e$ = fixoperationorder(e$)
@@ -7275,7 +7291,7 @@ DO
         l$ = l$ + tlayout$
         e$ = evaluatetotyp(e$, ISSTRING)
         IF Error_Happened THEN GOTO errmes
-        WriteBufLine MainTxtBuf, e$ + ");"
+        WriteBufLineCpp MainTxtBuf, e$ + ");"
         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
         GOTO finishedline
     END IF 'KEY
@@ -7306,7 +7322,7 @@ DO
         l$ = l$ + tlayout$ + sp2 + "," + sp
         e$ = evaluatetotyp(e$, 32&)
         IF Error_Happened THEN GOTO errmes
-        WriteBufLine MainTxtBuf, "field_new(" + e$ + ");"
+        WriteBufLineCpp MainTxtBuf, "field_new(" + e$ + ");"
 
         fieldnext:
 
@@ -7361,7 +7377,7 @@ DO
         IF (typ AND ISREFERENCE) = 0 THEN GOTO fielderror
         e$ = refer(e$, typ, 0)
         IF Error_Happened THEN GOTO errmes
-        WriteBufLine MainTxtBuf, "field_add(" + e$ + "," + sizee$ + ");"
+        WriteBufLineCpp MainTxtBuf, "field_add(" + e$ + "," + sizee$ + ");"
 
         IF i < n THEN
             i = i + 1
@@ -7399,7 +7415,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 3 OR t = 4 THEN
-                        WriteBufLine MainTxtBuf, "goto dl_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto dl_exit_" + _TOSTR$(controlid(i)) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7413,7 +7429,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 2 THEN
-                        WriteBufLine MainTxtBuf, "goto fornext_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto fornext_exit_" + _TOSTR$(controlid(i)) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7427,7 +7443,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 5 THEN
-                        WriteBufLine MainTxtBuf, "goto ww_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto ww_exit_" + _TOSTR$(controlid(i)) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7441,7 +7457,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 18 OR t = 19 THEN 'CASE/CASE ELSE
-                        WriteBufLine MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
+                        WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7455,11 +7471,11 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 18 THEN 'CASE
-                        WriteBufLine MainTxtBuf, "goto sc_ec_" + _TOSTR$(everycasenewcase + 1) + "_end;"
+                        WriteBufLineCpp MainTxtBuf, "goto sc_ec_" + _TOSTR$(everycasenewcase + 1) + "_end;"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     ELSEIF t = 19 THEN 'CASE ELSE
-                        WriteBufLine MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
+                        WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7509,7 +7525,7 @@ DO
             a$ = "Expected )": GOTO errmes
             onstriggotarg:
             IF e2$ = "" THEN a$ = "Expected ... )": GOTO errmes
-            WriteBufRawData MainTxtBuf, "onstrig_setup("
+            WriteBufRawDataCpp MainTxtBuf, "onstrig_setup("
 
             'sort scanned results
             IF LEN(e3$) THEN
@@ -7526,7 +7542,7 @@ DO
             e$ = fixoperationorder$(optI$): IF Error_Happened THEN GOTO errmes
             l$ = l$ + sp2 + tlayout$
             e$ = evaluatetotyp(e$, 32&): IF Error_Happened THEN GOTO errmes
-            WriteBufRawData MainTxtBuf, e$ + ","
+            WriteBufRawDataCpp MainTxtBuf, e$ + ","
 
             'controller , passed
             IF optPassed$ = "1" THEN
@@ -7536,7 +7552,7 @@ DO
             ELSE
                 e$ = optController$
             END IF
-            WriteBufRawData MainTxtBuf, e$ + "," + optPassed$ + ","
+            WriteBufRawDataCpp MainTxtBuf, e$ + "," + optPassed$ + ","
 
             l$ = l$ + sp2 + ")" + sp 'close brackets
 
@@ -7544,13 +7560,13 @@ DO
             IF i > n THEN a$ = "Expected GOSUB/sub-name": GOTO errmes
             a2$ = getelement$(a$, i): i = i + 1
             onstrigid = onstrigid + 1
-            WriteBufRawData MainTxtBuf, _TOSTR$(onstrigid) + ","
+            WriteBufRawDataCpp MainTxtBuf, _TOSTR$(onstrigid) + ","
 
             IF a2$ = "GOSUB" THEN
                 IF i > n THEN a$ = "Expected linenumber/label": GOTO errmes
                 a2$ = getelement$(ca$, i): i = i + 1
 
-                WriteBufLine MainTxtBuf, "0);"
+                WriteBufLineCpp MainTxtBuf, "0);"
 
                 IF validlabel(a2$) = 0 THEN a$ = "Invalid label": GOTO errmes
 
@@ -7621,7 +7637,7 @@ DO
                 IF i > n THEN
 
                     IF id.args = 1 THEN a$ = "Expected argument after SUB": GOTO errmes
-                    WriteBufLine MainTxtBuf, "0);"
+                    WriteBufLineCpp MainTxtBuf, "0);"
                     WriteBufLine StrigTxtBuf, ");"
 
                 ELSE
@@ -7645,7 +7661,7 @@ DO
                     l$ = l$ + sp + tlayout$
                     e$ = evaluatetotyp(e$, INTEGER64TYPE - ISPOINTER)
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLine MainTxtBuf, e$ + ");"
+                    WriteBufLineCpp MainTxtBuf, e$ + ");"
 
                 END IF
 
@@ -7700,7 +7716,7 @@ DO
             a$ = "Expected )": GOTO errmes
             ontimgotarg:
             IF e2$ = "" THEN a$ = "Expected ... )": GOTO errmes
-            WriteBufRawData MainTxtBuf, "ontimer_setup("
+            WriteBufRawDataCpp MainTxtBuf, "ontimer_setup("
             'i
             IF LEN(e3$) THEN
                 e$ = fixoperationorder$(e3$)
@@ -7708,9 +7724,9 @@ DO
                 l$ = l$ + sp2 + tlayout$ + "," + sp
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufRawData MainTxtBuf, e$ + ","
+                WriteBufRawDataCpp MainTxtBuf, e$ + ","
             ELSE
-                WriteBufRawData MainTxtBuf, "0,"
+                WriteBufRawDataCpp MainTxtBuf, "0,"
                 l$ = l$ + sp2
             END IF
             'sec
@@ -7719,18 +7735,18 @@ DO
             l$ = l$ + tlayout$ + sp2 + ")" + sp
             e$ = evaluatetotyp(e$, DOUBLETYPE - ISPOINTER)
             IF Error_Happened THEN GOTO errmes
-            WriteBufRawData MainTxtBuf, e$ + ","
+            WriteBufRawDataCpp MainTxtBuf, e$ + ","
             i = i + 1
             IF i > n THEN a$ = "Expected GOSUB/sub-name": GOTO errmes
             a2$ = getelement$(a$, i): i = i + 1
             ontimerid = ontimerid + 1
-            WriteBufRawData MainTxtBuf, _TOSTR$(ontimerid) + ","
+            WriteBufRawDataCpp MainTxtBuf, _TOSTR$(ontimerid) + ","
 
             IF a2$ = "GOSUB" THEN
                 IF i > n THEN a$ = "Expected linenumber/label": GOTO errmes
                 a2$ = getelement$(ca$, i): i = i + 1
 
-                WriteBufLine MainTxtBuf, "0);"
+                WriteBufLineCpp MainTxtBuf, "0);"
 
                 IF validlabel(a2$) = 0 THEN a$ = "Invalid label": GOTO errmes
 
@@ -7808,7 +7824,8 @@ DO
                 IF i > n THEN
 
                     IF id.args = 1 THEN a$ = "Expected argument after SUB": GOTO errmes
-                    WriteBufLine MainTxtBuf, "0);"
+
+                    WriteBufLineCpp MainTxtBuf, "0);"
                     WriteBufLine TimeTxtBuf, ");"
 
                 ELSE
@@ -7832,7 +7849,8 @@ DO
                     l$ = l$ + sp + tlayout$
                     e$ = evaluatetotyp(e$, INTEGER64TYPE - ISPOINTER)
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLine MainTxtBuf, e$ + ");"
+
+                    WriteBufLineCpp MainTxtBuf, e$ + ");"
 
                 END IF
 
@@ -7877,19 +7895,19 @@ DO
             l$ = l$ + tlayout$ + sp2 + ")" + sp
             e$ = evaluatetotyp(e$, DOUBLETYPE - ISPOINTER)
             IF Error_Happened THEN GOTO errmes
-            WriteBufRawData MainTxtBuf, "onkey_setup(" + e$ + ","
+            WriteBufRawDataCpp MainTxtBuf, "onkey_setup(" + e$ + ","
 
             i = i + 1
             IF i > n THEN a$ = "Expected GOSUB/sub-name": GOTO errmes
             a2$ = getelement$(a$, i): i = i + 1
             onkeyid = onkeyid + 1
-            WriteBufRawData MainTxtBuf, _TOSTR$(onkeyid) + ","
+            WriteBufRawDataCpp MainTxtBuf, _TOSTR$(onkeyid) + ","
 
             IF a2$ = "GOSUB" THEN
                 IF i > n THEN a$ = "Expected linenumber/label": GOTO errmes
                 a2$ = getelement$(ca$, i): i = i + 1
 
-                WriteBufLine MainTxtBuf, "0);"
+                WriteBufLineCpp MainTxtBuf, "0);"
 
                 IF validlabel(a2$) = 0 THEN a$ = "Invalid label": GOTO errmes
 
@@ -7959,7 +7977,7 @@ DO
                 IF i > n THEN
 
                     IF id.args = 1 THEN a$ = "Expected argument after SUB": GOTO errmes
-                    WriteBufLine MainTxtBuf, "0);"
+                    WriteBufLineCpp MainTxtBuf, "0);"
                     WriteBufLine KeyTxtBuf, ");"
 
                 ELSE
@@ -7983,7 +8001,7 @@ DO
                     l$ = l$ + sp + tlayout$
                     e$ = evaluatetotyp(e$, INTEGER64TYPE - ISPOINTER)
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLine MainTxtBuf, e$ + ");"
+                    WriteBufLineCpp MainTxtBuf, e$ + ");"
 
                 END IF
 
@@ -8263,7 +8281,7 @@ DO
 
                 IF LEN(subfunc) = 0 THEN a$ = "EXIT " + secondelement$ + " must be used within a " + secondelement$: GOTO errmes
 
-                WriteBufLine MainTxtBuf, "goto exit_subfunc;"
+                WriteBufLineCpp MainTxtBuf, "goto exit_subfunc;"
                 IF LEFT$(subfunc, 4) = "SUB_" THEN secondelement$ = SCase$("Sub") ELSE secondelement$ = SCase$("Function")
                 l$ = SCase$("Exit") + sp + secondelement$
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -8352,33 +8370,33 @@ DO
             IF position$ = "1" THEN
                 IF useposition THEN l$ = l$ + sp2 + "," + sp + "1" + sp2 + ")" + sp + "=" ELSE l$ = l$ + sp2 + ")" + sp + "="
 
-                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(expression$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp + tlayout$
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
-                WriteBufLine MainTxtBuf, "if (tqbs->len){tqbs->chr[0]=tmp_long;}else{error(5);}"
-                WriteBufLine MainTxtBuf, "}}"
+                WriteBufLineCpp MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if (tqbs->len){tqbs->chr[0]=tmp_long;}else{error(5);}"
+                WriteBufLineCpp MainTxtBuf, "}}"
 
             ELSE
 
-                WriteBufLine MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "tqbs=" + stringvariable$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(position$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp2 + "," + sp + tlayout$ + sp2 + ")" + sp + "="
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + "; if (!is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "tmp_fileno=" + e$ + "; if (!is_error_pending()){"
                 e$ = fixoperationorder$(expression$)
                 IF Error_Happened THEN GOTO errmes
                 l$ = l$ + sp + tlayout$
                 e$ = evaluatetotyp(e$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
-                WriteBufLine MainTxtBuf, "if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}"
-                WriteBufLine MainTxtBuf, "}}}"
+                WriteBufLineCpp MainTxtBuf, "tmp_long=" + e$ + "; if (!is_error_pending()){"
+                WriteBufLineCpp MainTxtBuf, "if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}"
+                WriteBufLineCpp MainTxtBuf, "}}}"
 
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -8458,9 +8476,9 @@ DO
                 l$ = l$ + sp2 + "," + sp + tlayout$
                 length$ = evaluatetotyp(length$, 32&)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "sub_mid(" + stringvariable$ + "," + start$ + "," + length$ + "," + stringexpression$ + ",1);"
+                WriteBufLineCpp MainTxtBuf, "sub_mid(" + stringvariable$ + "," + start$ + "," + length$ + "," + stringexpression$ + ",1);"
             ELSE
-                WriteBufLine MainTxtBuf, "sub_mid(" + stringvariable$ + "," + start$ + ",0," + stringexpression$ + ",0);"
+                WriteBufLineCpp MainTxtBuf, "sub_mid(" + stringvariable$ + "," + start$ + ",0," + stringexpression$ + ",0);"
             END IF
 
             l$ = l$ + sp2 + ")" + sp + "=" + sp + l2$
@@ -8521,127 +8539,127 @@ DO
                         bytesperelement$ = _TOSTR$(udtxsize(udt) \ 8)
                     END IF
                 END IF
-                WriteBufLine MainTxtBuf, "if (" + n$ + "[2]&1){" 'array is defined
-                WriteBufLine MainTxtBuf, "if (" + n$ + "[2]&2){" 'array is static
+                WriteBufLineCpp MainTxtBuf, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLineCpp MainTxtBuf, "if (" + n$ + "[2]&2){" 'array is static
                 IF udt > 0 AND id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode) THEN
                     ' A DIM/static-storage parent array may contain explicit _Dynamic TYPE member arrays.
                     ' ERASE must release those nested descriptors before clearing the parent
                     ' storage, otherwise descriptor allocations and _MEM locks would leak.
-                    WriteBufRawData MainTxtBuf, "tmp_long="
+                    WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                     FOR i2 = 1 TO ABS(id.arrayelements)
-                        IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                        WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                        IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                        WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                     NEXT
-                    WriteBufLine MainTxtBuf, ";"
-                    WriteBufLine MainTxtBuf, "while(tmp_long--){"
+                    WriteBufLineCpp MainTxtBuf, ";"
+                    WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
                     acc$ = ""
                     AppendDynUDTDescFree n$ + "[0]", udt, 0, bytesperelement$, acc$, id.dynudtmode
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLine MainTxtBuf, acc$
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, acc$
+                    WriteBufLineCpp MainTxtBuf, "}"
                 END IF
                 IF (id.arraytype AND ISSTRING) <> 0 AND (id.arraytype AND ISFIXEDLENGTH) = 0 THEN
-                    WriteBufRawData MainTxtBuf, "tmp_long="
+                    WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                     FOR i2 = 1 TO ABS(id.arrayelements)
-                        IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                        WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                        IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                        WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                     NEXT
-                    WriteBufLine MainTxtBuf, ";"
-                    WriteBufLine MainTxtBuf, "while(tmp_long--){"
-                    WriteBufLine MainTxtBuf, "((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))->len=0;"
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, ";"
+                    WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
+                    WriteBufLineCpp MainTxtBuf, "((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))->len=0;"
+                    WriteBufLineCpp MainTxtBuf, "}"
                 ELSEIF udt > 0 AND udtxvariable(udt) AND NOT (id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode)) THEN
                     ' Static arrays of UDTs must clear nested variable members element-by-element.
-                    WriteBufRawData MainTxtBuf, "tmp_long="
+                    WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                     FOR i2 = 1 TO ABS(id.arrayelements)
-                        IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                        WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                        IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                        WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                     NEXT
-                    WriteBufLine MainTxtBuf, ";"
-                    WriteBufLine MainTxtBuf, "while(tmp_long--){"
+                    WriteBufLineCpp MainTxtBuf, ";"
+                    WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
                     acc$ = ""
                     clear_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                    WriteBufLine MainTxtBuf, acc$
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, acc$
+                    WriteBufLineCpp MainTxtBuf, "}"
                 ELSE
                     'numeric / fixed-length / plain UDT
                     'clear array
-                    WriteBufRawData MainTxtBuf, "memset((void*)(" + n$ + "[0]),0,"
+                    WriteBufRawDataCpp MainTxtBuf, "memset((void*)(" + n$ + "[0]),0,"
                     FOR i2 = 1 TO ABS(id.arrayelements)
-                        IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                        WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                        IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                        WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                     NEXT
-                    WriteBufLine MainTxtBuf, "*" + bytesperelement$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "*" + bytesperelement$ + ");"
                 END IF
-                WriteBufLine MainTxtBuf, "}else{" 'array is dynamic
+                WriteBufLineCpp MainTxtBuf, "}else{" 'array is dynamic
                 '1. free memory & any allocated strings
                 IF (id.arraytype AND ISSTRING) <> 0 AND (id.arraytype AND ISFIXEDLENGTH) = 0 THEN
                     'free strings
-                    WriteBufRawData MainTxtBuf, "tmp_long="
+                    WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                     FOR i2 = 1 TO ABS(id.arrayelements)
-                        IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                        WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                        IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                        WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                     NEXT
-                    WriteBufLine MainTxtBuf, ";"
-                    WriteBufLine MainTxtBuf, "while(tmp_long--){"
-                    WriteBufLine MainTxtBuf, "qbs_free((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]));"
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, ";"
+                    WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
+                    WriteBufLineCpp MainTxtBuf, "qbs_free((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]));"
+                    WriteBufLineCpp MainTxtBuf, "}"
                     'free memory
-                    WriteBufLine MainTxtBuf, "free((void*)(" + n$ + "[0]));"
+                    WriteBufLineCpp MainTxtBuf, "free((void*)(" + n$ + "[0]));"
                 ELSE
                     IF udt > 0 AND udtxvariable(udt) AND NOT (id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode)) THEN
                         ' Dynamic arrays of UDTs must free nested variable members before the raw block is freed.
-                        WriteBufRawData MainTxtBuf, "tmp_long="
+                        WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                         FOR i2 = 1 TO ABS(id.arrayelements)
-                            IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                            WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                            IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                            WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                         NEXT
-                        WriteBufLine MainTxtBuf, ";"
-                        WriteBufLine MainTxtBuf, "while(tmp_long--){"
+                        WriteBufLineCpp MainTxtBuf, ";"
+                        WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
                         acc$ = ""
                         free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        WriteBufLine MainTxtBuf, acc$
-                        WriteBufLine MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, acc$
+                        WriteBufLineCpp MainTxtBuf, "}"
                     END IF
                     IF udt > 0 AND id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode) THEN
-                        WriteBufLine MainTxtBuf, "if (" + n$ + "[2]&8){"
-                        WriteBufRawData MainTxtBuf, "tmp_long="
+                        WriteBufLineCpp MainTxtBuf, "if (" + n$ + "[2]&8){"
+                        WriteBufRawDataCpp MainTxtBuf, "tmp_long="
                         FOR i2 = 1 TO ABS(id.arrayelements)
-                            IF i2 <> 1 THEN WriteBufRawData MainTxtBuf, "*"
-                            WriteBufRawData MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
+                            IF i2 <> 1 THEN WriteBufRawDataCpp MainTxtBuf, "*"
+                            WriteBufRawDataCpp MainTxtBuf, n$ + "[" + _TOSTR$(i2 * 4 - 4 + 5) + "]"
                         NEXT
-                        WriteBufLine MainTxtBuf, ";"
-                        WriteBufLine MainTxtBuf, "while(tmp_long--){"
+                        WriteBufLineCpp MainTxtBuf, ";"
+                        WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
                         acc$ = ""
                         AppendDynUDTDescFree n$ + "[0]", udt, 0, bytesperelement$, acc$, id.dynudtmode
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLine MainTxtBuf, acc$
-                        WriteBufLine MainTxtBuf, "}"
-                        WriteBufLine MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, acc$
+                        WriteBufLineCpp MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, "}"
                     END IF
                     'free memory
-                    WriteBufLine MainTxtBuf, "if (" + n$ + "[2]&4){" 'cmem array
-                    WriteBufLine MainTxtBuf, "cmem_dynamic_free((uint8*)(" + n$ + "[0]));"
-                    WriteBufLine MainTxtBuf, "}else{" 'non-cmem array
-                    WriteBufLine MainTxtBuf, "free((void*)(" + n$ + "[0]));"
-                    WriteBufLine MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, "if (" + n$ + "[2]&4){" 'cmem array
+                    WriteBufLineCpp MainTxtBuf, "cmem_dynamic_free((uint8*)(" + n$ + "[0]));"
+                    WriteBufLineCpp MainTxtBuf, "}else{" 'non-cmem array
+                    WriteBufLineCpp MainTxtBuf, "free((void*)(" + n$ + "[0]));"
+                    WriteBufLineCpp MainTxtBuf, "}"
                 END IF
                 '2. set array (and its elements) as undefined
-                WriteBufLine MainTxtBuf, n$ + "[2]^=1;" 'remove defined flag, keeping other flags (such as cmem)
+                WriteBufLineCpp MainTxtBuf, n$ + "[2]^=1;" 'remove defined flag, keeping other flags (such as cmem)
                 'set dimensions as undefined
                 FOR i2 = 1 TO ABS(id.arrayelements)
                     B = i2 * 4
-                    WriteBufLine MainTxtBuf, n$ + "[" + _TOSTR$(B) + "]=2147483647;" 'base
-                    WriteBufLine MainTxtBuf, n$ + "[" + _TOSTR$(B + 1) + "]=0;" 'num. index
-                    WriteBufLine MainTxtBuf, n$ + "[" + _TOSTR$(B + 2) + "]=0;" 'multiplier
+                    WriteBufLineCpp MainTxtBuf, n$ + "[" + _TOSTR$(B) + "]=2147483647;" 'base
+                    WriteBufLineCpp MainTxtBuf, n$ + "[" + _TOSTR$(B + 1) + "]=0;" 'num. index
+                    WriteBufLineCpp MainTxtBuf, n$ + "[" + _TOSTR$(B + 2) + "]=0;" 'multiplier
                 NEXT
                 IF (id.arraytype AND ISSTRING) <> 0 AND (id.arraytype AND ISFIXEDLENGTH) = 0 THEN
-                    WriteBufLine MainTxtBuf, n$ + "[0]=(ptrszint)&nothingstring;"
+                    WriteBufLineCpp MainTxtBuf, n$ + "[0]=(ptrszint)&nothingstring;"
                 ELSE
-                    WriteBufLine MainTxtBuf, n$ + "[0]=(ptrszint)nothingvalue;"
+                    WriteBufLineCpp MainTxtBuf, n$ + "[0]=(ptrszint)nothingvalue;"
                 END IF
-                WriteBufLine MainTxtBuf, "}" 'static/dynamic
-                WriteBufLine MainTxtBuf, "}" 'array is defined
+                WriteBufLineCpp MainTxtBuf, "}" 'static/dynamic
+                WriteBufLineCpp MainTxtBuf, "}" 'array is defined
                 IF clearerasereturn = 1 THEN clearerasereturn = 0: GOTO clearerasereturned
                 GOTO erasedarray
             END IF
@@ -8674,7 +8692,7 @@ DO
                             AppendDynMemberLockBump ptr$, acc$
                             AppendDynMemberEraseTyped ptr$, udt_dyn_array_elem_bytes(member_element_id), 0, DynMemVarStr%(member_element_id), acc$, id.dynudtmode
                             IF Error_Happened THEN GOTO errmes
-                            WriteBufLine MainTxtBuf, acc$
+                            WriteBufLineCpp MainTxtBuf, acc$
                             GOTO erasedarray
                         END IF
 
@@ -8685,18 +8703,18 @@ DO
 
                         IF (udtetype(member_element_id) AND ISSTRING) <> 0 AND (udtetype(member_element_id) AND ISFIXEDLENGTH) = 0 THEN
                             FOR i2 = 0 TO memberelems - 1
-                                WriteBufLine MainTxtBuf, "(*(qbs**)(" + ptr$ + "+" + _TOSTR$(i2 * elementbytes) + "))->len=0;"
+                                WriteBufLineCpp MainTxtBuf, "(*(qbs**)(" + ptr$ + "+" + _TOSTR$(i2 * elementbytes) + "))->len=0;"
                             NEXT
                         ELSEIF (udtetype(member_element_id) AND ISSTRING) <> 0 AND (udtetype(member_element_id) AND ISFIXEDLENGTH) <> 0 THEN
                             ' Match ordinary QB64PE static-array reset semantics for STRING * N.
                             ' Fixed-length string storage is cleared to NUL bytes here, not spaces.
-                            WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
+                            WriteBufLineCpp MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
                         ELSEIF (udtetype(member_element_id) AND ISUDT) <> 0 AND udtxvariable(udtetype(member_element_id) AND UDTMASK) THEN
                             FOR i2 = 0 TO memberelems - 1
                                 clear_udt_with_varstrings ptr$, udtetype(member_element_id) AND UDTMASK, MainTxtBuf, i2 * elementbytes
                             NEXT
                         ELSE
-                            WriteBufLine MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
+                            WriteBufLineCpp MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
                         END IF
                         GOTO erasedarray
                     END IF
@@ -8846,8 +8864,15 @@ DO
                             '-----
 
                             ' Evaluate the target as a whole bare member-array reference.
+                            ' This dedicated REDIM path receives the original token stream from ca$.
+                            ' Normalize unary operators first, matching normal expression handling;
+                            ' otherwise an intermediate negative member index such as leafSet(-1)
+                            ' reaches evaluate() as raw "- 1" tokens and the closing parenthesis is
+                            ' misdiagnosed as "Expected variable/value before ')'".
+                            redimTargetEval$ = fixoperationorder$(redimTargetExpr$)
+                            IF Error_Happened THEN GOTO errmes
                             udt_allow_bare_array = -1
-                            redimTargetRef$ = evaluate(redimTargetExpr$, redimTargetTyp)
+                            redimTargetRef$ = evaluate(redimTargetEval$, redimTargetTyp)
                             udt_allow_bare_array = 0
                             IF Error_Happened THEN GOTO errmes
                             IF (redimTargetTyp AND ISREFERENCE) = 0 OR (redimTargetTyp AND ISARRAY) = 0 THEN
@@ -8922,7 +8947,7 @@ DO
                                 IF Error_Happened THEN GOTO errmes
                                 AppendDynMemberRedim redimDynPrefix$, redimDynDims, redimSlot$, redimElementBytes, redimElemUDT, DynMemVarStr%(redimE), redimoption, redimAcc$, id.dynudtmode
                                 IF Error_Happened THEN GOTO errmes
-                                WriteBufLine MainTxtBuf, redimAcc$
+                                WriteBufLineCpp MainTxtBuf, redimAcc$
                             ELSE
                                 ' The requested bounds must describe the exact same inline storage layout.
                                 ' An inline TYPE member array (unmarked or _Static) has fixed bounds, so REDIM may only
@@ -8945,18 +8970,18 @@ DO
                                     ' REDIM _PRESERVE/_RETAIN on the same descriptor must leave the bytes untouched.
                                     IF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) = 0 THEN
                                         FOR redimI2 = 0 TO redimMemberElems - 1
-                                            WriteBufLine MainTxtBuf, "(*(qbs**)(" + redimPtr$ + "+" + _TOSTR$(redimI2 * redimElementBytes) + "))->len=0;"
+                                            WriteBufLineCpp MainTxtBuf, "(*(qbs**)(" + redimPtr$ + "+" + _TOSTR$(redimI2 * redimElementBytes) + "))->len=0;"
                                         NEXT
                                     ELSEIF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) <> 0 THEN
                                         ' Match ordinary QB64PE static-array REDIM semantics for STRING * N.
                                         ' Fixed-length string storage is reinitialized to NUL bytes, not spaces.
-                                        WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
+                                        WriteBufLineCpp MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
                                     ELSEIF (udtetype(redimE) AND ISUDT) <> 0 AND udtxvariable(udtetype(redimE) AND UDTMASK) THEN
                                         FOR redimI2 = 0 TO redimMemberElems - 1
                                             clear_udt_with_varstrings redimPtr$, udtetype(redimE) AND UDTMASK, MainTxtBuf, redimI2 * redimElementBytes
                                         NEXT
                                     ELSE
-                                        WriteBufLine MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
+                                        WriteBufLineCpp MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
                                     END IF
                                 END IF
                             END IF
@@ -9405,8 +9430,8 @@ DO
                         MainTxtBuf = OpenBuffer%("A", tmpdir$ + "chain.txt")
                         l2$ = tlayout$
 
-                        WriteBufLine MainTxtBuf, "int32val=1;" 'simple variable
-                        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+                        WriteBufLineCpp MainTxtBuf, "int32val=1;" 'simple variable
+                        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
                         t = id.t
                         bits = t AND UDTMASK
@@ -9415,15 +9440,15 @@ DO
                             IF t AND ISFIXEDLENGTH THEN
                                 bits = id.tsize * 8
                             ELSE
-                                WriteBufLine MainTxtBuf, "int64val=__STRING_" + RTRIM$(id.n) + "->len*8;"
+                                WriteBufLineCpp MainTxtBuf, "int64val=__STRING_" + RTRIM$(id.n) + "->len*8;"
                                 bits = 0
                             END IF
                         END IF
 
                         IF bits THEN
-                            WriteBufLine MainTxtBuf, "int64val=" + _TOSTR$(bits) + ";" 'size in bits
+                            WriteBufLineCpp MainTxtBuf, "int64val=" + _TOSTR$(bits) + ";" 'size in bits
                         END IF
-                        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+                        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
 
                         'put the variable
                         e$ = RTRIM$(id.n)
@@ -9439,7 +9464,7 @@ DO
                         e$ = evaluatetotyp(fixoperationorder$(e$), -4)
                         IF Error_Happened THEN GOTO errmes
 
-                        WriteBufLine MainTxtBuf, "sub_put(FF,NULL," + e$ + ",0);"
+                        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL," + e$ + ",0);"
 
                         tlayout$ = l2$
 
@@ -9450,9 +9475,9 @@ DO
                         l2$ = tlayout$
 
 
-                        WriteBufLine MainTxtBuf, "if (int32val==1){"
+                        WriteBufLineCpp MainTxtBuf, "if (int32val==1){"
                         'get the size in bits
-                        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+                        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
                         '***assume correct size***
 
                         e$ = RTRIM$(id.n)
@@ -9468,18 +9493,18 @@ DO
 
                         IF t AND ISSTRING THEN
                             IF (t AND ISFIXEDLENGTH) = 0 THEN
-                                WriteBufLine MainTxtBuf, "tqbs=qbs_new(int64val>>3,1);"
-                                WriteBufLine MainTxtBuf, "qbs_set(__STRING_" + RTRIM$(id.n) + ",tqbs);"
+                                WriteBufLineCpp MainTxtBuf, "tqbs=qbs_new(int64val>>3,1);"
+                                WriteBufLineCpp MainTxtBuf, "qbs_set(__STRING_" + RTRIM$(id.n) + ",tqbs);"
                                 'now that the string is the correct size, the following GET command will work correctly...
                             END IF
                         END IF
 
                         e$ = evaluatetotyp(fixoperationorder$(e$), -4)
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLine MainTxtBuf, "sub_get(FF,NULL," + e$ + ",0);"
+                        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL," + e$ + ",0);"
 
-                        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);" 'get next command
-                        WriteBufLine MainTxtBuf, "}"
+                        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);" 'get next command
+                        WriteBufLineCpp MainTxtBuf, "}"
 
                         tlayout$ = l2$
                         'revert output to main
@@ -9694,7 +9719,7 @@ DO
 
             IF LEN(l$) THEN l$ = l$ + sp + tlayout$ ELSE l$ = tlayout$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            WriteBufLine MainTxtBuf, "goto LABEL_" + a2$ + ";"
+            WriteBufLineCpp MainTxtBuf, "goto LABEL_" + a2$ + ";"
             GOTO finishedline
         END IF
     END IF
@@ -9706,15 +9731,15 @@ DO
             FOR i = controllevel TO 1 STEP -1
                 t = controltype(i)
                 IF t = 2 THEN 'for...next
-                    WriteBufLine MainTxtBuf, "goto fornext_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto fornext_continue_" + _TOSTR$(controlid(i)) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 ELSEIF t = 3 OR t = 4 THEN 'do...loop
-                    WriteBufLine MainTxtBuf, "goto dl_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto dl_continue_" + _TOSTR$(controlid(i)) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 ELSEIF t = 5 THEN 'while...wend
-                    WriteBufLine MainTxtBuf, "goto ww_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto ww_continue_" + _TOSTR$(controlid(i)) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 END IF
@@ -9736,12 +9761,12 @@ DO
         l$ = SCase$("Run")
         IF n = 1 THEN
             'no parameters
-            WriteBufLine MainTxtBuf, "sub_run_init();" 'note: called first to free up screen-locked image handles
-            WriteBufLine MainTxtBuf, "sub_clear(NULL,NULL,NULL,NULL);" 'use functionality of CLEAR
+            WriteBufLineCpp MainTxtBuf, "sub_run_init();" 'note: called first to free up screen-locked image handles
+            WriteBufLineCpp MainTxtBuf, "sub_clear(NULL,NULL,NULL,NULL);" 'use functionality of CLEAR
             IF LEN(subfunc$) THEN
-                WriteBufLine MainTxtBuf, "QBMAIN(NULL);"
+                WriteBufLineCpp MainTxtBuf, "QBMAIN(NULL);"
             ELSE
-                WriteBufLine MainTxtBuf, "goto S_0;"
+                WriteBufLineCpp MainTxtBuf, "goto S_0;"
             END IF
         ELSE
             'parameter passed
@@ -9785,21 +9810,21 @@ DO
                 END IF 'x
 
                 l$ = l$ + sp + tlayout$
-                WriteBufLine MainTxtBuf, "sub_run_init();" 'note: called first to free up screen-locked image handles
-                WriteBufLine MainTxtBuf, "sub_clear(NULL,NULL,NULL,NULL);" 'use functionality of CLEAR
+                WriteBufLineCpp MainTxtBuf, "sub_run_init();" 'note: called first to free up screen-locked image handles
+                WriteBufLineCpp MainTxtBuf, "sub_clear(NULL,NULL,NULL,NULL);" 'use functionality of CLEAR
                 IF LEN(subfunc$) THEN
                     WriteBufLine RunTxtBuf, "if (run_from_line==" + _TOSTR$(nextrunlineindex) + "){run_from_line=0;goto LABEL_" + lbl$ + ";}"
-                    WriteBufLine MainTxtBuf, "run_from_line=" + _TOSTR$(nextrunlineindex) + ";"
+                    WriteBufLineCpp MainTxtBuf, "run_from_line=" + _TOSTR$(nextrunlineindex) + ";"
                     nextrunlineindex = nextrunlineindex + 1
-                    WriteBufLine MainTxtBuf, "QBMAIN(NULL);"
+                    WriteBufLineCpp MainTxtBuf, "QBMAIN(NULL);"
                 ELSE
-                    WriteBufLine MainTxtBuf, "goto LABEL_" + lbl$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto LABEL_" + lbl$ + ";"
                 END IF
             ELSE
                 'assume it's a string containing a filename to execute
                 e$ = evaluatetotyp(e$, ISSTRING)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "sub_run(" + e$ + ");"
+                WriteBufLineCpp MainTxtBuf, "sub_run(" + e$ + ");"
                 l$ = l$ + sp + l2$
             END IF 'isstring
         END IF 'n=1
@@ -9826,8 +9851,8 @@ DO
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
             IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
-            WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
-            WriteBufLine MainTxtBuf, "exit_code=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
+            WriteBufLineCpp MainTxtBuf, "exit_code=" + e$ + ";"
             l$ = l$ + sp + l2$
         END IF
         xend
@@ -9850,8 +9875,8 @@ DO
                 inclinenump$ = inclinenump$ + "," + CHR$(34) + thisincname$ + CHR$(34)
             END IF
             IF GetRCStateVar(vWatchOn) = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
-            WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
-            WriteBufLine MainTxtBuf, "exit_code=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}" 'non-resumable error check (cannot exit without handling errors)
+            WriteBufLineCpp MainTxtBuf, "exit_code=" + e$ + ";"
             l$ = l$ + sp + l2$
         END IF
 
@@ -9860,11 +9885,11 @@ DO
             IF inclinenumber(inclevel) = 0 THEN
                 vWatchAddLabel linenumber, 0
             END IF
-            WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+            WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
-        WriteBufLine MainTxtBuf, "if (sub_gl_called) error(271);"
-        WriteBufLine MainTxtBuf, "close_program=1;"
-        WriteBufLine MainTxtBuf, "end();"
+        WriteBufLineCpp MainTxtBuf, "if (sub_gl_called) error(271);"
+        WriteBufLineCpp MainTxtBuf, "close_program=1;"
+        WriteBufLineCpp MainTxtBuf, "end();"
         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
         GOTO finishedline
     END IF
@@ -9883,11 +9908,11 @@ DO
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             IF GetRCStateVar(vWatchOn) = 1 AND CheckingOn = 1 AND inclinenumber(inclevel) = 0 THEN
-                WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-3; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
+                WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER=-3; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 vWatchAddLabel linenumber, 0
             ELSE
-                WriteBufLine MainTxtBuf, "close_program=1;"
-                WriteBufLine MainTxtBuf, "end();"
+                WriteBufLineCpp MainTxtBuf, "close_program=1;"
+                WriteBufLineCpp MainTxtBuf, "end();"
             END IF
             GOTO finishedline
         END IF
@@ -9905,7 +9930,7 @@ DO
     IF n >= 1 THEN
         IF firstelement$ = "RETURN" THEN
             IF n = 1 THEN
-                WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "ret" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
+                WriteBufLineCpp MainTxtBuf, "#include " + CHR$(34) + "ret" + _TOSTR$(subfuncn) + ".txt" + CHR$(34)
                 l$ = SCase$("Return")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -9913,8 +9938,8 @@ DO
                 'label/linenumber follows
                 IF subfuncn <> 0 THEN a$ = "RETURN linelabel/linenumber invalid within a SUB/FUNCTION": GOTO errmes
                 IF n > 2 THEN a$ = "Expected linelabel/linenumber after RETURN": GOTO errmes
-                WriteBufLine MainTxtBuf, "if (!next_return_point) error(3);" 'check return point available
-                WriteBufLine MainTxtBuf, "next_return_point--;" 'destroy return point
+                WriteBufLineCpp MainTxtBuf, "if (!next_return_point) error(3);" 'check return point available
+                WriteBufLineCpp MainTxtBuf, "next_return_point--;" 'destroy return point
                 a2$ = getelement$(ca$, 2)
                 IF validlabel(a2$) = 0 THEN a$ = "Invalid label!": GOTO errmes
 
@@ -9943,7 +9968,7 @@ DO
                     Labels(r).Error_Line = linenumber
                 END IF 'x
 
-                WriteBufLine MainTxtBuf, "goto LABEL_" + a2$ + ";"
+                WriteBufLineCpp MainTxtBuf, "goto LABEL_" + a2$ + ";"
                 l$ = SCase$("Return") + sp + tlayout$
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -9958,7 +9983,7 @@ DO
                 resumeprev:
 
 
-                WriteBufLine MainTxtBuf, "if (!error_handling){error(20);}else{error_retry=1; qbevent=1; error_handling=0; error_err=0; return;}"
+                WriteBufLineCpp MainTxtBuf, "if (!error_handling){error(20);}else{error_retry=1; qbevent=1; error_handling=0; error_err=0; return;}"
 
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -9968,7 +9993,7 @@ DO
             IF UCASE$(s$) = "NEXT" THEN
 
 
-                WriteBufLine MainTxtBuf, "if (!error_handling){error(20);}else{error_handling=0; error_err=0; return;}"
+                WriteBufLineCpp MainTxtBuf, "if (!error_handling){error(20);}else{error_handling=0; error_err=0; return;}"
 
                 l$ = l$ + sp + SCase$("Next")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -10004,7 +10029,7 @@ DO
 
             l$ = l$ + sp + tlayout$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
-            WriteBufLine MainTxtBuf, "if (!error_handling){error(20);}else{error_handling=0; error_err=0; goto LABEL_" + s$ + ";}"
+            WriteBufLineCpp MainTxtBuf, "if (!error_handling){error(20);}else{error_handling=0; error_err=0; goto LABEL_" + s$ + ";}"
             GOTO finishedline
         END IF
     END IF
@@ -10021,9 +10046,9 @@ DO
                 IF lbl$ = "0" THEN a$ = "Zero not allowed after _NEWHANDLER": GOTO errmes
             END IF
             IF lbl$ = "0" THEN 'independent from hhc$ (i.e. always clear history)
-                WriteBufLine MainTxtBuf, "error_goto_line=0;"
-                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_new_txt_len(" + MKI$(&H2222) + ", 0));"
-                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+                WriteBufLineCpp MainTxtBuf, "error_goto_line=0;"
+                WriteBufLineCpp MainTxtBuf, "qbs_set(error_handler_history, qbs_new_txt_len(" + MKI$(&H2222) + ", 0));"
+                WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + "0"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -10031,9 +10056,9 @@ DO
                 IF n = 4 THEN a$ = "Expected: ON ERROR GOTO [_NEWHANDLER] label": GOTO errmes
                 l$ = l$ + sp + SCase$("_NewHandler")
             ELSEIF hhc$ = "_LASTHANDLER" THEN
-                WriteBufLine MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
-                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
-                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+                WriteBufLineCpp MainTxtBuf, "error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));"
+                WriteBufLineCpp MainTxtBuf, "qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1), 0) + 1 , NULL, 0));"
+                WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
                 l$ = l$ + sp + SCase$("_LastHandler")
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -10072,10 +10097,10 @@ DO
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             errorlabels = errorlabels + 1
             IF hhc$ = "_NEWHANDLER" THEN
-                WriteBufLine MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
-                WriteBufLine MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
+                WriteBufLineCpp MainTxtBuf, "qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len(" + CHR$(34) + "|" + CHR$(34) + ", 1)), error_handler_history));"
+                WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qbs_tmp_base, 0);"
             END IF
-            WriteBufLine MainTxtBuf, "error_goto_line=" + _TOSTR$(errorlabels) + ";"
+            WriteBufLineCpp MainTxtBuf, "error_goto_line=" + _TOSTR$(errorlabels) + ";"
             WriteBufLine ErrTxtBuf, "if (error_goto_line==" + _TOSTR$(errorlabels) + "){error_handling=1; goto LABEL_" + lbl$ + ";}"
             GOTO finishedline
         END IF
@@ -10085,7 +10110,7 @@ DO
         IF firstelement$ = "RESTORE" THEN
             l$ = SCase$("Restore")
             IF n = 1 THEN
-                WriteBufLine MainTxtBuf, "data_offset=0;"
+                WriteBufLineCpp MainTxtBuf, "data_offset=0;"
             ELSE
                 IF n > 2 THEN a$ = "Syntax error - too many parameters (expected RESTORE label/line number)": GOTO errmes
                 lbl$ = getelement$(ca$, 2)
@@ -10114,7 +10139,7 @@ DO
                 END IF 'x
 
                 l$ = l$ + sp + tlayout$
-                WriteBufLine MainTxtBuf, "data_offset=data_at_LABEL_" + lbl$ + ";"
+                WriteBufLineCpp MainTxtBuf, "data_offset=data_at_LABEL_" + lbl$ + ";"
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             GOTO finishedline
@@ -10166,13 +10191,13 @@ DO
             '            IF typ AND ISREFERENCE THEN e$ = refer(e$, typ, 0)
 
 
-            'WriteBufLine MainTxtBuf, blkoffs$ '???
+            'WriteBufLineCpp MainTxtBuf, blkoffs$ '???
 
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
             l$ = l$ + sp2 + "," + sp + tlayout$
             e$ = evaluatetotyp(e$, OFFSETTYPE - ISPOINTER): IF Error_Happened THEN GOTO errmes
             offs$ = e$
-            'WriteBufLine MainTxtBuf, e$ '???
+            'WriteBufLineCpp MainTxtBuf, e$ '???
 
             e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
             l$ = l$ + sp2 + "," + sp + tlayout$
@@ -10180,8 +10205,8 @@ DO
             varoffs$ = evaluatetotyp(e$, -6): IF Error_Happened THEN GOTO errmes
 
 
-            'WriteBufLine MainTxtBuf, varoffs$ '???
-            'WriteBufLine MainTxtBuf, varsize$ '???
+            'WriteBufLineCpp MainTxtBuf, varoffs$ '???
+            'WriteBufLineCpp MainTxtBuf, varsize$ '???
 
             'what do we do next
             'need to know offset of variable and its size
@@ -10196,30 +10221,30 @@ DO
             IF CheckingOn = 0 THEN
                 'fast version:
                 IF s THEN
-                    WriteBufLine MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)(" + offs$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)(" + offs$ + ");"
                 ELSE
-                    WriteBufLine MainTxtBuf, "memmove(" + varoffs$ + ",(uint8_t*)" + offs$ + "," + varsize$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "memmove(" + varoffs$ + ",(uint8_t*)" + offs$ + "," + varsize$ + ");"
                 END IF
             ELSE
                 'safe version:
-                WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
+                WriteBufLineCpp MainTxtBuf, "tmp_long=" + offs$ + ";"
                 'is mem block init?
-                WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                WriteBufLineCpp MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
                 'are region and id valid?
-                WriteBufLine MainTxtBuf, "if ("
-                WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                WriteBufLineCpp MainTxtBuf, "if ("
+                WriteBufLineCpp MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
+                WriteBufLineCpp MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                WriteBufLineCpp MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
                 'diagnose error
-                WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
-                WriteBufLine MainTxtBuf, "}else{"
+                WriteBufLineCpp MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
+                WriteBufLineCpp MainTxtBuf, "}else{"
                 IF s THEN
-                    WriteBufLine MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)tmp_long;"
+                    WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)" + varoffs$ + "=*(" + st$ + "*)tmp_long;"
                 ELSE
-                    WriteBufLine MainTxtBuf, "memmove(" + varoffs$ + ",(void*)tmp_long," + varsize$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "memmove(" + varoffs$ + ",(void*)tmp_long," + varsize$ + ");"
                 END IF
-                WriteBufLine MainTxtBuf, "}"
-                WriteBufLine MainTxtBuf, "}else error(309);"
+                WriteBufLineCpp MainTxtBuf, "}"
+                WriteBufLineCpp MainTxtBuf, "}else error(309);"
             END IF
 
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -10278,7 +10303,7 @@ DO
                 udt_allow_bare_array = 0
                 IF Error_Happened THEN GOTO errmes
                 IF (t AND ISREFERENCE) = 0 AND (t AND ISSTRING) THEN
-                    WriteBufLine MainTxtBuf, "g_tmp_str=" + test$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "g_tmp_str=" + test$ + ";"
                     varsize$ = "g_tmp_str->len"
                     varoffs$ = "g_tmp_str->chr"
                 ELSE
@@ -10296,30 +10321,30 @@ DO
                 IF CheckingOn = 0 THEN
                     'fast version:
                     IF s THEN
-                        WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=*(" + st$ + "*)" + varoffs$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=*(" + st$ + "*)" + varoffs$ + ";"
                     ELSE
-                        WriteBufLine MainTxtBuf, "memmove((uint8_t*)" + offs$ + "," + varoffs$ + "," + varsize$ + ");"
+                        WriteBufLineCpp MainTxtBuf, "memmove((uint8_t*)" + offs$ + "," + varoffs$ + "," + varsize$ + ");"
                     END IF
                 ELSE
                     'safe version:
-                    WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "tmp_long=" + offs$ + ";"
                     'is mem block init?
-                    WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                    WriteBufLineCpp MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
                     'are region and id valid?
-                    WriteBufLine MainTxtBuf, "if ("
-                    WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                    WriteBufLineCpp MainTxtBuf, "if ("
+                    WriteBufLineCpp MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
+                    WriteBufLineCpp MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                    WriteBufLineCpp MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
                     'diagnose error
-                    WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
-                    WriteBufLine MainTxtBuf, "}else{"
+                    WriteBufLineCpp MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
+                    WriteBufLineCpp MainTxtBuf, "}else{"
                     IF s THEN
-                        WriteBufLine MainTxtBuf, "*(" + st$ + "*)tmp_long=*(" + st$ + "*)" + varoffs$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)tmp_long=*(" + st$ + "*)" + varoffs$ + ";"
                     ELSE
-                        WriteBufLine MainTxtBuf, "memmove((void*)tmp_long," + varoffs$ + "," + varsize$ + ");"
+                        WriteBufLineCpp MainTxtBuf, "memmove((void*)tmp_long," + varoffs$ + "," + varsize$ + ");"
                     END IF
-                    WriteBufLine MainTxtBuf, "}"
-                    WriteBufLine MainTxtBuf, "}else error(309);"
+                    WriteBufLineCpp MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, "}else error(309);"
                 END IF
 
             ELSE
@@ -10339,23 +10364,23 @@ DO
                 varsize$ = _TOSTR$((t AND UDTMASK) \ 8)
                 IF CheckingOn = 0 THEN
                     'fast version:
-                    WriteBufLine MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=" + e$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)(" + offs$ + ")=" + e$ + ";"
                 ELSE
                     'safe version:
-                    WriteBufLine MainTxtBuf, "tmp_long=" + offs$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "tmp_long=" + offs$ + ";"
                     'is mem block init?
-                    WriteBufLine MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
+                    WriteBufLineCpp MainTxtBuf, "if ( ((mem_block*)(" + blkoffs$ + "))->lock_offset ){"
                     'are region and id valid?
-                    WriteBufLine MainTxtBuf, "if ("
-                    WriteBufLine MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
-                    WriteBufLine MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
-                    WriteBufLine MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
+                    WriteBufLineCpp MainTxtBuf, "if ("
+                    WriteBufLineCpp MainTxtBuf, "tmp_long < ((mem_block*)(" + blkoffs$ + "))->offset  ||"
+                    WriteBufLineCpp MainTxtBuf, "(tmp_long+(" + varsize$ + ")) > ( ((mem_block*)(" + blkoffs$ + "))->offset + ((mem_block*)(" + blkoffs$ + "))->size)  ||"
+                    WriteBufLineCpp MainTxtBuf, "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id  ){"
                     'diagnose error
-                    WriteBufLine MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
-                    WriteBufLine MainTxtBuf, "}else{"
-                    WriteBufLine MainTxtBuf, "*(" + st$ + "*)tmp_long=" + e$ + ";"
-                    WriteBufLine MainTxtBuf, "}"
-                    WriteBufLine MainTxtBuf, "}else error(309);"
+                    WriteBufLineCpp MainTxtBuf, "if (" + "((mem_lock*)((mem_block*)(" + blkoffs$ + "))->lock_offset)->id != ((mem_block*)(" + blkoffs$ + "))->lock_id" + ") error(308); else error(300);"
+                    WriteBufLineCpp MainTxtBuf, "}else{"
+                    WriteBufLineCpp MainTxtBuf, "*(" + st$ + "*)tmp_long=" + e$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "}"
+                    WriteBufLineCpp MainTxtBuf, "}else error(309);"
                 END IF
 
             END IF
@@ -10422,7 +10447,7 @@ DO
                 udt_allow_bare_array = 0
                 IF Error_Happened THEN GOTO errmes
                 IF (t AND ISREFERENCE) = 0 AND (t AND ISSTRING) THEN
-                    WriteBufLine MainTxtBuf, "tmp_long=(ptrszint)" + test$ + ";"
+                    WriteBufLineCpp MainTxtBuf, "tmp_long=(ptrszint)" + test$ + ";"
                     varsize$ = "((qbs*)tmp_long)->len"
                     varoffs$ = "((qbs*)tmp_long)->chr"
                 ELSE
@@ -10431,9 +10456,9 @@ DO
                 END IF
 
                 IF CheckingOn = 0 THEN
-                    WriteBufLine MainTxtBuf, "sub__memfill_nochecks(" + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "sub__memfill_nochecks(" + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
                 ELSE
-                    WriteBufLine MainTxtBuf, "sub__memfill((mem_block*)" + blkoffs$ + "," + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "sub__memfill((mem_block*)" + blkoffs$ + "," + offs$ + "," + bytes$ + ",(ptrszint)" + varoffs$ + "," + varsize$ + ");"
                 END IF
 
             ELSE
@@ -10463,7 +10488,7 @@ DO
                 END IF
                 c$ = c$ + "("
                 IF CheckingOn THEN c$ = c$ + "(mem_block*)" + blkoffs$ + ","
-                WriteBufLine MainTxtBuf, c$ + offs$ + "," + bytes$ + "," + e$ + ");"
+                WriteBufLineCpp MainTxtBuf, c$ + offs$ + "," + bytes$ + "," + e$ + ");"
             END IF
 
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -10513,7 +10538,7 @@ DO
 
             IF n$ = "INTERRUPT" OR n$ = "INTERRUPTX" THEN 'assume CALL INTERRUPT[X] request
                 'print "CI: call interrupt command reached":sleep 1
-                IF n$ = "INTERRUPT" THEN WriteBufRawData MainTxtBuf, "call_interrupt(" ELSE WriteBufRawData MainTxtBuf, "call_interruptx("
+                IF n$ = "INTERRUPT" THEN WriteBufRawDataCpp MainTxtBuf, "call_interrupt(" ELSE WriteBufRawDataCpp MainTxtBuf, "call_interruptx("
                 argn = 0
                 n = numelements(a$)
                 B = 0
@@ -10535,7 +10560,7 @@ DO
                             e$ = evaluatetotyp(e$, 64&)
                             IF Error_Happened THEN GOTO errmes
                             'print "CI: evaluated interrupt number as ["+e$+"]":sleep 1
-                            WriteBufRawData MainTxtBuf, e$
+                            WriteBufRawDataCpp MainTxtBuf, e$
                         END IF
                         IF argn = 2 OR argn = 3 THEN 'inregs, outregs
                             e$ = fixoperationorder$(e$)
@@ -10545,7 +10570,7 @@ DO
                             e$ = evaluatetotyp(e$, -2) 'offset+size
                             IF Error_Happened THEN GOTO errmes
                             'print "CI: evaluated in/out regs ["+e2$+"] as ["+e$+"]":sleep 1
-                            WriteBufRawData MainTxtBuf, "," + e$
+                            WriteBufRawDataCpp MainTxtBuf, "," + e$
                         END IF
                         e$ = ""
                     ELSE
@@ -10553,7 +10578,7 @@ DO
                     END IF
                 NEXT
                 IF argn <> 3 THEN a$ = "Expected CALL INTERRUPT (interrupt-no, inregs, outregs)": GOTO errmes
-                WriteBufLine MainTxtBuf, ");"
+                WriteBufLineCpp MainTxtBuf, ");"
                 IF cispecial = 0 THEN l$ = l$ + sp2 + ")"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 'print "CI: done":sleep 1
@@ -10606,22 +10631,22 @@ DO
                                         IF Error_Happened THEN GOTO errmes
                                         v$ = "pass" + _TOSTR$(uniquenumber)
                                         WriteBufLine defdatahandle, "float *" + v$ + "=NULL;"
-                                        WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
-                                        WriteBufLine DataTxtBuf, "cmem_sp-=4;"
-                                        WriteBufLine DataTxtBuf, v$ + "=(float*)(dblock+cmem_sp);"
-                                        WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                                        WriteBufLine DataTxtBuf, "}"
+                                        WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
+                                        WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
+                                        WriteBufLineCpp DataTxtBuf, v$ + "=(float*)(dblock+cmem_sp);"
+                                        WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                                        WriteBufLineCpp DataTxtBuf, "}"
                                         e$ = "(uint16)(((uint8*)&(*" + v$ + "=" + e$ + "))-((uint8*)dblock))"
                                     ELSE
                                         e$ = evaluatetotyp(e$, DOUBLETYPE - ISPOINTER)
                                         IF Error_Happened THEN GOTO errmes
                                         v$ = "pass" + _TOSTR$(uniquenumber)
                                         WriteBufLine defdatahandle, "double *" + v$ + "=NULL;"
-                                        WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
-                                        WriteBufLine DataTxtBuf, "cmem_sp-=8;"
-                                        WriteBufLine DataTxtBuf, v$ + "=(double*)(dblock+cmem_sp);"
-                                        WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                                        WriteBufLine DataTxtBuf, "}"
+                                        WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
+                                        WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
+                                        WriteBufLineCpp DataTxtBuf, v$ + "=(double*)(dblock+cmem_sp);"
+                                        WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                                        WriteBufLineCpp DataTxtBuf, "}"
                                         e$ = "(uint16)(((uint8*)&(*" + v$ + "=" + e$ + "))-((uint8*)dblock))"
                                     END IF
                                 ELSE
@@ -10629,17 +10654,17 @@ DO
                                     IF Error_Happened THEN GOTO errmes
                                     v$ = "pass" + _TOSTR$(uniquenumber)
                                     WriteBufLine defdatahandle, "int64 *" + v$ + "=NULL;"
-                                    WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
-                                    WriteBufLine DataTxtBuf, "cmem_sp-=8;"
-                                    WriteBufLine DataTxtBuf, v$ + "=(int64*)(dblock+cmem_sp);"
-                                    WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                                    WriteBufLine DataTxtBuf, "}"
+                                    WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
+                                    WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
+                                    WriteBufLineCpp DataTxtBuf, v$ + "=(int64*)(dblock+cmem_sp);"
+                                    WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                                    WriteBufLineCpp DataTxtBuf, "}"
                                     e$ = "(uint16)(((uint8*)&(*" + v$ + "=" + e$ + "))-((uint8*)dblock))"
                                 END IF
 
                             END IF
 
-                            WriteBufLine MainTxtBuf, "call_absolute_offsets[" + _TOSTR$(argn) + "]=" + e$ + ";"
+                            WriteBufLineCpp MainTxtBuf, "call_absolute_offsets[" + _TOSTR$(argn) + "]=" + e$ + ";"
                         ELSE
                             IF e$ = "" THEN e$ = e2$ ELSE e$ = e$ + sp + e2$
                             e$ = fixoperationorder(e$)
@@ -10647,7 +10672,7 @@ DO
                             l$ = l$ + tlayout$ + sp2 + ")"
                             e$ = evaluatetotyp(e$, UINTEGERTYPE - ISPOINTER)
                             IF Error_Happened THEN GOTO errmes
-                            WriteBufLine MainTxtBuf, "call_absolute(" + _TOSTR$(argn) + "," + e$ + ");"
+                            WriteBufLineCpp MainTxtBuf, "call_absolute(" + _TOSTR$(argn) + "," + e$ + ");"
                         END IF
                         argn = argn + 1
                         e$ = ""
@@ -10783,7 +10808,7 @@ DO
                     END IF
 
                     IF n = 1 THEN
-                        WriteBufLine MainTxtBuf, "sub_close(NULL,0);" 'closes all files
+                        WriteBufLineCpp MainTxtBuf, "sub_close(NULL,0);" 'closes all files
                     ELSE
                         l$ = l$ + sp
                         B = 0
@@ -10806,7 +10831,7 @@ DO
                                     l$ = l$ + tlayout$ + sp2 + "," + sp
                                     e$ = evaluatetotyp(e$, 64&)
                                     IF Error_Happened THEN GOTO errmes
-                                    WriteBufLine MainTxtBuf, "sub_close(" + e$ + ",1);"
+                                    WriteBufLineCpp MainTxtBuf, "sub_close(" + e$ + ",1);"
                                     a3$ = ""
                                     s = 0
                                     GOTO closenexta
@@ -10827,7 +10852,7 @@ DO
                             l$ = l$ + tlayout$
                             e$ = evaluatetotyp(e$, 64&)
                             IF Error_Happened THEN GOTO errmes
-                            WriteBufLine MainTxtBuf, "sub_close(" + e$ + ",1);"
+                            WriteBufLineCpp MainTxtBuf, "sub_close(" + e$ + ",1);"
                         ELSE
                             l$ = LEFT$(l$, LEN(l$) - 1)
                         END IF
@@ -10931,8 +10956,8 @@ DO
                             l$ = l$ + sp2 + tlayout$
                             e$ = evaluatetotyp(e$, 64&)
                             IF Error_Happened THEN GOTO errmes
-                            WriteBufLine MainTxtBuf, "tmp_fileno=" + e$ + ";"
-                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                            WriteBufLineCpp MainTxtBuf, "tmp_fileno=" + e$ + ";"
+                            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                             i = i + 1
                             IF i > n THEN a$ = "Expected , ...": GOTO errmes
                             a3$ = ""
@@ -10957,11 +10982,11 @@ DO
                                         e$ = refer(e$, t, 0)
                                         IF Error_Happened THEN GOTO errmes
                                         IF lineinput THEN
-                                            WriteBufLine MainTxtBuf, "sub_file_line_input_string(tmp_fileno," + e$ + ");"
-                                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                                            WriteBufLineCpp MainTxtBuf, "sub_file_line_input_string(tmp_fileno," + e$ + ");"
+                                            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                                         ELSE
-                                            WriteBufLine MainTxtBuf, "sub_file_input_string(tmp_fileno," + e$ + ");"
-                                            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                                            WriteBufLineCpp MainTxtBuf, "sub_file_input_string(tmp_fileno," + e$ + ");"
+                                            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                                         END IF
                                         stringprocessinghappened = 1
                                     ELSE
@@ -10986,7 +11011,7 @@ DO
                                             END IF
                                         END IF
 
-                                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                                        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                                     END IF
                                     IF i = n THEN EXIT FOR
@@ -10995,8 +11020,8 @@ DO
                                 END IF
                                 IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
                             NEXT
-                            WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-                            IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                            WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+                            IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                             GOTO finishedline
                         END IF
@@ -11015,7 +11040,7 @@ DO
                     IF LEFT$(a2$, 1) = CHR$(34) THEN
                         e$ = fixoperationorder$(a2$): l$ = l$ + sp + tlayout$
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLine MainTxtBuf, "qbs_print(qbs_new_txt_len(" + a2$ + "),0);"
+                        WriteBufLineCpp MainTxtBuf, "qbs_print(qbs_new_txt_len(" + a2$ + "),0);"
                         i = i + 1
                         'MUST be followed by a ; or ,
                         a2$ = getelement$(ca$, i)
@@ -11023,7 +11048,7 @@ DO
                         l$ = l$ + sp2 + a2$
                         IF a2$ = ";" THEN
                             IF lineinput THEN GOTO finishedpromptstring
-                            WriteBufLine MainTxtBuf, "qbs_print(qbs_new_txt(" + CHR$(34) + "? " + CHR$(34) + "),0);"
+                            WriteBufLineCpp MainTxtBuf, "qbs_print(qbs_new_txt(" + CHR$(34) + "? " + CHR$(34) + "),0);"
                             GOTO finishedpromptstring
                         END IF
                         IF a2$ = "," THEN
@@ -11032,7 +11057,7 @@ DO
                         a$ = "Syntax error - Reference: INPUT [;] " + CHR$(34) + "[Question or statement text]" + CHR$(34) + "{,|;} variable[, ...] or INPUT ; variable[, ...]": GOTO errmes
                     END IF
                     'there was no promptstring, so print a ?
-                    IF lineinput = 0 THEN WriteBufLine MainTxtBuf, "qbs_print(qbs_new_txt(" + CHR$(34) + "? " + CHR$(34) + "),0);"
+                    IF lineinput = 0 THEN WriteBufLineCpp MainTxtBuf, "qbs_print(qbs_new_txt(" + CHR$(34) + "? " + CHR$(34) + "),0);"
                     finishedpromptstring:
                     numvar = 0
                     FOR i = i TO n
@@ -11065,11 +11090,11 @@ DO
                                 IF Error_Happened THEN GOTO errmes
                                 numvar = numvar + 1
                                 IF lineinput THEN
-                                    WriteBufLine MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=ISSTRING+512;"
+                                    WriteBufLineCpp MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=ISSTRING+512;"
                                 ELSE
-                                    WriteBufLine MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=ISSTRING;"
+                                    WriteBufLineCpp MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=ISSTRING;"
                                 END IF
-                                WriteBufLine MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + e$ + ";"
+                                WriteBufLineCpp MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + e$ + ";"
                                 GOTO gotinputvar
                             END IF
 
@@ -11090,15 +11115,15 @@ DO
                             'IF (t AND ISOFFSETINBITS) THEN
                             'numvar = numvar + 1
                             'consider storing the bit offset in unused bits of t
-                            'WriteBufLine MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=" + _TOSTR$(t) + ";"
-                            'WriteBufLine MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + refer(ref$, typ, 1) + ";"
+                            'WriteBufLineCpp MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=" + _TOSTR$(t) + ";"
+                            'WriteBufLineCpp MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + refer(ref$, typ, 1) + ";"
                             'GOTO gotinputvar
                             'END IF
 
                             'assume it is a regular variable
                             numvar = numvar + 1
-                            WriteBufLine MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=" + _TOSTR$(t) + ";"
-                            WriteBufLine MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + e$ + ";"
+                            WriteBufLineCpp MainTxtBuf, "qbs_input_variabletypes[" + _TOSTR$(numvar) + "]=" + _TOSTR$(t) + ";"
+                            WriteBufLineCpp MainTxtBuf, "qbs_input_variableoffsets[" + _TOSTR$(numvar) + "]=" + e$ + ";"
                             GOTO gotinputvar
 
                         END IF
@@ -11108,14 +11133,14 @@ DO
                     IF numvar = 0 THEN a$ = "Syntax error - Reference: INPUT [;] " + CHR$(34) + "[Question or statement text]" + CHR$(34) + "{,|;} variable[, ...] or INPUT ; variable[, ...]": GOTO errmes
                     IF lineinput = 1 AND numvar > 1 THEN a$ = "Too many variables": GOTO errmes
                     IF GetRCStateVar(vWatchOn) THEN
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
-                    WriteBufLine MainTxtBuf, "qbs_input(" + _TOSTR$(numvar) + "," + _TOSTR$(newline) + ");"
-                    WriteBufLine MainTxtBuf, "if (stop_program) end();"
+                    WriteBufLineCpp MainTxtBuf, "qbs_input(" + _TOSTR$(numvar) + "," + _TOSTR$(newline) + ");"
+                    WriteBufLineCpp MainTxtBuf, "if (stop_program) end();"
                     IF GetRCStateVar(vWatchOn) THEN
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
-                    WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                    WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 END IF
@@ -11250,9 +11275,9 @@ DO
                     source$ = evaluatetotyp(source$, ISSTRING)
                     IF Error_Happened THEN GOTO errmes
                     IF firstelement$ = "LSET" THEN
-                        WriteBufLine MainTxtBuf, "sub_lset(" + dest$ + "," + source$ + ");"
+                        WriteBufLineCpp MainTxtBuf, "sub_lset(" + dest$ + "," + source$ + ");"
                     ELSE
-                        WriteBufLine MainTxtBuf, "sub_rset(" + dest$ + "," + source$ + ");"
+                        WriteBufLineCpp MainTxtBuf, "sub_rset(" + dest$ + "," + source$ + ");"
                     END IF
                     GOTO finishedline
                 END IF
@@ -11297,7 +11322,7 @@ DO
                         IF (e2typ AND ISSTRING) = 0 THEN a$ = "Type mismatch": GOTO errmes
                         e1$ = refer(e1$, e1typ, 0): e2$ = refer(e2$, e2typ, 0)
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLine MainTxtBuf, "swap_string(" + e1$ + "," + e2$ + ");"
+                        WriteBufLineCpp MainTxtBuf, "swap_string(" + e1$ + "," + e2$ + ");"
                         GOTO finishedline
                     END IF
 
@@ -11343,22 +11368,22 @@ DO
                                     IF lhsdynmode% <> rhsdynmode% THEN a$ = "Cannot SWAP these TYPE values because their nested-array storage layouts are incompatible": GOTO errmes
                                     B = UDTDynLayoutSize&(u) \ 8
                                     siz$ = _TOSTR$(B)
-                                    WriteBufLine MainTxtBuf, "{"
-                                    WriteBufLine MainTxtBuf, "uint8 *dyn_swap_tmp=(uint8*)malloc((size_t)" + siz$ + ");"
-                                    WriteBufLine MainTxtBuf, "if (!dyn_swap_tmp) error(257);"
-                                    WriteBufLine MainTxtBuf, "memcpy((void*)dyn_swap_tmp,(void*)(" + dst$ + "),(size_t)" + siz$ + ");"
-                                    WriteBufLine MainTxtBuf, "memcpy((void*)(" + dst$ + "),(void*)(" + src$ + "),(size_t)" + siz$ + ");"
-                                    WriteBufLine MainTxtBuf, "memcpy((void*)(" + src$ + "),(void*)dyn_swap_tmp,(size_t)" + siz$ + ");"
-                                    WriteBufLine MainTxtBuf, "free((void*)dyn_swap_tmp);"
-                                    WriteBufLine MainTxtBuf, "}"
+                                    WriteBufLineCpp MainTxtBuf, "{"
+                                    WriteBufLineCpp MainTxtBuf, "uint8 *dyn_swap_tmp=(uint8*)malloc((size_t)" + siz$ + ");"
+                                    WriteBufLineCpp MainTxtBuf, "if (!dyn_swap_tmp) error(257);"
+                                    WriteBufLineCpp MainTxtBuf, "memcpy((void*)dyn_swap_tmp,(void*)(" + dst$ + "),(size_t)" + siz$ + ");"
+                                    WriteBufLineCpp MainTxtBuf, "memcpy((void*)(" + dst$ + "),(void*)(" + src$ + "),(size_t)" + siz$ + ");"
+                                    WriteBufLineCpp MainTxtBuf, "memcpy((void*)(" + src$ + "),(void*)dyn_swap_tmp,(size_t)" + siz$ + ");"
+                                    WriteBufLineCpp MainTxtBuf, "free((void*)dyn_swap_tmp);"
+                                    WriteBufLineCpp MainTxtBuf, "}"
                                 ELSE
                                     B = udtxsize(u) \ 8
                                     siz$ = _TOSTR$(B)
-                                    IF B = 1 THEN WriteBufLine MainTxtBuf, "swap_8(" + src$ + "," + dst$ + ");"
-                                    IF B = 2 THEN WriteBufLine MainTxtBuf, "swap_16(" + src$ + "," + dst$ + ");"
-                                    IF B = 4 THEN WriteBufLine MainTxtBuf, "swap_32(" + src$ + "," + dst$ + ");"
-                                    IF B = 8 THEN WriteBufLine MainTxtBuf, "swap_64(" + src$ + "," + dst$ + ");"
-                                    IF B <> 1 AND B <> 2 AND B <> 4 AND B <> 8 THEN WriteBufLine MainTxtBuf, "swap_block(" + src$ + "," + dst$ + "," + siz$ + ");"
+                                    IF B = 1 THEN WriteBufLineCpp MainTxtBuf, "swap_8(" + src$ + "," + dst$ + ");"
+                                    IF B = 2 THEN WriteBufLineCpp MainTxtBuf, "swap_16(" + src$ + "," + dst$ + ");"
+                                    IF B = 4 THEN WriteBufLineCpp MainTxtBuf, "swap_32(" + src$ + "," + dst$ + ");"
+                                    IF B = 8 THEN WriteBufLineCpp MainTxtBuf, "swap_64(" + src$ + "," + dst$ + ");"
+                                    IF B <> 1 AND B <> 2 AND B <> 4 AND B <> 8 THEN WriteBufLineCpp MainTxtBuf, "swap_block(" + src$ + "," + dst$ + "," + siz$ + ");"
                                 END IF
                                 GOTO finishedline
                             END IF 'e=0
@@ -11383,7 +11408,7 @@ DO
                     IF t AND ISOFFSETINBITS THEN a$ = "Cannot SWAP bit-length variables": GOTO errmes
                     B = t AND UDTMASK
                     t$ = _TOSTR$(B): IF B > 64 THEN t$ = "longdouble"
-                    WriteBufLine MainTxtBuf, "swap_" + t$ + "(&" + refer(e1$, e1typ, 0) + ",&" + refer(e2$, e2typ, 0) + ");"
+                    WriteBufLineCpp MainTxtBuf, "swap_" + t$ + "(&" + refer(e1$, e1typ, 0) + ",&" + refer(e2$, e2typ, 0) + ");"
                     IF Error_Happened THEN GOTO errmes
                     GOTO finishedline
                 END IF
@@ -11876,6 +11901,20 @@ DO
                             END IF
                         END IF
 
+                        'A user SUB scalar parameter must not silently accept array() as array(0).
+                        'The original spelling is required because both forms currently encode offset zero.
+                        IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                            IF targettyp >= 0 THEN
+                                IF (targettyp AND ISARRAY) = 0 THEN
+                                    IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                        IF HasFinalEmptyArrayBrackets%(separgs2(i)) THEN
+                                            a$ = "Whole array cannot be passed to a scalar SUB parameter": GOTO errmes
+                                        END IF
+                                    END IF
+                                END IF
+                            END IF
+                        END IF
+
                         IF RTRIM$(id2.callname) = "sub_paint" THEN
                             IF i = 3 THEN
                                 IF (sourcetyp AND ISSTRING) THEN
@@ -12136,14 +12175,14 @@ DO
                             IF MID$(sfcmemargs(targetid), i, 1) = CHR$(1) THEN 'cmem required?
                                 bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
                                 WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
-                                WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
-                                WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
-                                WriteBufLine DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
-                                WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                                WriteBufLine DataTxtBuf, "}"
+                                WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
+                                WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
+                                WriteBufLineCpp DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
+                                WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                                WriteBufLineCpp DataTxtBuf, "}"
                                 e$ = "&(*" + v$ + "=" + e$ + ")"
                             ELSE
-                                WriteBufLine DataTxtBuf, t$ + " " + v$ + ";"
+                                WriteBufLineCpp DataTxtBuf, t$ + " " + v$ + ";"
                                 e$ = "&(" + v$ + "=" + e$ + ")"
                             END IF
                             GOTO sete
@@ -12260,21 +12299,21 @@ DO
 
                 IF firstelement$ = "SLEEP" THEN
                     IF GetRCStateVar(vWatchOn) THEN
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
 
-                WriteBufLine MainTxtBuf, subcall$
-                IF dynfilepost$ <> "" THEN WriteBufLine MainTxtBuf, dynfilepost$
+                WriteBufLineCpp MainTxtBuf, subcall$
+                IF dynfilepost$ <> "" THEN WriteBufLineCpp MainTxtBuf, dynfilepost$
 
                 IF firstelement$ = "SLEEP" THEN
                     IF GetRCStateVar(vWatchOn) THEN
-                        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+                        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
                     END IF
                 END IF
 
                 subcall$ = ""
-                IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+                IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
 
                 layoutdone = 1
                 x$ = RIGHT$(l$, 1): IF x$ = sp OR x$ = sp2 THEN l$ = LEFT$(l$, LEN(l$) - 1)
@@ -12335,7 +12374,7 @@ DO
     IF inputfunctioncalled THEN
         inputfunctioncalled = 0
         IF GetRCStateVar(vWatchOn) THEN
-            WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+            WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -5; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
 
@@ -12352,9 +12391,9 @@ DO
         IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
         IF dynscope THEN
             dynscope = 0
-            WriteBufLine MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");if(r)goto S_" + _TOSTR$(statementn) + ";}"
+            WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");if(r)goto S_" + _TOSTR$(statementn) + ";}"
         ELSE
-            WriteBufLine MainTxtBuf, "if(!qbevent)break;" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}while(r);"
+            WriteBufLineCpp MainTxtBuf, "if(!qbevent)break;" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}while(r);"
         END IF
     END IF
 
@@ -12393,6 +12432,9 @@ DO
                     END IF
                     includingFromRoot = 1
                 END IF
+                incIsInternalNow = (includingFromRoot <> 0)
+            ELSE
+                incIsInternalNow = incIsInternal(inclevel)
             END IF
 
             IF inclevel = 100 THEN
@@ -12453,7 +12495,7 @@ DO
             NEXT
             IF qberrorhappened <> -2 THEN qberrorhappened = 0: a$ = "File " + a$ + " not found": GOTO errmes
             qberrorhappened = 0
-            inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0
+            inclevel = inclevel + 1: incname$(inclevel) = f$: inclinenumber(inclevel) = 0: incIsInternal(inclevel) = incIsInternalNow
         END IF 'fall through to next section...
         '--------------------
         DO WHILE inclevel
@@ -12639,11 +12681,11 @@ FOR i = 1 TO idn
             IF Error_Happened THEN GOTO errmes
             IF typ AND ISSTRING THEN
                 IF typ AND ISFIXEDLENGTH THEN
-                    WriteBufLine MainTxtBuf, "memset((void*)(" + e$ + "->chr),0," + bytes$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "memset((void*)(" + e$ + "->chr),0," + bytes$ + ");"
                     GOTO cleared
                 ELSE
                     IF INSTR(vWatchVariableExclusions$, "@" + e$ + "@") = 0 AND LEFT$(e$, 12) <> "_SUB_VWATCH_" THEN
-                        WriteBufLine MainTxtBuf, e$ + "->len=0;"
+                        WriteBufLineCpp MainTxtBuf, e$ + "->len=0;"
                     END IF
                     GOTO cleared
                 END IF
@@ -12653,11 +12695,11 @@ FOR i = 1 TO idn
                     'this next procedure resets values of UDT variables with variable-length strings
                     clear_udt_with_varstrings e$, typ AND UDTMASK, MainTxtBuf, 0
                 ELSE
-                    WriteBufLine MainTxtBuf, "memset((void*)" + e$ + ",0," + bytes$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "memset((void*)" + e$ + ",0," + bytes$ + ");"
                 END IF
             ELSE
                 IF INSTR(vWatchVariableExclusions$, "@" + e$ + "@") = 0 AND LEFT$(e$, 12) <> "_SUB_VWATCH_" THEN
-                    WriteBufLine MainTxtBuf, "*" + e$ + "=0;"
+                    WriteBufLineCpp MainTxtBuf, "*" + e$ + "=0;"
                 END IF
             END IF
             GOTO cleared
@@ -13041,7 +13083,7 @@ FOR x = 1 TO commonarraylistn
 
 
         MainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
-        WriteBufLine MainTxtBuf, "if (int32val==2){" 'array place-holder
+        WriteBufLineCpp MainTxtBuf, "if (int32val==2){" 'array place-holder
         'create buffer to store array as-is in global.txt
         x$ = _TOSTR$(uniquenumber)
         x1$ = "chainarraybuf" + x$
@@ -13049,65 +13091,65 @@ FOR x = 1 TO commonarraylistn
         WriteBufLine GlobTxtBuf, "static uint8 *" + x1$ + "=(uint8*)malloc(1);"
         WriteBufLine GlobTxtBuf, "static int64 " + x2$ + "=0;"
         'read next command
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
-        IF command = 3 THEN WriteBufLine MainTxtBuf, "if (int32val==3){" 'fixed-length-element array
-        IF command = 4 THEN WriteBufLine MainTxtBuf, "if (int32val==4){" 'var-length-element array
-        WriteBufLine MainTxtBuf, x2$ + "+=4; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int32*)(" + x1$ + "+" + x2$ + "-4)=int32val;"
+        IF command = 3 THEN WriteBufLineCpp MainTxtBuf, "if (int32val==3){" 'fixed-length-element array
+        IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "if (int32val==4){" 'var-length-element array
+        WriteBufLineCpp MainTxtBuf, x2$ + "+=4; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int32*)(" + x1$ + "+" + x2$ + "-4)=int32val;"
 
         IF command = 3 THEN
             'read size in bits of one element, convert it to bytes
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
-            WriteBufLine MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
-            WriteBufLine MainTxtBuf, "bytes=int64val>>3;"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
+            WriteBufLineCpp MainTxtBuf, "bytes=int64val>>3;"
         END IF 'com=3
 
-        IF command = 4 THEN WriteBufLine MainTxtBuf, "bytes=1;" 'bytes used to calculate number of elements
+        IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "bytes=1;" 'bytes used to calculate number of elements
 
         'read number of dimensions
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
-        WriteBufLine MainTxtBuf, x2$ + "+=4; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int32*)(" + x1$ + "+" + x2$ + "-4)=int32val;"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, x2$ + "+=4; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int32*)(" + x1$ + "+" + x2$ + "-4)=int32val;"
 
         'read size of dimensions & calculate the size of the array in bytes
-        WriteBufLine MainTxtBuf, "while(int32val--){"
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'lbound
-        WriteBufLine MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);" 'ubound
-        WriteBufLine MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val2;"
-        WriteBufLine MainTxtBuf, "bytes*=(int64val2-int64val+1);"
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "while(int32val--){"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'lbound
+        WriteBufLineCpp MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);" 'ubound
+        WriteBufLineCpp MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val2;"
+        WriteBufLineCpp MainTxtBuf, "bytes*=(int64val2-int64val+1);"
+        WriteBufLineCpp MainTxtBuf, "}"
 
         IF command = 3 THEN
             'read the array data
-            WriteBufLine MainTxtBuf, x2$ + "+=bytes; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + ");"
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)(" + x1$ + "+" + x2$ + "-bytes),bytes," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, x2$ + "+=bytes; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + ");"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)(" + x1$ + "+" + x2$ + "-bytes),bytes," + NewByteElement$ + "),0);"
         END IF 'com=3
 
         IF command = 4 THEN
-            WriteBufLine MainTxtBuf, "bytei=0;"
-            WriteBufLine MainTxtBuf, "while(bytei<bytes){"
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'get size
-            WriteBufLine MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
-            WriteBufLine MainTxtBuf, x2$ + "+=(int64val>>3); " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + ");"
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)(" + x1$ + "+" + x2$ + "-(int64val>>3)),(int64val>>3)," + NewByteElement$ + "),0);"
-            WriteBufLine MainTxtBuf, "bytei++;"
-            WriteBufLine MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "bytei=0;"
+            WriteBufLineCpp MainTxtBuf, "while(bytei<bytes){"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'get size
+            WriteBufLineCpp MainTxtBuf, x2$ + "+=8; " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + "); *(int64*)(" + x1$ + "+" + x2$ + "-8)=int64val;"
+            WriteBufLineCpp MainTxtBuf, x2$ + "+=(int64val>>3); " + x1$ + "=(uint8*)realloc(" + x1$ + "," + x2$ + ");"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)(" + x1$ + "+" + x2$ + "-(int64val>>3)),(int64val>>3)," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, "bytei++;"
+            WriteBufLineCpp MainTxtBuf, "}"
         END IF
 
         'get next command
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
-        WriteBufLine MainTxtBuf, "}" 'command=3 or 4
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "}" 'command=3 or 4
 
-        WriteBufLine MainTxtBuf, "}" 'array place-holder
+        WriteBufLineCpp MainTxtBuf, "}" 'array place-holder
 
 
         'save array (saves the buffered data, if any, for later)
 
         MainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
-        WriteBufLine MainTxtBuf, "int32val=2;" 'placeholder
-        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "int32val=2;" 'placeholder
+        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
-        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)" + x1$ + "," + x2$ + "," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)" + x1$ + "," + x2$ + "," + NewByteElement$ + "),0);"
 
 
 
@@ -13119,24 +13161,24 @@ FOR x = 1 TO commonarraylistn
 
         MainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
 
-        WriteBufLine MainTxtBuf, "if (int32val==2){" 'array place-holder
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "if (int32val==2){" 'array place-holder
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
-        IF command = 3 THEN WriteBufLine MainTxtBuf, "if (int32val==3){" 'fixed-length-element array
-        IF command = 4 THEN WriteBufLine MainTxtBuf, "if (int32val==4){" 'var-length-element array
+        IF command = 3 THEN WriteBufLineCpp MainTxtBuf, "if (int32val==3){" 'fixed-length-element array
+        IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "if (int32val==4){" 'var-length-element array
 
         IF command = 3 THEN
             'get size in bits
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
             '***assume correct***
         END IF
 
         'get number of elements
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
         '***assume correct***
 
         e$ = ""
-        IF command = 4 THEN WriteBufLine MainTxtBuf, "bytes=1;" 'bytes counts the number of total elements
+        IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "bytes=1;" 'bytes counts the number of total elements
         FOR x2 = 1 TO arrayelements
 
             'create 'secret' variables to assist in passing common arrays
@@ -13155,11 +13197,11 @@ FOR x = 1 TO commonarraylistn
 
             END IF
 
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
-            WriteBufLine MainTxtBuf, "*__INTEGER64____RESERVED_COMMON_LBOUND" + _TOSTR$(x2) + "=int64val;"
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);"
-            WriteBufLine MainTxtBuf, "*__INTEGER64____RESERVED_COMMON_UBOUND" + _TOSTR$(x2) + "=int64val2;"
-            IF command = 4 THEN WriteBufLine MainTxtBuf, "bytes*=(int64val2-int64val+1);"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, "*__INTEGER64____RESERVED_COMMON_LBOUND" + _TOSTR$(x2) + "=int64val;"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, "*__INTEGER64____RESERVED_COMMON_UBOUND" + _TOSTR$(x2) + "=int64val2;"
+            IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "bytes*=(int64val2-int64val+1);"
             IF x2 > 1 THEN e$ = e$ + sp + "," + sp
             e$ = e$ + "___RESERVED_COMMON_LBOUND" + _TOSTR$(x2) + sp + "TO" + sp + "___RESERVED_COMMON_UBOUND" + _TOSTR$(x2)
         NEXT
@@ -13179,49 +13221,49 @@ FOR x = 1 TO commonarraylistn
             varname$ = varname$ + sp + "(" + sp + ")"
             e$ = evaluatetotyp(fixoperationorder$(varname$), -4)
             IF Error_Happened THEN GOTO errmes
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL," + e$ + ",0);"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL," + e$ + ",0);"
         END IF
 
         IF command = 4 THEN
-            WriteBufLine MainTxtBuf, "bytei=0;"
-            WriteBufLine MainTxtBuf, "while(bytei<bytes){"
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'get size
-            WriteBufLine MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
-            WriteBufLine MainTxtBuf, "qbs_set(tqbs,qbs_new(int64val>>3,1));" 'change string size
-            WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)tqbs->chr,int64val>>3," + NewByteElement$ + "),0);" 'get size
-            WriteBufLine MainTxtBuf, "bytei++;"
-            WriteBufLine MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "bytei=0;"
+            WriteBufLineCpp MainTxtBuf, "while(bytei<bytes){"
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'get size
+            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
+            WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs,qbs_new(int64val>>3,1));" 'change string size
+            WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)tqbs->chr,int64val>>3," + NewByteElement$ + "),0);" 'get size
+            WriteBufLineCpp MainTxtBuf, "bytei++;"
+            WriteBufLineCpp MainTxtBuf, "}"
         END IF
 
         'get next command
-        WriteBufLine MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "}"
 
         'save array
 
         MainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
 
-        WriteBufLine MainTxtBuf, "int32val=2;" 'placeholder
-        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "int32val=2;" 'placeholder
+        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
-        WriteBufLine MainTxtBuf, "if (" + n2$ + "[2]&1){" 'don't add unless defined
+        WriteBufLineCpp MainTxtBuf, "if (" + n2$ + "[2]&1){" 'don't add unless defined
 
-        IF command = 3 THEN WriteBufLine MainTxtBuf, "int32val=3;"
-        IF command = 4 THEN WriteBufLine MainTxtBuf, "int32val=4;"
-        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        IF command = 3 THEN WriteBufLineCpp MainTxtBuf, "int32val=3;"
+        IF command = 4 THEN WriteBufLineCpp MainTxtBuf, "int32val=4;"
+        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
         IF command = 3 THEN
             'size of each element in bits
             bits = t AND UDTMASK
             IF t AND ISUDT THEN bits = udtxsize(t AND UDTMASK)
             IF t AND ISSTRING THEN bits = tsize * 8
-            WriteBufLine MainTxtBuf, "int64val=" + _TOSTR$(bits) + ";" 'size in bits
-            WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+            WriteBufLineCpp MainTxtBuf, "int64val=" + _TOSTR$(bits) + ";" 'size in bits
+            WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
         END IF 'com=3
 
-        WriteBufLine MainTxtBuf, "int32val=" + _TOSTR$(arrayelements) + ";" 'number of dimensions
-        WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
+        WriteBufLineCpp MainTxtBuf, "int32val=" + _TOSTR$(arrayelements) + ";" 'number of dimensions
+        WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
         IF command = 3 THEN
 
@@ -13230,52 +13272,52 @@ FOR x = 1 TO commonarraylistn
                 e$ = "LBOUND" + sp + "(" + sp + n$ + sp + "," + sp + _TOSTR$(x2) + sp + ")"
                 e$ = evaluatetotyp(fixoperationorder$(e$), 64)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "int64val=" + e$ + ";"
-                WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+                WriteBufLineCpp MainTxtBuf, "int64val=" + e$ + ";"
+                WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
                 e$ = "UBOUND" + sp + "(" + sp + n$ + sp + "," + sp + _TOSTR$(x2) + sp + ")"
                 e$ = evaluatetotyp(fixoperationorder$(e$), 64)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "int64val=" + e$ + ";"
-                WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+                WriteBufLineCpp MainTxtBuf, "int64val=" + e$ + ";"
+                WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
             NEXT
 
             'array data
             e$ = evaluatetotyp(fixoperationorder$(n$ + sp + "(" + sp + ")"), -4)
             IF Error_Happened THEN GOTO errmes
-            WriteBufLine MainTxtBuf, "sub_put(FF,NULL," + e$ + ",0);"
+            WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL," + e$ + ",0);"
 
         END IF 'com=3
 
         IF command = 4 THEN
 
             'store LBOUND/UBOUND values and calculate number of total elements/strings
-            WriteBufLine MainTxtBuf, "bytes=1;" 'note: bytes is actually the total number of elements
+            WriteBufLineCpp MainTxtBuf, "bytes=1;" 'note: bytes is actually the total number of elements
             FOR x2 = 1 TO arrayelements
                 e$ = "LBOUND" + sp + "(" + sp + n$ + sp + "," + sp + _TOSTR$(x2) + sp + ")"
                 e$ = evaluatetotyp(fixoperationorder$(e$), 64)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "int64val=" + e$ + ";"
-                WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
+                WriteBufLineCpp MainTxtBuf, "int64val=" + e$ + ";"
+                WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);"
                 e$ = "UBOUND" + sp + "(" + sp + n$ + sp + "," + sp + _TOSTR$(x2) + sp + ")"
                 e$ = evaluatetotyp(fixoperationorder$(e$), 64)
                 IF Error_Happened THEN GOTO errmes
-                WriteBufLine MainTxtBuf, "int64val2=" + e$ + ";"
-                WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);"
-                WriteBufLine MainTxtBuf, "bytes*=(int64val2-int64val+1);"
+                WriteBufLineCpp MainTxtBuf, "int64val2=" + e$ + ";"
+                WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val2,8," + NewByteElement$ + "),0);"
+                WriteBufLineCpp MainTxtBuf, "bytes*=(int64val2-int64val+1);"
             NEXT
 
-            WriteBufLine MainTxtBuf, "bytei=0;"
-            WriteBufLine MainTxtBuf, "while(bytei<bytes){"
-            WriteBufLine MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
-            WriteBufLine MainTxtBuf, "int64val=tqbs->len; int64val<<=3;"
-            WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'size of element
-            WriteBufLine MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)tqbs->chr,tqbs->len," + NewByteElement$ + "),0);" 'element data
-            WriteBufLine MainTxtBuf, "bytei++;"
-            WriteBufLine MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "bytei=0;"
+            WriteBufLineCpp MainTxtBuf, "while(bytei<bytes){"
+            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
+            WriteBufLineCpp MainTxtBuf, "int64val=tqbs->len; int64val<<=3;"
+            WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'size of element
+            WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)tqbs->chr,tqbs->len," + NewByteElement$ + "),0);" 'element data
+            WriteBufLineCpp MainTxtBuf, "bytei++;"
+            WriteBufLineCpp MainTxtBuf, "}"
 
         END IF 'com=4
 
-        WriteBufLine MainTxtBuf, "}" 'don't add unless defined
+        WriteBufLineCpp MainTxtBuf, "}" 'don't add unless defined
 
 
 
@@ -13567,7 +13609,7 @@ CxxLibsExtra$ = ExtraLinkerFlags$
 ' If debugging then use `-Og` rather than `-O2`
 IF OptimizeCppProgram THEN
     IF IncludeDebugInfo THEN
-        CxxFlagsExtra$ = CxxFlagsExtra$ + " -Og"
+        CxxFlagsExtra$ = CxxFlagsExtra$ + " -Og -g"
     ELSE
         CxxFlagsExtra$ = CxxFlagsExtra$ + " -O2"
     END IF
@@ -14361,6 +14403,8 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":stripdebugsymbols"
                         IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":absolutedebugpaths"
+                        IF NOT ParseBooleanSetting&(token$, AbsoluteDebugPaths) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":extracppflags"
                         IF NOT ParseStringSetting&(token$, ExtraCppFlags$) THEN CMDLineSettingsError token$, 3, 1
                     CASE ":extralinkerflags"
@@ -14486,6 +14530,9 @@ SUB CMDLineTemporarySettingsHelp
     PRINT "  -f                                    Show this list of supported settings"
     PRINT "  -f:OptimizeCppProgram=[true|false]    Compile with C++ Optimization flag"
     PRINT "  -f:StripDebugSymbols=[true|false]     Strip C++ Symbols from executable"
+    PRINT "  -f:AbsoluteDebugPaths=[true|false]    Name source files by absolute path in"
+    PRINT "                                        the C++ debug info, instead of"
+    PRINT "                                        relative to the main source file"
     PRINT "  -f:ExtraCppFlags=[string]             Extra flags for the C++ Compiler"
     PRINT "  -f:ExtraLinkerFlags=[string]          Extra flags for the Linker"
     PRINT "  -f:MaxCompilerProcesses=[integer]     Max C++ Compiler processes to use"
@@ -14784,12 +14831,12 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     'Begin creation of array descriptor (if array has not been defined yet)
     IF arraydesc = 0 THEN
         WriteBufLine defdatahandle, "ptrszint *" + n$ + "=NULL;"
-        WriteBufLine DataTxtBuf, "if (!" + n$ + "){"
-        WriteBufLine DataTxtBuf, n$ + "=(ptrszint*)mem_static_malloc(" + _TOSTR$(4 * nume + 4 + 1) + "*ptrsz);" '+1 is for the lock
+        WriteBufLineCpp DataTxtBuf, "if (!" + n$ + "){"
+        WriteBufLineCpp DataTxtBuf, n$ + "=(ptrszint*)mem_static_malloc(" + _TOSTR$(4 * nume + 4 + 1) + "*ptrsz);" '+1 is for the lock
         'create _MEM lock
-        WriteBufLine DataTxtBuf, "new_mem_lock();"
-        WriteBufLine DataTxtBuf, "mem_lock_tmp->type=4;"
-        WriteBufLine DataTxtBuf, "((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "]=(ptrszint)mem_lock_tmp;"
+        WriteBufLineCpp DataTxtBuf, "new_mem_lock();"
+        WriteBufLineCpp DataTxtBuf, "mem_lock_tmp->type=4;"
+        WriteBufLineCpp DataTxtBuf, "((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "]=(ptrszint)mem_lock_tmp;"
     END IF
 
     'generate sizestr$ & elesizestr$ (both are used in various places in following code)
@@ -14818,7 +14865,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     '------------------STATIC ARRAY CREATION--------------------------------
     IF staticarray THEN
         'STATIC memory
-        WriteBufLine DataTxtBuf, sd$ 'setup new array dimension ranges
+        WriteBufLineCpp DataTxtBuf, sd$ 'setup new array dimension ranges
         'Example of sd$ for DIM a(10):
         '__ARRAY_SINGLE_A[4]= 0 ;
         '__ARRAY_SINGLE_A[5]=( 10 )-__ARRAY_SINGLE_A[4]+1;
@@ -14826,33 +14873,33 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
         IF cmem AND stringarray = 0 THEN
             'Note: A string array's pointers are always stored in 64bit memory
             '(static)CONVENTIONAL memory
-            WriteBufLine DataTxtBuf, n$ + "[0]=(ptrszint)cmem_static_pointer;"
+            WriteBufLineCpp DataTxtBuf, n$ + "[0]=(ptrszint)cmem_static_pointer;"
             'alloc mem & check if static memory boundary has overstepped dynamic memory boundary
-            WriteBufLine DataTxtBuf, "if ((cmem_static_pointer+=((" + sizestr$ + ")+15)&-16)>cmem_dynamic_base) error(257);"
+            WriteBufLineCpp DataTxtBuf, "if ((cmem_static_pointer+=((" + sizestr$ + ")+15)&-16)>cmem_dynamic_base) error(257);"
             '64K check
-            WriteBufLine DataTxtBuf, "if ((" + sizestr$ + ")>65536) error(257);"
+            WriteBufLineCpp DataTxtBuf, "if ((" + sizestr$ + ")>65536) error(257);"
             'clear array
-            WriteBufLine DataTxtBuf, "memset((void*)(" + n$ + "[0]),0," + sizestr$ + ");"
+            WriteBufLineCpp DataTxtBuf, "memset((void*)(" + n$ + "[0]),0," + sizestr$ + ");"
             'set flags
-            WriteBufLine DataTxtBuf, n$ + "[2]=1+2+4;" 'init+static+cmem
+            WriteBufLineCpp DataTxtBuf, n$ + "[2]=1+2+4;" 'init+static+cmem
         ELSE
             '64BIT MEMORY
-            WriteBufLine DataTxtBuf, n$ + "[0]=(ptrszint)mem_static_malloc(" + sizestr$ + ");"
+            WriteBufLineCpp DataTxtBuf, n$ + "[0]=(ptrszint)mem_static_malloc(" + sizestr$ + ");"
             IF stringarray THEN
                 'Init string pointers in the array
-                WriteBufLine DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
-                WriteBufLine DataTxtBuf, "while(tmp_long--){"
+                WriteBufLineCpp DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
+                WriteBufLineCpp DataTxtBuf, "while(tmp_long--){"
                 IF cmem THEN
-                    WriteBufLine DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                    WriteBufLineCpp DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
                 ELSE
-                    WriteBufLine DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                    WriteBufLineCpp DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
                 END IF
-                WriteBufLine DataTxtBuf, "}"
+                WriteBufLineCpp DataTxtBuf, "}"
             ELSE
                 'clear array
-                WriteBufLine DataTxtBuf, "memset((void*)(" + n$ + "[0]),0," + sizestr$ + ");"
+                WriteBufLineCpp DataTxtBuf, "memset((void*)(" + n$ + "[0]),0," + sizestr$ + ");"
             END IF
-            WriteBufLine DataTxtBuf, n$ + "[2]=1+2;" 'init+static
+            WriteBufLineCpp DataTxtBuf, n$ + "[2]=1+2;" 'init+static
         END IF
 
         IF udt > 0 AND dynarrmode <> 0 THEN
@@ -14860,27 +14907,27 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 ' A DIM/static-storage parent array still needs descriptor initialization when
                 ' its TYPE graph contains explicit _Dynamic members. Parent storage remains fixed,
                 ' while each element owns live member-array descriptors that require lifecycle handling.
-                WriteBufLine DataTxtBuf, n$ + "[2]|=8;" 'dynamic UDT descriptor-layout flag
-                WriteBufLine DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
-                WriteBufLine DataTxtBuf, "while(tmp_long--){"
+                WriteBufLineCpp DataTxtBuf, n$ + "[2]|=8;" 'dynamic UDT descriptor-layout flag
+                WriteBufLineCpp DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
+                WriteBufLineCpp DataTxtBuf, "while(tmp_long--){"
                 acc$ = ""
                 AppendDynUDTDescInit n$, udt, 0, bytesperelement$, acc$, dynarrmode
                 IF Error_Happened THEN EXIT FUNCTION
-                WriteBufLine DataTxtBuf, acc$
-                WriteBufLine DataTxtBuf, "}"
+                WriteBufLineCpp DataTxtBuf, acc$
+                WriteBufLineCpp DataTxtBuf, "}"
             END IF
         END IF
 
         IF udt > 0 AND udtxvariable(udt) AND NOT (dynarrmode <> 0 AND UDTDynHasMemberArrays%(udt, dynarrmode)) THEN
-            WriteBufLine DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
-            WriteBufLine DataTxtBuf, "while(tmp_long--){"
+            WriteBufLineCpp DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
+            WriteBufLineCpp DataTxtBuf, "while(tmp_long--){"
             initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-            WriteBufLine DataTxtBuf, acc$
-            WriteBufLine DataTxtBuf, "}"
+            WriteBufLineCpp DataTxtBuf, acc$
+            WriteBufLineCpp DataTxtBuf, "}"
         END IF
 
         'Close static array desc
-        WriteBufLine DataTxtBuf, "}"
+        WriteBufLineCpp DataTxtBuf, "}"
         allocarray = nume + 65536
     END IF
     '------------------END OF STATIC ARRAY CREATION-------------------------
@@ -15413,22 +15460,22 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
         '----FINISH ARRAY DESCRIPTOR IF DEFINING FOR THE FIRST TIME----
         IF arraydesc = 0 THEN
             'Note: Array is init as undefined (& possibly a cmem flag)
-            IF cmem THEN WriteBufLine DataTxtBuf, n$ + "[2]=4;" ELSE WriteBufLine DataTxtBuf, n$ + "[2]=0;"
+            IF cmem THEN WriteBufLineCpp DataTxtBuf, n$ + "[2]=4;" ELSE WriteBufLineCpp DataTxtBuf, n$ + "[2]=0;"
             'set dimensions as undefined
             FOR i = 1 TO nume
                 b = i * 4
-                WriteBufLine DataTxtBuf, n$ + "[" + _TOSTR$(b) + "]=2147483647;" 'base
-                WriteBufLine DataTxtBuf, n$ + "[" + _TOSTR$(b + 1) + "]=0;" 'num. index
-                WriteBufLine DataTxtBuf, n$ + "[" + _TOSTR$(b + 2) + "]=0;" 'multiplier
+                WriteBufLineCpp DataTxtBuf, n$ + "[" + _TOSTR$(b) + "]=2147483647;" 'base
+                WriteBufLineCpp DataTxtBuf, n$ + "[" + _TOSTR$(b + 1) + "]=0;" 'num. index
+                WriteBufLineCpp DataTxtBuf, n$ + "[" + _TOSTR$(b + 2) + "]=0;" 'multiplier
             NEXT
             IF stringarray THEN
                 'set array's data offset to the offset of the offset to nothingstring
-                WriteBufLine DataTxtBuf, n$ + "[0]=(ptrszint)&nothingstring;"
+                WriteBufLineCpp DataTxtBuf, n$ + "[0]=(ptrszint)&nothingstring;"
             ELSE
                 'set array's data offset to "nothing"
-                WriteBufLine DataTxtBuf, n$ + "[0]=(ptrszint)nothingvalue;"
+                WriteBufLineCpp DataTxtBuf, n$ + "[0]=(ptrszint)nothingvalue;"
             END IF
-            WriteBufLine DataTxtBuf, "}" 'close array descriptor
+            WriteBufLineCpp DataTxtBuf, "}" 'close array descriptor
         END IF 'arraydesc = 0
 
         IF undefined = 0 THEN
@@ -16442,6 +16489,319 @@ FUNCTION WholeArrayName$ (expr AS STRING)
     WholeArrayName$ = candidate
 END FUNCTION
 
+
+'Classify only the spelling of a direct reference. ref_kind values:
+'  1 = final name has no parentheses
+'  2 = final name has empty parentheses ()
+'  3 = final name has a non-empty index list
+'  0 = not a direct variable/member chain
+'Symbol identity is deliberately not resolved here.
+SUB GetAsgRefSyntax (expr AS STRING, ref_kind AS LONG, final_name AS STRING, has_member AS LONG, root_name AS STRING)
+    DIM AS STRING work, token_text
+    DIM AS LONG token_count, token_at, scan_at, depth_count, full_wrap, group_kind
+
+    ref_kind = 0
+    final_name = ""
+    has_member = 0
+    root_name = ""
+
+    work = expr
+    token_count = numelements(work)
+    IF token_count = 0 THEN EXIT SUB
+
+    'Ignore complete outer parentheses around a direct reference.
+    DO WHILE token_count >= 2
+        IF getelement$(work, 1) <> "(" OR getelement$(work, token_count) <> ")" THEN EXIT DO
+        depth_count = 0
+        full_wrap = -1
+        FOR scan_at = 1 TO token_count
+            token_text = getelement$(work, scan_at)
+            IF token_text = "(" THEN depth_count = depth_count + 1
+            IF token_text = ")" THEN
+                depth_count = depth_count - 1
+                IF depth_count = 0 AND scan_at <> token_count THEN full_wrap = 0: EXIT FOR
+            END IF
+        NEXT
+        IF full_wrap = 0 OR depth_count <> 0 THEN EXIT DO
+        work = getelements$(work, 2, token_count - 1)
+        token_count = numelements(work)
+        IF token_count = 0 THEN EXIT SUB
+    LOOP
+
+    token_at = 1
+    token_text = getelement$(work, token_at)
+    IF validname(token_text) = 0 THEN EXIT SUB
+    root_name = token_text
+
+    DO
+        token_text = getelement$(work, token_at)
+        IF validname(token_text) = 0 THEN ref_kind = 0: EXIT SUB
+        final_name = token_text
+        token_at = token_at + 1
+        group_kind = 0
+
+        IF token_at <= token_count THEN
+            IF getelement$(work, token_at) = "(" THEN
+                depth_count = 1
+                scan_at = token_at
+                DO
+                    scan_at = scan_at + 1
+                    IF scan_at > token_count THEN ref_kind = 0: EXIT SUB
+                    token_text = getelement$(work, scan_at)
+                    IF token_text = "(" THEN depth_count = depth_count + 1
+                    IF token_text = ")" THEN
+                        depth_count = depth_count - 1
+                        IF depth_count = 0 THEN EXIT DO
+                    END IF
+                LOOP
+                IF scan_at = token_at + 1 THEN group_kind = 2 ELSE group_kind = 3
+                token_at = scan_at + 1
+            END IF
+        END IF
+
+        IF token_at > token_count THEN
+            IF group_kind = 0 THEN ref_kind = 1 ELSE ref_kind = group_kind
+            EXIT SUB
+        END IF
+
+        IF getelement$(work, token_at) <> "." THEN ref_kind = 0: EXIT SUB
+        has_member = -1
+        token_at = token_at + 1
+        IF token_at > token_count THEN ref_kind = 0: EXIT SUB
+    LOOP
+END SUB
+
+'Resolve an explicit whole-array reference. Top-level name() uses the existing
+'FindArray resolver. TYPE member arrays are resolved by the normal UDT evaluator
+'with its established whole-member mode enabled.
+SUB GetWholeAsgRef (expr AS STRING, root_name AS STRING, has_member AS LONG, ref_ok AS LONG, ref_text AS STRING, ref_typ AS LONG, id_number AS LONG, member_id AS LONG)
+    DIM AS STRING eval_text, saved_layout
+    DIM saved_bare AS INTEGER
+    DIM AS LONG sep_one, sep_two, sep_three, array_found
+
+    ref_ok = 0
+    ref_text = ""
+    ref_typ = 0
+    id_number = 0
+    member_id = 0
+
+    IF has_member = 0 THEN
+        array_found = FindArray(root_name)
+        IF Error_Happened THEN EXIT SUB
+        IF array_found = 0 THEN EXIT SUB
+        IF id.arraytype = 0 THEN EXIT SUB
+        id_number = currentid
+        ref_typ = id.arraytype
+        ref_text = RTRIM$(id.callname)
+        ref_ok = -1
+        EXIT SUB
+    END IF
+
+    saved_layout = tlayout$
+    eval_text = fixoperationorder$(expr)
+    tlayout$ = saved_layout
+    IF Error_Happened THEN EXIT SUB
+
+    saved_bare = udt_allow_bare_array
+    udt_allow_bare_array = -1
+    ref_text = evaluate(eval_text, ref_typ)
+    udt_allow_bare_array = saved_bare
+    tlayout$ = saved_layout
+    IF Error_Happened THEN EXIT SUB
+    IF IsWholeMemberArrayRef%(ref_text, ref_typ) = 0 THEN EXIT SUB
+
+    sep_one = INSTR(ref_text, sp3)
+    IF sep_one = 0 THEN EXIT SUB
+    sep_two = INSTR(sep_one + LEN(sp3), ref_text, sp3)
+    IF sep_two = 0 THEN EXIT SUB
+    sep_three = INSTR(sep_two + LEN(sp3), ref_text, sp3)
+    IF sep_three = 0 THEN EXIT SUB
+
+    id_number = VAL(LEFT$(ref_text, sep_one - 1))
+    member_id = VAL(MID$(ref_text, sep_two + LEN(sp3), sep_three - sep_two - LEN(sp3)))
+    IF id_number <= 0 OR member_id <= 0 THEN EXIT SUB
+    ref_ok = -1
+END SUB
+
+'Emit a whole-array assignment for top-level arrays, TYPE member arrays, or a
+'mix of both. BuildUDTMemberArg supplies a live/synthetic descriptor for members.
+SUB EmitAssignWhole (lref AS STRING, ltyp AS LONG, lidnum AS LONG, lmember AS LONG, rref AS STRING, rtyp AS LONG, ridnum AS LONG, rmember AS LONG)
+    DIM lid AS idstruct
+    DIM rid AS idstruct
+    DIM AS STRING ldesc, rdesc, lprep, rprep
+    DIM AS LONG lcmp, rcmp, lsize, rsize, ldims, rdims, lmode, rmode, lphysdyn, rphysdyn, lowns, rowns, ludt, rudt
+
+    IF lmember = 0 THEN
+        getid lidnum
+        IF Error_Happened THEN EXIT SUB
+        lid = id
+        ldesc = RTRIM$(lid.callname)
+        ltyp = lid.arraytype
+        lsize = lid.tsize
+        ldims = lid.arrayelements
+        IF ldims <= 0 THEN ldims = arrayelementslist(lidnum)
+        lmode = lid.dynudtmode
+        IF lmode = 0 THEN lmode = lid.dynudt
+        IF lid.dynudt THEN lphysdyn = -1 ELSE lphysdyn = 0
+        lowns = -1
+    ELSE
+        BuildUDTMemberArg lref, ldesc, lprep, ldims
+        IF Error_Happened THEN EXIT SUB
+        getid lidnum
+        IF Error_Happened THEN EXIT SUB
+        lid = id
+        ltyp = udtetype(lmember)
+        lsize = udtetypesize(lmember)
+        lmode = lid.dynudtmode
+        IF lmode = 0 THEN lmode = lid.dynudt
+        IF lid.dynudt AND UDTMemberDynDesc%(lmember) THEN lowns = -1 ELSE lowns = 0
+    END IF
+
+    IF rmember = 0 THEN
+        getid ridnum
+        IF Error_Happened THEN EXIT SUB
+        rid = id
+        rdesc = RTRIM$(rid.callname)
+        rtyp = rid.arraytype
+        rsize = rid.tsize
+        rdims = rid.arrayelements
+        IF rdims <= 0 THEN rdims = arrayelementslist(ridnum)
+        rmode = rid.dynudtmode
+        IF rmode = 0 THEN rmode = rid.dynudt
+        IF rid.dynudt THEN rphysdyn = -1 ELSE rphysdyn = 0
+        rowns = -1
+    ELSE
+        BuildUDTMemberArg rref, rdesc, rprep, rdims
+        IF Error_Happened THEN EXIT SUB
+        getid ridnum
+        IF Error_Happened THEN EXIT SUB
+        rid = id
+        rtyp = udtetype(rmember)
+        rsize = udtetypesize(rmember)
+        rmode = rid.dynudtmode
+        IF rmode = 0 THEN rmode = rid.dynudt
+        IF rid.dynudt AND UDTMemberDynDesc%(rmember) THEN rowns = -1 ELSE rowns = 0
+    END IF
+
+    lcmp = ltyp AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    rcmp = rtyp AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    IF lcmp <> rcmp THEN Give_Error "Cannot assign arrays of different types": EXIT SUB
+    IF (lcmp AND ISFIXEDLENGTH) <> 0 AND lsize <> rsize THEN Give_Error "Cannot assign fixed-length STRING arrays with different element sizes": EXIT SUB
+    IF ldims <= 0 OR rdims <= 0 THEN Give_Error "Cannot assign arrays with unknown dimensions": EXIT SUB
+    IF ldims <> rdims THEN Give_Error "Cannot assign arrays with different dimensions": EXIT SUB
+
+    IF lcmp AND ISUDT THEN
+        ludt = lcmp AND UDTMASK
+        rudt = rcmp AND UDTMASK
+        IF ludt <> rudt THEN Give_Error "Cannot assign arrays of different types": EXIT SUB
+
+        IF lmember THEN
+            IF lowns THEN
+                lphysdyn = -1
+            ELSEIF lid.dynudt THEN
+                IF UDTDynHasMemberArrays%(ludt, lmode) THEN lphysdyn = -1
+            END IF
+        END IF
+        IF rmember THEN
+            IF rowns THEN
+                rphysdyn = -1
+            ELSEIF rid.dynudt THEN
+                IF UDTDynHasMemberArrays%(rudt, rmode) THEN rphysdyn = -1
+            END IF
+        END IF
+
+        IF lphysdyn <> rphysdyn THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
+        IF lphysdyn AND lmode <> rmode THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
+    END IF
+
+    IF lprep <> "" THEN WriteBufRawData MainTxtBuf, lprep
+    IF rprep <> "" THEN WriteBufRawData MainTxtBuf, rprep
+
+    IF lcmp AND ISUDT THEN
+        IF lmember = 0 AND lphysdyn AND UDTDynHasMemberArrays%(ludt, lmode) THEN
+            AppendDynUDTArrayAssign ldesc, rdesc, ludt, lmode, ldims
+        ELSE
+            AppendWholeArrayAssign ldesc, rdesc, lcmp, lsize, ldims, lphysdyn, lmode
+        END IF
+    ELSE
+        AppendWholeArrayAssign ldesc, rdesc, lcmp, lsize, ldims, 0, 0
+    END IF
+END SUB
+
+'Classify only the final reference used by the array-assignment guard.
+'For a top-level name, the normal resolver is authoritative: a bare scalar may
+'legally share its name with an array. ISARRAY can also describe an indexed
+'parent array, so a final TYPE member is checked through its own metadata.
+SUB GetAsgRefState (ref_text AS STRING, ref_typ AS LONG, ref_kind AS LONG, has_member AS LONG, ref_state AS LONG)
+    DIM AS LONG sep_one, sep_two, sep_three, member_id
+
+    ref_state = 0
+    IF ref_kind < 1 OR ref_kind > 3 THEN EXIT SUB
+
+    IF has_member = 0 THEN
+        IF ref_typ AND ISARRAY THEN ref_state = ref_kind
+        EXIT SUB
+    END IF
+
+    IF (ref_typ AND ISREFERENCE) = 0 THEN EXIT SUB
+    sep_one = INSTR(ref_text, sp3)
+    IF sep_one = 0 THEN EXIT SUB
+    sep_two = INSTR(sep_one + LEN(sp3), ref_text, sp3)
+    IF sep_two = 0 THEN EXIT SUB
+    sep_three = INSTR(sep_two + LEN(sp3), ref_text, sp3)
+    IF sep_three = 0 THEN EXIT SUB
+
+    member_id = VAL(MID$(ref_text, sep_two + LEN(sp3), sep_three - sep_two - LEN(sp3)))
+    IF member_id <= 0 THEN EXIT SUB
+    IF udtearrayelements(member_id) THEN ref_state = ref_kind
+END SUB
+
+'Apply the agreed diagnostic table after the normal resolver has identified the
+'right side. A nonzero state means the final reference really is an array:
+'  1 bare array, 2 whole array (), 3 indexed array element.
+SUB CheckAsgRHS (rhs_ref AS STRING, rhs_typ AS LONG)
+    DIM rhs_state AS LONG
+
+    GetAsgRefState rhs_ref, rhs_typ, asg_rkind, asg_rmember, rhs_state
+
+    IF asg_lstate = 2 OR rhs_state = 2 THEN
+        IF asg_lstate <> 0 AND rhs_state <> 0 THEN
+            Give_Error "Whole-array assignment requires empty parentheses on both sides"
+        ELSEIF asg_lstate = 2 THEN
+            Give_Error "Expected array index after " + asg_lname
+        ELSEIF rhs_state = 2 THEN
+            Give_Error "Expected array index after " + asg_rname
+        END IF
+        EXIT SUB
+    END IF
+
+    IF asg_lstate = 1 AND rhs_state = 1 THEN
+        Give_Error "Whole-array assignment requires empty parentheses on both sides"
+        EXIT SUB
+    END IF
+    IF asg_lstate = 1 THEN Give_Error "Expected array index after " + asg_lname: EXIT SUB
+    IF rhs_state = 1 THEN Give_Error "Expected array index after " + asg_rname: EXIT SUB
+END SUB
+
+'Evaluate the RHS once through the normal resolver, then run the assignment-only
+'guard. Recursive evaluation is excluded by temporarily clearing asg_guard_on.
+SUB EvalAsgRHS (expr AS STRING, ref_text AS STRING, out_typ AS LONG)
+    DIM saved_on AS INTEGER
+    DIM saved_bare AS INTEGER
+
+    saved_on = asg_guard_on
+    saved_bare = udt_allow_bare_array
+    asg_guard_on = 0
+    IF asg_rmember AND (asg_rkind = 1 OR asg_rkind = 2) THEN udt_allow_bare_array = -1
+
+    ref_text = evaluate(expr, out_typ)
+
+    udt_allow_bare_array = saved_bare
+    asg_guard_on = saved_on
+    IF Error_Happened THEN EXIT SUB
+    CheckAsgRHS ref_text, out_typ
+END SUB
+
 'Emit whole-array assignment for descriptor-layout UDT arrays, e.g. dst() = src().
 'This validates both arrays and requires identical bounds, then performs deep-copy
 'semantics so destination descriptors/qbs strings are independent from the source.
@@ -16453,19 +16813,19 @@ SUB AppendDynUDTArrayAssign (dstarr AS STRING, srcarr AS STRING, udt AS LONG, la
 
     elembytes = _TOSTR$(UDTDynLayoutSize&(udt) \ 8)
 
-    WriteBufLine MainTxtBuf, "{"
-    WriteBufLine MainTxtBuf, "ptrszint *dyn_arr_dst=" + dstarr + ";"
-    WriteBufLine MainTxtBuf, "ptrszint *dyn_arr_src=" + srcarr + ";"
-    WriteBufLine MainTxtBuf, "if ((!dyn_arr_dst[0])||(!dyn_arr_src[0])||(dyn_arr_dst[0]==(ptrszint)nothingvalue)||(dyn_arr_src[0]==(ptrszint)nothingvalue)) error(9);"
-    WriteBufLine MainTxtBuf, "uint64 dyn_arr_total=1;"
-    WriteBufLine MainTxtBuf, "for(ptrszint dyn_arr_i=1; dyn_arr_i<=" + _TOSTR$(arrdims) + "; dyn_arr_i++){"
-    WriteBufLine MainTxtBuf, "ptrszint dyn_arr_arg=(" + _TOSTR$(arrdims) + "-dyn_arr_i)*4+4;"
-    WriteBufLine MainTxtBuf, "if ((dyn_arr_dst[dyn_arr_arg]!=dyn_arr_src[dyn_arr_arg])||(dyn_arr_dst[dyn_arr_arg+1]!=dyn_arr_src[dyn_arr_arg+1])) error(9);"
-    WriteBufLine MainTxtBuf, "if (dyn_arr_dst[dyn_arr_arg+1]<0) error(9);"
-    WriteBufLine MainTxtBuf, "if (dyn_arr_dst[dyn_arr_arg+1]&&dyn_arr_total>(18446744073709551615ull/(uint64)dyn_arr_dst[dyn_arr_arg+1])) error(9);"
-    WriteBufLine MainTxtBuf, "dyn_arr_total*=(uint64)dyn_arr_dst[dyn_arr_arg+1];"
-    WriteBufLine MainTxtBuf, "}"
-    WriteBufLine MainTxtBuf, "if (dyn_arr_dst[0]!=dyn_arr_src[0]){"
+    WriteBufLineCpp MainTxtBuf, "{"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *dyn_arr_dst=" + dstarr + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *dyn_arr_src=" + srcarr + ";"
+    WriteBufLineCpp MainTxtBuf, "if ((!dyn_arr_dst[0])||(!dyn_arr_src[0])||(dyn_arr_dst[0]==(ptrszint)nothingvalue)||(dyn_arr_src[0]==(ptrszint)nothingvalue)) error(9);"
+    WriteBufLineCpp MainTxtBuf, "uint64 dyn_arr_total=1;"
+    WriteBufLineCpp MainTxtBuf, "for(ptrszint dyn_arr_i=1; dyn_arr_i<=" + _TOSTR$(arrdims) + "; dyn_arr_i++){"
+    WriteBufLineCpp MainTxtBuf, "ptrszint dyn_arr_arg=(" + _TOSTR$(arrdims) + "-dyn_arr_i)*4+4;"
+    WriteBufLineCpp MainTxtBuf, "if ((dyn_arr_dst[dyn_arr_arg]!=dyn_arr_src[dyn_arr_arg])||(dyn_arr_dst[dyn_arr_arg+1]!=dyn_arr_src[dyn_arr_arg+1])) error(9);"
+    WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[dyn_arr_arg+1]<0) error(9);"
+    WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[dyn_arr_arg+1]&&dyn_arr_total>(18446744073709551615ull/(uint64)dyn_arr_dst[dyn_arr_arg+1])) error(9);"
+    WriteBufLineCpp MainTxtBuf, "dyn_arr_total*=(uint64)dyn_arr_dst[dyn_arr_arg+1];"
+    WriteBufLineCpp MainTxtBuf, "}"
+    WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[0]!=dyn_arr_src[0]){"
 
     IF udtxvariable(udt) THEN
         ' Owner-layout whole-array assignment has two safe paths:
@@ -16482,26 +16842,26 @@ SUB AppendDynUDTArrayAssign (dstarr AS STRING, srcarr AS STRING, udt AS LONG, la
         owncopy = ""
         freecopy = ""
         inpcopy = ""
-        WriteBufLine MainTxtBuf, "if (dyn_arr_dst[2]&2){"
-        WriteBufLine MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[2]&2){"
+        WriteBufLineCpp MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
         AppendDynUDTOwnSetAt "(void*)dyn_arr_dst[0]", "(void*)dyn_arr_src[0]", udt, 0, 0, elembytes, "dyn_arr_i", "dyn_arr_i", inpcopy, layout_mode
         IF Error_Happened THEN EXIT SUB
-        WriteBufLine MainTxtBuf, inpcopy
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "}else{"
-        WriteBufLine MainTxtBuf, "if (dyn_arr_total&&dyn_arr_total>(18446744073709551615ull/(uint64)" + elembytes + ")) error(257);"
-        WriteBufLine MainTxtBuf, "uint64 dyn_arr_bytes=dyn_arr_total*(uint64)" + elembytes + ";"
-        WriteBufLine MainTxtBuf, "uint8 *dyn_arr_new_data=NULL;"
-        WriteBufLine MainTxtBuf, "if (dyn_arr_bytes){"
-        WriteBufLine MainTxtBuf, "if (dyn_arr_dst[2]&4){"
-        WriteBufLine MainTxtBuf, "dyn_arr_new_data=(uint8*)cmem_dynamic_malloc((size_t)dyn_arr_bytes);"
-        WriteBufLine MainTxtBuf, "if (!dyn_arr_new_data) error(257);"
-        WriteBufLine MainTxtBuf, "memset((void*)dyn_arr_new_data,0,(size_t)dyn_arr_bytes);"
-        WriteBufLine MainTxtBuf, "}else{"
-        WriteBufLine MainTxtBuf, "dyn_arr_new_data=(uint8*)calloc((size_t)dyn_arr_bytes,1);"
-        WriteBufLine MainTxtBuf, "if (!dyn_arr_new_data) error(257);"
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
+        WriteBufLineCpp MainTxtBuf, inpcopy
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "}else{"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_total&&dyn_arr_total>(18446744073709551615ull/(uint64)" + elembytes + ")) error(257);"
+        WriteBufLineCpp MainTxtBuf, "uint64 dyn_arr_bytes=dyn_arr_total*(uint64)" + elembytes + ";"
+        WriteBufLineCpp MainTxtBuf, "uint8 *dyn_arr_new_data=NULL;"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_bytes){"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[2]&4){"
+        WriteBufLineCpp MainTxtBuf, "dyn_arr_new_data=(uint8*)cmem_dynamic_malloc((size_t)dyn_arr_bytes);"
+        WriteBufLineCpp MainTxtBuf, "if (!dyn_arr_new_data) error(257);"
+        WriteBufLineCpp MainTxtBuf, "memset((void*)dyn_arr_new_data,0,(size_t)dyn_arr_bytes);"
+        WriteBufLineCpp MainTxtBuf, "}else{"
+        WriteBufLineCpp MainTxtBuf, "dyn_arr_new_data=(uint8*)calloc((size_t)dyn_arr_bytes,1);"
+        WriteBufLineCpp MainTxtBuf, "if (!dyn_arr_new_data) error(257);"
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
         ' The replacement payload is calloc/zero-filled. Do not pre-initialize the
         ' destination owner element here. Use AppendDynUDTOwnCloneAt, not SetAt:
         ' the replacement payload is zero-filled and every element is cloned into
@@ -16509,31 +16869,31 @@ SUB AppendDynUDTArrayAssign (dstarr AS STRING, srcarr AS STRING, udt AS LONG, la
         ' nested owner graphs by avoiding initialization followed immediately by erase.
         AppendDynUDTOwnCloneAt "(void*)dyn_arr_new_data", "(void*)dyn_arr_src[0]", udt, 0, 0, elembytes, "dyn_arr_i", "dyn_arr_i", owncopy, layout_mode
         IF Error_Happened THEN EXIT SUB
-        WriteBufLine MainTxtBuf, owncopy
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "if (dyn_arr_dst[0]&&dyn_arr_dst[0]!=(ptrszint)nothingvalue){"
-        WriteBufLine MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
+        WriteBufLineCpp MainTxtBuf, owncopy
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[0]&&dyn_arr_dst[0]!=(ptrszint)nothingvalue){"
+        WriteBufLineCpp MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
         AppendDynUDTOwnFreeAt "(void*)dyn_arr_dst[0]", udt, 0, elembytes, "dyn_arr_i", freecopy, layout_mode
         IF Error_Happened THEN EXIT SUB
-        WriteBufLine MainTxtBuf, freecopy
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "if (dyn_arr_dst[2]&4) cmem_dynamic_free((uint8*)dyn_arr_dst[0]); else free((void*)dyn_arr_dst[0]);"
-        WriteBufLine MainTxtBuf, "}"
-        WriteBufLine MainTxtBuf, "dyn_arr_dst[0]=(ptrszint)dyn_arr_new_data;"
-        WriteBufLine MainTxtBuf, "((mem_lock*)((ptrszint*)dyn_arr_dst)[8])->id=(++mem_lock_id);"
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, freecopy
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "if (dyn_arr_dst[2]&4) cmem_dynamic_free((uint8*)dyn_arr_dst[0]); else free((void*)dyn_arr_dst[0]);"
+        WriteBufLineCpp MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "dyn_arr_dst[0]=(ptrszint)dyn_arr_new_data;"
+        WriteBufLineCpp MainTxtBuf, "((mem_lock*)((ptrszint*)dyn_arr_dst)[8])->id=(++mem_lock_id);"
+        WriteBufLineCpp MainTxtBuf, "}"
     ELSE
-        WriteBufLine MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
-        WriteBufLine MainTxtBuf, "uint8 *dyn_elem_dst=((uint8*)dyn_arr_dst[0])+dyn_arr_i*" + elembytes + ";"
-        WriteBufLine MainTxtBuf, "uint8 *dyn_elem_src=((uint8*)dyn_arr_src[0])+dyn_arr_i*" + elembytes + ";"
+        WriteBufLineCpp MainTxtBuf, "for(ptrszint dyn_arr_i=0; dyn_arr_i<(ptrszint)dyn_arr_total; dyn_arr_i++){"
+        WriteBufLineCpp MainTxtBuf, "uint8 *dyn_elem_dst=((uint8*)dyn_arr_dst[0])+dyn_arr_i*" + elembytes + ";"
+        WriteBufLineCpp MainTxtBuf, "uint8 *dyn_elem_src=((uint8*)dyn_arr_src[0])+dyn_arr_i*" + elembytes + ";"
         copy_full_udt_dyn "dyn_elem_dst", "dyn_elem_src", MainTxtBuf, 0, udt, layout_mode
         IF Error_Happened THEN EXIT SUB
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "}"
     END IF
 
-    WriteBufLine MainTxtBuf, "}"
-    WriteBufLine MainTxtBuf, "}"
+    WriteBufLineCpp MainTxtBuf, "}"
+    WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
 
@@ -16669,7 +17029,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     DIM elemnum AS LONG
     DIM nested_udt AS LONG
     DIM stat_bit AS LONG
-    DIM dyn_bit AS LONG
     DIM stat_off AS LONG
     DIM dyn_off AS LONG
     DIM stat_bytes AS LONG
@@ -16688,14 +17047,15 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     cr = CHR$(13) + CHR$(10)
     elemnum = udtxnext(udt_index)
     stat_bit = 0
-    dyn_bit = 0
 
     DO WHILE elemnum
         IF stat_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-        IF dyn_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
+        IF UDTDynMemberOffset&(elemnum) MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
 
         stat_off = stat_bit \ 8
-        dyn_off = dyn_bit \ 8
+        ' Descriptor layouts may insert alignment padding before a member. Use the
+        ' canonical precomputed offset instead of reconstructing it from member sizes.
+        dyn_off = UDTDynMemberOffset&(elemnum) \ 8
         stat_bytes = udtesize(elemnum) \ 8
         dyn_bytes = UDTDynMemberSize&(elemnum) \ 8
         nested_udt = 0
@@ -16763,7 +17123,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
         END IF
 
         stat_bit = stat_bit + udtesize(elemnum)
-        dyn_bit = dyn_bit + UDTDynMemberSize&(elemnum)
         elemnum = udtenext(elemnum)
     LOOP
 END SUB
@@ -16859,16 +17218,104 @@ FUNCTION UDTFileArrayBE$ (arr_expr AS STRING, udt_index AS LONG, layout_mode AS 
 END FUNCTION
 
 
+'Emit whole-array assignment for ordinary arrays and inline-layout UDT arrays.
+'Both descriptors must already be initialized and must have identical bounds.
+'Variable-length STRING and UDT ownership are copied element-by-element;
+'plain fixed-size payloads use one block copy.
+SUB AppendWholeArrayAssign (dstarr AS STRING, srcarr AS STRING, arrtyp AS LONG, arrsize AS LONG, arrdims AS LONG, dynudt AS LONG, dynmode AS LONG)
+    DIM elemtext AS STRING
+    DIM dstexpr AS STRING
+    DIM srcexpr AS STRING
+    DIM arrudt AS LONG
+    DIM bits AS LONG
+
+    IF arrdims <= 0 THEN Give_Error "Cannot assign arrays with unknown dimensions": EXIT SUB
+
+    WriteBufLine MainTxtBuf, "{"
+    WriteBufLine MainTxtBuf, "ptrszint *whole_arr_dst=" + dstarr + ";"
+    WriteBufLine MainTxtBuf, "ptrszint *whole_arr_src=" + srcarr + ";"
+    WriteBufLine MainTxtBuf, "int32 whole_arr_ok=1;"
+    WriteBufLine MainTxtBuf, "uint64 whole_arr_total=1;"
+    WriteBufLine MainTxtBuf, "if (!(whole_arr_dst[2]&1)||!(whole_arr_src[2]&1)||(!whole_arr_dst[0])||(!whole_arr_src[0])||(whole_arr_dst[0]==(ptrszint)nothingvalue)||(whole_arr_src[0]==(ptrszint)nothingvalue)){error(9); whole_arr_ok=0;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_ok){"
+    WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_dim=1; whole_arr_dim<=" + _TOSTR$(arrdims) + "; whole_arr_dim++){"
+    WriteBufLine MainTxtBuf, "ptrszint whole_arr_arg=(" + _TOSTR$(arrdims) + "-whole_arr_dim)*4+4;"
+    WriteBufLine MainTxtBuf, "if ((whole_arr_dst[whole_arr_arg]!=whole_arr_src[whole_arr_arg])||(whole_arr_dst[whole_arr_arg+1]!=whole_arr_src[whole_arr_arg+1])){error(9); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_dst[whole_arr_arg+1]<0){error(9); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_dst[whole_arr_arg+1]&&whole_arr_total>(18446744073709551615ull/(uint64)whole_arr_dst[whole_arr_arg+1])){error(257); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "whole_arr_total*=(uint64)whole_arr_dst[whole_arr_arg+1];"
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_ok&&(whole_arr_dst[0]!=whole_arr_src[0])){"
+
+    IF arrtyp AND ISUDT THEN
+        arrudt = arrtyp AND UDTMASK
+        IF dynudt THEN
+            elemtext = _TOSTR$(UDTDynLayoutSize&(arrudt) \ 8)
+        ELSE
+            elemtext = _TOSTR$(udtxsize(arrudt) \ 8)
+        END IF
+        WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_i=0; whole_arr_i<(ptrszint)whole_arr_total; whole_arr_i++){"
+        dstexpr = "((uint8*)whole_arr_dst[0])+whole_arr_i*" + elemtext
+        srcexpr = "((uint8*)whole_arr_src[0])+whole_arr_i*" + elemtext
+        IF dynudt AND (UDTDynHasMemberArrays%(arrudt, dynmode) OR udtxvariable(arrudt)) THEN
+            copy_full_udt_dyn dstexpr, srcexpr, MainTxtBuf, 0, arrudt, dynmode
+        ELSE
+            copy_full_udt dstexpr, srcexpr, MainTxtBuf, 0, arrudt
+        END IF
+        IF Error_Happened THEN EXIT SUB
+        WriteBufLine MainTxtBuf, "}"
+    ELSEIF arrtyp AND ISSTRING THEN
+        IF arrtyp AND ISFIXEDLENGTH THEN
+            IF arrsize <= 0 THEN Give_Error "Invalid fixed-length STRING array size": EXIT SUB
+            elemtext = _TOSTR$(arrsize)
+            WriteBufLine MainTxtBuf, "if (whole_arr_total>(18446744073709551615ull/(uint64)" + elemtext + ")) error(257);"
+            WriteBufLine MainTxtBuf, "if (!is_error_pending()) memmove((void*)whole_arr_dst[0],(void*)whole_arr_src[0],(size_t)(whole_arr_total*(uint64)" + elemtext + "));"
+        ELSE
+            WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_i=0; whole_arr_i<(ptrszint)whole_arr_total; whole_arr_i++){"
+            WriteBufLine MainTxtBuf, "qbs_set((qbs*)(((uint64*)whole_arr_dst[0])[whole_arr_i]),(qbs*)(((uint64*)whole_arr_src[0])[whole_arr_i]));"
+            WriteBufLine MainTxtBuf, "}"
+        END IF
+    ELSE
+        bits = arrtyp AND UDTMASK
+        IF bits <= 0 THEN Give_Error "Cannot determine array element size": EXIT SUB
+        IF arrtyp AND ISOFFSETINBITS THEN
+            elemtext = _TOSTR$(bits) + "/8+1"
+        ELSE
+            elemtext = _TOSTR$(bits \ 8)
+        END IF
+        WriteBufLine MainTxtBuf, "if (whole_arr_total>(18446744073709551615ull/(uint64)(" + elemtext + "))) error(257);"
+        WriteBufLine MainTxtBuf, "if (!is_error_pending()) memmove((void*)whole_arr_dst[0],(void*)whole_arr_src[0],(size_t)(whole_arr_total*(uint64)(" + elemtext + ")));"
+    END IF
+
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "}"
+END SUB
+
+
 SUB assign (a$, n)
-    DIM lhswhole AS STRING
-    DIM rhswhole AS STRING
-    DIM rhsall AS STRING
-    DIM lhsid AS idstruct
-    DIM rhsid AS idstruct
-    DIM lhsok AS LONG
-    DIM rhsok AS LONG
-    DIM lhsudt AS LONG
-    DIM rhsudt AS LONG
+    DIM lsrc AS STRING
+    DIM rsrc AS STRING
+    DIM llabel AS STRING
+    DIM rlabel AS STRING
+    DIM lroot AS STRING
+    DIM rroot AS STRING
+    DIM lref AS STRING
+    DIM rref AS STRING
+    DIM lkind AS LONG
+    DIM rkind AS LONG
+    DIM lhasmember AS LONG
+    DIM rhasmember AS LONG
+    DIM lok AS LONG
+    DIM rok AS LONG
+    DIM lreftyp AS LONG
+    DIM rreftyp AS LONG
+    DIM lidnum AS LONG
+    DIM ridnum AS LONG
+    DIM lmember AS LONG
+    DIM rmember AS LONG
+    DIM lhsstate AS LONG
+    DIM saved_bare AS INTEGER
 
     FOR i = 1 TO n
         c = ASC(getelement$(a$, i))
@@ -16878,57 +17325,35 @@ SUB assign (a$, n)
             IF i = 1 THEN Give_Error "Expected ... =": EXIT SUB
             IF i = n THEN Give_Error "Expected = ...": EXIT SUB
 
-            a2$ = fixoperationorder(getelements$(a$, 1, i - 1))
+            lsrc = getelements$(a$, 1, i - 1)
+            rsrc = getelements$(a$, i + 1, n)
+            GetAsgRefSyntax lsrc, lkind, llabel, lhasmember, lroot
+            GetAsgRefSyntax rsrc, rkind, rlabel, rhasmember, rroot
+
+            a2$ = fixoperationorder(lsrc)
             IF Error_Happened THEN EXIT SUB
             l$ = tlayout$ + sp + "=" + sp
 
-            rhsall = getelements$(a$, i + 1, n)
-            lhswhole = WholeArrayName$(a2$)
-            rhswhole = WholeArrayName$(rhsall)
-            IF lhswhole <> "" AND rhswhole <> "" THEN
-                lhsok = 0
-                rhsok = 0
-                try = findid(lhswhole)
+            'Only explicit target() = source() can enter whole-array assignment.
+            'The resolver verifies that both expressions really are arrays; function
+            'calls or scalar members using () remain on the normal expression path.
+            IF lkind = 2 AND rkind = 2 THEN
+                GetWholeAsgRef lsrc, lroot, lhasmember, lok, lref, lreftyp, lidnum, lmember
                 IF Error_Happened THEN EXIT SUB
-                DO WHILE try
-                    IF id.arraytype AND ISUDT THEN
-                        lhsid = id
-                        lhsok = -1
-                        EXIT DO
-                    END IF
-                    IF try = 2 THEN findanotherid = 1: try = findid(lhswhole) ELSE try = 0
-                    IF Error_Happened THEN EXIT SUB
-                LOOP
-                try = findid(rhswhole)
+                GetWholeAsgRef rsrc, rroot, rhasmember, rok, rref, rreftyp, ridnum, rmember
                 IF Error_Happened THEN EXIT SUB
-                DO WHILE try
-                    IF id.arraytype AND ISUDT THEN
-                        rhsid = id
-                        rhsok = -1
-                        EXIT DO
-                    END IF
-                    IF try = 2 THEN findanotherid = 1: try = findid(rhswhole) ELSE try = 0
+                IF lok AND rok THEN
+                    EmitAssignWhole lref, lreftyp, lidnum, lmember, rref, rreftyp, ridnum, rmember
                     IF Error_Happened THEN EXIT SUB
-                LOOP
-                IF lhsok AND rhsok THEN
-                    lhsudt = lhsid.arraytype AND UDTMASK
-                    rhsudt = rhsid.arraytype AND UDTMASK
-                    IF lhsudt = rhsudt AND lhsid.dynudt AND rhsid.dynudt THEN
-                        IF lhsid.dynudtmode <> rhsid.dynudtmode THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
-                        IF lhsid.arrayelements <> rhsid.arrayelements THEN Give_Error "Cannot assign arrays with different dimensions": EXIT SUB
-                        IF UDTDynHasMemberArrays%(lhsudt, lhsid.dynudtmode) THEN
-                            AppendDynUDTArrayAssign RTRIM$(lhsid.callname), RTRIM$(rhsid.callname), lhsudt, lhsid.dynudtmode, lhsid.arrayelements
-                            IF Error_Happened THEN EXIT SUB
-                            tlayout$ = l$ + rhswhole + "()"
-                            EXIT SUB
-                        END IF
-                    ELSEIF lhsudt = rhsudt AND (lhsid.dynudt OR rhsid.dynudt) THEN
-                        Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
-                    END IF
+                    a2$ = fixoperationorder(rsrc)
+                    IF Error_Happened THEN EXIT SUB
+                    tlayout$ = l$ + tlayout$
+                    EXIT SUB
                 END IF
             END IF
 
-            'note: evaluating a2$ will fail if it is setting a function's return value without this check (as the function, not the return-variable) will be found by evaluate)
+            'Retain the original special handling of a simple function return/local
+            'scalar. This is what correctly distinguishes scalar t from array T().
             IF i = 2 THEN 'lhs has only 1 element
                 try = findid(a2$)
                 IF Error_Happened THEN EXIT SUB
@@ -16937,7 +17362,7 @@ SUB assign (a$, n)
                         IF subfuncn = id.insubfuncn THEN 'avoid global before local
                             IF (id.t AND ISUDT) = 0 THEN
                                 makeidrefer a2$, typ
-                                GOTO assignsimplevariable
+                                GOTO assignlhsready
                             END IF
                         END IF
                     END IF
@@ -16946,10 +17371,25 @@ SUB assign (a$, n)
                 LOOP
             END IF
 
-            a2$ = evaluate$(a2$, typ): IF Error_Happened THEN EXIT SUB
-            assignsimplevariable:
+            saved_bare = udt_allow_bare_array
+            IF lhasmember AND (lkind = 1 OR lkind = 2) THEN udt_allow_bare_array = -1
+            a2$ = evaluate$(a2$, typ)
+            udt_allow_bare_array = saved_bare
+            IF Error_Happened THEN EXIT SUB
+
+            assignlhsready:
             IF (typ AND ISREFERENCE) = 0 THEN Give_Error "Expected variable =, look for conflict with a CONST name": EXIT SUB
-            setrefer a2$, typ, getelements$(a$, i + 1, n), 0
+
+            GetAsgRefState a2$, typ, lkind, lhasmember, lhsstate
+
+            asg_lstate = lhsstate
+            asg_lname = llabel
+            asg_rkind = rkind
+            asg_rname = rlabel
+            asg_rmember = rhasmember
+            asg_guard_on = -1
+            setrefer a2$, typ, rsrc, 0
+            asg_guard_on = 0
             IF Error_Happened THEN EXIT SUB
             tlayout$ = l$ + tlayout$
 
@@ -16992,11 +17432,11 @@ SUB vWatchVariable (this$, action AS _BYTE)
         CASE 1 'dump to data[].txt & reset
             IF subfunc = "" THEN
                 IF totalMainModuleVariables > 0 THEN
-                    WriteBufLine DataTxtBuf, "void *vwatch_local_vars[0];"
+                    WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
                     WriteBufLine GlobTxtBuf, "void *vwatch_global_vars[" + STR$(totalMainModuleVariables) + "];"
-                    WriteBufLine DataTxtBuf, mainModuleVariablesList$
+                    WriteBufLineCpp DataTxtBuf, mainModuleVariablesList$
                 ELSE
-                    WriteBufLine DataTxtBuf, "void *vwatch_local_vars[0];"
+                    WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
                     WriteBufLine GlobTxtBuf, "void *vwatch_global_vars[0];"
                 END IF
 
@@ -17005,13 +17445,13 @@ SUB vWatchVariable (this$, action AS _BYTE)
             ELSE
                 IF subfunc <> "SUB_VWATCH" THEN
                     IF totalLocalVariables > 0 THEN
-                        WriteBufLine DataTxtBuf, "void *vwatch_local_vars[" + STR$(totalLocalVariables) + "];"
-                        WriteBufLine DataTxtBuf, localVariablesList$
+                        WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[" + STR$(totalLocalVariables) + "];"
+                        WriteBufLineCpp DataTxtBuf, localVariablesList$
                     ELSE
-                        WriteBufLine DataTxtBuf, "void *vwatch_local_vars[0];"
+                        WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
                     END IF
                 ELSE
-                    WriteBufLine DataTxtBuf, "void *vwatch_local_vars[0];"
+                    WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
                 END IF
 
                 localVariablesList$ = ""
@@ -17034,21 +17474,21 @@ SUB vWatchAddLabel (this AS LONG, lastLine AS _BYTE)
         ELSE
             IF prevSkip <> prevLabel THEN
                 ASC(vWatchUsedSkipLabels, prevLabel) = 1
-                WriteBufLine MainTxtBuf, "VWATCH_SKIPLABEL_" + _TOSTR$(prevLabel) + ":;"
+                WriteBufLineCpp MainTxtBuf, "VWATCH_SKIPLABEL_" + _TOSTR$(prevLabel) + ":;"
                 prevSkip = prevLabel
             END IF
         END IF
 
         IF prevLabel <> this THEN
             ASC(vWatchUsedLabels, this) = 1
-            WriteBufLine MainTxtBuf, "VWATCH_LABEL_" + _TOSTR$(this) + ":;"
+            WriteBufLineCpp MainTxtBuf, "VWATCH_LABEL_" + _TOSTR$(this) + ":;"
             prevLabel = this
             lastLineNumberLabelvWatch = this
         END IF
     ELSE
         IF prevSkip <> prevLabel THEN
             ASC(vWatchUsedSkipLabels, prevLabel) = 1
-            WriteBufLine MainTxtBuf, "VWATCH_SKIPLABEL_" + _TOSTR$(prevLabel) + ":;"
+            WriteBufLineCpp MainTxtBuf, "VWATCH_SKIPLABEL_" + _TOSTR$(prevLabel) + ":;"
             prevSkip = prevLabel
         END IF
     END IF
@@ -17074,23 +17514,23 @@ END SUB
 SUB closemain
     IF GetRCStateVar(vWatchOn) = 1 THEN vWatchAddLabel 0, -1
     xend
-    WriteBufLine MainTxtBuf, "return;"
+    WriteBufLineCpp MainTxtBuf, "return;"
     IF GetRCStateVar(vWatchOn) = 1 THEN
-        WriteBufLine MainTxtBuf, "VWATCH_SETNEXTLINE:;"
-        WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
-        WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "vw_main_dispatch.txt" + CHR$(34)
-        WriteBufLine MainTxtBuf, "    default:"
-        WriteBufLine MainTxtBuf, "        *__LONG_VWATCH_GOTO=*__LONG_VWATCH_LINENUMBER;"
-        WriteBufLine MainTxtBuf, "        goto VWATCH_SETNEXTLINE;"
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "VWATCH_SETNEXTLINE:;"
+        WriteBufLineCpp MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
+        WriteBufLineCpp MainTxtBuf, "#include " + CHR$(34) + "vw_main_dispatch.txt" + CHR$(34)
+        WriteBufLineCpp MainTxtBuf, "    default:"
+        WriteBufLineCpp MainTxtBuf, "        *__LONG_VWATCH_GOTO=*__LONG_VWATCH_LINENUMBER;"
+        WriteBufLineCpp MainTxtBuf, "        goto VWATCH_SETNEXTLINE;"
+        WriteBufLineCpp MainTxtBuf, "}"
 
-        WriteBufLine MainTxtBuf, "VWATCH_SKIPLINE:;"
-        WriteBufLine MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
-        WriteBufLine MainTxtBuf, "#include " + CHR$(34) + "vw_main_skip.txt" + CHR$(34)
-        WriteBufLine MainTxtBuf, "}"
+        WriteBufLineCpp MainTxtBuf, "VWATCH_SKIPLINE:;"
+        WriteBufLineCpp MainTxtBuf, "switch (*__LONG_VWATCH_GOTO) {"
+        WriteBufLineCpp MainTxtBuf, "#include " + CHR$(34) + "vw_main_skip.txt" + CHR$(34)
+        WriteBufLineCpp MainTxtBuf, "}"
     END IF
 
-    WriteBufLine MainTxtBuf, "}"
+    WriteBufLineCpp MainTxtBuf, "}"
     WriteBufLine RetTxtBuf, "}" 'end case
     WriteBufLine RetTxtBuf, "}"
     WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
@@ -17289,11 +17729,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
                 IF f THEN
-                    WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
-                    WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytes) + ";"
-                    WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                    WriteBufLine DataTxtBuf, n$ + "=(void*)(dblock+cmem_sp);"
-                    WriteBufLine DataTxtBuf, "memset(" + n$ + ",0," + _TOSTR$(bytes) + ");"
+                    WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
+                    WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytes) + ";"
+                    WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                    WriteBufLineCpp DataTxtBuf, n$ + "=(void*)(dblock+cmem_sp);"
+                    WriteBufLineCpp DataTxtBuf, "memset(" + n$ + ",0," + _TOSTR$(bytes) + ");"
                     IF scalar_dyn_layout THEN
                         acc$ = ""
                         IF udtxvariable(i) THEN
@@ -17306,7 +17746,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                             AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
                         END IF
                         IF Error_Happened THEN EXIT FUNCTION
-                        WriteBufLine DataTxtBuf, acc$
+                        WriteBufLineCpp DataTxtBuf, acc$
                         acc$ = ""
                         IF udtxvariable(i) THEN
                             AppendDynUDTOwnFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
@@ -17316,13 +17756,13 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                         IF Error_Happened THEN EXIT FUNCTION
                         IF acc$ <> "" THEN WriteBufLine FreeTxtBuf, acc$
                     END IF
-                    WriteBufLine DataTxtBuf, "}"
+                    WriteBufLineCpp DataTxtBuf, "}"
                 END IF
             ELSE
                 IF f THEN
-                    WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
-                    WriteBufLine DataTxtBuf, n$ + "=(void*)mem_static_malloc(" + _TOSTR$(bytes) + ");"
-                    WriteBufLine DataTxtBuf, "memset(" + n$ + ",0," + _TOSTR$(bytes) + ");"
+                    WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
+                    WriteBufLineCpp DataTxtBuf, n$ + "=(void*)mem_static_malloc(" + _TOSTR$(bytes) + ");"
+                    WriteBufLineCpp DataTxtBuf, "memset(" + n$ + ",0," + _TOSTR$(bytes) + ");"
                     IF scalar_dyn_layout THEN
                         acc$ = ""
                         IF udtxvariable(i) THEN
@@ -17335,7 +17775,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                             AppendDynUDTDescInitAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
                         END IF
                         IF Error_Happened THEN EXIT FUNCTION
-                        WriteBufLine DataTxtBuf, acc$
+                        WriteBufLineCpp DataTxtBuf, acc$
                         acc$ = ""
                         IF udtxvariable(i) THEN
                             AppendDynUDTOwnFreeAt n$, i, 0, _TOSTR$(bytes), "0", acc$, scalar_dyn_mode
@@ -17345,11 +17785,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                         IF Error_Happened THEN EXIT FUNCTION
                         IF acc$ <> "" THEN WriteBufLine FreeTxtBuf, acc$
                     END IF
-                    IF udtxvariable(i) AND scalar_dyn_layout = 0 THEN
+                    IF udtxvariable(i) AND scalar_dyn_mode = 0 THEN
                         initialise_udt_varstrings n$, i, DataTxtBuf, 0
                         free_udt_varstrings n$, i, FreeTxtBuf, 0
                     END IF
-                    WriteBufLine DataTxtBuf, "}"
+                    WriteBufLineCpp DataTxtBuf, "}"
                 END IF
             END IF
             id.callname = n$
@@ -17503,18 +17943,18 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             id.t = STRINGTYPE + ISFIXEDLENGTH
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
-                IF f THEN WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytes) + ";"
-                IF f THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                IF f THEN WriteBufLine DataTxtBuf, n$ + "=qbs_new_fixed((uint8*)(dblock+cmem_sp)," + _TOSTR$(bytes) + ",0);"
-                IF f THEN WriteBufLine DataTxtBuf, "memset(" + n$ + "->chr,0," + _TOSTR$(bytes) + ");"
-                IF f THEN WriteBufLine DataTxtBuf, "}"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytes) + ";"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, n$ + "=qbs_new_fixed((uint8*)(dblock+cmem_sp)," + _TOSTR$(bytes) + ",0);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "memset(" + n$ + "->chr,0," + _TOSTR$(bytes) + ");"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "}"
             ELSE
-                IF f THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
                 o$ = "(uint8*)mem_static_malloc(" + _TOSTR$(bytes) + ")"
-                IF f THEN WriteBufLine DataTxtBuf, n$ + "=qbs_new_fixed(" + o$ + "," + _TOSTR$(bytes) + ",0);"
-                IF f THEN WriteBufLine DataTxtBuf, "memset(" + n$ + "->chr,0," + _TOSTR$(bytes) + ");"
-                IF f THEN WriteBufLine DataTxtBuf, "}"
+                IF f THEN WriteBufLineCpp DataTxtBuf, n$ + "=qbs_new_fixed(" + o$ + "," + _TOSTR$(bytes) + ",0);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "memset(" + n$ + "->chr,0," + _TOSTR$(bytes) + ");"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "}"
             END IF
             id.tsize = bytes
             IF method = 0 THEN
@@ -17605,11 +18045,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         id.t = STRINGTYPE
         IF cmemlist(idn + 1) THEN
             IF f THEN WriteBufLine defdatahandle, "qbs *" + n$ + "=NULL;"
-            IF f THEN WriteBufLine DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new_cmem(0,0);"
+            IF f THEN WriteBufLineCpp DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new_cmem(0,0);"
             id.t = id.t + ISINCONVENTIONALMEMORY
         ELSE
             IF f THEN WriteBufLine defdatahandle, "qbs *" + n$ + "=NULL;"
-            IF f THEN WriteBufLine DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new(0,0);"
+            IF f THEN WriteBufLineCpp DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new(0,0);"
         END IF
         IF f THEN WriteBufLine FreeTxtBuf, "qbs_free(" + n$ + ");"
         IF method = 0 THEN
@@ -17710,12 +18150,12 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         'standard bit-length variable
         n$ = scope2$ + n$
         WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-        WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
-        WriteBufLine DataTxtBuf, "cmem_sp-=4;"
-        WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-        WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-        WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-        WriteBufLine DataTxtBuf, "}"
+        WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
+        WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
+        WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+        WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+        WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+        WriteBufLineCpp DataTxtBuf, "}"
         clearid
         id.n = cvarname$
         id.t = BITTYPE - 1 + bits + ISINCONVENTIONALMEMORY: IF unsgn THEN id.t = id.t + ISUNSIGNED
@@ -17793,17 +18233,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = BYTETYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=1;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=1;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(1);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(1);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -17877,17 +18317,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = INTEGERTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=2;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=2;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(2);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(2);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -17966,17 +18406,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = OFFSETTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(OS_BITS \ 8) + ";"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(OS_BITS \ 8) + ";"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(" + _TOSTR$(OS_BITS \ 8) + ");"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(" + _TOSTR$(OS_BITS \ 8) + ");"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -18052,17 +18492,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = LONGTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=4;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(4);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(4);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -18138,17 +18578,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = INTEGER64TYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=8;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(8);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(8);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -18224,17 +18664,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = SINGLETYPE
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=4;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(4);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(4);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -18308,17 +18748,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = DOUBLETYPE
             IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "cmem_sp-=8;"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f = 1 THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(8);"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(8);"
             END IF
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f = 1 THEN WriteBufLine DataTxtBuf, "}"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -18392,17 +18832,17 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             clearid
             id.t = FLOATTYPE
             IF f THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-            IF f THEN WriteBufLine DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF f THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f THEN WriteBufLine DataTxtBuf, "cmem_sp-=32;"
-                IF f THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-                IF f THEN WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=32;"
+                IF f THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f THEN WriteBufLine DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(32);"
+                IF f THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(32);"
             END IF
-            IF f THEN WriteBufLine DataTxtBuf, "*" + n$ + "=0;"
-            IF f THEN WriteBufLine DataTxtBuf, "}"
+            IF f THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            IF f THEN WriteBufLineCpp DataTxtBuf, "}"
         END IF
         id.n = cvarname$
         IF method = 0 THEN
@@ -19729,7 +20169,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     IF RTRIM$(id2.callname) = "func_input" AND args = 1 AND inputfunctioncalled = 0 THEN
         inputfunctioncalled = -1
         IF GetRCStateVar(vWatchOn) THEN
-            WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+            WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= -4; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
         END IF
     END IF
 
@@ -20047,10 +20487,10 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF
 
 
-                'WriteBufLine MainTxtBuf, "n$="; n$
-                'WriteBufLine MainTxtBuf, "curarg="; curarg
-                'WriteBufLine MainTxtBuf, "e$="; e$
-                'WriteBufLine MainTxtBuf, "r$="; r$
+                'WriteBufLineCpp MainTxtBuf, "n$="; n$
+                'WriteBufLineCpp MainTxtBuf, "curarg="; curarg
+                'WriteBufLineCpp MainTxtBuf, "e$="; e$
+                'WriteBufLineCpp MainTxtBuf, "r$="; r$
 
                 '*special case*
                 IF n$ = "_MEMGET" THEN
@@ -20155,6 +20595,20 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF INSTR(member_array_arg_source$, ".") THEN
                         IF IsWholeMemberArrayRef%(e$, sourcetyp) THEN
                             IF HasFinalEmptyArrayBrackets%(member_array_arg_source$) = 0 THEN Give_Error "Expected: Array Name()": EXIT FUNCTION
+                        END IF
+                    END IF
+                END IF
+
+                'A user FUNCTION scalar parameter must not silently accept array() as array(0).
+                'The original spelling is required because both forms currently encode offset zero.
+                IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                    IF targettyp >= 0 THEN
+                        IF (targettyp AND ISARRAY) = 0 THEN
+                            IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                IF HasFinalEmptyArrayBrackets%(e2$) THEN
+                                    Give_Error "Whole array cannot be passed to a scalar FUNCTION parameter": EXIT FUNCTION
+                                END IF
+                            END IF
                         END IF
                     END IF
                 END IF
@@ -21394,14 +21848,14 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
                         bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
                         WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
-                        WriteBufLine DataTxtBuf, "if(" + v$ + "==NULL){"
-                        WriteBufLine DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
-                        WriteBufLine DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
-                        WriteBufLine DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-                        WriteBufLine DataTxtBuf, "}"
+                        WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
+                        WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
+                        WriteBufLineCpp DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
+                        WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+                        WriteBufLineCpp DataTxtBuf, "}"
                         e$ = "&(*" + v$ + "=" + e$ + ")"
                     ELSE
-                        WriteBufLine DataTxtBuf, t$ + " " + v$ + ";"
+                        WriteBufLineCpp DataTxtBuf, t$ + " " + v$ + ";"
                         e$ = "&(" + v$ + "=" + e$ + ")"
                     END IF
                     GOTO dontevaluate
@@ -21632,9 +22086,13 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     END IF
 
 
-    IF allow_bare_member_array THEN udt_allow_bare_array = -1
-    e$ = evaluate(a$, sourcetyp)
-    IF allow_bare_member_array THEN udt_allow_bare_array = 0
+    IF asg_guard_on THEN
+        EvalAsgRHS a$, e$, sourcetyp
+    ELSE
+        IF allow_bare_member_array THEN udt_allow_bare_array = -1
+        e$ = evaluate(a$, sourcetyp)
+        IF allow_bare_member_array THEN udt_allow_bare_array = 0
+    END IF
     IF Error_Happened THEN EXIT FUNCTION
 
     '-5 size
@@ -26198,6 +26656,7 @@ END FUNCTION
 
 SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     DIM udtElem AS LONG
+    DIM asg_eval_text AS STRING
     a$ = a2$: typ = typ2: e$ = e2$
     IF method <> 1 THEN e$ = fixoperationorder$(e$)
     IF Error_Happened THEN EXIT SUB
@@ -26238,7 +26697,12 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
 
             IF method <> 0 THEN Give_Error "Unexpected internal code reference to UDT": EXIT SUB
             lhsscope$ = scope$
-            e$ = evaluate(e$, t2)
+            IF asg_guard_on THEN
+                asg_eval_text = e$
+                EvalAsgRHS asg_eval_text, e$, t2
+            ELSE
+                e$ = evaluate(e$, t2)
+            END IF
             IF Error_Happened THEN EXIT SUB
             IF (t2 AND ISUDT) = 0 THEN Give_Error "Expected = similar user defined type": EXIT SUB
 
@@ -26300,8 +26764,8 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             END IF
             IF method = 0 THEN e$ = evaluatetotyp(e$, STRINGTYPE - ISPOINTER)
             IF Error_Happened THEN EXIT SUB
-            WriteBufLine MainTxtBuf, "qbs_set(" + r$ + "," + e$ + ");"
-            WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+            WriteBufLineCpp MainTxtBuf, "qbs_set(" + r$ + "," + e$ + ");"
+            WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
         ELSE
             typ = typ - ISUDT - ISREFERENCE - ISPOINTER
             IF typ AND ISARRAY THEN typ = typ - ISARRAY
@@ -26311,7 +26775,7 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             r$ = "*" + "(" + t$ + "*)" + o2$
             IF method = 0 THEN e$ = evaluatetotyp(e$, typ)
             IF Error_Happened THEN EXIT SUB
-            WriteBufLine MainTxtBuf, r$ + "=" + e$ + ";"
+            WriteBufLineCpp MainTxtBuf, r$ + "=" + e$ + ";"
         END IF
 
         'print "setUDTrefer:"+r$,e$
@@ -26330,25 +26794,25 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             IF (typ AND ISFIXEDLENGTH) THEN
                 offset$ = "&((uint8*)(" + n$ + "[0]))[tmp_long*" + _TOSTR$(id.tsize) + "]"
                 r$ = "qbs_new_fixed(" + offset$ + "," + _TOSTR$(id.tsize) + ",1)"
-                WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
+                WriteBufLineCpp MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
                     l$ = "if (!is_error_pending()) qbs_set(" + r$ + "," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
                     l$ = "if (!is_error_pending()) qbs_set(" + r$ + "," + e$ + ");"
                 END IF
-                WriteBufLine MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, l$
             ELSE
-                WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
+                WriteBufLineCpp MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
                     l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
                     l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
                 END IF
-                WriteBufLine MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, l$
             END IF
-            WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+            WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
             tlayout$ = tl$
             IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
             EXIT SUB
@@ -26358,14 +26822,14 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             'r$ = "setbits_" + _TOSTR$(typ AND UDTMASK) + "("
             r$ = "setbits(" + _TOSTR$(typ AND UDTMASK) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ",tmp_long,"
-            WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
+            WriteBufLineCpp MainTxtBuf, "tmp_long=" + a$ + ";"
             IF method = 0 THEN
                 l$ = "if (!is_error_pending()) " + r$ + evaluatetotyp(e$, typ) + ");"
                 IF Error_Happened THEN EXIT SUB
             ELSE
                 l$ = "if (!is_error_pending()) " + r$ + e$ + ");"
             END IF
-            WriteBufLine MainTxtBuf, l$
+            WriteBufLineCpp MainTxtBuf, l$
             tlayout$ = tl$
             EXIT SUB
         ELSE
@@ -26391,7 +26855,7 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             END IF
         END IF
         IF t$ = "" THEN Give_Error "Cannot find C type to return array data": EXIT SUB
-        WriteBufLine MainTxtBuf, "tmp_long=" + a$ + ";"
+        WriteBufLineCpp MainTxtBuf, "tmp_long=" + a$ + ";"
         IF method = 0 THEN
             l$ = "if (!is_error_pending()) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + evaluatetotyp(e$, typ) + ";"
             IF Error_Happened THEN EXIT SUB
@@ -26399,7 +26863,7 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             l$ = "if (!is_error_pending()) ((" + t$ + "*)(" + n$ + "[0]))[tmp_long]=" + e$ + ";"
         END IF
 
-        WriteBufLine MainTxtBuf, l$
+        WriteBufLineCpp MainTxtBuf, l$
         tlayout$ = tl$
         EXIT SUB
     END IF 'array
@@ -26421,8 +26885,8 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             END IF
             IF method = 0 THEN e$ = evaluatetotyp(e$, ISSTRING)
             IF Error_Happened THEN EXIT SUB
-            WriteBufLine MainTxtBuf, "qbs_set(" + r$ + "," + e$ + ");"
-            WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+            WriteBufLineCpp MainTxtBuf, "qbs_set(" + r$ + "," + e$ + ");"
+            WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
             IF arrayprocessinghappened THEN arrayprocessinghappened = 0
             tlayout$ = tl$
             IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
@@ -26437,23 +26901,23 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
                 IF method = 0 THEN e$ = evaluatetotyp(e$, 64& + ISUNSIGNED)
                 IF Error_Happened THEN EXIT SUB
                 l$ = r$ + "=(" + e$ + ")&" + _TOSTR$(bitmask(b)) + ";"
-                WriteBufLine MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, l$
             ELSE
                 r$ = "*" + scope$ + "BIT" + _TOSTR$(t AND UDTMASK) + "_" + r$
                 IF method = 0 THEN e$ = evaluatetotyp(e$, 64&)
                 IF Error_Happened THEN EXIT SUB
                 l$ = "if ((" + r$ + "=" + e$ + ")&" + _TOSTR$(2 ^ (b - 1)) + "){"
-                WriteBufLine MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, l$
                 'signed bit is set
                 l$ = r$ + "|=" + _TOSTR$(bitmaskinv(b)) + ";"
-                WriteBufLine MainTxtBuf, l$
-                WriteBufLine MainTxtBuf, "}else{"
+                WriteBufLineCpp MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, "}else{"
                 'signed bit is not set
                 l$ = r$ + "&=" + _TOSTR$(bitmask(b)) + ";"
-                WriteBufLine MainTxtBuf, l$
-                WriteBufLine MainTxtBuf, "}"
+                WriteBufLineCpp MainTxtBuf, l$
+                WriteBufLineCpp MainTxtBuf, "}"
             END IF
-            IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
+            IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
             IF arrayprocessinghappened THEN arrayprocessinghappened = 0
             tlayout$ = tl$
             IF LEFT$(r$, 1) = "*" THEN r$ = MID$(r$, 2)
@@ -26479,8 +26943,8 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         IF method = 0 THEN e$ = evaluatetotyp(e$, t2)
         IF Error_Happened THEN EXIT SUB
         l$ = r$ + "=" + e$ + ";"
-        WriteBufLine MainTxtBuf, l$
-        IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
+        WriteBufLineCpp MainTxtBuf, l$
+        IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);": stringprocessinghappened = 0
         IF arrayprocessinghappened THEN arrayprocessinghappened = 0
         tlayout$ = tl$
 
@@ -26628,14 +27092,14 @@ END FUNCTION
 
 SUB xend
     IF GetRCStateVar(vWatchOn) THEN
-        WriteBufLine MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
+        WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= 0; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars);"
     END IF
-    WriteBufLine MainTxtBuf, "sub_end();"
+    WriteBufLineCpp MainTxtBuf, "sub_end();"
 END SUB
 
 SUB xfileprint (a$, ca$, n)
     u$ = _TOSTR$(uniquenumber)
-    WriteBufLine MainTxtBuf, "tab_spc_cr_size=2;"
+    WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
     IF n = 2 THEN Give_Error "Expected # ... , ...": EXIT SUB
     a3$ = ""
     b = 0
@@ -26656,8 +27120,8 @@ SUB xfileprint (a$, ca$, n)
     l$ = SCase$("Print") + sp + "#" + sp2 + tlayout$ + sp2 + ","
     e$ = evaluatetotyp(e$, 64&)
     IF Error_Happened THEN EXIT SUB
-    WriteBufLine MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
-    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+    WriteBufLineCpp MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
+    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
     i = i + 1
 
     'PRINT USING? (file)
@@ -26691,18 +27155,18 @@ SUB xfileprint (a$, ca$, n)
             IF puformat$ = "" THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
             IF i = n THEN Give_Error "Expected PRINT USING #filenumber, formatstring ; ...": EXIT SUB
             'create build string
-            WriteBufLine MainTxtBuf, "tqbs=qbs_new(0,0);"
+            WriteBufLineCpp MainTxtBuf, "tqbs=qbs_new(0,0);"
             'set format start/index variable
-            WriteBufLine MainTxtBuf, "tmp_long=0;" 'scan format from beginning
+            WriteBufLineCpp MainTxtBuf, "tmp_long=0;" 'scan format from beginning
             'create string to hold format in for multiple references
             puf$ = "print_using_format" + u$
             IF subfunc = "" THEN
-                WriteBufLine DataTxtBuf, "static qbs *" + puf$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static qbs *" + puf$ + ";"
             ELSE
-                WriteBufLine DataTxtBuf, "qbs *" + puf$ + ";"
+                WriteBufLineCpp DataTxtBuf, "qbs *" + puf$ + ";"
             END IF
-            WriteBufLine MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+            WriteBufLineCpp MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
             'print expressions
             b = 0
             e$ = ""
@@ -26728,35 +27192,35 @@ SUB xfileprint (a$, ca$, n)
                                 'TAB/SPC exception
                                 'note: position in format-string must be maintained
                                 '-print any string up until now
-                                WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
+                                WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-print e$
-                                WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
-                                WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
+                                WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
+                                WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
+                                WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0,0);"
                                 '-set length of tqbs to 0
-                                WriteBufLine MainTxtBuf, "tqbs->len=0;"
+                                WriteBufLineCpp MainTxtBuf, "tqbs->len=0;"
 
                             ELSE
 
                                 'regular string
-                                WriteBufLine MainTxtBuf, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
+                                WriteBufLineCpp MainTxtBuf, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
 
                             END IF
 
                         ELSE 'not a string
                             IF typ AND ISFLOAT THEN
-                                IF (typ AND UDTMASK) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND UDTMASK) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND UDTMASK) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 32 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 64 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) > 64 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                             ELSE
                                 IF ((typ AND UDTMASK) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
-                                    WriteBufLine MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                    WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 ELSE
-                                    WriteBufLine MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                    WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 END IF
                             END IF
                         END IF 'string/not string
-                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                         e$ = ""
                         IF last THEN EXIT FOR
                         GOTO fprintunext
@@ -26766,19 +27230,19 @@ SUB xfileprint (a$, ca$, n)
                 fprintunext:
             NEXT
             IF e$ <> "" THEN a2$ = "": last = 1: GOTO fprintulast
-            WriteBufLine MainTxtBuf, "skip_pu" + u$ + ":"
+            WriteBufLineCpp MainTxtBuf, "skip_pu" + u$ + ":"
             'check for errors
-            WriteBufLine MainTxtBuf, "if (is_error_pending()){"
-            WriteBufLine MainTxtBuf, "g_tmp_long=new_error; new_error=0; sub_file_print(tmp_fileno,tqbs,0,0,0); new_error=g_tmp_long;"
-            WriteBufLine MainTxtBuf, "}else{"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){"
+            WriteBufLineCpp MainTxtBuf, "g_tmp_long=new_error; new_error=0; sub_file_print(tmp_fileno,tqbs,0,0,0); new_error=g_tmp_long;"
+            WriteBufLineCpp MainTxtBuf, "}else{"
             IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
-            WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0," + _TOSTR$(nl) + ");"
-            WriteBufLine MainTxtBuf, "}"
-            WriteBufLine MainTxtBuf, "qbs_free(tqbs);"
-            WriteBufLine MainTxtBuf, "qbs_free(" + puf$ + ");"
-            WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-            WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
-            WriteBufLine MainTxtBuf, "tab_spc_cr_size=1;"
+            WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,tqbs,0,0," + _TOSTR$(nl) + ");"
+            WriteBufLineCpp MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "qbs_free(tqbs);"
+            WriteBufLineCpp MainTxtBuf, "qbs_free(" + puf$ + ");"
+            WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+            WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+            WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=1;"
             tlayout$ = l$
             EXIT SUB
         END IF
@@ -26786,7 +27250,7 @@ SUB xfileprint (a$, ca$, n)
     'end of print using code
 
     IF i > n THEN
-        WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
+        WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
         GOTO printblankline
     END IF
     b = 0
@@ -26834,15 +27298,15 @@ SUB xfileprint (a$, ca$, n)
                     IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                     IF Error_Happened THEN EXIT SUB
                     'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                    WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + "," + STR$(extraspace) + "," + STR$(usetab) + "," + STR$(newline) + ");"
+                    WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + "," + STR$(extraspace) + "," + STR$(usetab) + "," + STR$(newline) + ");"
                 ELSE 'len(e$)=0
                     IF a2$ = "," THEN l$ = l$ + sp + a2$
                     IF a2$ = ";" THEN
                         IF RIGHT$(l$, 1) <> ";" THEN l$ = l$ + sp + a2$ 'concat ;; to ;
                     END IF
-                    IF usetab THEN WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
+                    IF usetab THEN WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
                 END IF 'len(e$)
-                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                 e$ = ""
                 IF gotofpu THEN GOTO fpujump
@@ -26855,16 +27319,16 @@ SUB xfileprint (a$, ca$, n)
     NEXT
     IF e$ <> "" THEN a2$ = "": last = 1: GOTO printfilelast
     printblankline:
-    WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-    WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
-    WriteBufLine MainTxtBuf, "tab_spc_cr_size=1;"
+    WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+    WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+    WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=1;"
     tlayout$ = l$
 END SUB
 
 SUB xfilewrite (ca$, n)
     l$ = SCase$("Write") + sp + "#"
     u$ = _TOSTR$(uniquenumber)
-    WriteBufLine MainTxtBuf, "tab_spc_cr_size=2;"
+    WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
     IF n = 2 THEN Give_Error "Expected # ...": EXIT SUB
     a3$ = ""
     b = 0
@@ -26885,11 +27349,11 @@ SUB xfilewrite (ca$, n)
     l$ = l$ + sp2 + tlayout$ + sp2 + ","
     e$ = evaluatetotyp(e$, 64&)
     IF Error_Happened THEN EXIT SUB
-    WriteBufLine MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
-    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+    WriteBufLineCpp MainTxtBuf, "tab_fileno=tmp_fileno=" + e$ + ";"
+    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
     i = i + 1
     IF i > n THEN
-        WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
+        WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,0,1);"
         GOTO writeblankline
     END IF
     b = 0
@@ -26930,8 +27394,8 @@ SUB xfilewrite (ca$, n)
                 IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                 IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                WriteBufLine MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + ",0,0," + STR$(newline) + ");"
-                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + ",0,0," + STR$(newline) + ");"
+                WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                 e$ = ""
                 IF last THEN EXIT FOR
                 GOTO writefilenext
@@ -26942,10 +27406,10 @@ SUB xfilewrite (ca$, n)
     NEXT
     IF e$ <> "" THEN a2$ = ",": last = 1: GOTO writefilelast
     writeblankline:
-    'WriteBufLine MainTxtBuf, "}"'new_error
-    WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-    WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
-    WriteBufLine MainTxtBuf, "tab_spc_cr_size=1;"
+    'WriteBufLineCpp MainTxtBuf, "}"'new_error
+    WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+    WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+    WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=1;"
     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 END SUB
 
@@ -26982,14 +27446,14 @@ SUB xgosub (ca$)
     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
     'note: This code fragment also used by ON ... GOTO/GOSUB
     'assume label is reachable (revise)
-    WriteBufLine MainTxtBuf, "return_point[next_return_point++]=" + _TOSTR$(gosubid) + ";"
-    WriteBufLine MainTxtBuf, "if (next_return_point>=return_points) more_return_points();"
-    WriteBufLine MainTxtBuf, "goto LABEL_" + a2$ + ";"
+    WriteBufLineCpp MainTxtBuf, "return_point[next_return_point++]=" + _TOSTR$(gosubid) + ";"
+    WriteBufLineCpp MainTxtBuf, "if (next_return_point>=return_points) more_return_points();"
+    WriteBufLineCpp MainTxtBuf, "goto LABEL_" + a2$ + ";"
     'add return point jump
     WriteBufLine RetTxtBuf, "case " + _TOSTR$(gosubid) + ":"
     WriteBufLine RetTxtBuf, "goto RETURN_" + _TOSTR$(gosubid) + ";"
     WriteBufLine RetTxtBuf, "break;"
-    WriteBufLine MainTxtBuf, "RETURN_" + _TOSTR$(gosubid) + ":;"
+    WriteBufLineCpp MainTxtBuf, "RETURN_" + _TOSTR$(gosubid) + ":;"
     gosubid = gosubid + 1
 END SUB
 
@@ -27020,8 +27484,8 @@ SUB xongotogosub (a$, ca$, n)
     END IF
     l$ = l$ + sp + e2$
     u$ = _TOSTR$(uniquenumber)
-    WriteBufLine DataTxtBuf, "static int32 ongo_" + u$ + "=0;"
-    WriteBufLine MainTxtBuf, "ongo_" + u$ + "=" + e$ + ";"
+    WriteBufLineCpp DataTxtBuf, "static int32 ongo_" + u$ + "=0;"
+    WriteBufLineCpp MainTxtBuf, "ongo_" + u$ + "=" + e$ + ";"
     ln = 1
     labelwaslast = 0
     FOR i = i + 1 TO n
@@ -27063,28 +27527,28 @@ SUB xongotogosub (a$, ca$, n)
             l$ = l$ + sp + tlayout$
             IF g THEN 'gosub
                 lb$ = e$
-                WriteBufLine MainTxtBuf, "if (ongo_" + u$ + "==" + _TOSTR$(ln) + "){"
+                WriteBufLineCpp MainTxtBuf, "if (ongo_" + u$ + "==" + _TOSTR$(ln) + "){"
                 'note: This code fragment also used by ON ... GOTO/GOSUB
                 'assume label is reachable (revise)
-                WriteBufLine MainTxtBuf, "return_point[next_return_point++]=" + _TOSTR$(gosubid) + ";"
-                WriteBufLine MainTxtBuf, "if (next_return_point>=return_points) more_return_points();"
-                WriteBufLine MainTxtBuf, "goto LABEL_" + lb$ + ";"
+                WriteBufLineCpp MainTxtBuf, "return_point[next_return_point++]=" + _TOSTR$(gosubid) + ";"
+                WriteBufLineCpp MainTxtBuf, "if (next_return_point>=return_points) more_return_points();"
+                WriteBufLineCpp MainTxtBuf, "goto LABEL_" + lb$ + ";"
                 'add return point jump
                 WriteBufLine RetTxtBuf, "case " + _TOSTR$(gosubid) + ":"
                 WriteBufLine RetTxtBuf, "goto RETURN_" + _TOSTR$(gosubid) + ";"
                 WriteBufLine RetTxtBuf, "break;"
-                WriteBufLine MainTxtBuf, "RETURN_" + _TOSTR$(gosubid) + ":;"
+                WriteBufLineCpp MainTxtBuf, "RETURN_" + _TOSTR$(gosubid) + ":;"
                 gosubid = gosubid + 1
-                WriteBufLine MainTxtBuf, "goto ongo_" + u$ + "_skip;"
-                WriteBufLine MainTxtBuf, "}"
+                WriteBufLineCpp MainTxtBuf, "goto ongo_" + u$ + "_skip;"
+                WriteBufLineCpp MainTxtBuf, "}"
             ELSE 'goto
-                WriteBufLine MainTxtBuf, "if (ongo_" + u$ + "==" + _TOSTR$(ln) + ") goto LABEL_" + e$ + ";"
+                WriteBufLineCpp MainTxtBuf, "if (ongo_" + u$ + "==" + _TOSTR$(ln) + ") goto LABEL_" + e$ + ";"
             END IF
             labelwaslast = 1
         END IF
     NEXT
-    WriteBufLine MainTxtBuf, "if (ongo_" + u$ + "<0) error(5);"
-    IF g = 1 THEN WriteBufLine MainTxtBuf, "ongo_" + u$ + "_skip:;"
+    WriteBufLineCpp MainTxtBuf, "if (ongo_" + u$ + "<0) error(5);"
+    IF g = 1 THEN WriteBufLineCpp MainTxtBuf, "ongo_" + u$ + "_skip:;"
     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 END SUB
 
@@ -27092,7 +27556,7 @@ SUB xprint (a$, ca$, n)
     u$ = _TOSTR$(uniquenumber)
 
     l$ = SCase$("Print")
-    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLine MainTxtBuf, "tab_LPRINT=1;": SetDependency DEPENDENCY_PRINTER '"L"
+    IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLineCpp MainTxtBuf, "tab_LPRINT=1;": SetDependency DEPENDENCY_PRINTER '"L"
 
     'PRINT USING?
     IF n >= 2 THEN
@@ -27127,23 +27591,23 @@ SUB xprint (a$, ca$, n)
             IF i = n THEN Give_Error "Expected PRINT USING formatstring ; ...": EXIT SUB
             'create build string
             IF TQBSset = 0 THEN
-                WriteBufLine MainTxtBuf, "tqbs=qbs_new(0,0);"
+                WriteBufLineCpp MainTxtBuf, "tqbs=qbs_new(0,0);"
             ELSE
-                WriteBufLine MainTxtBuf, "qbs_set(tqbs,qbs_new_txt_len(" + CHR$(34) + CHR$(34) + ",0));"
+                WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs,qbs_new_txt_len(" + CHR$(34) + CHR$(34) + ",0));"
             END IF
             'set format start/index variable
-            WriteBufLine MainTxtBuf, "tmp_long=0;" 'scan format from beginning
+            WriteBufLineCpp MainTxtBuf, "tmp_long=0;" 'scan format from beginning
 
 
             'create string to hold format in for multiple references
             puf$ = "print_using_format" + u$
             IF subfunc = "" THEN
-                WriteBufLine DataTxtBuf, "static qbs *" + puf$ + ";"
+                WriteBufLineCpp DataTxtBuf, "static qbs *" + puf$ + ";"
             ELSE
-                WriteBufLine DataTxtBuf, "qbs *" + puf$ + ";"
+                WriteBufLineCpp DataTxtBuf, "qbs *" + puf$ + ";"
             END IF
-            WriteBufLine MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
-            WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
+            WriteBufLineCpp MainTxtBuf, puf$ + "=qbs_new(0,0); qbs_set(" + puf$ + "," + puformat$ + ");"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
 
             'print expressions
             b = 0
@@ -27170,19 +27634,19 @@ SUB xprint (a$, ca$, n)
                                 'TAB/SPC exception
                                 'note: position in format-string must be maintained
                                 '-print any string up until now
-                                WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
+                                WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-print e$
-                                WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
-                                IF lp THEN WriteBufLine MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLine MainTxtBuf, "makefit(tqbs);"
-                                WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
+                                WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
+                                WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
+                                IF lp THEN WriteBufLineCpp MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLineCpp MainTxtBuf, "makefit(tqbs);"
+                                WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                                 '-set length of tqbs to 0
-                                WriteBufLine MainTxtBuf, "tqbs->len=0;"
+                                WriteBufLineCpp MainTxtBuf, "tqbs->len=0;"
 
                             ELSE
 
                                 'regular string
-                                WriteBufLine MainTxtBuf, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
+                                WriteBufLineCpp MainTxtBuf, "tmp_long=print_using(" + puf$ + ",tmp_long,tqbs," + e$ + ");"
 
                             END IF
 
@@ -27190,18 +27654,18 @@ SUB xprint (a$, ca$, n)
 
                         ELSE 'not a string
                             IF typ AND ISFLOAT THEN
-                                IF (typ AND UDTMASK) = 32 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND UDTMASK) = 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
-                                IF (typ AND UDTMASK) > 64 THEN WriteBufLine MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 32 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_single(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) = 64 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_double(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                IF (typ AND UDTMASK) > 64 THEN WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_float(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                             ELSE
                                 IF ((typ AND UDTMASK) = 64) AND (typ AND ISUNSIGNED) <> 0 THEN
-                                    WriteBufLine MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                    WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_uinteger64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 ELSE
-                                    WriteBufLine MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
+                                    WriteBufLineCpp MainTxtBuf, "tmp_long=print_using_integer64(" + puf$ + "," + e$ + ",tmp_long,tqbs);"
                                 END IF
                             END IF
                         END IF 'string/not string
-                        WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip_pu" + u$ + ";"
                         e$ = ""
                         IF last THEN EXIT FOR
                         GOTO printunext
@@ -27211,19 +27675,19 @@ SUB xprint (a$, ca$, n)
                 printunext:
             NEXT
             IF e$ <> "" THEN a2$ = "": last = 1: GOTO printulast
-            WriteBufLine MainTxtBuf, "skip_pu" + u$ + ":"
+            WriteBufLineCpp MainTxtBuf, "skip_pu" + u$ + ":"
             'check for errors
-            WriteBufLine MainTxtBuf, "if (is_error_pending()){"
-            WriteBufLine MainTxtBuf, "g_tmp_long=new_error; new_error=0; qbs_" + lp$ + "print(tqbs,0); new_error=g_tmp_long;"
-            WriteBufLine MainTxtBuf, "}else{"
+            WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){"
+            WriteBufLineCpp MainTxtBuf, "g_tmp_long=new_error; new_error=0; qbs_" + lp$ + "print(tqbs,0); new_error=g_tmp_long;"
+            WriteBufLineCpp MainTxtBuf, "}else{"
             IF a2$ = "," OR a2$ = ";" THEN nl = 0 ELSE nl = 1 'note: a2$ is set to the last element of a$
-            WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs," + _TOSTR$(nl) + ");"
-            WriteBufLine MainTxtBuf, "}"
-            WriteBufLine MainTxtBuf, "qbs_free(tqbs);"
-            WriteBufLine MainTxtBuf, "qbs_free(" + puf$ + ");"
-            WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-            WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
-            IF lp THEN WriteBufLine MainTxtBuf, "tab_LPRINT=0;"
+            WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(tqbs," + _TOSTR$(nl) + ");"
+            WriteBufLineCpp MainTxtBuf, "}"
+            WriteBufLineCpp MainTxtBuf, "qbs_free(tqbs);"
+            WriteBufLineCpp MainTxtBuf, "qbs_free(" + puf$ + ");"
+            WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+            WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+            IF lp THEN WriteBufLineCpp MainTxtBuf, "tab_LPRINT=0;"
             tlayout$ = l$
             EXIT SUB
         END IF
@@ -27233,7 +27697,7 @@ SUB xprint (a$, ca$, n)
     b = 0
     e$ = ""
     last = 0
-    WriteBufLine MainTxtBuf, "tqbs=qbs_new(0,0);" 'initialize the temp string
+    WriteBufLineCpp MainTxtBuf, "tqbs=qbs_new(0,0);" 'initialize the temp string
     TQBSset = -1 'set the temporary flag so we don't create a temp string twice, in case USING comes after something
     FOR i = 2 TO n
         a2$ = getelement(ca$, i)
@@ -27272,23 +27736,23 @@ SUB xprint (a$, ca$, n)
                     END IF
                     IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                     IF Error_Happened THEN EXIT SUB
-                    WriteBufLine MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
-                    WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
-                    IF lp THEN WriteBufLine MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLine MainTxtBuf, "makefit(tqbs);"
-                    WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs," + e$ + ");"
+                    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                    IF lp THEN WriteBufLineCpp MainTxtBuf, "lprint_makefit(tqbs);" ELSE WriteBufLineCpp MainTxtBuf, "makefit(tqbs);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(tqbs,0);"
                 ELSE
                     IF a2$ = "," THEN l$ = l$ + sp + a2$
                     IF a2$ = ";" THEN
                         IF RIGHT$(l$, 1) <> ";" THEN l$ = l$ + sp + a2$ 'concat ;; to ;
                     END IF
                 END IF 'len(e$)
-                IF a2$ = "," THEN WriteBufLine MainTxtBuf, "tab();"
+                IF a2$ = "," THEN WriteBufLineCpp MainTxtBuf, "tab();"
                 e$ = ""
 
                 IF gotopu THEN i = i + 1: GOTO pujump
 
                 IF last THEN
-                    WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(nothingstring,1);" 'go to new line
+                    WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(nothingstring,1);" 'go to new line
                     EXIT FOR
                 END IF
 
@@ -27300,11 +27764,11 @@ SUB xprint (a$, ca$, n)
         printnext:
     NEXT
     IF LEN(e$) THEN a2$ = "": last = 1: GOTO printlast
-    IF n = 1 THEN WriteBufLine MainTxtBuf, "qbs_" + lp$ + "print(nothingstring,1);"
-    WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-    WriteBufLine MainTxtBuf, "qbs_free(tqbs);"
-    WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
-    IF lp THEN WriteBufLine MainTxtBuf, "tab_LPRINT=0;"
+    IF n = 1 THEN WriteBufLineCpp MainTxtBuf, "qbs_" + lp$ + "print(nothingstring,1);"
+    WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+    WriteBufLineCpp MainTxtBuf, "qbs_free(tqbs);"
+    WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+    IF lp THEN WriteBufLineCpp MainTxtBuf, "tab_LPRINT=0;"
     tlayout$ = l$
 END SUB
 
@@ -27337,7 +27801,7 @@ SUB xread (ca$, n)
             IF (t AND ISSTRING) THEN
                 e$ = refer(e$, t, 0)
                 IF Error_Happened THEN EXIT SUB
-                WriteBufLine MainTxtBuf, "sub_read_string(data,&data_offset,data_size," + e$ + ");"
+                WriteBufLineCpp MainTxtBuf, "sub_read_string(data,&data_offset,data_size," + e$ + ");"
                 stringprocessinghappened = 1
             ELSE
                 'numeric variable
@@ -27364,7 +27828,7 @@ SUB xread (ca$, n)
         END IF
         IF a3$ = "" THEN a3$ = a2$ ELSE a3$ = a3$ + sp + a2$
     NEXT
-    IF stringprocessinghappened THEN WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+    IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 END SUB
 
@@ -27372,7 +27836,7 @@ SUB xwrite (ca$, n)
     l$ = SCase$("Write")
     u$ = _TOSTR$(uniquenumber)
     IF n = 1 THEN
-        WriteBufLine MainTxtBuf, "qbs_print(nothingstring,1);"
+        WriteBufLineCpp MainTxtBuf, "qbs_print(nothingstring,1);"
         GOTO writeblankline2
     END IF
     b = 0
@@ -27413,8 +27877,8 @@ SUB xwrite (ca$, n)
                 IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                 IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
-                WriteBufLine MainTxtBuf, "qbs_print(" + e$ + "," + STR$(newline) + ");"
-                WriteBufLine MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
+                WriteBufLineCpp MainTxtBuf, "qbs_print(" + e$ + "," + STR$(newline) + ");"
+                WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                 e$ = ""
                 IF last THEN EXIT FOR
                 GOTO writenext
@@ -27425,8 +27889,8 @@ SUB xwrite (ca$, n)
     NEXT
     IF e$ <> "" THEN a2$ = ",": last = 1: GOTO writelast
     writeblankline2:
-    WriteBufLine MainTxtBuf, "skip" + u$ + ":"
-    WriteBufLine MainTxtBuf, cleanupstringprocessingcall$ + "0);"
+    WriteBufLineCpp MainTxtBuf, "skip" + u$ + ":"
+    WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 END SUB
 
@@ -27617,10 +28081,10 @@ FUNCTION NewByteElement$
     IF use_global_byte_elements THEN
         WriteBufLine GlobTxtBuf, "byte_element_struct *" + a$ + "=(byte_element_struct*)malloc(12);"
     ELSE
-        WriteBufLine DataTxtBuf, "byte_element_struct *" + a$ + "=NULL;"
-        WriteBufLine DataTxtBuf, "if (!" + a$ + "){"
-        WriteBufLine DataTxtBuf, "if ((mem_static_pointer+=12)<mem_static_limit) " + a$ + "=(byte_element_struct*)(mem_static_pointer-12); else " + a$ + "=(byte_element_struct*)mem_static_malloc(12);"
-        WriteBufLine DataTxtBuf, "}"
+        WriteBufLineCpp DataTxtBuf, "byte_element_struct *" + a$ + "=NULL;"
+        WriteBufLineCpp DataTxtBuf, "if (!" + a$ + "){"
+        WriteBufLineCpp DataTxtBuf, "if ((mem_static_pointer+=12)<mem_static_limit) " + a$ + "=(byte_element_struct*)(mem_static_pointer-12); else " + a$ + "=(byte_element_struct*)mem_static_malloc(12);"
+        WriteBufLineCpp DataTxtBuf, "}"
     END IF
 END FUNCTION
 

@@ -1,78 +1,50 @@
-int32 FUNC_PARSESTRING(qbs*_FUNC_PARSESTRING_STRING_EXP,void*_FUNC_PARSESTRING_UDT_STATE){
+#line 987 "utilities/s-buffer/simplebuffer.bm"
+qbs* FUNC_VERSIONSIMPLEBUFFER(){
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 qbs *tqbs;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 ptrszint tmp_long;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 int32 tmp_fileno;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 #include "data210.txt"
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 mem_lock *sf_mem_lock;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 new_mem_lock();
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 sf_mem_lock=mem_lock_tmp;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 sf_mem_lock->type=3;
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 libqb_check_stack();
+#line 987 "utilities/s-buffer/simplebuffer.bm"
 if (is_error_pending()) goto exit_subfunc;
-S_39272:;
-if (( 0ll )||is_error_pending()){
-if(qbevent){evnt(28169,229,"const_eval.bas");if(r)goto S_39272;}
+#line 988 "utilities/s-buffer/simplebuffer.bm"
 do{
-sub__echo(qbs_new_txt_len("ParseString",11));
+#line 988 "utilities/s-buffer/simplebuffer.bm"
+qbs_set(_FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER,func_mid(qbs_new_txt_len("$VER: simplebuffer.bm 3.2 (18-Oct-2022) by RhoSigma :END$",57), 7 , 45 ,0|1));
+#line 988 "utilities/s-buffer/simplebuffer.bm"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,229,"const_eval.bas");}while(r);
-}
-do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_PEEKNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,230,"const_eval.bas");}while(r);
-S_39276:;
-if ((qbs_cleanup(qbs_tmp_base,FUNC_ELEMENTISSTRING(_FUNC_PARSESTRING_STRING_ELE)))||is_error_pending()){
-if(qbevent){evnt(28169,232,"const_eval.bas");if(r)goto S_39276;}
-do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,233,"const_eval.bas");}while(r);
-do{
-SUB_PARSENUMSETS((void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+8)) ),_FUNC_PARSESTRING_STRING_ELE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,235,"const_eval.bas");}while(r);
-do{
-*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
-if(!qbevent)break;evnt(28169,237,"const_eval.bas");}while(r);
-}else{
-S_39281:;
-if ((qbs_cleanup(qbs_tmp_base,FUNC_PARSENUMHASHLOOKUP(_FUNC_PARSESTRING_STRING_ELE,(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ))))||is_error_pending()){
-if(qbevent){evnt(28169,239,"const_eval.bas");if(r)goto S_39281;}
-S_39282:;
-if ((-((*(int32*)(((char*)_FUNC_PARSESTRING_UDT_STATE)+((0+64)))&*__LONG_ISSTRING)== 0 ))||is_error_pending()){
-if(qbevent){evnt(28169,240,"const_eval.bas");if(r)goto S_39282;}
-do{
-qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+((0+68)))),qbs_new_txt_len("ERROR - Expecting a string value",32));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,240,"const_eval.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28169,240,"const_eval.bas");}while(r);
-}
-do{
-qbs_set(_FUNC_PARSESTRING_STRING_ELE,FUNC_GETNEXTELEMENT(_FUNC_PARSESTRING_STRING_EXP,(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+0)) ),(int32*)(void*)( ((char*)(_FUNC_PARSESTRING_UDT_STATE)) + ((0+4)) )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,242,"const_eval.bas");}while(r);
-do{
-*_FUNC_PARSESTRING_LONG_PARSESTRING= -1 ;
-if(!qbevent)break;evnt(28169,243,"const_eval.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28169,244,"const_eval.bas");}while(r);
-}
-do{
-qbs_set(*((qbs**)((char*)(_FUNC_PARSESTRING_UDT_STATE)+((0+68)))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Unexpected element '",28),_FUNC_PARSESTRING_STRING_ELE),qbs_new_txt_len("'",1)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,247,"const_eval.bas");}while(r);
-}
+#line 988 "utilities/s-buffer/simplebuffer.bm"
+if(!qbevent)break;evnt(28632,988,"simplebuffer.bm");}while(r);
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 exit_subfunc:;
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 free_mem_lock(sf_mem_lock);
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 #include "free210.txt"
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_PARSESTRING_LONG_PARSESTRING;
+#line 989 "utilities/s-buffer/simplebuffer.bm"
+qbs_maketmp(_FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER);return _FUNC_VERSIONSIMPLEBUFFER_STRING_VERSIONSIMPLEBUFFER;
+#line 989 "utilities/s-buffer/simplebuffer.bm"
 }

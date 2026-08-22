@@ -1,24 +1,110 @@
-void SUB_WRITECONFIGSETTING(qbs*_SUB_WRITECONFIGSETTING_STRING_SECTION,qbs*_SUB_WRITECONFIGSETTING_STRING_ITEM,qbs*_SUB_WRITECONFIGSETTING_STRING_VALUE){
+#line 4 "utilities/strings.bas"
+qbs* FUNC_STRREMOVE(qbs*_FUNC_STRREMOVE_STRING_MYSTRING,qbs*_FUNC_STRREMOVE_STRING_WHATTOREMOVE){
+#line 4 "utilities/strings.bas"
 qbs *tqbs;
+#line 4 "utilities/strings.bas"
 ptrszint tmp_long;
+#line 4 "utilities/strings.bas"
 int32 tmp_fileno;
+#line 4 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 4 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 4 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 4 "utilities/strings.bas"
 #include "data113.txt"
+#line 4 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
+#line 4 "utilities/strings.bas"
 new_mem_lock();
+#line 4 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 4 "utilities/strings.bas"
 sf_mem_lock->type=3;
+#line 4 "utilities/strings.bas"
 libqb_check_stack();
+#line 4 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 5 "utilities/strings.bas"
 do{
-SUB_WRITESETTING(__STRING_CONFIGFILE,_SUB_WRITECONFIGSETTING_STRING_SECTION,_SUB_WRITECONFIGSETTING_STRING_ITEM,_SUB_WRITECONFIGSETTING_STRING_VALUE);
+#line 5 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,5,"strings.bas");}while(r);
+#line 6 "utilities/strings.bas"
+do{
+#line 6 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,6,"strings.bas");}while(r);
+#line 8 "utilities/strings.bas"
+do{
+#line 8 "utilities/strings.bas"
+qbs_set(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_MYSTRING);
+#line 8 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28162,85,"strings.bas");}while(r);
+#line 8 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,8,"strings.bas");}while(r);
+#line 9 "utilities/strings.bas"
+do{
+#line 9 "utilities/strings.bas"
+qbs_set(_FUNC_STRREMOVE_STRING_B,qbs_lcase(_FUNC_STRREMOVE_STRING_WHATTOREMOVE));
+#line 9 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 9 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,9,"strings.bas");}while(r);
+#line 10 "utilities/strings.bas"
+do{
+#line 10 "utilities/strings.bas"
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+#line 10 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 10 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,10,"strings.bas");}while(r);
+#line 11 "utilities/strings.bas"
+S_37197:;
+#line 11 "utilities/strings.bas"
+while((*_FUNC_STRREMOVE_LONG_I)||is_error_pending()){
+#line 11 "utilities/strings.bas"
+if(qbevent){evnt(28626,11,"strings.bas");if(r)goto S_37197;}
+#line 12 "utilities/strings.bas"
+do{
+#line 12 "utilities/strings.bas"
+qbs_set(_FUNC_STRREMOVE_STRING_A,qbs_add(qbs_left(_FUNC_STRREMOVE_STRING_A,*_FUNC_STRREMOVE_LONG_I- 1 ),qbs_right(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_A->len-*_FUNC_STRREMOVE_LONG_I-_FUNC_STRREMOVE_STRING_B->len+ 1 )));
+#line 12 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,12,"strings.bas");}while(r);
+#line 13 "utilities/strings.bas"
+do{
+#line 13 "utilities/strings.bas"
+*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
+#line 13 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 13 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,13,"strings.bas");}while(r);
+#line 14 "utilities/strings.bas"
+dl_continue_3494:;
+#line 14 "utilities/strings.bas"
+}
+#line 14 "utilities/strings.bas"
+dl_exit_3494:;
+#line 15 "utilities/strings.bas"
+do{
+#line 15 "utilities/strings.bas"
+qbs_set(_FUNC_STRREMOVE_STRING_STRREMOVE,_FUNC_STRREMOVE_STRING_A);
+#line 15 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,15,"strings.bas");}while(r);
+#line 16 "utilities/strings.bas"
 exit_subfunc:;
+#line 16 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
+#line 16 "utilities/strings.bas"
 #include "free113.txt"
+#line 16 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 16 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
+#line 16 "utilities/strings.bas"
+qbs_maketmp(_FUNC_STRREMOVE_STRING_STRREMOVE);return _FUNC_STRREMOVE_STRING_STRREMOVE;
+#line 16 "utilities/strings.bas"
 }

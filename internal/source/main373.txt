@@ -1,42 +1,64 @@
-void SUB_IDEPAR(void*_SUB_IDEPAR_UDT_PAR,int32*_SUB_IDEPAR_LONG_W,int32*_SUB_IDEPAR_LONG_H,qbs*_SUB_IDEPAR_STRING_TITLE){
+#line 12117 "ide/ide_methods.bas"
+qbs* FUNC_IDEGETLINE(int32*_FUNC_IDEGETLINE_LONG_I){
+#line 12117 "ide/ide_methods.bas"
 qbs *tqbs;
+#line 12117 "ide/ide_methods.bas"
 ptrszint tmp_long;
+#line 12117 "ide/ide_methods.bas"
 int32 tmp_fileno;
+#line 12117 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 12117 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 12117 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 12117 "ide/ide_methods.bas"
 #include "data373.txt"
+#line 12117 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
+#line 12117 "ide/ide_methods.bas"
 new_mem_lock();
+#line 12117 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 12117 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
+#line 12117 "ide/ide_methods.bas"
 libqb_check_stack();
+#line 12117 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 12118 "ide/ide_methods.bas"
+S_57894:;
+#line 12118 "ide/ide_methods.bas"
+if ((-(*_FUNC_IDEGETLINE_LONG_I!= -1 ))||is_error_pending()){
+#line 12118 "ide/ide_methods.bas"
+if(qbevent){evnt(28646,12118,"ide_methods.bas");if(r)goto S_57894;}
+#line 12118 "ide/ide_methods.bas"
 do{
-*(int32*)(((char*)_SUB_IDEPAR_UDT_PAR)+((0+0)))=((qb_safe_idiv(*__LONG_IDEWX, 2 )))-(qb_safe_idiv(*_SUB_IDEPAR_LONG_W, 2 ));
-if(!qbevent)break;evnt(28182,12944,"ide_methods.bas");}while(r);
-do{
-*(int32*)(((char*)_SUB_IDEPAR_UDT_PAR)+((0+4)))=((qb_safe_idiv((*__LONG_IDEWY+*__LONG_IDESUBWINDOW), 2 )))-(qb_safe_idiv(*_SUB_IDEPAR_LONG_H, 2 ));
-if(!qbevent)break;evnt(28182,12945,"ide_methods.bas");}while(r);
-do{
-*(int32*)(((char*)_SUB_IDEPAR_UDT_PAR)+((0+8)))=*_SUB_IDEPAR_LONG_W;
-if(!qbevent)break;evnt(28182,12946,"ide_methods.bas");}while(r);
-do{
-*(int32*)(((char*)_SUB_IDEPAR_UDT_PAR)+((0+12)))=*_SUB_IDEPAR_LONG_H;
-if(!qbevent)break;evnt(28182,12947,"ide_methods.bas");}while(r);
-S_58157:;
-if ((qbs_cleanup(qbs_tmp_base,_SUB_IDEPAR_STRING_TITLE->len))||is_error_pending()){
-if(qbevent){evnt(28182,12948,"ide_methods.bas");if(r)goto S_58157;}
-do{
-*(int32*)(((char*)_SUB_IDEPAR_UDT_PAR)+((0+16)))=FUNC_IDENEWTXT(_SUB_IDEPAR_STRING_TITLE);
-if(!qbevent)break;evnt(28182,12948,"ide_methods.bas");}while(r);
+#line 12118 "ide/ide_methods.bas"
+SUB_IDEGOTOLINE(_FUNC_IDEGETLINE_LONG_I);
+#line 12118 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,12118,"ide_methods.bas");}while(r);
+#line 12118 "ide/ide_methods.bas"
 }
+#line 12119 "ide/ide_methods.bas"
 do{
-sub__resize( 2 ,NULL);
-if(!qbevent)break;evnt(28182,12949,"ide_methods.bas");}while(r);
+#line 12119 "ide/ide_methods.bas"
+qbs_set(_FUNC_IDEGETLINE_STRING_IDEGETLINE,func_mid(__STRING_IDET,*__LONG_IDELI+ 4 ,string2l(func_mid(__STRING_IDET,*__LONG_IDELI, 4 ,0|1)),0|1));
+#line 12119 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12119 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28646,12119,"ide_methods.bas");}while(r);
+#line 12120 "ide/ide_methods.bas"
 exit_subfunc:;
+#line 12120 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
+#line 12120 "ide/ide_methods.bas"
 #include "free373.txt"
+#line 12120 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 12120 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
+#line 12120 "ide/ide_methods.bas"
+qbs_maketmp(_FUNC_IDEGETLINE_STRING_IDEGETLINE);return _FUNC_IDEGETLINE_STRING_IDEGETLINE;
+#line 12120 "ide/ide_methods.bas"
 }

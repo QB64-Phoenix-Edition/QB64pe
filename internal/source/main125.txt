@@ -1,69 +1,106 @@
-qbs* FUNC_REMOVEDOUBLESLASHES(qbs*_FUNC_REMOVEDOUBLESLASHES_STRING_F2){
+#line 6 "utilities/file.bas"
+int32 FUNC_COPYFILE(qbs*_FUNC_COPYFILE_STRING_SOURCEFILE,qbs*_FUNC_COPYFILE_STRING_DESTFILE){
+#line 6 "utilities/file.bas"
 qbs *tqbs;
+#line 6 "utilities/file.bas"
 ptrszint tmp_long;
+#line 6 "utilities/file.bas"
 int32 tmp_fileno;
+#line 6 "utilities/file.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 6 "utilities/file.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 6 "utilities/file.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 6 "utilities/file.bas"
 #include "data125.txt"
+#line 6 "utilities/file.bas"
 mem_lock *sf_mem_lock;
+#line 6 "utilities/file.bas"
 new_mem_lock();
+#line 6 "utilities/file.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 6 "utilities/file.bas"
 sf_mem_lock->type=3;
+#line 6 "utilities/file.bas"
 libqb_check_stack();
+#line 6 "utilities/file.bas"
 if (is_error_pending()) goto exit_subfunc;
+#line 8 "utilities/file.bas"
 do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,_FUNC_REMOVEDOUBLESLASHES_STRING_F2);
+#line 8 "utilities/file.bas"
+qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
+#line 8 "utilities/file.bas"
+qbs_cleanup(qbs_tmp_base, 0);
+#line 8 "utilities/file.bas"
+error_goto_line=11;
+#line 8 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,8,"file.bas");}while(r);
+#line 9 "utilities/file.bas"
+do{
+#line 9 "utilities/file.bas"
+*__LONG_E= 0 ;
+#line 9 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,9,"file.bas");}while(r);
+#line 9 "utilities/file.bas"
+do{
+#line 9 "utilities/file.bas"
+qbs_set(_FUNC_COPYFILE_STRING_DAT,func__readfile(_FUNC_COPYFILE_STRING_SOURCEFILE));
+#line 9 "utilities/file.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,100,"file.bas");}while(r);
-S_36839:;
+#line 9 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,9,"file.bas");}while(r);
+#line 10 "utilities/file.bas"
+S_37277:;
+#line 10 "utilities/file.bas"
+if ((-(*__LONG_E== 0 ))||is_error_pending()){
+#line 10 "utilities/file.bas"
+if(qbevent){evnt(28627,10,"file.bas");if(r)goto S_37277;}
+#line 10 "utilities/file.bas"
 do{
-if(qbevent){evnt(28163,102,"file.bas");if(r)goto S_36839;}
-do{
-*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP=func_instr(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_new_txt_len("//",2),0|1);
+#line 10 "utilities/file.bas"
+sub__writefile(_FUNC_COPYFILE_STRING_DESTFILE,_FUNC_COPYFILE_STRING_DAT);
+#line 10 "utilities/file.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,103,"file.bas");}while(r);
-S_36841:;
-if ((-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP> 0 ))||is_error_pending()){
-if(qbevent){evnt(28163,104,"file.bas");if(r)goto S_36841;}
+#line 10 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,10,"file.bas");}while(r);
+#line 10 "utilities/file.bas"
+}else{
+#line 10 "utilities/file.bas"
 do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_add(qbs_left(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP- 1 ),func_mid(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,104,"file.bas");}while(r);
+#line 10 "utilities/file.bas"
+*__LONG_E= -1 ;
+#line 10 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,10,"file.bas");}while(r);
+#line 10 "utilities/file.bas"
 }
-S_36844:;
-dl_continue_4405:;
-}while((!(-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP== 0 )))&&(!is_error_pending()));
-dl_exit_4405:;
-if(qbevent){evnt(28163,105,"file.bas");if(r)goto S_36844;}
-S_36845:;
+#line 11 "utilities/file.bas"
 do{
-if(qbevent){evnt(28163,106,"file.bas");if(r)goto S_36845;}
+#line 11 "utilities/file.bas"
+error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
+#line 11 "utilities/file.bas"
+qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
+#line 11 "utilities/file.bas"
+qbs_cleanup(qbs_tmp_base, 0);
+#line 11 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,11,"file.bas");}while(r);
+#line 13 "utilities/file.bas"
 do{
-*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP=func_instr(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_new_txt_len("\\\\",2),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,107,"file.bas");}while(r);
-S_36847:;
-if ((-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP> 0 ))||is_error_pending()){
-if(qbevent){evnt(28163,108,"file.bas");if(r)goto S_36847;}
-do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_F,qbs_add(qbs_left(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP- 1 ),func_mid(_FUNC_REMOVEDOUBLESLASHES_STRING_F,*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP+ 1 ,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,108,"file.bas");}while(r);
-}
-S_36850:;
-dl_continue_4406:;
-}while((!(-(*_FUNC_REMOVEDOUBLESLASHES_INTEGER_SP== 0 )))&&(!is_error_pending()));
-dl_exit_4406:;
-if(qbevent){evnt(28163,109,"file.bas");if(r)goto S_36850;}
-do{
-qbs_set(_FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES,_FUNC_REMOVEDOUBLESLASHES_STRING_F);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,111,"file.bas");}while(r);
+#line 13 "utilities/file.bas"
+*_FUNC_COPYFILE_LONG_COPYFILE=*__LONG_E;
+#line 13 "utilities/file.bas"
+if(!qbevent)break;evnt(28627,13,"file.bas");}while(r);
+#line 14 "utilities/file.bas"
 exit_subfunc:;
+#line 14 "utilities/file.bas"
 free_mem_lock(sf_mem_lock);
+#line 14 "utilities/file.bas"
 #include "free125.txt"
+#line 14 "utilities/file.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 14 "utilities/file.bas"
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES);return _FUNC_REMOVEDOUBLESLASHES_STRING_REMOVEDOUBLESLASHES;
+#line 14 "utilities/file.bas"
+return *_FUNC_COPYFILE_LONG_COPYFILE;
+#line 14 "utilities/file.bas"
 }

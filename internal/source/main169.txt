@@ -1,122 +1,118 @@
-void SUB_INILOAD(qbs*_SUB_INILOAD_STRING_FILE){
+#line 138 "utilities/ini-manager/ini.bm"
+qbs* FUNC_INIFORMATSECTION(qbs*_FUNC_INIFORMATSECTION_STRING___SECTION){
+#line 138 "utilities/ini-manager/ini.bm"
 qbs *tqbs;
+#line 138 "utilities/ini-manager/ini.bm"
 ptrszint tmp_long;
+#line 138 "utilities/ini-manager/ini.bm"
 int32 tmp_fileno;
+#line 138 "utilities/ini-manager/ini.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 138 "utilities/ini-manager/ini.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 138 "utilities/ini-manager/ini.bm"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 138 "utilities/ini-manager/ini.bm"
 #include "data169.txt"
+#line 138 "utilities/ini-manager/ini.bm"
 mem_lock *sf_mem_lock;
+#line 138 "utilities/ini-manager/ini.bm"
 new_mem_lock();
+#line 138 "utilities/ini-manager/ini.bm"
 sf_mem_lock=mem_lock_tmp;
+#line 138 "utilities/ini-manager/ini.bm"
 sf_mem_lock->type=3;
+#line 138 "utilities/ini-manager/ini.bm"
 libqb_check_stack();
+#line 138 "utilities/ini-manager/ini.bm"
 if (is_error_pending()) goto exit_subfunc;
+#line 139 "utilities/ini-manager/ini.bm"
 do{
-if(!qbevent)break;evnt(28167,489,"ini.bm");}while(r);
+#line 139 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,139,"ini.bm");}while(r);
+#line 141 "utilities/ini-manager/ini.bm"
 do{
-if(!qbevent)break;evnt(28167,490,"ini.bm");}while(r);
+#line 141 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,141,"ini.bm");}while(r);
+#line 143 "utilities/ini-manager/ini.bm"
 do{
-if(!qbevent)break;evnt(28167,491,"ini.bm");}while(r);
-do{
-if(!qbevent)break;evnt(28167,492,"ini.bm");}while(r);
-do{
-*__LONG_INICODE= 0 ;
-if(!qbevent)break;evnt(28167,495,"ini.bm");}while(r);
-S_38222:;
-if ((qbs_cleanup(qbs_tmp_base,(qbs_notequal(_SUB_INILOAD_STRING_FILE,qbs_new_txt_len("",0)))&(qbs_notequal(__STRING_CURRENTINIFILENAME,_SUB_INILOAD_STRING_FILE))))||is_error_pending()){
-if(qbevent){evnt(28167,497,"ini.bm");if(r)goto S_38222;}
-do{
-qbs_set(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0));
+#line 143 "utilities/ini-manager/ini.bm"
+qbs_set(_FUNC_INIFORMATSECTION_STRING_SECTION,qbs_ltrim(qbs_rtrim(_FUNC_INIFORMATSECTION_STRING___SECTION)));
+#line 143 "utilities/ini-manager/ini.bm"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,497,"ini.bm");}while(r);
+#line 143 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,143,"ini.bm");}while(r);
+#line 146 "utilities/ini-manager/ini.bm"
+S_38471:;
+#line 146 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_left(_FUNC_INIFORMATSECTION_STRING_SECTION, 1 ),qbs_new_txt_len("[",1))))||is_error_pending()){
+#line 146 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(28631,146,"ini.bm");if(r)goto S_38471;}
+#line 146 "utilities/ini-manager/ini.bm"
+do{
+#line 146 "utilities/ini-manager/ini.bm"
+qbs_set(_FUNC_INIFORMATSECTION_STRING_SECTION,qbs_add(qbs_new_txt_len("[",1),_FUNC_INIFORMATSECTION_STRING_SECTION));
+#line 146 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 146 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,146,"ini.bm");}while(r);
+#line 146 "utilities/ini-manager/ini.bm"
 }
-S_38225:;
-if ((qbs_cleanup(qbs_tmp_base,*__LONG_INIFORCERELOAD&(-(__STRING_CURRENTINIFILENAME->len> 0 ))))||is_error_pending()){
-if(qbevent){evnt(28167,499,"ini.bm");if(r)goto S_38225;}
+#line 147 "utilities/ini-manager/ini.bm"
+S_38474:;
+#line 147 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_right(_FUNC_INIFORMATSECTION_STRING_SECTION, 1 ),qbs_new_txt_len("]",1))))||is_error_pending()){
+#line 147 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(28631,147,"ini.bm");if(r)goto S_38474;}
+#line 147 "utilities/ini-manager/ini.bm"
 do{
-qbs_set(_SUB_INILOAD_STRING_FILE,__STRING_CURRENTINIFILENAME);
+#line 147 "utilities/ini-manager/ini.bm"
+qbs_set(_FUNC_INIFORMATSECTION_STRING_SECTION,qbs_add(_FUNC_INIFORMATSECTION_STRING_SECTION,qbs_new_txt_len("]",1)));
+#line 147 "utilities/ini-manager/ini.bm"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,500,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,501,"ini.bm");}while(r);
+#line 147 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,147,"ini.bm");}while(r);
+#line 147 "utilities/ini-manager/ini.bm"
 }
-S_38229:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
-if(qbevent){evnt(28167,506,"ini.bm");if(r)goto S_38229;}
-S_38230:;
-if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_SUB_INILOAD_STRING_FILE)))||is_error_pending()){
-if(qbevent){evnt(28167,508,"ini.bm");if(r)goto S_38230;}
+#line 149 "utilities/ini-manager/ini.bm"
+S_38477:;
+#line 149 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func_mid(_FUNC_INIFORMATSECTION_STRING_SECTION, 2 ,_FUNC_INIFORMATSECTION_STRING_SECTION->len- 3 ,0|1),qbs_new_txt_len("[",1),0)|func_instr(NULL,func_mid(_FUNC_INIFORMATSECTION_STRING_SECTION, 2 ,_FUNC_INIFORMATSECTION_STRING_SECTION->len- 3 ,0|1),qbs_new_txt_len("]",1),0)))||is_error_pending()){
+#line 149 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(28631,149,"ini.bm");if(r)goto S_38477;}
+#line 150 "utilities/ini-manager/ini.bm"
 do{
-qbs_set(__STRING_CURRENTINIFILENAME,_SUB_INILOAD_STRING_FILE);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,509,"ini.bm");}while(r);
+#line 150 "utilities/ini-manager/ini.bm"
+*__LONG_INICODE= 15 ;
+#line 150 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,150,"ini.bm");}while(r);
+#line 151 "utilities/ini-manager/ini.bm"
 do{
-*_SUB_INILOAD_INTEGER_FILENUM=func_freefile();
-if(!qbevent)break;evnt(28167,512,"ini.bm");}while(r);
-do{
-sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INILOAD_INTEGER_FILENUM,NULL,0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,513,"ini.bm");}while(r);
-do{
-*__ULONG_CURRENTINIFILELOF=func_lof(*_SUB_INILOAD_INTEGER_FILENUM);
-if(!qbevent)break;evnt(28167,514,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_INIWHOLEFILE,func_space(*__ULONG_CURRENTINIFILELOF));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,515,"ini.bm");}while(r);
-do{
-sub_get2(*_SUB_INILOAD_INTEGER_FILENUM, 1 ,__STRING_INIWHOLEFILE,1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,516,"ini.bm");}while(r);
-do{
-sub_close(*_SUB_INILOAD_INTEGER_FILENUM,1);
-if(!qbevent)break;evnt(28167,517,"ini.bm");}while(r);
-S_38238:;
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,__STRING_INIWHOLEFILE,func_chr( 13 ),0)))||is_error_pending()){
-if(qbevent){evnt(28167,520,"ini.bm");if(r)goto S_38238;}
-do{
-qbs_set(__STRING_INILF,qbs_add(func_chr( 13 ),func_chr( 10 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,520,"ini.bm");}while(r);
-}else{
-do{
-qbs_set(__STRING_INILF,func_chr( 10 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,520,"ini.bm");}while(r);
-}
-}else{
-LABEL_INIFILENOTFOUND:;
-if(qbevent){evnt(28167,522,"ini.bm");r=0;}
-do{
-*__LONG_INICODE= 1 ;
-if(!qbevent)break;evnt(28167,523,"ini.bm");}while(r);
-do{
-qbs_set(__STRING_INILF,func_chr( 10 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,528,"ini.bm");}while(r);
-do{
+#line 151 "utilities/ini-manager/ini.bm"
 goto exit_subfunc;
-if(!qbevent)break;evnt(28167,530,"ini.bm");}while(r);
+#line 151 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,151,"ini.bm");}while(r);
+#line 152 "utilities/ini-manager/ini.bm"
 }
-S_38248:;
-}else{
-if (qbs_cleanup(qbs_tmp_base,~(func__fileexists(__STRING_CURRENTINIFILENAME)))){
-if(qbevent){evnt(28167,532,"ini.bm");if(r)goto S_38248;}
+#line 154 "utilities/ini-manager/ini.bm"
 do{
-qbs_set(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0));
+#line 154 "utilities/ini-manager/ini.bm"
+qbs_set(_FUNC_INIFORMATSECTION_STRING_INIFORMATSECTION,_FUNC_INIFORMATSECTION_STRING_SECTION);
+#line 154 "utilities/ini-manager/ini.bm"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28167,533,"ini.bm");}while(r);
-do{
-goto LABEL_INIFILENOTFOUND;
-if(!qbevent)break;evnt(28167,534,"ini.bm");}while(r);
-}
-}
+#line 154 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(28631,154,"ini.bm");}while(r);
+#line 155 "utilities/ini-manager/ini.bm"
 exit_subfunc:;
+#line 155 "utilities/ini-manager/ini.bm"
 free_mem_lock(sf_mem_lock);
+#line 155 "utilities/ini-manager/ini.bm"
 #include "free169.txt"
+#line 155 "utilities/ini-manager/ini.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 155 "utilities/ini-manager/ini.bm"
 cmem_sp=tmp_cmem_sp;
+#line 155 "utilities/ini-manager/ini.bm"
+qbs_maketmp(_FUNC_INIFORMATSECTION_STRING_INIFORMATSECTION);return _FUNC_INIFORMATSECTION_STRING_INIFORMATSECTION;
+#line 155 "utilities/ini-manager/ini.bm"
 }

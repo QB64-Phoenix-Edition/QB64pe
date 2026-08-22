@@ -1,69 +1,58 @@
-qbs* FUNC_REMOVEFILEEXTENSION(qbs*_FUNC_REMOVEFILEEXTENSION_STRING_F){
+#line 88 "utilities/strings.bas"
+int32 FUNC_READCONFIGSETTING(qbs*_FUNC_READCONFIGSETTING_STRING_SECTION,qbs*_FUNC_READCONFIGSETTING_STRING_ITEM,qbs*_FUNC_READCONFIGSETTING_STRING_VALUE){
+#line 88 "utilities/strings.bas"
 qbs *tqbs;
+#line 88 "utilities/strings.bas"
 ptrszint tmp_long;
+#line 88 "utilities/strings.bas"
 int32 tmp_fileno;
+#line 88 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
+#line 88 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
+#line 88 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
+#line 88 "utilities/strings.bas"
 #include "data121.txt"
+#line 88 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
+#line 88 "utilities/strings.bas"
 new_mem_lock();
+#line 88 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
+#line 88 "utilities/strings.bas"
 sf_mem_lock->type=3;
+#line 88 "utilities/strings.bas"
 libqb_check_stack();
+#line 88 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-S_36794:;
-fornext_value4387=_FUNC_REMOVEFILEEXTENSION_STRING_F->len;
-fornext_finalvalue4387= 1 ;
-fornext_step4387= -1 ;
-if (fornext_step4387<0) fornext_step_negative4387=1; else fornext_step_negative4387=0;
-if (is_error_pending()) goto fornext_error4387;
-goto fornext_entrylabel4387;
-while(1){
-fornext_value4387=fornext_step4387+(*_FUNC_REMOVEFILEEXTENSION_LONG_I);
-fornext_entrylabel4387:
-*_FUNC_REMOVEFILEEXTENSION_LONG_I=fornext_value4387;
+#line 89 "utilities/strings.bas"
+do{
+#line 89 "utilities/strings.bas"
+qbs_set(_FUNC_READCONFIGSETTING_STRING_VALUE,FUNC_READSETTING(__STRING_CONFIGFILE,_FUNC_READCONFIGSETTING_STRING_SECTION,_FUNC_READCONFIGSETTING_STRING_ITEM));
+#line 89 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if (fornext_step_negative4387){
-if (fornext_value4387<fornext_finalvalue4387) break;
-}else{
-if (fornext_value4387>fornext_finalvalue4387) break;
-}
-fornext_error4387:;
-if(qbevent){evnt(28163,48,"file.bas");if(r)goto S_36794;}
+#line 89 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,89,"strings.bas");}while(r);
+#line 90 "utilities/strings.bas"
 do{
-*_FUNC_REMOVEFILEEXTENSION_LONG_A=qbs_asc(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I);
+#line 90 "utilities/strings.bas"
+*_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING=(-(_FUNC_READCONFIGSETTING_STRING_VALUE->len> 0 ));
+#line 90 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,49,"file.bas");}while(r);
-S_36796:;
-if (((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 47 ))|(-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 92 )))||is_error_pending()){
-if(qbevent){evnt(28163,50,"file.bas");if(r)goto S_36796;}
-do{
-goto fornext_exit_4386;
-if(!qbevent)break;evnt(28163,50,"file.bas");}while(r);
-}
-S_36799:;
-if ((-(*_FUNC_REMOVEFILEEXTENSION_LONG_A== 46 ))||is_error_pending()){
-if(qbevent){evnt(28163,51,"file.bas");if(r)goto S_36799;}
-do{
-qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,qbs_left(_FUNC_REMOVEFILEEXTENSION_STRING_F,*_FUNC_REMOVEFILEEXTENSION_LONG_I- 1 ));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,51,"file.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28163,51,"file.bas");}while(r);
-}
-fornext_continue_4386:;
-}
-fornext_exit_4386:;
-do{
-qbs_set(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION,_FUNC_REMOVEFILEEXTENSION_STRING_F);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28163,53,"file.bas");}while(r);
+#line 90 "utilities/strings.bas"
+if(!qbevent)break;evnt(28626,90,"strings.bas");}while(r);
+#line 91 "utilities/strings.bas"
 exit_subfunc:;
+#line 91 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
+#line 91 "utilities/strings.bas"
 #include "free121.txt"
+#line 91 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
+#line 91 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION);return _FUNC_REMOVEFILEEXTENSION_STRING_REMOVEFILEEXTENSION;
+#line 91 "utilities/strings.bas"
+return *_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING;
+#line 91 "utilities/strings.bas"
 }

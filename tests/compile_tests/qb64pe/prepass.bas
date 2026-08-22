@@ -49,11 +49,16 @@ Next
 
 SYSTEM
 
+qberror_test:
+E = 1
+RESUME NEXT
+
 '$include:'../../../source/utilities/ini-manager/ini.bm'
 '$include:'../../../source/utilities/s-buffer/simplebuffer.bm'
 '$include:'../../../source/utilities/elements.bas'
 '$include:'../../../source/utilities/const_eval.bas'
 '$include:'../../../source/utilities/hash.bas'
+'$include:'../../../source/utilities/file.bas'
 '$include:'../../../source/utilities/give_error.bas'
 '$include:'../../../source/utilities/strings.bas'
 '$include:'../../../source/utilities/type.bas'

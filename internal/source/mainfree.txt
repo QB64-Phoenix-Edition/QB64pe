@@ -49,6 +49,14 @@ while(tmp_long--) qbs_free((qbs*)((uint64*)(__ARRAY_STRING_SBUFN[0]))[tmp_long])
 free((void*)(__ARRAY_STRING_SBUFN[0]));
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_STRING_SBUFN)[8] );
+if (__ARRAY_BYTE_SBUFCPPLINESTATUS[2]&1){
+if (__ARRAY_BYTE_SBUFCPPLINESTATUS[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_BYTE_SBUFCPPLINESTATUS[0]));
+}else{
+free((void*)(__ARRAY_BYTE_SBUFCPPLINESTATUS[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_BYTE_SBUFCPPLINESTATUS)[8] );
 if (__ARRAY_UDT_CONSTFUNCS[2]&1){
 tmp_long=__ARRAY_UDT_CONSTFUNCS[5];
 while(tmp_long--) {
@@ -799,6 +807,14 @@ free((void*)(__ARRAY_LONG_INCLINENUMBER[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_INCLINENUMBER)[8] );
+if (__ARRAY_LONG_INCISINTERNAL[2]&1){
+if (__ARRAY_LONG_INCISINTERNAL[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_LONG_INCISINTERNAL[0]));
+}else{
+free((void*)(__ARRAY_LONG_INCISINTERNAL[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_INCISINTERNAL)[8] );
 qbs_free(__STRING_INCERROR);
 qbs_free(__STRING_FIX046);
 qbs_free(__STRING_LAYOUT);
@@ -840,6 +856,7 @@ free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_LONG_LFSINGLECHAR)[8] );
 qbs_free(__STRING_LINEINPUT3BUFFER);
 qbs_free(__STRING_STATICARRAYLIST);
 qbs_free(__STRING_COMMONARRAYLIST);
+#line 605 "qb64pe.bas"
 qbs_free(*((qbs**)(((char*)__UDT_ID)+ 2965)));
 if (__ARRAY_UDT_IDS[2]&1){
 tmp_long=__ARRAY_UDT_IDS[5];
@@ -873,6 +890,7 @@ free((void*)(__ARRAY_INTEGER_ARRAYELEMENTSLIST[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_ARRAYELEMENTSLIST)[8] );
+#line 617 "qb64pe.bas"
 qbs_free(*((qbs**)(((char*)__UDT_CLEARIDDATA)+ 2965)));
 qbs_free(__STRING_SOURCEFILE);
 qbs_free(__STRING_FILE);
@@ -885,6 +903,8 @@ qbs_free(__STRING_CLEANUPSTRINGPROCESSINGCALL);
 qbs_free(__STRING_ADDMETAINCLUDE);
 qbs_free(__STRING_MODULE);
 qbs_free(__STRING_SUBFUNC);
+qbs_free(__STRING_ASG_LNAME);
+qbs_free(__STRING_ASG_RNAME);
 if (__ARRAY_INTEGER64_BITMASK[2]&1){
 if (__ARRAY_INTEGER64_BITMASK[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_INTEGER64_BITMASK[0]));
@@ -961,6 +981,7 @@ free((void*)(__ARRAY_BYTE_UNSTABLEFLAGS[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_BYTE_UNSTABLEFLAGS)[8] );
+#line 796 "qb64pe.bas"
 qbs_free(*((qbs**)(((char*)__UDT_ID2)+ 2965)));
 if (__ARRAY_LONG_SFIDLIST[2]&1){
 if (__ARRAY_LONG_SFIDLIST[2]&4){
@@ -1116,6 +1137,7 @@ qbs_free(__STRING_HASHNAME);
 qbs_free(__STRING_CN);
 qbs_free(__STRING_S);
 qbs_free(__STRING_E2);
+#line 2542 "qb64pe.bas"
 qbs_free(*((qbs**)(((char*)__UDT_TEMPNUM)+ 48)));
 qbs_free(__STRING_TEMP1);
 qbs_free(__STRING_THISCONSTVAL);
@@ -1216,6 +1238,7 @@ qbs_free(__STRING_REDIMFULLTARGET);
 qbs_free(__STRING_REDIMTARGETEXPR);
 qbs_free(__STRING_REDIMBOUNDS);
 qbs_free(__STRING_REDIMTYPESUFFIX);
+qbs_free(__STRING_REDIMTARGETEVAL);
 qbs_free(__STRING_REDIMTARGETREF);
 qbs_free(__STRING_REDIMOFFSET);
 qbs_free(__STRING_REDIMBASE);
