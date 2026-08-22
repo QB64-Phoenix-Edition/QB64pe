@@ -717,6 +717,18 @@ DIM SHARED uniquenumbern AS LONG
 
 DIM SHARED udt_allow_bare_array AS INTEGER
 
+
+'Assignment syntax guard state. These values are set only by assign() while the
+'right side of a normal assignment is being evaluated. The guard never decides
+'array/scalar identity from a name lookup alone; it uses the type returned by the
+'normal expression resolver, preserving valid scalar/array name coexistence.
+DIM SHARED asg_guard_on AS INTEGER
+DIM SHARED asg_lstate AS INTEGER
+DIM SHARED asg_lname AS STRING
+DIM SHARED asg_rkind AS INTEGER
+DIM SHARED asg_rname AS STRING
+DIM SHARED asg_rmember AS INTEGER
+
 'CLEAR , , 16384
 
 
@@ -8852,8 +8864,15 @@ DO
                             '-----
 
                             ' Evaluate the target as a whole bare member-array reference.
+                            ' This dedicated REDIM path receives the original token stream from ca$.
+                            ' Normalize unary operators first, matching normal expression handling;
+                            ' otherwise an intermediate negative member index such as leafSet(-1)
+                            ' reaches evaluate() as raw "- 1" tokens and the closing parenthesis is
+                            ' misdiagnosed as "Expected variable/value before ')'".
+                            redimTargetEval$ = fixoperationorder$(redimTargetExpr$)
+                            IF Error_Happened THEN GOTO errmes
                             udt_allow_bare_array = -1
-                            redimTargetRef$ = evaluate(redimTargetExpr$, redimTargetTyp)
+                            redimTargetRef$ = evaluate(redimTargetEval$, redimTargetTyp)
                             udt_allow_bare_array = 0
                             IF Error_Happened THEN GOTO errmes
                             IF (redimTargetTyp AND ISREFERENCE) = 0 OR (redimTargetTyp AND ISARRAY) = 0 THEN
@@ -11878,6 +11897,20 @@ DO
                             IF INSTR(member_array_arg_source$, ".") THEN
                                 IF IsWholeMemberArrayRef%(e$, sourcetyp) THEN
                                     IF HasFinalEmptyArrayBrackets%(member_array_arg_source$) = 0 THEN a$ = "Expected: Array Name()": GOTO errmes
+                                END IF
+                            END IF
+                        END IF
+
+                        'A user SUB scalar parameter must not silently accept array() as array(0).
+                        'The original spelling is required because both forms currently encode offset zero.
+                        IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                            IF targettyp >= 0 THEN
+                                IF (targettyp AND ISARRAY) = 0 THEN
+                                    IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                        IF HasFinalEmptyArrayBrackets%(separgs2(i)) THEN
+                                            a$ = "Whole array cannot be passed to a scalar SUB parameter": GOTO errmes
+                                        END IF
+                                    END IF
                                 END IF
                             END IF
                         END IF
@@ -16456,6 +16489,319 @@ FUNCTION WholeArrayName$ (expr AS STRING)
     WholeArrayName$ = candidate
 END FUNCTION
 
+
+'Classify only the spelling of a direct reference. ref_kind values:
+'  1 = final name has no parentheses
+'  2 = final name has empty parentheses ()
+'  3 = final name has a non-empty index list
+'  0 = not a direct variable/member chain
+'Symbol identity is deliberately not resolved here.
+SUB GetAsgRefSyntax (expr AS STRING, ref_kind AS LONG, final_name AS STRING, has_member AS LONG, root_name AS STRING)
+    DIM AS STRING work, token_text
+    DIM AS LONG token_count, token_at, scan_at, depth_count, full_wrap, group_kind
+
+    ref_kind = 0
+    final_name = ""
+    has_member = 0
+    root_name = ""
+
+    work = expr
+    token_count = numelements(work)
+    IF token_count = 0 THEN EXIT SUB
+
+    'Ignore complete outer parentheses around a direct reference.
+    DO WHILE token_count >= 2
+        IF getelement$(work, 1) <> "(" OR getelement$(work, token_count) <> ")" THEN EXIT DO
+        depth_count = 0
+        full_wrap = -1
+        FOR scan_at = 1 TO token_count
+            token_text = getelement$(work, scan_at)
+            IF token_text = "(" THEN depth_count = depth_count + 1
+            IF token_text = ")" THEN
+                depth_count = depth_count - 1
+                IF depth_count = 0 AND scan_at <> token_count THEN full_wrap = 0: EXIT FOR
+            END IF
+        NEXT
+        IF full_wrap = 0 OR depth_count <> 0 THEN EXIT DO
+        work = getelements$(work, 2, token_count - 1)
+        token_count = numelements(work)
+        IF token_count = 0 THEN EXIT SUB
+    LOOP
+
+    token_at = 1
+    token_text = getelement$(work, token_at)
+    IF validname(token_text) = 0 THEN EXIT SUB
+    root_name = token_text
+
+    DO
+        token_text = getelement$(work, token_at)
+        IF validname(token_text) = 0 THEN ref_kind = 0: EXIT SUB
+        final_name = token_text
+        token_at = token_at + 1
+        group_kind = 0
+
+        IF token_at <= token_count THEN
+            IF getelement$(work, token_at) = "(" THEN
+                depth_count = 1
+                scan_at = token_at
+                DO
+                    scan_at = scan_at + 1
+                    IF scan_at > token_count THEN ref_kind = 0: EXIT SUB
+                    token_text = getelement$(work, scan_at)
+                    IF token_text = "(" THEN depth_count = depth_count + 1
+                    IF token_text = ")" THEN
+                        depth_count = depth_count - 1
+                        IF depth_count = 0 THEN EXIT DO
+                    END IF
+                LOOP
+                IF scan_at = token_at + 1 THEN group_kind = 2 ELSE group_kind = 3
+                token_at = scan_at + 1
+            END IF
+        END IF
+
+        IF token_at > token_count THEN
+            IF group_kind = 0 THEN ref_kind = 1 ELSE ref_kind = group_kind
+            EXIT SUB
+        END IF
+
+        IF getelement$(work, token_at) <> "." THEN ref_kind = 0: EXIT SUB
+        has_member = -1
+        token_at = token_at + 1
+        IF token_at > token_count THEN ref_kind = 0: EXIT SUB
+    LOOP
+END SUB
+
+'Resolve an explicit whole-array reference. Top-level name() uses the existing
+'FindArray resolver. TYPE member arrays are resolved by the normal UDT evaluator
+'with its established whole-member mode enabled.
+SUB GetWholeAsgRef (expr AS STRING, root_name AS STRING, has_member AS LONG, ref_ok AS LONG, ref_text AS STRING, ref_typ AS LONG, id_number AS LONG, member_id AS LONG)
+    DIM AS STRING eval_text, saved_layout
+    DIM saved_bare AS INTEGER
+    DIM AS LONG sep_one, sep_two, sep_three, array_found
+
+    ref_ok = 0
+    ref_text = ""
+    ref_typ = 0
+    id_number = 0
+    member_id = 0
+
+    IF has_member = 0 THEN
+        array_found = FindArray(root_name)
+        IF Error_Happened THEN EXIT SUB
+        IF array_found = 0 THEN EXIT SUB
+        IF id.arraytype = 0 THEN EXIT SUB
+        id_number = currentid
+        ref_typ = id.arraytype
+        ref_text = RTRIM$(id.callname)
+        ref_ok = -1
+        EXIT SUB
+    END IF
+
+    saved_layout = tlayout$
+    eval_text = fixoperationorder$(expr)
+    tlayout$ = saved_layout
+    IF Error_Happened THEN EXIT SUB
+
+    saved_bare = udt_allow_bare_array
+    udt_allow_bare_array = -1
+    ref_text = evaluate(eval_text, ref_typ)
+    udt_allow_bare_array = saved_bare
+    tlayout$ = saved_layout
+    IF Error_Happened THEN EXIT SUB
+    IF IsWholeMemberArrayRef%(ref_text, ref_typ) = 0 THEN EXIT SUB
+
+    sep_one = INSTR(ref_text, sp3)
+    IF sep_one = 0 THEN EXIT SUB
+    sep_two = INSTR(sep_one + LEN(sp3), ref_text, sp3)
+    IF sep_two = 0 THEN EXIT SUB
+    sep_three = INSTR(sep_two + LEN(sp3), ref_text, sp3)
+    IF sep_three = 0 THEN EXIT SUB
+
+    id_number = VAL(LEFT$(ref_text, sep_one - 1))
+    member_id = VAL(MID$(ref_text, sep_two + LEN(sp3), sep_three - sep_two - LEN(sp3)))
+    IF id_number <= 0 OR member_id <= 0 THEN EXIT SUB
+    ref_ok = -1
+END SUB
+
+'Emit a whole-array assignment for top-level arrays, TYPE member arrays, or a
+'mix of both. BuildUDTMemberArg supplies a live/synthetic descriptor for members.
+SUB EmitAssignWhole (lref AS STRING, ltyp AS LONG, lidnum AS LONG, lmember AS LONG, rref AS STRING, rtyp AS LONG, ridnum AS LONG, rmember AS LONG)
+    DIM lid AS idstruct
+    DIM rid AS idstruct
+    DIM AS STRING ldesc, rdesc, lprep, rprep
+    DIM AS LONG lcmp, rcmp, lsize, rsize, ldims, rdims, lmode, rmode, lphysdyn, rphysdyn, lowns, rowns, ludt, rudt
+
+    IF lmember = 0 THEN
+        getid lidnum
+        IF Error_Happened THEN EXIT SUB
+        lid = id
+        ldesc = RTRIM$(lid.callname)
+        ltyp = lid.arraytype
+        lsize = lid.tsize
+        ldims = lid.arrayelements
+        IF ldims <= 0 THEN ldims = arrayelementslist(lidnum)
+        lmode = lid.dynudtmode
+        IF lmode = 0 THEN lmode = lid.dynudt
+        IF lid.dynudt THEN lphysdyn = -1 ELSE lphysdyn = 0
+        lowns = -1
+    ELSE
+        BuildUDTMemberArg lref, ldesc, lprep, ldims
+        IF Error_Happened THEN EXIT SUB
+        getid lidnum
+        IF Error_Happened THEN EXIT SUB
+        lid = id
+        ltyp = udtetype(lmember)
+        lsize = udtetypesize(lmember)
+        lmode = lid.dynudtmode
+        IF lmode = 0 THEN lmode = lid.dynudt
+        IF lid.dynudt AND UDTMemberDynDesc%(lmember) THEN lowns = -1 ELSE lowns = 0
+    END IF
+
+    IF rmember = 0 THEN
+        getid ridnum
+        IF Error_Happened THEN EXIT SUB
+        rid = id
+        rdesc = RTRIM$(rid.callname)
+        rtyp = rid.arraytype
+        rsize = rid.tsize
+        rdims = rid.arrayelements
+        IF rdims <= 0 THEN rdims = arrayelementslist(ridnum)
+        rmode = rid.dynudtmode
+        IF rmode = 0 THEN rmode = rid.dynudt
+        IF rid.dynudt THEN rphysdyn = -1 ELSE rphysdyn = 0
+        rowns = -1
+    ELSE
+        BuildUDTMemberArg rref, rdesc, rprep, rdims
+        IF Error_Happened THEN EXIT SUB
+        getid ridnum
+        IF Error_Happened THEN EXIT SUB
+        rid = id
+        rtyp = udtetype(rmember)
+        rsize = udtetypesize(rmember)
+        rmode = rid.dynudtmode
+        IF rmode = 0 THEN rmode = rid.dynudt
+        IF rid.dynudt AND UDTMemberDynDesc%(rmember) THEN rowns = -1 ELSE rowns = 0
+    END IF
+
+    lcmp = ltyp AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    rcmp = rtyp AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    IF lcmp <> rcmp THEN Give_Error "Cannot assign arrays of different types": EXIT SUB
+    IF (lcmp AND ISFIXEDLENGTH) <> 0 AND lsize <> rsize THEN Give_Error "Cannot assign fixed-length STRING arrays with different element sizes": EXIT SUB
+    IF ldims <= 0 OR rdims <= 0 THEN Give_Error "Cannot assign arrays with unknown dimensions": EXIT SUB
+    IF ldims <> rdims THEN Give_Error "Cannot assign arrays with different dimensions": EXIT SUB
+
+    IF lcmp AND ISUDT THEN
+        ludt = lcmp AND UDTMASK
+        rudt = rcmp AND UDTMASK
+        IF ludt <> rudt THEN Give_Error "Cannot assign arrays of different types": EXIT SUB
+
+        IF lmember THEN
+            IF lowns THEN
+                lphysdyn = -1
+            ELSEIF lid.dynudt THEN
+                IF UDTDynHasMemberArrays%(ludt, lmode) THEN lphysdyn = -1
+            END IF
+        END IF
+        IF rmember THEN
+            IF rowns THEN
+                rphysdyn = -1
+            ELSEIF rid.dynudt THEN
+                IF UDTDynHasMemberArrays%(rudt, rmode) THEN rphysdyn = -1
+            END IF
+        END IF
+
+        IF lphysdyn <> rphysdyn THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
+        IF lphysdyn AND lmode <> rmode THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
+    END IF
+
+    IF lprep <> "" THEN WriteBufRawData MainTxtBuf, lprep
+    IF rprep <> "" THEN WriteBufRawData MainTxtBuf, rprep
+
+    IF lcmp AND ISUDT THEN
+        IF lmember = 0 AND lphysdyn AND UDTDynHasMemberArrays%(ludt, lmode) THEN
+            AppendDynUDTArrayAssign ldesc, rdesc, ludt, lmode, ldims
+        ELSE
+            AppendWholeArrayAssign ldesc, rdesc, lcmp, lsize, ldims, lphysdyn, lmode
+        END IF
+    ELSE
+        AppendWholeArrayAssign ldesc, rdesc, lcmp, lsize, ldims, 0, 0
+    END IF
+END SUB
+
+'Classify only the final reference used by the array-assignment guard.
+'For a top-level name, the normal resolver is authoritative: a bare scalar may
+'legally share its name with an array. ISARRAY can also describe an indexed
+'parent array, so a final TYPE member is checked through its own metadata.
+SUB GetAsgRefState (ref_text AS STRING, ref_typ AS LONG, ref_kind AS LONG, has_member AS LONG, ref_state AS LONG)
+    DIM AS LONG sep_one, sep_two, sep_three, member_id
+
+    ref_state = 0
+    IF ref_kind < 1 OR ref_kind > 3 THEN EXIT SUB
+
+    IF has_member = 0 THEN
+        IF ref_typ AND ISARRAY THEN ref_state = ref_kind
+        EXIT SUB
+    END IF
+
+    IF (ref_typ AND ISREFERENCE) = 0 THEN EXIT SUB
+    sep_one = INSTR(ref_text, sp3)
+    IF sep_one = 0 THEN EXIT SUB
+    sep_two = INSTR(sep_one + LEN(sp3), ref_text, sp3)
+    IF sep_two = 0 THEN EXIT SUB
+    sep_three = INSTR(sep_two + LEN(sp3), ref_text, sp3)
+    IF sep_three = 0 THEN EXIT SUB
+
+    member_id = VAL(MID$(ref_text, sep_two + LEN(sp3), sep_three - sep_two - LEN(sp3)))
+    IF member_id <= 0 THEN EXIT SUB
+    IF udtearrayelements(member_id) THEN ref_state = ref_kind
+END SUB
+
+'Apply the agreed diagnostic table after the normal resolver has identified the
+'right side. A nonzero state means the final reference really is an array:
+'  1 bare array, 2 whole array (), 3 indexed array element.
+SUB CheckAsgRHS (rhs_ref AS STRING, rhs_typ AS LONG)
+    DIM rhs_state AS LONG
+
+    GetAsgRefState rhs_ref, rhs_typ, asg_rkind, asg_rmember, rhs_state
+
+    IF asg_lstate = 2 OR rhs_state = 2 THEN
+        IF asg_lstate <> 0 AND rhs_state <> 0 THEN
+            Give_Error "Whole-array assignment requires empty parentheses on both sides"
+        ELSEIF asg_lstate = 2 THEN
+            Give_Error "Expected array index after " + asg_lname
+        ELSEIF rhs_state = 2 THEN
+            Give_Error "Expected array index after " + asg_rname
+        END IF
+        EXIT SUB
+    END IF
+
+    IF asg_lstate = 1 AND rhs_state = 1 THEN
+        Give_Error "Whole-array assignment requires empty parentheses on both sides"
+        EXIT SUB
+    END IF
+    IF asg_lstate = 1 THEN Give_Error "Expected array index after " + asg_lname: EXIT SUB
+    IF rhs_state = 1 THEN Give_Error "Expected array index after " + asg_rname: EXIT SUB
+END SUB
+
+'Evaluate the RHS once through the normal resolver, then run the assignment-only
+'guard. Recursive evaluation is excluded by temporarily clearing asg_guard_on.
+SUB EvalAsgRHS (expr AS STRING, ref_text AS STRING, out_typ AS LONG)
+    DIM saved_on AS INTEGER
+    DIM saved_bare AS INTEGER
+
+    saved_on = asg_guard_on
+    saved_bare = udt_allow_bare_array
+    asg_guard_on = 0
+    IF asg_rmember AND (asg_rkind = 1 OR asg_rkind = 2) THEN udt_allow_bare_array = -1
+
+    ref_text = evaluate(expr, out_typ)
+
+    udt_allow_bare_array = saved_bare
+    asg_guard_on = saved_on
+    IF Error_Happened THEN EXIT SUB
+    CheckAsgRHS ref_text, out_typ
+END SUB
+
 'Emit whole-array assignment for descriptor-layout UDT arrays, e.g. dst() = src().
 'This validates both arrays and requires identical bounds, then performs deep-copy
 'semantics so destination descriptors/qbs strings are independent from the source.
@@ -16683,7 +17029,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     DIM elemnum AS LONG
     DIM nested_udt AS LONG
     DIM stat_bit AS LONG
-    DIM dyn_bit AS LONG
     DIM stat_off AS LONG
     DIM dyn_off AS LONG
     DIM stat_bytes AS LONG
@@ -16702,14 +17047,15 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
     cr = CHR$(13) + CHR$(10)
     elemnum = udtxnext(udt_index)
     stat_bit = 0
-    dyn_bit = 0
 
     DO WHILE elemnum
         IF stat_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
-        IF dyn_bit MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
+        IF UDTDynMemberOffset&(elemnum) MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT SUB
 
         stat_off = stat_bit \ 8
-        dyn_off = dyn_bit \ 8
+        ' Descriptor layouts may insert alignment padding before a member. Use the
+        ' canonical precomputed offset instead of reconstructing it from member sizes.
+        dyn_off = UDTDynMemberOffset&(elemnum) \ 8
         stat_bytes = udtesize(elemnum) \ 8
         dyn_bytes = UDTDynMemberSize&(elemnum) \ 8
         nested_udt = 0
@@ -16777,7 +17123,6 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
         END IF
 
         stat_bit = stat_bit + udtesize(elemnum)
-        dyn_bit = dyn_bit + UDTDynMemberSize&(elemnum)
         elemnum = udtenext(elemnum)
     LOOP
 END SUB
@@ -16873,16 +17218,104 @@ FUNCTION UDTFileArrayBE$ (arr_expr AS STRING, udt_index AS LONG, layout_mode AS 
 END FUNCTION
 
 
+'Emit whole-array assignment for ordinary arrays and inline-layout UDT arrays.
+'Both descriptors must already be initialized and must have identical bounds.
+'Variable-length STRING and UDT ownership are copied element-by-element;
+'plain fixed-size payloads use one block copy.
+SUB AppendWholeArrayAssign (dstarr AS STRING, srcarr AS STRING, arrtyp AS LONG, arrsize AS LONG, arrdims AS LONG, dynudt AS LONG, dynmode AS LONG)
+    DIM elemtext AS STRING
+    DIM dstexpr AS STRING
+    DIM srcexpr AS STRING
+    DIM arrudt AS LONG
+    DIM bits AS LONG
+
+    IF arrdims <= 0 THEN Give_Error "Cannot assign arrays with unknown dimensions": EXIT SUB
+
+    WriteBufLine MainTxtBuf, "{"
+    WriteBufLine MainTxtBuf, "ptrszint *whole_arr_dst=" + dstarr + ";"
+    WriteBufLine MainTxtBuf, "ptrszint *whole_arr_src=" + srcarr + ";"
+    WriteBufLine MainTxtBuf, "int32 whole_arr_ok=1;"
+    WriteBufLine MainTxtBuf, "uint64 whole_arr_total=1;"
+    WriteBufLine MainTxtBuf, "if (!(whole_arr_dst[2]&1)||!(whole_arr_src[2]&1)||(!whole_arr_dst[0])||(!whole_arr_src[0])||(whole_arr_dst[0]==(ptrszint)nothingvalue)||(whole_arr_src[0]==(ptrszint)nothingvalue)){error(9); whole_arr_ok=0;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_ok){"
+    WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_dim=1; whole_arr_dim<=" + _TOSTR$(arrdims) + "; whole_arr_dim++){"
+    WriteBufLine MainTxtBuf, "ptrszint whole_arr_arg=(" + _TOSTR$(arrdims) + "-whole_arr_dim)*4+4;"
+    WriteBufLine MainTxtBuf, "if ((whole_arr_dst[whole_arr_arg]!=whole_arr_src[whole_arr_arg])||(whole_arr_dst[whole_arr_arg+1]!=whole_arr_src[whole_arr_arg+1])){error(9); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_dst[whole_arr_arg+1]<0){error(9); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_dst[whole_arr_arg+1]&&whole_arr_total>(18446744073709551615ull/(uint64)whole_arr_dst[whole_arr_arg+1])){error(257); whole_arr_ok=0; break;}"
+    WriteBufLine MainTxtBuf, "whole_arr_total*=(uint64)whole_arr_dst[whole_arr_arg+1];"
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "if (whole_arr_ok&&(whole_arr_dst[0]!=whole_arr_src[0])){"
+
+    IF arrtyp AND ISUDT THEN
+        arrudt = arrtyp AND UDTMASK
+        IF dynudt THEN
+            elemtext = _TOSTR$(UDTDynLayoutSize&(arrudt) \ 8)
+        ELSE
+            elemtext = _TOSTR$(udtxsize(arrudt) \ 8)
+        END IF
+        WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_i=0; whole_arr_i<(ptrszint)whole_arr_total; whole_arr_i++){"
+        dstexpr = "((uint8*)whole_arr_dst[0])+whole_arr_i*" + elemtext
+        srcexpr = "((uint8*)whole_arr_src[0])+whole_arr_i*" + elemtext
+        IF dynudt AND (UDTDynHasMemberArrays%(arrudt, dynmode) OR udtxvariable(arrudt)) THEN
+            copy_full_udt_dyn dstexpr, srcexpr, MainTxtBuf, 0, arrudt, dynmode
+        ELSE
+            copy_full_udt dstexpr, srcexpr, MainTxtBuf, 0, arrudt
+        END IF
+        IF Error_Happened THEN EXIT SUB
+        WriteBufLine MainTxtBuf, "}"
+    ELSEIF arrtyp AND ISSTRING THEN
+        IF arrtyp AND ISFIXEDLENGTH THEN
+            IF arrsize <= 0 THEN Give_Error "Invalid fixed-length STRING array size": EXIT SUB
+            elemtext = _TOSTR$(arrsize)
+            WriteBufLine MainTxtBuf, "if (whole_arr_total>(18446744073709551615ull/(uint64)" + elemtext + ")) error(257);"
+            WriteBufLine MainTxtBuf, "if (!is_error_pending()) memmove((void*)whole_arr_dst[0],(void*)whole_arr_src[0],(size_t)(whole_arr_total*(uint64)" + elemtext + "));"
+        ELSE
+            WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_i=0; whole_arr_i<(ptrszint)whole_arr_total; whole_arr_i++){"
+            WriteBufLine MainTxtBuf, "qbs_set((qbs*)(((uint64*)whole_arr_dst[0])[whole_arr_i]),(qbs*)(((uint64*)whole_arr_src[0])[whole_arr_i]));"
+            WriteBufLine MainTxtBuf, "}"
+        END IF
+    ELSE
+        bits = arrtyp AND UDTMASK
+        IF bits <= 0 THEN Give_Error "Cannot determine array element size": EXIT SUB
+        IF arrtyp AND ISOFFSETINBITS THEN
+            elemtext = _TOSTR$(bits) + "/8+1"
+        ELSE
+            elemtext = _TOSTR$(bits \ 8)
+        END IF
+        WriteBufLine MainTxtBuf, "if (whole_arr_total>(18446744073709551615ull/(uint64)(" + elemtext + "))) error(257);"
+        WriteBufLine MainTxtBuf, "if (!is_error_pending()) memmove((void*)whole_arr_dst[0],(void*)whole_arr_src[0],(size_t)(whole_arr_total*(uint64)(" + elemtext + ")));"
+    END IF
+
+    WriteBufLine MainTxtBuf, "}"
+    WriteBufLine MainTxtBuf, "}"
+END SUB
+
+
 SUB assign (a$, n)
-    DIM lhswhole AS STRING
-    DIM rhswhole AS STRING
-    DIM rhsall AS STRING
-    DIM lhsid AS idstruct
-    DIM rhsid AS idstruct
-    DIM lhsok AS LONG
-    DIM rhsok AS LONG
-    DIM lhsudt AS LONG
-    DIM rhsudt AS LONG
+    DIM lsrc AS STRING
+    DIM rsrc AS STRING
+    DIM llabel AS STRING
+    DIM rlabel AS STRING
+    DIM lroot AS STRING
+    DIM rroot AS STRING
+    DIM lref AS STRING
+    DIM rref AS STRING
+    DIM lkind AS LONG
+    DIM rkind AS LONG
+    DIM lhasmember AS LONG
+    DIM rhasmember AS LONG
+    DIM lok AS LONG
+    DIM rok AS LONG
+    DIM lreftyp AS LONG
+    DIM rreftyp AS LONG
+    DIM lidnum AS LONG
+    DIM ridnum AS LONG
+    DIM lmember AS LONG
+    DIM rmember AS LONG
+    DIM lhsstate AS LONG
+    DIM saved_bare AS INTEGER
 
     FOR i = 1 TO n
         c = ASC(getelement$(a$, i))
@@ -16892,57 +17325,35 @@ SUB assign (a$, n)
             IF i = 1 THEN Give_Error "Expected ... =": EXIT SUB
             IF i = n THEN Give_Error "Expected = ...": EXIT SUB
 
-            a2$ = fixoperationorder(getelements$(a$, 1, i - 1))
+            lsrc = getelements$(a$, 1, i - 1)
+            rsrc = getelements$(a$, i + 1, n)
+            GetAsgRefSyntax lsrc, lkind, llabel, lhasmember, lroot
+            GetAsgRefSyntax rsrc, rkind, rlabel, rhasmember, rroot
+
+            a2$ = fixoperationorder(lsrc)
             IF Error_Happened THEN EXIT SUB
             l$ = tlayout$ + sp + "=" + sp
 
-            rhsall = getelements$(a$, i + 1, n)
-            lhswhole = WholeArrayName$(a2$)
-            rhswhole = WholeArrayName$(rhsall)
-            IF lhswhole <> "" AND rhswhole <> "" THEN
-                lhsok = 0
-                rhsok = 0
-                try = findid(lhswhole)
+            'Only explicit target() = source() can enter whole-array assignment.
+            'The resolver verifies that both expressions really are arrays; function
+            'calls or scalar members using () remain on the normal expression path.
+            IF lkind = 2 AND rkind = 2 THEN
+                GetWholeAsgRef lsrc, lroot, lhasmember, lok, lref, lreftyp, lidnum, lmember
                 IF Error_Happened THEN EXIT SUB
-                DO WHILE try
-                    IF id.arraytype AND ISUDT THEN
-                        lhsid = id
-                        lhsok = -1
-                        EXIT DO
-                    END IF
-                    IF try = 2 THEN findanotherid = 1: try = findid(lhswhole) ELSE try = 0
-                    IF Error_Happened THEN EXIT SUB
-                LOOP
-                try = findid(rhswhole)
+                GetWholeAsgRef rsrc, rroot, rhasmember, rok, rref, rreftyp, ridnum, rmember
                 IF Error_Happened THEN EXIT SUB
-                DO WHILE try
-                    IF id.arraytype AND ISUDT THEN
-                        rhsid = id
-                        rhsok = -1
-                        EXIT DO
-                    END IF
-                    IF try = 2 THEN findanotherid = 1: try = findid(rhswhole) ELSE try = 0
+                IF lok AND rok THEN
+                    EmitAssignWhole lref, lreftyp, lidnum, lmember, rref, rreftyp, ridnum, rmember
                     IF Error_Happened THEN EXIT SUB
-                LOOP
-                IF lhsok AND rhsok THEN
-                    lhsudt = lhsid.arraytype AND UDTMASK
-                    rhsudt = rhsid.arraytype AND UDTMASK
-                    IF lhsudt = rhsudt AND lhsid.dynudt AND rhsid.dynudt THEN
-                        IF lhsid.dynudtmode <> rhsid.dynudtmode THEN Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
-                        IF lhsid.arrayelements <> rhsid.arrayelements THEN Give_Error "Cannot assign arrays with different dimensions": EXIT SUB
-                        IF UDTDynHasMemberArrays%(lhsudt, lhsid.dynudtmode) THEN
-                            AppendDynUDTArrayAssign RTRIM$(lhsid.callname), RTRIM$(rhsid.callname), lhsudt, lhsid.dynudtmode, lhsid.arrayelements
-                            IF Error_Happened THEN EXIT SUB
-                            tlayout$ = l$ + rhswhole + "()"
-                            EXIT SUB
-                        END IF
-                    ELSEIF lhsudt = rhsudt AND (lhsid.dynudt OR rhsid.dynudt) THEN
-                        Give_Error "Cannot assign these TYPE values because their nested-array storage layouts are incompatible": EXIT SUB
-                    END IF
+                    a2$ = fixoperationorder(rsrc)
+                    IF Error_Happened THEN EXIT SUB
+                    tlayout$ = l$ + tlayout$
+                    EXIT SUB
                 END IF
             END IF
 
-            'note: evaluating a2$ will fail if it is setting a function's return value without this check (as the function, not the return-variable) will be found by evaluate)
+            'Retain the original special handling of a simple function return/local
+            'scalar. This is what correctly distinguishes scalar t from array T().
             IF i = 2 THEN 'lhs has only 1 element
                 try = findid(a2$)
                 IF Error_Happened THEN EXIT SUB
@@ -16951,7 +17362,7 @@ SUB assign (a$, n)
                         IF subfuncn = id.insubfuncn THEN 'avoid global before local
                             IF (id.t AND ISUDT) = 0 THEN
                                 makeidrefer a2$, typ
-                                GOTO assignsimplevariable
+                                GOTO assignlhsready
                             END IF
                         END IF
                     END IF
@@ -16960,10 +17371,25 @@ SUB assign (a$, n)
                 LOOP
             END IF
 
-            a2$ = evaluate$(a2$, typ): IF Error_Happened THEN EXIT SUB
-            assignsimplevariable:
+            saved_bare = udt_allow_bare_array
+            IF lhasmember AND (lkind = 1 OR lkind = 2) THEN udt_allow_bare_array = -1
+            a2$ = evaluate$(a2$, typ)
+            udt_allow_bare_array = saved_bare
+            IF Error_Happened THEN EXIT SUB
+
+            assignlhsready:
             IF (typ AND ISREFERENCE) = 0 THEN Give_Error "Expected variable =, look for conflict with a CONST name": EXIT SUB
-            setrefer a2$, typ, getelements$(a$, i + 1, n), 0
+
+            GetAsgRefState a2$, typ, lkind, lhasmember, lhsstate
+
+            asg_lstate = lhsstate
+            asg_lname = llabel
+            asg_rkind = rkind
+            asg_rname = rlabel
+            asg_rmember = rhasmember
+            asg_guard_on = -1
+            setrefer a2$, typ, rsrc, 0
+            asg_guard_on = 0
             IF Error_Happened THEN EXIT SUB
             tlayout$ = l$ + tlayout$
 
@@ -20172,6 +20598,20 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         END IF
                     END IF
                 END IF
+
+                'A user FUNCTION scalar parameter must not silently accept array() as array(0).
+                'The original spelling is required because both forms currently encode offset zero.
+                IF id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+                    IF targettyp >= 0 THEN
+                        IF (targettyp AND ISARRAY) = 0 THEN
+                            IF (sourcetyp AND ISREFERENCE) <> 0 AND (sourcetyp AND ISARRAY) <> 0 THEN
+                                IF HasFinalEmptyArrayBrackets%(e2$) THEN
+                                    Give_Error "Whole array cannot be passed to a scalar FUNCTION parameter": EXIT FUNCTION
+                                END IF
+                            END IF
+                        END IF
+                    END IF
+                END IF
                 '------------------------------------------------------------------------------------------------------------
 
                 ' VAL support
@@ -21646,9 +22086,13 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     END IF
 
 
-    IF allow_bare_member_array THEN udt_allow_bare_array = -1
-    e$ = evaluate(a$, sourcetyp)
-    IF allow_bare_member_array THEN udt_allow_bare_array = 0
+    IF asg_guard_on THEN
+        EvalAsgRHS a$, e$, sourcetyp
+    ELSE
+        IF allow_bare_member_array THEN udt_allow_bare_array = -1
+        e$ = evaluate(a$, sourcetyp)
+        IF allow_bare_member_array THEN udt_allow_bare_array = 0
+    END IF
     IF Error_Happened THEN EXIT FUNCTION
 
     '-5 size
@@ -26212,6 +26656,7 @@ END FUNCTION
 
 SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     DIM udtElem AS LONG
+    DIM asg_eval_text AS STRING
     a$ = a2$: typ = typ2: e$ = e2$
     IF method <> 1 THEN e$ = fixoperationorder$(e$)
     IF Error_Happened THEN EXIT SUB
@@ -26252,7 +26697,12 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
 
             IF method <> 0 THEN Give_Error "Unexpected internal code reference to UDT": EXIT SUB
             lhsscope$ = scope$
-            e$ = evaluate(e$, t2)
+            IF asg_guard_on THEN
+                asg_eval_text = e$
+                EvalAsgRHS asg_eval_text, e$, t2
+            ELSE
+                e$ = evaluate(e$, t2)
+            END IF
             IF Error_Happened THEN EXIT SUB
             IF (t2 AND ISUDT) = 0 THEN Give_Error "Expected = similar user defined type": EXIT SUB
 
