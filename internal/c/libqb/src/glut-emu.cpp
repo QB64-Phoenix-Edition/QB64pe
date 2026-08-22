@@ -465,16 +465,16 @@ class GLUTEmu {
         if (std::this_thread::get_id() == mainThreadId) {
             if constexpr (std::is_same_v<T, int> || std::is_same_v<T, unsigned int>) {
                 glfwWindowHint(static_cast<int>(hint), value);
-                libqb_log_trace("Window hint set: %d = %d", static_cast<int>(hint), value);
+                libqb_log_trace("Window hint set: %X = %d", static_cast<int>(hint), value);
             } else if constexpr (std::is_same_v<T, bool>) {
                 glfwWindowHint(static_cast<int>(hint), value ? GLFW_TRUE : GLFW_FALSE);
-                libqb_log_trace("Window hint set: %d = %s", static_cast<int>(hint), value ? "true" : "false");
+                libqb_log_trace("Window hint set: %X = %s", static_cast<int>(hint), value ? "true" : "false");
             } else if constexpr (std::is_same_v<T, const char *> || std::is_same_v<T, char *>) {
                 glfwWindowHintString(static_cast<int>(hint), value);
-                libqb_log_trace("Window hint set: %d = '%s'", static_cast<int>(hint), value);
+                libqb_log_trace("Window hint set: %X = '%s'", static_cast<int>(hint), value);
             } else if constexpr (std::is_same_v<T, GLUTEmu_WindowHintValue>) {
                 glfwWindowHint(static_cast<int>(hint), static_cast<int>(value));
-                libqb_log_trace("Window hint set: %d = %d", static_cast<int>(hint), static_cast<int>(value));
+                libqb_log_trace("Window hint set: %X = %d", static_cast<int>(hint), static_cast<int>(value));
             } else {
                 static_assert(!sizeof(T), "Unsupported type");
             }
@@ -661,7 +661,16 @@ class GLUTEmu {
                     isWindowMousePassthrough = (glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE);
                     windowOpacity = glfwGetWindowOpacity(window);
 
-                    glfwSetWindowSizeLimits(window, windowMinWidthLimit, windowMinHeightLimit, windowMaxWidthLimit, windowMaxHeightLimit);
+                    WindowSetSizeLimits(windowMinWidth, windowMinHeight, windowMaxWidth, windowMaxHeight);
+
+                    switch (std::get<0>(cachedWindowPosition)) {
+                    case 1:
+                        WindowMove(std::get<1>(cachedWindowPosition), std::get<2>(cachedWindowPosition));
+                        break;
+                    case -1:
+                        WindowCenter();
+                        break;
+                    }
 
                     libqb_log_trace("Window created (%u x %u)", width, height);
 
@@ -980,7 +989,8 @@ class GLUTEmu {
 
             libqb_log_trace("Window moved to (%d, %d)", x, y);
         } else {
-            libqb_log_error("Window not created, cannot move");
+            cachedWindowPosition = {1, x, y};
+            libqb_log_info("Window not created, cached position (%d, %d)", x, y);
         }
     }
 
@@ -989,7 +999,7 @@ class GLUTEmu {
     }
 
     void WindowCenter() {
-        if ((monitor != nullptr) && (window != nullptr) && !isWindowFullscreen && !isWindowMaximized && !isWindowMinimized && !isWindowHidden) {
+        if ((monitor != nullptr) && (window != nullptr)) {
             int mx, my;
             glfwGetMonitorPos(monitor, &mx, &my);
 
@@ -1005,7 +1015,8 @@ class GLUTEmu {
 
             libqb_log_trace("Window centered");
         } else {
-            libqb_log_error("Window not created, cannot center");
+            cachedWindowPosition = {-1, 0, 0};
+            libqb_log_info("Window not created, cached center request");
         }
     }
 
@@ -1022,32 +1033,31 @@ class GLUTEmu {
     }
 
     void WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) {
-        windowMinWidthLimit = minWidth;
-        windowMinHeightLimit = minHeight;
-        windowMaxWidthLimit = maxWidth;
-        windowMaxHeightLimit = maxHeight;
+        windowMinWidth = minWidth;
+        windowMinHeight = minHeight;
+        windowMaxWidth = maxWidth;
+        windowMaxHeight = maxHeight;
 
         if (window != nullptr) {
-            const auto minWidthPixels = (windowMinWidthLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMinWidthLimit));
-            const auto minHeightPixels = (windowMinHeightLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMinHeightLimit));
-            const auto maxWidthPixels = (windowMaxWidthLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMaxWidthLimit));
-            const auto maxHeightPixels = (windowMaxHeightLimit < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMaxHeightLimit));
+            const auto minWidthPixels = (windowMinWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMinWidth));
+            const auto minHeightPixels = (windowMinHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMinHeight));
+            const auto maxWidthPixels = (windowMaxWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMaxWidth));
+            const auto maxHeightPixels = (windowMaxHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMaxHeight));
 
             glfwSetWindowSizeLimits(window, minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
 
             libqb_log_trace("Window size limits set to (%d, %d) to (%d, %d)", minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
         } else {
-            libqb_log_trace("Window not created; cached size limits (%d, %d) to (%d, %d)", windowMinWidthLimit, windowMinHeightLimit, windowMaxWidthLimit,
-                            windowMaxHeightLimit);
+            libqb_log_trace("Window not created; cached size limits (%d, %d) to (%d, %d)", windowMinWidth, windowMinHeight, windowMaxWidth, windowMaxHeight);
         }
     }
 
     void WindowSetMinimumSizeLimits(int minWidth, int minHeight) {
-        WindowSetSizeLimits(minWidth, minHeight, windowMaxWidthLimit, windowMaxHeightLimit);
+        WindowSetSizeLimits(minWidth, minHeight, windowMaxWidth, windowMaxHeight);
     }
 
     void WindowSetMaximumSizeLimits(int maxWidth, int maxHeight) {
-        WindowSetSizeLimits(windowMinWidthLimit, windowMinHeightLimit, maxWidth, maxHeight);
+        WindowSetSizeLimits(windowMinWidth, windowMinHeight, maxWidth, maxHeight);
     }
 
     void WindowSetShouldClose(bool shouldClose) const {
@@ -2159,13 +2169,15 @@ class GLUTEmu {
     bool isWindowMousePassthrough = false;            // whether the window is currently allowing mouse passthrough
     int windowedX = 0, windowedY = 0;                 // windowed mode position for restoring from fullscreen (in screen coordinates)
     int windowedWidth = 0, windowedHeight = 0;        // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidthLimit = GLFW_DONT_CARE, windowMinHeightLimit = GLFW_DONT_CARE; // current window size limits (in screen coordinates, -1 for no limit)
-    int windowMaxWidthLimit = GLFW_DONT_CARE, windowMaxHeightLimit = GLFW_DONT_CARE; // current window size limits (in screen coordinates, -1 for no limit)
-    int framebufferWidth = 0, framebufferHeight = 0;                                 // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode = {0, 0, 0};                                // current screen mode (width, height, refresh rate)
-    GLFWcursor *cursor = nullptr;                                                    // current mouse cursor
-    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal;          // current mouse cursor mode (normal, hidden, disabled, captured)
-    int keyboardModifiers = 0;                                                       // current keyboard modifiers
+    int windowMinWidth = -1, windowMinHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidth = -1, windowMaxHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
+
+    int framebufferWidth = 0, framebufferHeight = 0;            // current framebuffer size (in pixel coordinates)
+    std::tuple<int, int, int> screenMode = {0, 0, 0};           // current screen mode (width, height, refresh rate)
+    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0}; // window position in pixels, {0, 0, 0}: default, {1, x, y}: user, {-1, 0, 0}: centered
+    GLFWcursor *cursor = nullptr;                               // current mouse cursor
+    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal; // current mouse cursor mode (normal, hidden, disabled, captured)
+    int keyboardModifiers = 0;                                              // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
 #endif
