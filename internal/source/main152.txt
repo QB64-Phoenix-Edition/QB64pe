@@ -1,4 +1,4 @@
-qbs* FUNC_CREATEELEMENTSTRING(qbs*_FUNC_CREATEELEMENTSTRING_STRING_S){
+qbs* FUNC_ESCAPESTRING(qbs*_FUNC_ESCAPESTRING_STRING_S){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -13,27 +13,86 @@ sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
 do{
-if(!qbevent)break;evnt(28165,610,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28179,582,"elements.bas");}while(r);
 do{
-qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 ));
+*_FUNC_ESCAPESTRING_LONG_P1= 1 ;
+if(!qbevent)break;evnt(28179,584,"elements.bas");}while(r);
+S_37401:;
+fornext_value3582= 1 ;
+fornext_finalvalue3582=_FUNC_ESCAPESTRING_STRING_S->len;
+fornext_step3582= 1 ;
+if (fornext_step3582<0) fornext_step_negative3582=1; else fornext_step_negative3582=0;
+if (is_error_pending()) goto fornext_error3582;
+goto fornext_entrylabel3582;
+while(1){
+fornext_value3582=fornext_step3582+(*_FUNC_ESCAPESTRING_LONG_I);
+fornext_entrylabel3582:
+*_FUNC_ESCAPESTRING_LONG_I=fornext_value3582;
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,611,"elements.bas");}while(r);
+if (fornext_step_negative3582){
+if (fornext_value3582<fornext_finalvalue3582) break;
+}else{
+if (fornext_value3582>fornext_finalvalue3582) break;
+}
+fornext_error3582:;
+if(qbevent){evnt(28179,585,"elements.bas");if(r)goto S_37401;}
 do{
-qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,FUNC_ESCAPESTRING(_FUNC_CREATEELEMENTSTRING_STRING_S)));
+*_FUNC_ESCAPESTRING_LONG_C2=qbs_asc(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_I);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,613,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28179,586,"elements.bas");}while(r);
+S_37403:;
+if ((-(*_FUNC_ESCAPESTRING_LONG_C2== 92 ))||is_error_pending()){
+if(qbevent){evnt(28179,588,"elements.bas");if(r)goto S_37403;}
 do{
-qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int32)(_FUNC_CREATEELEMENTSTRING_STRING_S->len),NULL,0)));
+qbs_set(_FUNC_ESCAPESTRING_STRING_ELE,qbs_add(qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,*_FUNC_ESCAPESTRING_LONG_I-*_FUNC_ESCAPESTRING_LONG_P1,0|1)),qbs_new_txt_len("\\\\",2)));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,615,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28179,589,"elements.bas");}while(r);
 do{
-qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING,_FUNC_CREATEELEMENTSTRING_STRING_ELE);
+*_FUNC_ESCAPESTRING_LONG_P1=*_FUNC_ESCAPESTRING_LONG_I+ 1 ;
+if(!qbevent)break;evnt(28179,590,"elements.bas");}while(r);
+}
+S_37407:;
+if (((-(*_FUNC_ESCAPESTRING_LONG_C2< 32 ))|(-(*_FUNC_ESCAPESTRING_LONG_C2== 34 ))|(-(*_FUNC_ESCAPESTRING_LONG_C2> 126 )))||is_error_pending()){
+if(qbevent){evnt(28179,593,"elements.bas");if(r)goto S_37407;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,func_oct(*_FUNC_ESCAPESTRING_LONG_C2,32));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28165,616,"elements.bas");}while(r);
+if(!qbevent)break;evnt(28179,594,"elements.bas");}while(r);
+S_37409:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ESCAPESTRING_STRING_O->len< 3 )))||is_error_pending()){
+if(qbevent){evnt(28179,595,"elements.bas");if(r)goto S_37409;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,qbs_add(qbs_new_txt_len("0",1),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28179,596,"elements.bas");}while(r);
+S_37411:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ESCAPESTRING_STRING_O->len< 3 )))||is_error_pending()){
+if(qbevent){evnt(28179,597,"elements.bas");if(r)goto S_37411;}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_O,qbs_add(qbs_new_txt_len("0",1),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28179,597,"elements.bas");}while(r);
+}
+}
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,*_FUNC_ESCAPESTRING_LONG_I-*_FUNC_ESCAPESTRING_LONG_P1,0|1)),qbs_new_txt_len("\\",1)),_FUNC_ESCAPESTRING_STRING_O));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28179,599,"elements.bas");}while(r);
+do{
+*_FUNC_ESCAPESTRING_LONG_P1=*_FUNC_ESCAPESTRING_LONG_I+ 1 ;
+if(!qbevent)break;evnt(28179,601,"elements.bas");}while(r);
+}
+fornext_continue_3581:;
+}
+fornext_exit_3581:;
+do{
+qbs_set(_FUNC_ESCAPESTRING_STRING_ESCAPESTRING,qbs_add(_FUNC_ESCAPESTRING_STRING_ELE,func_mid(_FUNC_ESCAPESTRING_STRING_S,*_FUNC_ESCAPESTRING_LONG_P1,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28179,605,"elements.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free152.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING);return _FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING;
+qbs_maketmp(_FUNC_ESCAPESTRING_STRING_ESCAPESTRING);return _FUNC_ESCAPESTRING_STRING_ESCAPESTRING;
 }

@@ -1,4 +1,4 @@
-qbs* FUNC__WHATISMYIP(){
+qbs* FUNC_STRIPDISCORDANSI(qbs*_FUNC_STRIPDISCORDANSI_STRING_CLIP){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,41 +12,83 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-*_FUNC__WHATISMYIP_LONG__CH=func__openclient(qbs_new_txt_len("http://qb64phoenix.com/qb64_files/ip.php",40));
-qbs_cleanup(qbs_tmp_base,0);
-if ((-(*_FUNC__WHATISMYIP_LONG__CH== 0ll ))||is_error_pending()){
-goto exit_subfunc;
-}
-if ((-(func__statusCode(*_FUNC__WHATISMYIP_LONG__CH)== 200 ))||is_error_pending()){
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_new_txt_len("",0));
-qbs_cleanup(qbs_tmp_base,0);
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
 do{
-sub__delay( 0.1E+0 );
-sub_get2(*_FUNC__WHATISMYIP_LONG__CH,NULL,_FUNC__WHATISMYIP_STRING__REC,0);
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,_FUNC_STRIPDISCORDANSI_STRING_CLIP);
 qbs_cleanup(qbs_tmp_base,0);
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC__WHATISMYIP_STRING__REC->len> 0 )))||is_error_pending()){
-*_FUNC__WHATISMYIP_DOUBLE__ST=func_timer( 0.001E+0 ,0|1);
-}
-qbs_set(_FUNC__WHATISMYIP_STRING__RES,qbs_add(_FUNC__WHATISMYIP_STRING__RES,_FUNC__WHATISMYIP_STRING__REC));
+if(!qbevent)break;evnt(28196,640,"ide_export.bas");}while(r);
+S_70930:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_left(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 9 )),(qbs_add(qbs_add(qbs_new_txt_len("```ansi",7),func_chr( 13 )),func_chr( 10 ))))))||is_error_pending()){
+if(qbevent){evnt(28196,642,"ide_export.bas");if(r)goto S_70930;}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,func_mid(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 10 ,NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-if ((func_eof(*_FUNC__WHATISMYIP_LONG__CH))||is_error_pending()){
-qbs_set(_FUNC__WHATISMYIP_STRING__WHATISMYIP,_FUNC__WHATISMYIP_STRING__RES);
+if(!qbevent)break;evnt(28196,642,"ide_export.bas");}while(r);
+}
+S_70933:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_left(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 8 )),(qbs_add(qbs_new_txt_len("```ansi",7),func_chr( 10 ))))))||is_error_pending()){
+if(qbevent){evnt(28196,643,"ide_export.bas");if(r)goto S_70933;}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,func_mid(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 9 ,NULL,0));
 qbs_cleanup(qbs_tmp_base,0);
-goto dl_exit_8200;
+if(!qbevent)break;evnt(28196,643,"ide_export.bas");}while(r);
 }
-if ((-((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 )>=( 86400ll )))||is_error_pending()){
-*_FUNC__WHATISMYIP_DOUBLE__ST=*_FUNC__WHATISMYIP_DOUBLE__ST- 86400ll ;
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,FUNC_STRREMOVE(_FUNC_STRIPDISCORDANSI_STRING_TEMP,qbs_add(func_chr( 27 ),qbs_new_txt_len("[0;0;1;37m",10))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,645,"ide_export.bas");}while(r);
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,FUNC_STRREMOVE(_FUNC_STRIPDISCORDANSI_STRING_TEMP,qbs_add(func_chr( 27 ),qbs_new_txt_len("[0;0;1;38m",10))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,646,"ide_export.bas");}while(r);
+S_70938:;
+fornext_value7272= 0 ;
+fornext_finalvalue7272= 8 ;
+fornext_step7272= 1 ;
+if (fornext_step7272<0) fornext_step_negative7272=1; else fornext_step_negative7272=0;
+if (is_error_pending()) goto fornext_error7272;
+goto fornext_entrylabel7272;
+while(1){
+fornext_value7272=fornext_step7272+(*_FUNC_STRIPDISCORDANSI_INTEGER_I);
+fornext_entrylabel7272:
+*_FUNC_STRIPDISCORDANSI_INTEGER_I=fornext_value7272;
+if (fornext_step_negative7272){
+if (fornext_value7272<fornext_finalvalue7272) break;
+}else{
+if (fornext_value7272>fornext_finalvalue7272) break;
 }
-dl_continue_8200:;
-}while((!(-(((float)((func_timer( 0.001E+0 ,0|1))))>((float)((*_FUNC__WHATISMYIP_DOUBLE__ST+ 10 ))))))&&(!is_error_pending()));
-dl_exit_8200:;
+fornext_error7272:;
+if(qbevent){evnt(28196,647,"ide_export.bas");if(r)goto S_70938;}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,FUNC_STRREMOVE(_FUNC_STRIPDISCORDANSI_STRING_TEMP,qbs_add(qbs_add(qbs_add(func_chr( 27 ),qbs_new_txt_len("[3",2)),qbs__tostr((int16)(*_FUNC_STRIPDISCORDANSI_INTEGER_I),NULL,0)),qbs_new_txt_len("m",1))));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,648,"ide_export.bas");}while(r);
+fornext_continue_7271:;
 }
-sub_close(*_FUNC__WHATISMYIP_LONG__CH,1);
+fornext_exit_7271:;
+S_70941:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_right(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 5 )),(qbs_add(qbs_add(qbs_new_txt_len("```",3),func_chr( 13 )),func_chr( 10 ))))))||is_error_pending()){
+if(qbevent){evnt(28196,651,"ide_export.bas");if(r)goto S_70941;}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,qbs_left(_FUNC_STRIPDISCORDANSI_STRING_TEMP,_FUNC_STRIPDISCORDANSI_STRING_TEMP->len- 5 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,651,"ide_export.bas");}while(r);
+}
+S_70944:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal((qbs_right(_FUNC_STRIPDISCORDANSI_STRING_TEMP, 4 )),(qbs_add(qbs_new_txt_len("```",3),func_chr( 10 ))))))||is_error_pending()){
+if(qbevent){evnt(28196,652,"ide_export.bas");if(r)goto S_70944;}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_TEMP,qbs_left(_FUNC_STRIPDISCORDANSI_STRING_TEMP,_FUNC_STRIPDISCORDANSI_STRING_TEMP->len- 4 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,652,"ide_export.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_STRIPDISCORDANSI_STRING_STRIPDISCORDANSI,_FUNC_STRIPDISCORDANSI_STRING_TEMP);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,654,"ide_export.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free470.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC__WHATISMYIP_STRING__WHATISMYIP);return _FUNC__WHATISMYIP_STRING__WHATISMYIP;
+qbs_maketmp(_FUNC_STRIPDISCORDANSI_STRING_STRIPDISCORDANSI);return _FUNC_STRIPDISCORDANSI_STRING_STRIPDISCORDANSI;
 }

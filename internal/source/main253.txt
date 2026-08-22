@@ -1,4 +1,4 @@
-int32 FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM(qbs*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_LOWER_BOUND,int32*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT){
+void SUB_SETRCSTATEVAR(void*_SUB_SETRCSTATEVAR_UDT_STVAR,int8*_SUB_SETRCSTATEVAR_BYTE_SETVAL){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,77 +12,19 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-S_40750:;
-if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION<= 0 ))||is_error_pending()){
-if(qbevent){evnt(28172,171,"type.bas");if(r)goto S_40750;}
 do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION= 1 ;
-if(!qbevent)break;evnt(28172,171,"type.bas");}while(r);
+*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))=*_SUB_SETRCSTATEVAR_BYTE_SETVAL;
+if(!qbevent)break;evnt(28185,17,"statevars.bas");}while(r);
+S_40697:;
+if (((-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+1)))!=*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+0)))))&(-(*(int8*)(((char*)_SUB_SETRCSTATEVAR_UDT_STVAR)+((0+2)))== 0ll )))||is_error_pending()){
+if(qbevent){evnt(28185,18,"statevars.bas");if(r)goto S_40697;}
+do{
+*__INTEGER_RECOMPILE= 1 ;
+if(!qbevent)break;evnt(28185,19,"statevars.bas");}while(r);
 }
-S_40753:;
-if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION>_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR->len)))||is_error_pending()){
-if(qbevent){evnt(28172,172,"type.bas");if(r)goto S_40753;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28172,172,"type.bas");}while(r);
-}
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR=func_instr(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,qbs_new_txt_len(";",1),0|1);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,174,"type.bas");}while(r);
-S_40757:;
-if ((*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR)||is_error_pending()){
-if(qbevent){evnt(28172,175,"type.bas");if(r)goto S_40757;}
-do{
-qbs_set(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,0|1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,176,"type.bas");}while(r);
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION=*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_NEXT_SEPARATOR+ 1 ;
-if(!qbevent)break;evnt(28172,177,"type.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION,NULL,0));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,179,"type.bas");}while(r);
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_DESCRIPTOR_POSITION=_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_DESCRIPTOR->len+ 1 ;
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,180,"type.bas");}while(r);
-}
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS=func_instr(NULL,_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,qbs_new_txt_len(",",1),0);
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,183,"type.bas");}while(r);
-S_40765:;
-if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS== 0 ))||is_error_pending()){
-if(qbevent){evnt(28172,184,"type.bas");if(r)goto S_40765;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28172,184,"type.bas");}while(r);
-}
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_LOWER_BOUND=qbr(qbs_val<long double>(qbs_left(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS- 1 )));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,186,"type.bas");}while(r);
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT=qbr(qbs_val<long double>(func_mid(_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_STRING_PAIR,*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_COMMA_POS+ 1 ,NULL,0)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28172,187,"type.bas");}while(r);
-S_40770:;
-if ((-(*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_ELEMENT_COUNT<= 0 ))||is_error_pending()){
-if(qbevent){evnt(28172,188,"type.bas");if(r)goto S_40770;}
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28172,188,"type.bas");}while(r);
-}
-do{
-*_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_PARSENEXTUDTARRAYDESCRIPTORDIM= -1 ;
-if(!qbevent)break;evnt(28172,190,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free253.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_PARSENEXTUDTARRAYDESCRIPTORDIM_LONG_PARSENEXTUDTARRAYDESCRIPTORDIM;
 }

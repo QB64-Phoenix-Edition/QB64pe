@@ -1,4 +1,4 @@
-int8 FUNC_TYPE_ISFIXEDSTRING(int32*_FUNC_TYPE_ISFIXEDSTRING_LONG_TYPEID){
+int32 FUNC_ISUINTEGER(qbs*_FUNC_ISUINTEGER_STRING_I){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,13 +12,60 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
+S_43363:;
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_ISUINTEGER_STRING_I->len== 0 )))||is_error_pending()){
+if(qbevent){evnt(28186,2458,"type.bas");if(r)goto S_43363;}
 do{
-*_FUNC_TYPE_ISFIXEDSTRING_BYTE_TYPE_ISFIXEDSTRING=-((*_FUNC_TYPE_ISFIXEDSTRING_LONG_TYPEID&*__LONG_ISSTRING)&&(*_FUNC_TYPE_ISFIXEDSTRING_LONG_TYPEID&*__LONG_ISFIXEDLENGTH));
-if(!qbevent)break;evnt(28172,2573,"type.bas");}while(r);
+goto exit_subfunc;
+if(!qbevent)break;evnt(28186,2458,"type.bas");}while(r);
+}
+S_43366:;
+if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_ISUINTEGER_STRING_I, 1 )== 48 ))&(-(_FUNC_ISUINTEGER_STRING_I->len> 1 ))))||is_error_pending()){
+if(qbevent){evnt(28186,2459,"type.bas");if(r)goto S_43366;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28186,2459,"type.bas");}while(r);
+}
+S_43369:;
+fornext_value4318= 1 ;
+fornext_finalvalue4318=_FUNC_ISUINTEGER_STRING_I->len;
+fornext_step4318= 1 ;
+if (fornext_step4318<0) fornext_step_negative4318=1; else fornext_step_negative4318=0;
+if (is_error_pending()) goto fornext_error4318;
+goto fornext_entrylabel4318;
+while(1){
+fornext_value4318=fornext_step4318+(*_FUNC_ISUINTEGER_LONG_C);
+fornext_entrylabel4318:
+*_FUNC_ISUINTEGER_LONG_C=fornext_value4318;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative4318){
+if (fornext_value4318<fornext_finalvalue4318) break;
+}else{
+if (fornext_value4318>fornext_finalvalue4318) break;
+}
+fornext_error4318:;
+if(qbevent){evnt(28186,2460,"type.bas");if(r)goto S_43369;}
+do{
+*_FUNC_ISUINTEGER_LONG_V=qbs_asc(_FUNC_ISUINTEGER_STRING_I,*_FUNC_ISUINTEGER_LONG_C);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28186,2461,"type.bas");}while(r);
+S_43371:;
+if (((-(*_FUNC_ISUINTEGER_LONG_V< 48 ))|(-(*_FUNC_ISUINTEGER_LONG_V> 57 )))||is_error_pending()){
+if(qbevent){evnt(28186,2462,"type.bas");if(r)goto S_43371;}
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28186,2462,"type.bas");}while(r);
+}
+fornext_continue_4317:;
+}
+fornext_exit_4317:;
+do{
+*_FUNC_ISUINTEGER_LONG_ISUINTEGER= -1 ;
+if(!qbevent)break;evnt(28186,2464,"type.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free313.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_TYPE_ISFIXEDSTRING_BYTE_TYPE_ISFIXEDSTRING;
+return *_FUNC_ISUINTEGER_LONG_ISUINTEGER;
 }
