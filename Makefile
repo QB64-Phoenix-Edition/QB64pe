@@ -68,6 +68,10 @@ ifeq ($(OS),lnx)
 	ifeq ($(BITS),)
 		BITS := 64
 	endif
+
+	# gcc has no -fdebug-compilation-dir, so we have to remap the correct path.
+	# Clang accepts -fdebug-prefix-map= too so this covers either compiler.
+	DEBUG_PATH_FLAGS := "-fdebug-prefix-map=$(call FIXPATH,$(CURDIR))=."
 endif
 
 ifeq ($(OS),win)
@@ -108,6 +112,20 @@ ifeq ($(OS),win)
 	else
 		BITS := 64
 	endif
+
+	# The system mingw might be real gcc, so in that case we have to use
+	# "-fdebug-prefix-map" (not that ideal because the path might have any
+	# number of weird characters in it that we want to avoid dealing with).
+	# Additionally we check both slash directions just in case because we have
+	# to match whatever gcc/clang is planning to use.
+	#
+	# For the bundled clang we can use debug-compilation-dir and avoid the
+	# potential issue.
+	ifdef USE_SYSTEM_MINGW
+		DEBUG_PATH_FLAGS := "-fdebug-prefix-map=$(CURDIR)=." "-fdebug-prefix-map=$(call FIXPATH,$(CURDIR))=."
+	else
+		DEBUG_PATH_FLAGS := -fdebug-compilation-dir=.
+	endif
 endif
 
 ifeq ($(OS),osx)
@@ -128,7 +146,22 @@ ifeq ($(OS),osx)
 	BITS := 64
 	PLATFORM := posix
 	EXTENSION :=
+
+	# Xcode's compiler is clang, so debug-compilation-dir works fine.
+	DEBUG_PATH_FLAGS := -fdebug-compilation-dir=.
 endif
+
+# These flags ensure that #line directives inserted by the QB64-PE compiler are
+# considered relative to the current directory of the debugger (which is
+# configurable, you can add more directories to allow more files to be found).
+#
+# Without this, the location of the QB64-PE compiler on the build machine is
+# inserted into the debug information and all #line's would be considered
+# relative to that location, even if the .bas is elsewhere. This both breaks
+# the finding of the .bas source in general (unless you emit absolute paths),
+# and also ruins the portability of the symbols.
+CXXFLAGS += $(DEBUG_PATH_FLAGS)
+CFLAGS += $(DEBUG_PATH_FLAGS)
 
 ifeq ($(BITS),64)
 	OBJCOPY_FLAGS := -Oelf64-x86-64 -Bi386:x86-64

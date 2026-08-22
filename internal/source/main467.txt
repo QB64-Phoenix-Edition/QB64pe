@@ -1,4 +1,4 @@
-void SUB_VWATCH(){
+int16 FUNC_BINARYFORMATCHECK(qbs*_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,qbs*_FUNC_BINARYFORMATCHECK_STRING_PATHSEPTOCHECK,qbs*_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,9 +12,318 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
+do{
+qbs_set(__STRING_FILE,qbs_add(qbs_add(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,_FUNC_BINARYFORMATCHECK_STRING_PATHSEPTOCHECK),_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,4,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_FH=func_freefile();
+if(!qbevent)break;evnt(28196,6,"ide_converters.bas");}while(r);
+do{
+sub_open(__STRING_FILE, 2 ,NULL,NULL,*_FUNC_BINARYFORMATCHECK_LONG_FH,NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,7,"ide_converters.bas");}while(r);
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_A,func_space(func_lof(*_FUNC_BINARYFORMATCHECK_LONG_FH)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,8,"ide_converters.bas");}while(r);
+do{
+sub_get2(*_FUNC_BINARYFORMATCHECK_LONG_FH, 1 ,_FUNC_BINARYFORMATCHECK_STRING_A,1);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,9,"ide_converters.bas");}while(r);
+S_69628:;
+if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_BINARYFORMATCHECK_STRING_A,func_chr( 0 ),0)== 0 )))||is_error_pending()){
+if(qbevent){evnt(28196,10,"ide_converters.bas");if(r)goto S_69628;}
+do{
+sub_close(*_FUNC_BINARYFORMATCHECK_LONG_FH,1);
+if(!qbevent)break;evnt(28196,10,"ide_converters.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28196,10,"ide_converters.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_A,qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,11,"ide_converters.bas");}while(r);
+do{
+sub_get(*_FUNC_BINARYFORMATCHECK_LONG_FH, 1 ,byte_element((uint64)_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT,2,byte_element_7178),1);
+if(!qbevent)break;evnt(28196,12,"ide_converters.bas");}while(r);
+do{
+sub_get(*_FUNC_BINARYFORMATCHECK_LONG_FH,NULL,byte_element((uint64)_FUNC_BINARYFORMATCHECK_INTEGER_VERSION,2,byte_element_7179),0);
+if(!qbevent)break;evnt(28196,13,"ide_converters.bas");}while(r);
+do{
+sub_close(*_FUNC_BINARYFORMATCHECK_LONG_FH,1);
+if(!qbevent)break;evnt(28196,14,"ide_converters.bas");}while(r);
+S_69636:;
+if(qbevent){evnt(28196,16,"ide_converters.bas");if(r)goto S_69636;}
+S_69637:;
+if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 2300 )))||is_error_pending()){
+if(qbevent){evnt(28196,17,"ide_converters.bas");if(r)goto S_69637;}
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Invalid format",14),qbs_new_txt_len("VBDOS binary format not supported.",34),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,18,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
+if(!qbevent)break;evnt(28196,19,"ide_converters.bas");}while(r);
+sc_ec_487_end:;
+goto sc_7180_end;
+}
+S_69640:;
+if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 764 )))||is_error_pending()){
+if(qbevent){evnt(28196,20,"ide_converters.bas");if(r)goto S_69640;}
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Invalid format",14),qbs_new_txt_len("QBX 7.1 binary format not supported.",36),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,21,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
+if(!qbevent)break;evnt(28196,22,"ide_converters.bas");}while(r);
+sc_ec_488_end:;
+goto sc_7180_end;
+}
+S_69643:;
+if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 252 )))||is_error_pending()){
+if(qbevent){evnt(28196,23,"ide_converters.bas");if(r)goto S_69643;}
+S_69644:;
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
+if(qbevent){evnt(28196,24,"ide_converters.bas");if(r)goto S_69644;}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len("internal\\utilities\\QB45BIN.exe",30));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,25,"ide_converters.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len("./internal/utilities/QB45BIN",28));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,27,"ide_converters.bas");}while(r);
+}
+S_69649:;
+if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY)))||is_error_pending()){
+if(qbevent){evnt(28196,29,"ide_converters.bas");if(r)goto S_69649;}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_WHAT,FUNC_IDEYESNOBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("QuickBASIC 4.5 binary format detected. Convert to plain text?",61)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,30,"ide_converters.bas");}while(r);
+S_69651:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_BINARYFORMATCHECK_STRING_WHAT,qbs_new_txt_len("Y",1))))||is_error_pending()){
+if(qbevent){evnt(28196,31,"ide_converters.bas");if(r)goto S_69651;}
+LABEL_CONVERTIT:;
+if(qbevent){evnt(28196,32,"ide_converters.bas");r=0;}
+S_69652:;
+if ((qbs_cleanup(qbs_tmp_base,FUNC_FILEHASEXTENSION(__STRING_FILE)))||is_error_pending()){
+if(qbevent){evnt(28196,33,"ide_converters.bas");if(r)goto S_69652;}
+S_69653:;
+fornext_value7182=__STRING_FILE->len;
+fornext_finalvalue7182= 1 ;
+fornext_step7182= -1 ;
+if (fornext_step7182<0) fornext_step_negative7182=1; else fornext_step_negative7182=0;
+if (is_error_pending()) goto fornext_error7182;
+goto fornext_entrylabel7182;
+while(1){
+fornext_value7182=fornext_step7182+(*_FUNC_BINARYFORMATCHECK_LONG_I);
+fornext_entrylabel7182:
+*_FUNC_BINARYFORMATCHECK_LONG_I=fornext_value7182;
+qbs_cleanup(qbs_tmp_base,0);
+if (fornext_step_negative7182){
+if (fornext_value7182<fornext_finalvalue7182) break;
+}else{
+if (fornext_value7182>fornext_finalvalue7182) break;
+}
+fornext_error7182:;
+if(qbevent){evnt(28196,34,"ide_converters.bas");if(r)goto S_69653;}
+S_69654:;
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I)== 46 )))||is_error_pending()){
+if(qbevent){evnt(28196,35,"ide_converters.bas");if(r)goto S_69654;}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_OFILE,qbs_add(qbs_add(qbs_left(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I- 1 ),qbs_new_txt_len(" (converted)",12)),func_mid(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I,NULL,0)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,37,"ide_converters.bas");}while(r);
+do{
+goto fornext_exit_7181;
+if(!qbevent)break;evnt(28196,38,"ide_converters.bas");}while(r);
+}
+fornext_continue_7181:;
+}
+fornext_exit_7181:;
+}else{
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_OFILE,qbs_add(__STRING_FILE,qbs_new_txt_len(" (converted).bas",16)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,42,"ide_converters.bas");}while(r);
+}
+do{
+qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
+if(!qbevent)break;evnt(28196,45,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7184= 1 ));
+if(!qbevent)break;evnt(28196,46,"ide_converters.bas");}while(r);
+do{
+SUB_CLEARSTATUSWINDOW(&(pass7185= 0 ));
+if(!qbevent)break;evnt(28196,47,"ide_converters.bas");}while(r);
+do{
+qbg_sub_color( 15 , 1 ,NULL,NULL,3);
+if(!qbevent)break;evnt(28196,48,"ide_converters.bas");}while(r);
+do{
+sub__printstring( 2 ,*__LONG_IDEWY- 3 ,qbs_new_txt_len("Converting...          ",23),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,49,"ide_converters.bas");}while(r);
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(28196,50,"ide_converters.bas");}while(r);
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTLINE,qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len(" ",1)),FUNC_QUOTEDFILENAME(__STRING_FILE)),qbs_new_txt_len(" -o ",4)),FUNC_QUOTEDFILENAME(_FUNC_BINARYFORMATCHECK_STRING_OFILE)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,52,"ide_converters.bas");}while(r);
+do{
+sub_shell2(_FUNC_BINARYFORMATCHECK_STRING_CONVERTLINE,2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,53,"ide_converters.bas");}while(r);
+do{
+SUB_CLEARSTATUSWINDOW(&(pass7186= 0 ));
+if(!qbevent)break;evnt(28196,55,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7187= 0 ));
+if(!qbevent)break;evnt(28196,56,"ide_converters.bas");}while(r);
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(28196,57,"ide_converters.bas");}while(r);
+S_69673:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_OFILE)== 0 )))||is_error_pending()){
+if(qbevent){evnt(28196,59,"ide_converters.bas");if(r)goto S_69673;}
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Conversion failed.",18),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,60,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 2 ;
+if(!qbevent)break;evnt(28196,61,"ide_converters.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,FUNC_GETFILEPATH(_FUNC_BINARYFORMATCHECK_STRING_OFILE));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,63,"ide_converters.bas");}while(r);
+S_69678:;
+if ((qbs_cleanup(qbs_tmp_base,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len))||is_error_pending()){
+if(qbevent){evnt(28196,64,"ide_converters.bas");if(r)goto S_69678;}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK,func_mid(_FUNC_BINARYFORMATCHECK_STRING_OFILE,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len+ 1 ,NULL,0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,65,"ide_converters.bas");}while(r);
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,qbs_left(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len- 1 ));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,66,"ide_converters.bas");}while(r);
+}else{
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK,_FUNC_BINARYFORMATCHECK_STRING_OFILE);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,68,"ide_converters.bas");}while(r);
+}
+}
+}else{
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
+if(!qbevent)break;evnt(28196,72,"ide_converters.bas");}while(r);
+}
+}else{
+S_69689:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__fileexists(qbs_new_txt_len("internal/support/converter/QB45BIN.bas",38))== 0 )))||is_error_pending()){
+if(qbevent){evnt(28196,75,"ide_converters.bas");if(r)goto S_69689;}
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Conversion utility not found. Cannot open QuickBASIC 4.5 binary format.",71),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,76,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
+if(!qbevent)break;evnt(28196,77,"ide_converters.bas");}while(r);
+do{
+goto exit_subfunc;
+if(!qbevent)break;evnt(28196,78,"ide_converters.bas");}while(r);
+}
+do{
+qbs_set(_FUNC_BINARYFORMATCHECK_STRING_WHAT,FUNC_IDEYESNOBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("QuickBASIC 4.5 binary format detected. Convert to plain text?",61)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,80,"ide_converters.bas");}while(r);
+S_69695:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_BINARYFORMATCHECK_STRING_WHAT,qbs_new_txt_len("Y",1))))||is_error_pending()){
+if(qbevent){evnt(28196,81,"ide_converters.bas");if(r)goto S_69695;}
+S_69696:;
+if ((qbs_cleanup(qbs_tmp_base,-(func__direxists(qbs_new_txt_len("./internal/utilities",20))== 0 )))||is_error_pending()){
+if(qbevent){evnt(28196,83,"ide_converters.bas");if(r)goto S_69696;}
+do{
+sub_mkdir(qbs_new_txt_len("./internal/utilities",20));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,83,"ide_converters.bas");}while(r);
+}
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(28196,84,"ide_converters.bas");}while(r);
+do{
+qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
+if(!qbevent)break;evnt(28196,85,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7191= 1 ));
+if(!qbevent)break;evnt(28196,86,"ide_converters.bas");}while(r);
+do{
+SUB_CLEARSTATUSWINDOW(&(pass7192= 0 ));
+if(!qbevent)break;evnt(28196,87,"ide_converters.bas");}while(r);
+do{
+qbg_sub_color( 15 , 1 ,NULL,NULL,3);
+if(!qbevent)break;evnt(28196,88,"ide_converters.bas");}while(r);
+do{
+sub__printstring( 2 ,*__LONG_IDEWY- 3 ,qbs_new_txt_len("Preparing to convert...",23),NULL,0);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,89,"ide_converters.bas");}while(r);
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(28196,90,"ide_converters.bas");}while(r);
+S_69706:;
+if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
+if(qbevent){evnt(28196,91,"ide_converters.bas");if(r)goto S_69706;}
+do{
+sub_shell2(qbs_new_txt_len("qb64pe -x internal/support/converter/QB45BIN.bas -o internal/utilities/QB45BIN",78),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,92,"ide_converters.bas");}while(r);
+}else{
+do{
+sub_shell2(qbs_new_txt_len("./qb64pe -x ./internal/support/converter/QB45BIN.bas -o ./internal/utilities/QB45BIN",84),2);
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,94,"ide_converters.bas");}while(r);
+}
+S_69711:;
+if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY)))||is_error_pending()){
+if(qbevent){evnt(28196,96,"ide_converters.bas");if(r)goto S_69711;}
+do{
+goto LABEL_CONVERTIT;
+if(!qbevent)break;evnt(28196,96,"ide_converters.bas");}while(r);
+}
+do{
+SUB_CLEARSTATUSWINDOW(&(pass7193= 0 ));
+if(!qbevent)break;evnt(28196,97,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7194= 0 ));
+if(!qbevent)break;evnt(28196,98,"ide_converters.bas");}while(r);
+do{
+sub_pcopy( 3 , 0 );
+if(!qbevent)break;evnt(28196,99,"ide_converters.bas");}while(r);
+do{
+*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Error launching conversion utility.",35),qbs_new_txt_len("",0));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28196,100,"ide_converters.bas");}while(r);
+}
+do{
+*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
+if(!qbevent)break;evnt(28196,102,"ide_converters.bas");}while(r);
+}
+sc_ec_489_end:;
+goto sc_7180_end;
+}
+sc_7180_end:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free467.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
+return *_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK;
 }

@@ -1,4 +1,4 @@
-int32 FUNC_ISFUNCTIONIDENTIFIER(qbs*_FUNC_ISFUNCTIONIDENTIFIER_STRING_ELE){
+void SUB_FIXUPERRORMESSAGE(void*_SUB_FIXUPERRORMESSAGE_UDT_STATE,qbs*_SUB_FIXUPERRORMESSAGE_STRING_OP){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,41 +12,17 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
-S_40299:;
-fornext_value4883= 1 ;
-fornext_finalvalue4883=func_ubound(__ARRAY_UDT_CONSTFUNCS,1,1);
-fornext_step4883= 1 ;
-if (fornext_step4883<0) fornext_step_negative4883=1; else fornext_step_negative4883=0;
-if (is_error_pending()) goto fornext_error4883;
-goto fornext_entrylabel4883;
-while(1){
-fornext_value4883=fornext_step4883+(*_FUNC_ISFUNCTIONIDENTIFIER_LONG_I);
-fornext_entrylabel4883:
-*_FUNC_ISFUNCTIONIDENTIFIER_LONG_I=fornext_value4883;
-if (fornext_step_negative4883){
-if (fornext_value4883<fornext_finalvalue4883) break;
-}else{
-if (fornext_value4883>fornext_finalvalue4883) break;
-}
-fornext_error4883:;
-if(qbevent){evnt(28169,1129,"const_eval.bas");if(r)goto S_40299;}
-S_40300:;
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_ISFUNCTIONIDENTIFIER_STRING_ELE,*((qbs**)((char*)__ARRAY_UDT_CONSTFUNCS[0]+(((array_check((*_FUNC_ISFUNCTIONIDENTIFIER_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))))))||is_error_pending()){
-if(qbevent){evnt(28169,1130,"const_eval.bas");if(r)goto S_40300;}
+S_39974:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(*((qbs**)((char*)_SUB_FIXUPERRORMESSAGE_UDT_STATE+((0+56)))),qbs_new_txt_len("",0))))||is_error_pending()){
+if(qbevent){evnt(28183,788,"const_eval.bas");if(r)goto S_39974;}
 do{
-*_FUNC_ISFUNCTIONIDENTIFIER_LONG_ISFUNCTIONIDENTIFIER=*_FUNC_ISFUNCTIONIDENTIFIER_LONG_I;
-if(!qbevent)break;evnt(28169,1131,"const_eval.bas");}while(r);
-do{
-goto exit_subfunc;
-if(!qbevent)break;evnt(28169,1132,"const_eval.bas");}while(r);
+qbs_set(*((qbs**)((char*)(_SUB_FIXUPERRORMESSAGE_UDT_STATE)+((0+68)))),qbs_add(qbs_add(qbs_new_txt_len("ERROR - Expected variable/value after '",39),_SUB_FIXUPERRORMESSAGE_STRING_OP),qbs_new_txt_len("'",1)));
+qbs_cleanup(qbs_tmp_base,0);
+if(!qbevent)break;evnt(28183,788,"const_eval.bas");}while(r);
 }
-fornext_continue_4882:;
-}
-fornext_exit_4882:;
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free237.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_ISFUNCTIONIDENTIFIER_LONG_ISFUNCTIONIDENTIFIER;
 }

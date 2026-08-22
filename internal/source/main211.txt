@@ -1,4 +1,4 @@
-int32 FUNC_NUMERICEXPRESSION(qbs*_FUNC_NUMERICEXPRESSION_STRING_EXP,void*_FUNC_NUMERICEXPRESSION_UDT_STATE){
+void SUB_WRITEBUFRAWDATACPP(int32*_SUB_WRITEBUFRAWDATACPP_LONG_BUF,qbs*_SUB_WRITEBUFRAWDATACPP_STRING_S){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,14 +12,24 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
+S_39226:;
+if ((~(((int8*)(__ARRAY_BYTE_SBUFCPPLINESTATUS[0]))[array_check((*_SUB_WRITEBUFRAWDATACPP_LONG_BUF)-__ARRAY_BYTE_SBUFCPPLINESTATUS[4],__ARRAY_BYTE_SBUFCPPLINESTATUS[5])]))||is_error_pending()){
+if(qbevent){evnt(28182,189,"sb_qb64pe_extension.bm");if(r)goto S_39226;}
 do{
-*_FUNC_NUMERICEXPRESSION_LONG_NUMERICEXPRESSION=FUNC_LOGICALIMP(_FUNC_NUMERICEXPRESSION_STRING_EXP,(void*)( ((char*)(_FUNC_NUMERICEXPRESSION_UDT_STATE)) + ((0+0)) ));
+SUB_ADDCPPLINE(_SUB_WRITEBUFRAWDATACPP_LONG_BUF);
+if(!qbevent)break;evnt(28182,190,"sb_qb64pe_extension.bm");}while(r);
+do{
+tmp_long=array_check((*_SUB_WRITEBUFRAWDATACPP_LONG_BUF)-__ARRAY_BYTE_SBUFCPPLINESTATUS[4],__ARRAY_BYTE_SBUFCPPLINESTATUS[5]);
+if (!is_error_pending()) ((int8*)(__ARRAY_BYTE_SBUFCPPLINESTATUS[0]))[tmp_long]= -1ll ;
+if(!qbevent)break;evnt(28182,191,"sb_qb64pe_extension.bm");}while(r);
+}
+do{
+SUB_WRITEBUFRAWDATA(&(pass3815=*_SUB_WRITEBUFRAWDATACPP_LONG_BUF),_SUB_WRITEBUFRAWDATACPP_STRING_S);
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28169,252,"const_eval.bas");}while(r);
+if(!qbevent)break;evnt(28182,193,"sb_qb64pe_extension.bm");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free211.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-return *_FUNC_NUMERICEXPRESSION_LONG_NUMERICEXPRESSION;
 }

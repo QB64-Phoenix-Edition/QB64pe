@@ -1,4 +1,4 @@
-qbs* FUNC_IDEFILEEXISTS(qbs*_FUNC_IDEFILEEXISTS_STRING_F){
+void SUB_IDECHANGED(int32*_SUB_IDECHANGED_LONG_TOTALCHANGES){
 qbs *tqbs;
 ptrszint tmp_long;
 int32 tmp_fileno;
@@ -12,55 +12,21 @@ sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 libqb_check_stack();
 if (is_error_pending()) goto exit_subfunc;
+S_56421:;
+if ((-(*_SUB_IDECHANGED_LONG_TOTALCHANGES> 1 ))||is_error_pending()){
+if(qbevent){evnt(28196,11274,"ide_methods.bas");if(r)goto S_56421;}
 do{
-*_FUNC_IDEFILEEXISTS_LONG_L=_FUNC_IDEFILEEXISTS_STRING_F->len;
+qbs_set(_SUB_IDECHANGED_STRING_PL,qbs_new_txt_len("s",1));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11725,"ide_methods.bas");}while(r);
-S_56847:;
-do{
-if(qbevent){evnt(28182,11726,"ide_methods.bas");if(r)goto S_56847;}
-S_56848:;
-if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_IDEFILEEXISTS_LONG_L<_FUNC_IDEFILEEXISTS_STRING_F->len)))||is_error_pending()){
-if(qbevent){evnt(28182,11727,"ide_methods.bas");if(r)goto S_56848;}
-do{
-qbs_set(_FUNC_IDEFILEEXISTS_STRING_M,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("File ",5),func_chr( 34 )),func_string( 3 , 250 )),qbs_right(_FUNC_IDEFILEEXISTS_STRING_F,*_FUNC_IDEFILEEXISTS_LONG_L)),func_chr( 34 )),qbs_new_txt_len(" already exists. Overwrite?",27)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11728,"ide_methods.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_IDEFILEEXISTS_STRING_M,qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("File ",5),func_chr( 34 )),_FUNC_IDEFILEEXISTS_STRING_F),func_chr( 34 )),qbs_new_txt_len(" already exists. Overwrite?",27)));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11730,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(28196,11274,"ide_methods.bas");}while(r);
 }
 do{
-*_FUNC_IDEFILEEXISTS_LONG_L=*_FUNC_IDEFILEEXISTS_LONG_L- 1 ;
-if(!qbevent)break;evnt(28182,11732,"ide_methods.bas");}while(r);
-S_56854:;
-dl_continue_6719:;
-}while((!(qbs_cleanup(qbs_tmp_base,-((_FUNC_IDEFILEEXISTS_STRING_M->len+ 4 )<((*__LONG_IDEWX- 6 ))))))&&(!is_error_pending()));
-dl_exit_6719:;
-if(qbevent){evnt(28182,11733,"ide_methods.bas");if(r)goto S_56854;}
-do{
-*_FUNC_IDEFILEEXISTS_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Save",4),_FUNC_IDEFILEEXISTS_STRING_M,qbs_new_txt_len("#Yes;#No",8));
+*_SUB_IDECHANGED_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Change Complete",15),qbs_add(qbs_add(qbs_add(qbs__tostr((int32)(*_SUB_IDECHANGED_LONG_TOTALCHANGES),NULL,0),qbs_new_txt_len(" substitution",13)),_SUB_IDECHANGED_STRING_PL),qbs_new_txt_len(".",1)),qbs_new_txt_len("",0));
 qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11735,"ide_methods.bas");}while(r);
-S_56856:;
-if ((-(*_FUNC_IDEFILEEXISTS_LONG_RESULT== 1 ))||is_error_pending()){
-if(qbevent){evnt(28182,11736,"ide_methods.bas");if(r)goto S_56856;}
-do{
-qbs_set(_FUNC_IDEFILEEXISTS_STRING_IDEFILEEXISTS,qbs_new_txt_len("Y",1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11736,"ide_methods.bas");}while(r);
-}else{
-do{
-qbs_set(_FUNC_IDEFILEEXISTS_STRING_IDEFILEEXISTS,qbs_new_txt_len("N",1));
-qbs_cleanup(qbs_tmp_base,0);
-if(!qbevent)break;evnt(28182,11736,"ide_methods.bas");}while(r);
-}
+if(!qbevent)break;evnt(28196,11275,"ide_methods.bas");}while(r);
 exit_subfunc:;
 free_mem_lock(sf_mem_lock);
 #include "free357.txt"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
 cmem_sp=tmp_cmem_sp;
-qbs_maketmp(_FUNC_IDEFILEEXISTS_STRING_IDEFILEEXISTS);return _FUNC_IDEFILEEXISTS_STRING_IDEFILEEXISTS;
 }
