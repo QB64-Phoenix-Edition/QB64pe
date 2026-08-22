@@ -15,7 +15,6 @@
 // FIXME: These extern variable and function definitions should probably go
 // somewhere more global so that they can be referenced by libqb.cpp
 extern int32_t framebufferobjects_supported;
-extern int32_t screen_hide;
 
 extern void MAIN_LOOP(void *);
 extern void GLUT_EXIT_FUNC();
