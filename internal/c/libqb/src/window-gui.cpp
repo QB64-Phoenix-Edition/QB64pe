@@ -281,6 +281,15 @@ void sub__windowsizelimit(int32_t minX, int32_t minY, int32_t maxX, int32_t maxY
 
     OPTIONAL_GLUT();
 
+    if (display_page && display_page->text) {
+        int32_t fw = fontwidth[display_page->font];
+        int32_t fh = fontheight[display_page->font];
+        minX *= fw;
+        maxX *= fw;
+        minY *= fh;
+        maxY *= fh;
+    }
+
     if (!passed) {
         GLUTEmu_WindowSetSizeLimits(-1, -1, -1, -1);
     } else if ((passed & 1) && (passed & 2)) {
