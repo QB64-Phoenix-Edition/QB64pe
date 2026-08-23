@@ -1033,6 +1033,7 @@ static inline int32_t keyboard_is_super_held() {
 static inline bool keyboard_is_altgr_combo() {
     // AltGr is Right Alt on Linux, and Left Ctrl + Right Alt on Windows.
     // It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
+    // Note that GLFW filters out the fake Left Ctrl on Windows (see internal/c/parts/core/glfw/src/win32_window.c).
     return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_RALT);
 }
 
@@ -2114,7 +2115,7 @@ void sub__numlock(int32_t options) {
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     (void)modifiers;
 
-    if (!func__hasfocus()) {
+    if (!GLUTEmu_WindowIsFocused()) {
         return;
     }
 
@@ -2371,7 +2372,7 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     const bool isPressed = (action != GLUTEmu_ButtonAction::Released);
     const uint8_t scancode8 = static_cast<uint8_t>(scancode);
 
-    if (!func__hasfocus()) {
+    if (!GLUTEmu_WindowIsFocused()) {
         return;
     }
 
