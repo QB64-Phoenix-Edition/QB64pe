@@ -1031,9 +1031,8 @@ static inline int32_t keyboard_is_super_held() {
 }
 
 static inline bool keyboard_is_altgr_combo() {
-    // AltGr is Right Alt on Linux, and Left Ctrl + Right Alt on Windows.
-    // It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
-    // Note that GLFW filters out the fake Left Ctrl on Windows (see internal/c/parts/core/glfw/src/win32_window.c).
+    // On both Windows and Linux, AltGr behaves like Right Alt (because GLFW strips the fake Left Ctrl on Windows; see
+    // internal/c/parts/core/glfw/src/win32_window.c). It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
     return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_RALT);
 }
 
@@ -2140,7 +2139,25 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
         s_pressedKeyCodepoint[keyInt] = uint32_t(codepoint);
 
-    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    // Only clear the pending char key if this codepoint will actually go to INKEY$.
+    // If it's a Unicode character that doesn't map to CP437 (like Euro or currency signs),
+    // it gets dropped from INKEY$. In that case, we MUST NOT clear the pending char key,
+    // so that FlushPendingCharKey() can trigger the physical fallback (e.g. Alt + 4) on key release!
+    bool willGoToInkey = false;
+    if (codepoint <= 127) {
+        willGoToInkey = true;
+    } else if (unicode_to_cp437(codepoint) != 0) {
+        willGoToInkey = true;
+    } else if (codepoint >= kFullwidthAsciiStart && codepoint <= kFullwidthAsciiEnd) {
+        willGoToInkey = true;
+    } else if (codepoint == kIdeographicSpace) {
+        willGoToInkey = true;
+    }
+
+    if (willGoToInkey) {
+        s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    }
+
     keydown_unicode(uint32_t(codepoint));
     s_forceNextKeydownAsAltGr = false;
 }
@@ -2408,7 +2425,6 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             if (s_pressedKeyCodepoint[keyInt]) {
                 keyup_unicode(s_pressedKeyCodepoint[keyInt]);
                 s_pressedKeyCodepoint[keyInt] = 0;
-                return;
             }
 
             if (s_pressedKeyKeyCode[keyInt]) {
