@@ -1954,11 +1954,11 @@ void keyboard_update_shift_state() {
         x |= 4;
     if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
         x |= 8;
-    if (keyheld(QBK + QBK_SCROLL_LOCK_MODE))
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock))
         x |= 16;
-    if (keyheld(VK + QBVK_NUMLOCK))
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock))
         x |= 32;
-    if (keyheld(VK + QBVK_CAPSLOCK))
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock))
         x |= 64;
     // note: insert state is emulated (off by default)
     if (keyheld(QBK + QBK_INSERT_MODE))
@@ -1988,8 +1988,10 @@ void keyboard_update_shift_state() {
         x |= 8;
     if (keyheld(VK + QBVK_SCROLLLOCK))
         x |= 16;
-    // if (keyheld(VK+QBVK_NUMLOCK)) x|=32;
-    // if (keyheld(VK+QBVK_CAPSLOCK)) x|=64;
+    if (keyheld(VK + QBVK_NUMLOCK))
+        x |= 32;
+    if (keyheld(VK + QBVK_CAPSLOCK))
+        x |= 64;
     if (keyheld(QBKC_INSERT))
         x |= 128;
     cmem[kBiosExtendedShiftStatusOffset] = x;
@@ -2009,11 +2011,32 @@ void keyboard_update_shift_state() {
     */
     x = 0;
     if (keyheld(VK + QBVK_RCTRL))
-        x |= 1;
+        x |= 4;
     if (keyheld(VK + QBVK_RALT))
-        x |= 2;
+        x |= 8;
     x |= 16;
     cmem[kBiosKeyboardStatusFlagsOffset] = x;
+
+    /*
+        0:497h                   LED Indicator Flags
+        7 6 5 4 3 2 1 0
+        x . . . . . . .       Keyboard transmit error flag (always 0)
+        . x . . . . . .       Mode indicator update (always 0)
+        . . x . . . . .       Re-send received flag (always 0)
+        . . . x . . . .       ACK received (always 0)
+        . . . . x . . .       Circus system indicator (always 0)
+        . . . . . x . .       Caps-lock indicator
+        . . . . . . x .       Num-lock indicator
+        . . . . . . . x       Scroll-lock indicator
+    */
+    int32_t x97 = 0;
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::ScrollLock))
+        x97 |= 1;
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::NumLock))
+        x97 |= 2;
+    if (GLUTEmu_KeyboardIsKeyModifierSet(GLUTEmu_KeyboardKeyModifier::CapsLock))
+        x97 |= 4;
+    cmem[0x497] = x97;
 }
 
 int32_t func__capslock() {
@@ -2420,6 +2443,7 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
 
 void GLUT_KEYBOARD_FOCUS_FUNC(bool focused) {
     if (focused) {
+        keyboard_update_shift_state();
         return;
     }
 

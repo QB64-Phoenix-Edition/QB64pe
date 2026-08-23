@@ -619,6 +619,12 @@ class GLUTEmu {
 
                         libqb_log_trace("Window %s", focused == GLFW_TRUE ? "focused" : "unfocused");
 
+                        if (focused == GLFW_TRUE) {
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::CapsLock, instance->keyboardModifiers);
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, instance->keyboardModifiers);
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, instance->keyboardModifiers);
+                        }
+
                         if (instance->windowFocusedFunction) {
                             instance->windowFocusedFunction(focused == GLFW_TRUE);
                         }
@@ -1208,6 +1214,10 @@ class GLUTEmu {
             // We are already listening for window focus changes
 
             libqb_log_trace("Window focused function set: %p", function);
+
+            if (windowFocusedFunction) {
+                windowFocusedFunction(isWindowFocused);
+            }
         } else {
             libqb_log_error("Window not created, cannot set focused function");
         }
