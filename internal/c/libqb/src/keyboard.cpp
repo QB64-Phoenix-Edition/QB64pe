@@ -666,9 +666,7 @@ static int32_t keydown_glyph = 0;
 static RingBuffer<int64_t, 8192, true> keyhit_buffer;
 static RingBuffer<uint8_t, 256, true> port60h_buffer;
 static uint8_t last_port60h_value = 0;
-static uint32_t bindkey = 0;
 static std::vector<uint32_t> keyheld_buffer;
-static std::vector<uint32_t> keyheld_bind_buffer;
 static uint32_t s_pressedKeyCodepoint[kGlfwKeyLast + 1] = {};
 static int s_pressedKeyKeyCode[kGlfwKeyLast + 1] = {};
 static uint32_t s_unknownCharCodepoint = 0;
@@ -829,7 +827,65 @@ static void Keyboard_ReportDeviceEvent(uint32_t code, bool down) {
     }
 }
 
-static inline bool keyboard_is_altgr_combo();
+static int32_t keyheld(uint32_t x) {
+    for (size_t i = 0; i < keyheld_buffer.size(); i++) {
+        if (keyheld_buffer[i] == x)
+            return 1;
+    }
+
+    // check multimapped NUMPAD keys
+    if ((x >= 42) && (x <= 57)) {
+        if ((x >= 48) && (x <= 57))
+            return keyheld(VK + QBVK_KP0 + (x - 48)); // 0-9
+        if (x == 46)
+            return keyheld(VK + QBVK_KP_PERIOD);
+        if (x == 47)
+            return keyheld(VK + QBVK_KP_DIVIDE);
+        if (x == 42)
+            return keyheld(VK + QBVK_KP_MULTIPLY);
+        if (x == 45)
+            return keyheld(VK + QBVK_KP_MINUS);
+        if (x == 43)
+            return keyheld(VK + QBVK_KP_PLUS);
+    }
+    if (x == 13)
+        return keyheld(VK + QBVK_KP_ENTER);
+    if (x & kAsciiMask) {
+        const uint32_t x2 = (x >> 8) & 255;
+        if ((x2 >= 71) && (x2 <= 83)) {
+            if (x2 == 82)
+                return keyheld(QBK + QBVK_KP0 - QBVK_KP0);
+            if (x2 == 79)
+                return keyheld(QBK + QBVK_KP1 - QBVK_KP0);
+            if (x2 == 80)
+                return keyheld(QBK + QBVK_KP2 - QBVK_KP0);
+            if (x2 == 81)
+                return keyheld(QBK + QBVK_KP3 - QBVK_KP0);
+            if (x2 == 75)
+                return keyheld(QBK + QBVK_KP4 - QBVK_KP0);
+            if (x2 == 76)
+                return keyheld(QBK + QBVK_KP5 - QBVK_KP0);
+            if (x2 == 77)
+                return keyheld(QBK + QBVK_KP6 - QBVK_KP0);
+            if (x2 == 71)
+                return keyheld(QBK + QBVK_KP7 - QBVK_KP0);
+            if (x2 == 72)
+                return keyheld(QBK + QBVK_KP8 - QBVK_KP0);
+            if (x2 == 73)
+                return keyheld(QBK + QBVK_KP9 - QBVK_KP0);
+            if (x2 == 83)
+                return keyheld(QBK + QBVK_KP_PERIOD - QBVK_KP0);
+        }
+    }
+
+    return 0;
+}
+
+static inline bool keyboard_is_altgr_combo() {
+    // On both Windows and Linux, AltGr behaves like Right Alt (because GLFW strips the fake Left Ctrl on Windows; see
+    // internal/c/parts/core/glfw/src/win32_window.c). It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
+    return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_RALT);
+}
 
 static constexpr inline uint32_t unicode_to_cp437(uint32_t x) {
     for (int32_t i = 0; i <= 255; i++) {
@@ -974,8 +1030,6 @@ static inline void FlushPendingCharKey() {
     s_ignoreNextCharCallback = false;
 }
 
-static int32_t keyheld(uint32_t x);
-
 static constexpr inline int32_t keyboard_scancode_get_scancode(int32_t keyIndex) {
     return keyboard_scancode_lookup_table[keyIndex * kScancodeEntryWidth + 1];
 }
@@ -1028,12 +1082,6 @@ static inline int32_t keyboard_is_alt_held() {
 
 static inline int32_t keyboard_is_super_held() {
     return keyheld(VK + QBVK_LSUPER) || keyheld(VK + QBVK_RSUPER);
-}
-
-static inline bool keyboard_is_altgr_combo() {
-    // On both Windows and Linux, AltGr behaves like Right Alt (because GLFW strips the fake Left Ctrl on Windows; see
-    // internal/c/parts/core/glfw/src/win32_window.c). It must not be Right Alt + Right Ctrl or Left Alt + Right Alt.
-    return (keyheld(VK + QBVK_LALT) == 0) && (keyheld(VK + QBVK_RCTRL) == 0) && keyheld(VK + QBVK_RALT);
 }
 
 static inline void keyboard_get_modifier_triplet(int32_t *shift, int32_t *ctrl, int32_t *alt) {
@@ -1276,64 +1324,6 @@ void sub__keyclear(int32_t buf, int32_t passed) {
 #endif
 }
 
-void keyboard_set_bindkey(uint32_t key) {
-    bindkey = key;
-}
-
-static int32_t keyheld(uint32_t x) {
-    for (size_t i = 0; i < keyheld_buffer.size(); i++) {
-        if (keyheld_buffer[i] == x)
-            return 1;
-    }
-
-    // check multimapped NUMPAD keys
-    if ((x >= 42) && (x <= 57)) {
-        if ((x >= 48) && (x <= 57))
-            return keyheld(VK + QBVK_KP0 + (x - 48)); // 0-9
-        if (x == 46)
-            return keyheld(VK + QBVK_KP_PERIOD);
-        if (x == 47)
-            return keyheld(VK + QBVK_KP_DIVIDE);
-        if (x == 42)
-            return keyheld(VK + QBVK_KP_MULTIPLY);
-        if (x == 45)
-            return keyheld(VK + QBVK_KP_MINUS);
-        if (x == 43)
-            return keyheld(VK + QBVK_KP_PLUS);
-    }
-    if (x == 13)
-        return keyheld(VK + QBVK_KP_ENTER);
-    if (x & kAsciiMask) {
-        const uint32_t x2 = (x >> 8) & 255;
-        if ((x2 >= 71) && (x2 <= 83)) {
-            if (x2 == 82)
-                return keyheld(QBK + QBVK_KP0 - QBVK_KP0);
-            if (x2 == 79)
-                return keyheld(QBK + QBVK_KP1 - QBVK_KP0);
-            if (x2 == 80)
-                return keyheld(QBK + QBVK_KP2 - QBVK_KP0);
-            if (x2 == 81)
-                return keyheld(QBK + QBVK_KP3 - QBVK_KP0);
-            if (x2 == 75)
-                return keyheld(QBK + QBVK_KP4 - QBVK_KP0);
-            if (x2 == 76)
-                return keyheld(QBK + QBVK_KP5 - QBVK_KP0);
-            if (x2 == 77)
-                return keyheld(QBK + QBVK_KP6 - QBVK_KP0);
-            if (x2 == 71)
-                return keyheld(QBK + QBVK_KP7 - QBVK_KP0);
-            if (x2 == 72)
-                return keyheld(QBK + QBVK_KP8 - QBVK_KP0);
-            if (x2 == 73)
-                return keyheld(QBK + QBVK_KP9 - QBVK_KP0);
-            if (x2 == 83)
-                return keyheld(QBK + QBVK_KP_PERIOD - QBVK_KP0);
-        }
-    }
-
-    return 0;
-}
-
 static inline void keyheld_add(uint32_t x) {
     for (size_t i = 0; i < keyheld_buffer.size(); i++) {
         if (keyheld_buffer[i] == x)
@@ -1341,8 +1331,6 @@ static inline void keyheld_add(uint32_t x) {
     } // already in buffer
 
     keyheld_buffer.push_back(x);
-    keyheld_bind_buffer.push_back(bindkey);
-    bindkey = 0; // add binded key (0=none)
 }
 
 static inline void keyheld_remove(uint32_t x) {
@@ -1350,9 +1338,6 @@ static inline void keyheld_remove(uint32_t x) {
         if (keyheld_buffer[i] == x) { // exists
             keyheld_buffer[i] = keyheld_buffer.back();
             keyheld_buffer.pop_back();
-
-            keyheld_bind_buffer[i] = keyheld_bind_buffer.back();
-            keyheld_bind_buffer.pop_back();
             return;
         }
     }

@@ -8,7 +8,6 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
 void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers);
 void GLUT_KEYBOARD_FOCUS_FUNC(bool focused);
 
-void keyboard_set_bindkey(uint32_t key);
 void keyboard_keydown(uint32_t key);
 void keyboard_keyup(uint32_t key);
 void keyboard_update_shift_state();
