@@ -25959,8 +25959,6 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < 32; i++)
         sub_file_print_spaces[i] = 32;
 
-    keyboard_set_last_port60h_value(129); // simulate release of ESC
-
     mem_static_size = 1048576; // 1MEG
     mem_static = (uint8 *)malloc(mem_static_size);
     mem_static_pointer = mem_static;

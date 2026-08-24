@@ -2425,6 +2425,7 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
             if (s_pressedKeyCodepoint[keyInt]) {
                 keyup_unicode(s_pressedKeyCodepoint[keyInt]);
                 s_pressedKeyCodepoint[keyInt] = 0;
+                return;
             }
 
             if (s_pressedKeyKeyCode[keyInt]) {
