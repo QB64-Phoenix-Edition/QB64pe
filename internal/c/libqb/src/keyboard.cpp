@@ -661,7 +661,6 @@ static constexpr int kGlfwKeyLast = int(GLUTEmu_KeyboardKey::Last);
 
 static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
-static int32_t asciicode_reading = 0;
 static int32_t keydown_glyph = 0;
 static RingBuffer<int64_t, 8192, true> keyhit_buffer;
 static RingBuffer<uint8_t, 256, true> port60h_buffer;
@@ -1437,17 +1436,15 @@ void keyboard_keyup(uint32_t x) {
 
     keyheld_remove(x);
 
-    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
-        // identify and revert numpad specific key codes to non-numpad codes
-        static uint32_t x2;
-        static int64_t numpadkey;
-        keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
+    // identify and revert numpad specific key codes to non-numpad codes
+    static uint32_t x2;
+    static int64_t numpadkey;
+    keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
 
-        if (keyboard_keyup_mask_consume(x))
-            goto key_handled;
+    if (keyboard_keyup_mask_consume(x))
+        goto key_handled;
 
-        keyboard_push_keyhit_value(-static_cast<int32_t>(x2), numpadkey);
-    } // asciicode_reading!=2
+    keyboard_push_keyhit_value(-static_cast<int32_t>(x2), numpadkey);
 
     // static int32_t numlock;
     // numlock = 0;
@@ -1631,167 +1628,165 @@ void keyboard_keydown(uint32_t x) {
         }
     }
 
-    if (asciicode_reading != 2) { // hide numpad presses related to ALT+1+2+3 type entries
-        // identify and revert numpad specific key codes to non-numpad codes
-        static uint32_t x2;
-        static int64_t numpadkey;
-        keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
+    // identify and revert numpad specific key codes to non-numpad codes
+    static uint32_t x2;
+    static int64_t numpadkey;
+    keyboard_try_translate_numpad_keyhit(x, &x2, &numpadkey);
 
-        // ON KEY trapping
-        { // new scope
-            static int32_t block_onkey = 0;
-            static int32_t f, scancode, extended, flags_mask;
-            int32_t i, i2; // must not be static!
+    // ON KEY trapping
+    { // new scope
+        static int32_t block_onkey = 0;
+        static int32_t f, scancode, extended, flags_mask;
+        int32_t i, i2; // must not be static!
 
-            // establish scancode (if any)
-            scancode = 0;
-            keyboard_get_onkey_scancode_and_flags(x, &scancode, &flags_mask);
+        // establish scancode (if any)
+        scancode = 0;
+        keyboard_get_onkey_scancode_and_flags(x, &scancode, &flags_mask);
 
-            // establish if key is an extended key
-            extended = keyboard_is_onkey_extended_key(x);
+        // establish if key is an extended key
+        extended = keyboard_is_onkey_extended_key(x);
 
-            if (!block_onkey) {
-                // priority #1: user defined keys
-                if (scancode) {
-                    for (i = 0; i <= 31; i++) {
-                        if (onkey[i].key_scancode == scancode) {
-                            if (onkey[i].active) {
-                                if (onkey[i].id) {
-                                    // check keyboard flags
-                                    f = onkey[i].key_flags;
-                                    // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key, 16 Super(Windows/Command),
-                                    // 32 NumLock key,64 Caps Lock key, 128 Extended keys on a
-                                    // 101-key keyboard To specify multiple shift states, add the values together. For example, a value of 12 specifies that the
-                                    // user-defined key is used in combination with the Ctrl and Alt keys.
-                                    if ((flags_mask & 3) == 0) {
-                                        if (f & 3) {
-                                            if (keyheld(VK + QBVK_LSHIFT) == 0 && keyheld(VK + QBVK_RSHIFT) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 4) == 0) {
-                                        if (f & 4) {
-                                            if (keyheld(VK + QBVK_LCTRL) == 0 && keyheld(VK + QBVK_RCTRL) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 8) == 0) {
-                                        if (f & 8) {
-                                            if (keyheld(VK + QBVK_LALT) == 0 && keyheld(VK + QBVK_RALT) == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 16) == 0) {
-                                        if (f & 16) {
-                                            if (keyboard_is_super_held() == 0)
-                                                goto wrong_flags;
-                                        } else {
-                                            if (keyboard_is_super_held())
-                                                goto wrong_flags;
-                                        }
-                                    }
-                                    if ((flags_mask & 32) == 0) {
-                                        if (f & 32) {
-                                            if (keyheld(VK + QBVK_NUMLOCK) == 0)
-                                                goto wrong_flags;
-                                            //*revise
-                                        }
-                                    }
-                                    if ((flags_mask & 64) == 0) {
-                                        if (f & 64) {
-                                            if (keyheld(VK + QBVK_CAPSLOCK) == 0)
-                                                goto wrong_flags;
-                                            //*revise
-                                        }
-                                    }
-                                    if ((flags_mask & 128) == 0) {
-                                        if (((f & 128) / 128) != extended)
+        if (!block_onkey) {
+            // priority #1: user defined keys
+            if (scancode) {
+                for (i = 0; i <= 31; i++) {
+                    if (onkey[i].key_scancode == scancode) {
+                        if (onkey[i].active) {
+                            if (onkey[i].id) {
+                                // check keyboard flags
+                                f = onkey[i].key_flags;
+                                // 0 No keyboard flag, 1-3 Either Shift key, 4 Ctrl key, 8 Alt key, 16 Super(Windows/Command),
+                                // 32 NumLock key,64 Caps Lock key, 128 Extended keys on a
+                                // 101-key keyboard To specify multiple shift states, add the values together. For example, a value of 12 specifies that the
+                                // user-defined key is used in combination with the Ctrl and Alt keys.
+                                if ((flags_mask & 3) == 0) {
+                                    if (f & 3) {
+                                        if (keyheld(VK + QBVK_LSHIFT) == 0 && keyheld(VK + QBVK_RSHIFT) == 0)
+                                            goto wrong_flags;
+                                    } else {
+                                        if (keyheld(VK + QBVK_LSHIFT) || keyheld(VK + QBVK_RSHIFT))
                                             goto wrong_flags;
                                     }
-                                    if (onkey[i].active == 1) { //(1)ON
-                                        onkey[i].state++;
-                                    } else { //(2)STOP
-                                        onkey[i].state = 1;
+                                }
+                                if ((flags_mask & 4) == 0) {
+                                    if (f & 4) {
+                                        if (keyheld(VK + QBVK_LCTRL) == 0 && keyheld(VK + QBVK_RCTRL) == 0)
+                                            goto wrong_flags;
+                                    } else {
+                                        if (keyheld(VK + QBVK_LCTRL) || keyheld(VK + QBVK_RCTRL))
+                                            goto wrong_flags;
                                     }
-
-                                    qbevent = 1;
-
-                                    // mask trigger key
-                                    keyboard_keyup_mask_add(x);
-
-                                    goto key_handled;
-
-                                } // id
-                            } // active
-                        } // scancode==
-                    wrong_flags:;
-                    } // i
-                } // scancode
-
-                // priority #2: fixed index F1-F12, arrows
-                for (i = 0; i <= 31; i++) {
-                    if (onkey[i].active) {
-                        if (onkey[i].id) {
-                            if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
+                                }
+                                if ((flags_mask & 8) == 0) {
+                                    if (f & 8) {
+                                        if (keyheld(VK + QBVK_LALT) == 0 && keyheld(VK + QBVK_RALT) == 0)
+                                            goto wrong_flags;
+                                    } else {
+                                        if (keyheld(VK + QBVK_LALT) || keyheld(VK + QBVK_RALT))
+                                            goto wrong_flags;
+                                    }
+                                }
+                                if ((flags_mask & 16) == 0) {
+                                    if (f & 16) {
+                                        if (keyboard_is_super_held() == 0)
+                                            goto wrong_flags;
+                                    } else {
+                                        if (keyboard_is_super_held())
+                                            goto wrong_flags;
+                                    }
+                                }
+                                if ((flags_mask & 32) == 0) {
+                                    if (f & 32) {
+                                        if (keyheld(VK + QBVK_NUMLOCK) == 0)
+                                            goto wrong_flags;
+                                        //*revise
+                                    }
+                                }
+                                if ((flags_mask & 64) == 0) {
+                                    if (f & 64) {
+                                        if (keyheld(VK + QBVK_CAPSLOCK) == 0)
+                                            goto wrong_flags;
+                                        //*revise
+                                    }
+                                }
+                                if ((flags_mask & 128) == 0) {
+                                    if (((f & 128) / 128) != extended)
+                                        goto wrong_flags;
+                                }
                                 if (onkey[i].active == 1) { //(1)ON
                                     onkey[i].state++;
                                 } else { //(2)STOP
                                     onkey[i].state = 1;
                                 }
+
                                 qbevent = 1;
 
                                 // mask trigger key
                                 keyboard_keyup_mask_add(x);
 
                                 goto key_handled;
-                            } // keycode
-                        } // id
-                    } // active
+
+                            } // id
+                        } // active
+                    } // scancode==
+                wrong_flags:;
                 } // i
+            } // scancode
 
-            } // block_onkey
-
-            // priority #3: string insertion
+            // priority #2: fixed index F1-F12, arrows
             for (i = 0; i <= 31; i++) {
-                if (onkey[i].text) {
-                    if (onkey[i].text->len) {
+                if (onkey[i].active) {
+                    if (onkey[i].id) {
                         if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
+                            if (onkey[i].active == 1) { //(1)ON
+                                onkey[i].state++;
+                            } else { //(2)STOP
+                                onkey[i].state = 1;
+                            }
+                            qbevent = 1;
+
                             // mask trigger key
                             keyboard_keyup_mask_add(x);
 
-                            for (i2 = 0; i2 < onkey[i].text->len; i2++) {
-                                block_onkey = 1;
-                                keyboard_keydown(onkey[i].text->chr[i2]);
-                                keyboard_keyup(onkey[i].text->chr[i2]);
-                                block_onkey = 0;
-                            } // i2
                             goto key_handled;
                         } // keycode
-                    }
-                } // text
+                    } // id
+                } // active
             } // i
-        } // descope
 
-        /*
-            //keyhit cyclic buffer
-            int64_t keyhit[8192];
-            //    keyhit specific internal flags: (stored in high 32-bits)
-            //    &4294967296->numpad was used
-            int32_t keyhit_nextfree=0;
-            int32_t keyhit_next=0;
-            //note: if full, the oldest message is discarded to make way for the new message
-        */
-        keyboard_push_keyhit_value(static_cast<int32_t>(x2), numpadkey);
-    } // asciicode_reading!=2
+        } // block_onkey
+
+        // priority #3: string insertion
+        for (i = 0; i <= 31; i++) {
+            if (onkey[i].text) {
+                if (onkey[i].text->len) {
+                    if ((x2 == onkey[i].keycode) || x == onkey[i].keycode_alternate) {
+                        // mask trigger key
+                        keyboard_keyup_mask_add(x);
+
+                        for (i2 = 0; i2 < onkey[i].text->len; i2++) {
+                            block_onkey = 1;
+                            keyboard_keydown(onkey[i].text->chr[i2]);
+                            keyboard_keyup(onkey[i].text->chr[i2]);
+                            block_onkey = 0;
+                        } // i2
+                        goto key_handled;
+                    } // keycode
+                }
+            } // text
+        } // i
+    } // descope
+
+    /*
+        //keyhit cyclic buffer
+        int64_t keyhit[8192];
+        //    keyhit specific internal flags: (stored in high 32-bits)
+        //    &4294967296->numpad was used
+        int32_t keyhit_nextfree=0;
+        int32_t keyhit_next=0;
+        //note: if full, the oldest message is discarded to make way for the new message
+    */
+    keyboard_push_keyhit_value(static_cast<int32_t>(x2), numpadkey);
 
     static int32_t shift, alt, ctrl, numlock;
     numlock = 0;
