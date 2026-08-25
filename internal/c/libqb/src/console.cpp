@@ -150,9 +150,7 @@ int32_t func__getconsoleinput() {
         GetConsoleScreenBufferInfo(hStdout, &cl_bufinfo);
 
     GetConsoleMode(hStdin, (LPDWORD)&dwMode);
-    fdwMode = ENABLE_EXTENDED_FLAGS;
-    SetConsoleMode(hStdin, fdwMode);
-    fdwMode = dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+    fdwMode = (dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS) & ~(ENABLE_QUICK_EDIT_MODE);
     SetConsoleMode(hStdin, fdwMode);
 
     // Drain all pending OS console input into the internal queues so that  rapid mouse clicks / movements are not overwritten in the single-call global state
