@@ -663,7 +663,7 @@ static int32_t keyboard_keyup_mask_last = -1;
 static uint32_t keyboard_keyup_mask[256]; // NULL values indicate removed masks
 static int32_t keydown_glyph = 0;
 static RingBuffer<int64_t, 8192, true> keyhit_buffer;
-static RingBuffer<uint8_t, 256, true> port60h_buffer;
+static RingBuffer<uint8_t, 4096, true> port60h_buffer;
 static uint8_t last_port60h_value = 0;
 static std::vector<uint32_t> keyheld_buffer;
 static uint32_t s_pressedKeyCodepoint[kGlfwKeyLast + 1] = {};
