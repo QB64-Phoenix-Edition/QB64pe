@@ -673,6 +673,12 @@ static bool s_pendingCharKeyIsAltGr = false;
 static bool s_forceNextKeydownAsAltGr = false;
 static GLUTEmu_KeyboardKey s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
 static int s_pendingCharKeyModifiers = 0;
+// A deferred printable key is allowed to synthesize its physical-key fallback only after
+// the platform character callback has actually produced text for that key. This distinction
+// is important for dead keys and IME/composition input: those key presses intentionally do
+// not produce a character callback of their own, so translating their physical GLFW token
+// (for example GLFW_KEY_EQUAL) would leak an unrelated US-layout character into INKEY$/IDE.
+static bool s_pendingCharCallbackSeen = false;
 static bool s_ignoreNextCharCallback = false;
 
 static constexpr inline int TranslateDirectKey(GLUTEmu_KeyboardKey key) {
@@ -1002,6 +1008,46 @@ static inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isCon
         return false;
 
     return true;
+}
+
+static inline void FlushPendingCharKey() {
+    if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown)
+        return;
+
+    // No character callback means the OS did not commit text for this physical key. The
+    // normal example is a dead key: Windows keeps the accent as composition state and only
+    // emits the final composed character after the next key press. Do not manufacture a
+    // character from the GLFW physical-key token in that case. Physical scancode/device
+    // reporting is handled separately and remains unchanged.
+    if (!s_pendingCharCallbackSeen) {
+        s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+        s_pendingCharKeyModifiers = 0;
+        s_pendingCharKeyIsAltGr = false;
+        s_ignoreNextCharCallback = false;
+        return;
+    }
+
+    const int mods = s_pendingCharKeyModifiers;
+    const bool isNumLock = bool(mods & GLUTEmu_KeyboardKeyModifier::NumLock);
+    const bool isShift = bool(mods & GLUTEmu_KeyboardKeyModifier::Shift);
+    const bool isControl = bool(mods & GLUTEmu_KeyboardKeyModifier::Control);
+    const bool isAlt = bool(mods & GLUTEmu_KeyboardKeyModifier::Alt);
+    const bool isCapsLock = bool(mods & GLUTEmu_KeyboardKeyModifier::CapsLock);
+    const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
+
+    const int qbKey = TranslateKey(s_pendingCharKey, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
+    if (qbKey != -1) {
+        const int keyInt = int(s_pendingCharKey);
+        if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
+            s_pressedKeyKeyCode[keyInt] = qbKey;
+        keyboard_keydown(qbKey);
+    }
+
+    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    s_pendingCharKeyModifiers = 0;
+    s_pendingCharKeyIsAltGr = false;
+    s_pendingCharCallbackSeen = false;
+    s_ignoreNextCharCallback = false;
 }
 
 static constexpr inline int32_t keyboard_scancode_get_scancode(int32_t keyIndex) {
@@ -2090,11 +2136,34 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
         return;
     }
 
+    // Remember that the OS really produced text for this deferred physical key. If the
+    // character cannot be represented in the legacy INKEY$ path below, the existing physical
+    // fallback is still permitted on key release. Dead keys never reach this point for their
+    // first press, which is what prevents the spurious fallback character.
+    s_pendingCharCallbackSeen = true;
+
     const int keyInt = int(s_pendingCharKey);
     if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
         s_pressedKeyCodepoint[keyInt] = uint32_t(codepoint);
 
-    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    // Only clear the pending char key if this codepoint will actually go to INKEY$.
+    // If it's a Unicode character that doesn't map to CP437 (like Euro or currency signs),
+    // it gets dropped from INKEY$. In that case, we MUST NOT clear the pending char key,
+    // so that FlushPendingCharKey() can trigger the physical fallback (e.g. Alt + 4) on key release!
+    bool willGoToInkey = false;
+    if (codepoint <= 127) {
+        willGoToInkey = true;
+    } else if (unicode_to_cp437(codepoint) != 0) {
+        willGoToInkey = true;
+    } else if (codepoint >= kFullwidthAsciiStart && codepoint <= kFullwidthAsciiEnd) {
+        willGoToInkey = true;
+    } else if (codepoint == kIdeographicSpace) {
+        willGoToInkey = true;
+    }
+
+    if (willGoToInkey) {
+        s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
+    }
 
     keydown_unicode(uint32_t(codepoint));
     s_forceNextKeydownAsAltGr = false;
@@ -2331,6 +2400,15 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
         return;
     }
 
+    // If this is the release of a deferred key for which the OS never emitted a character,
+    // FlushPendingCharKey() will intentionally discard it instead of synthesizing a logical
+    // keydown. Remember that fact so the release path below does not generate a mismatched
+    // logical keyup for the same physical token. Scancode and device events are still emitted.
+    const bool releaseOfPendingKeyWithoutCharacter =
+        action == GLUTEmu_ButtonAction::Released && s_pendingCharKey != GLUTEmu_KeyboardKey::Unknown && key == s_pendingCharKey && !s_pendingCharCallbackSeen;
+
+    FlushPendingCharKey();
+
     const uint8_t dosScancode = glfw_key_to_dos_scancode(key);
     if (isPressed) {
         scancodedown(dosScancode);
@@ -2349,6 +2427,9 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     const bool useKeypadNumber = isNumLock && !isShift;
 
     if (action == GLUTEmu_ButtonAction::Released) {
+        if (releaseOfPendingKeyWithoutCharacter)
+            return;
+
         if (key == GLUTEmu_KeyboardKey::Unknown && s_unknownCharCodepoint) {
             keyup_unicode(s_unknownCharCodepoint);
             s_unknownCharCodepoint = 0;
@@ -2381,6 +2462,7 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
         s_pendingCharKey = key;
         s_pendingCharKeyModifiers = modifiers;
         s_pendingCharKeyIsAltGr = keyboard_is_altgr_combo();
+        s_pendingCharCallbackSeen = false;
         s_ignoreNextCharCallback = false;
     } else {
         s_ignoreNextCharCallback = true;
@@ -2412,6 +2494,7 @@ void GLUT_KEYBOARD_FOCUS_FUNC(bool focused) {
     s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
     s_pendingCharKeyModifiers = 0;
     s_pendingCharKeyIsAltGr = false;
+    s_pendingCharCallbackSeen = false;
     s_ignoreNextCharCallback = false;
     s_unknownCharCodepoint = 0;
 
