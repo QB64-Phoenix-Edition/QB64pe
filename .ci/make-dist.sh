@@ -59,7 +59,7 @@ case "$buildPlatform" in
         ;;
 
     lnx)
-        filename="qb64pe_lnx-$version.tar.gz"
+        filename="qb64pe_lnx-$PLATFORM-$version.tar.gz"
         format=tar
 
         # Not sure if we should distribute this

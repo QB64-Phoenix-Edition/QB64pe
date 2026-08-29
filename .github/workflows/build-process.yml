@@ -12,15 +12,23 @@ jobs:
           - os: ubuntu-24.04
             platform: x64
             prefix: lnx
+
+          - os: ubuntu-24.04
+            platform: x86
+            prefix: lnx
+
           - os: macos-15-intel
             platform: x64
             prefix: osx
+
           - os: windows-2022
             platform: x64
             prefix: win
+
           - os: windows-2022
             platform: x86
             prefix: win
+
           - os: windows-11-arm
             platform: arm64
             prefix: win
@@ -46,13 +54,46 @@ jobs:
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
     - uses: webfactory/ssh-agent@v0.10.0
-      if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' }}
+      if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' && matrix.platform == 'x64' }}
       with:
         ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
 
     - name: Install dependencies
       if: ${{ matrix.prefix == 'lnx' }}
-      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev pulseaudio dbus-x11 libportaudio2 libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+      run: sudo apt update && sudo apt install -y \
+        build-essential \
+        x11-utils \
+        pulseaudio \
+        dbus-x11 \
+        mesa-common-dev \
+        libglu1-mesa-dev \
+        libasound2-dev \
+        libpng-dev \
+        libportaudio2 \
+        libcurl4-openssl-dev \
+        libx11-dev \
+        libxcursor-dev \
+        libxrandr-dev \
+        libxinerama-dev \
+        libxi-dev
+
+      # The 32-bit Linux run builds a real 32-bit binary, so requires all the
+      # multilib packages matching the above list.
+    - name: Install 32-bit dependencies
+      if: ${{ matrix.prefix == 'lnx' && matrix.platform == 'x86' }}
+      run: sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install -y \
+          gcc-multilib \
+          g++-multilib \
+          libgl1-mesa-dev:i386 \
+          libglu1-mesa-dev:i386 \
+          libasound2-dev:i386 \
+          libpng-dev:i386 \
+          libcurl4-openssl-dev:i386 \
+          libx11-dev:i386 \
+          libxcursor-dev:i386 \
+          libxrandr-dev:i386 \
+          libxinerama-dev:i386 \
+          libxi-dev:i386
 
       # Pulseaudio puts a dummy ALSA device in place, which allows us to do
       # audio testing on Linux
@@ -133,13 +174,13 @@ jobs:
       # the main branch, and building a Pull request merge. Otherwise the repo
       # is left alone.
     - name: Update ./internal/source
-      if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
+      if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && matrix.platform == 'x64' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
       run: .ci/push-internal-source.sh
 
     - uses: actions/upload-artifact@v6
       if: always()
       with:
-        name: qb64pe-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
+        name: qb64pe-${{ matrix.prefix }}${{ (matrix.prefix == 'win' || matrix.prefix == 'lnx') && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
         path: |
           tests/results/
           qb64pe_win-x86*.7z
