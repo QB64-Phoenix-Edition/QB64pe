@@ -1004,31 +1004,6 @@ static inline bool ShouldDeferToCharCallback(GLUTEmu_KeyboardKey key, bool isCon
     return true;
 }
 
-static inline void FlushPendingCharKey() {
-    if (s_pendingCharKey == GLUTEmu_KeyboardKey::Unknown)
-        return;
-
-    const int mods = s_pendingCharKeyModifiers;
-    const bool isNumLock = bool(mods & GLUTEmu_KeyboardKeyModifier::NumLock);
-    const bool isShift = bool(mods & GLUTEmu_KeyboardKeyModifier::Shift);
-    const bool isControl = bool(mods & GLUTEmu_KeyboardKeyModifier::Control);
-    const bool isAlt = bool(mods & GLUTEmu_KeyboardKeyModifier::Alt);
-    const bool isCapsLock = bool(mods & GLUTEmu_KeyboardKeyModifier::CapsLock);
-    const bool useKeypadNumber = isAlt || (isNumLock && !isShift);
-
-    const int qbKey = TranslateKey(s_pendingCharKey, isShift, isControl, isAlt, isCapsLock, useKeypadNumber);
-    if (qbKey != -1) {
-        const int keyInt = int(s_pendingCharKey);
-        if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
-            s_pressedKeyKeyCode[keyInt] = qbKey;
-        keyboard_keydown(qbKey);
-    }
-
-    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
-    s_pendingCharKeyIsAltGr = false;
-    s_ignoreNextCharCallback = false;
-}
-
 static constexpr inline int32_t keyboard_scancode_get_scancode(int32_t keyIndex) {
     return keyboard_scancode_lookup_table[keyIndex * kScancodeEntryWidth + 1];
 }
@@ -2119,24 +2094,7 @@ void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers) {
     if (keyInt >= 0 && keyInt <= kGlfwKeyLast)
         s_pressedKeyCodepoint[keyInt] = uint32_t(codepoint);
 
-    // Only clear the pending char key if this codepoint will actually go to INKEY$.
-    // If it's a Unicode character that doesn't map to CP437 (like Euro or currency signs),
-    // it gets dropped from INKEY$. In that case, we MUST NOT clear the pending char key,
-    // so that FlushPendingCharKey() can trigger the physical fallback (e.g. Alt + 4) on key release!
-    bool willGoToInkey = false;
-    if (codepoint <= 127) {
-        willGoToInkey = true;
-    } else if (unicode_to_cp437(codepoint) != 0) {
-        willGoToInkey = true;
-    } else if (codepoint >= kFullwidthAsciiStart && codepoint <= kFullwidthAsciiEnd) {
-        willGoToInkey = true;
-    } else if (codepoint == kIdeographicSpace) {
-        willGoToInkey = true;
-    }
-
-    if (willGoToInkey) {
-        s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
-    }
+    s_pendingCharKey = GLUTEmu_KeyboardKey::Unknown;
 
     keydown_unicode(uint32_t(codepoint));
     s_forceNextKeydownAsAltGr = false;
@@ -2372,8 +2330,6 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
     if (!GLUTEmu_WindowIsFocused()) {
         return;
     }
-
-    FlushPendingCharKey();
 
     const uint8_t dosScancode = glfw_key_to_dos_scancode(key);
     if (isPressed) {
