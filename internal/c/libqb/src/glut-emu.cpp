@@ -642,6 +642,11 @@ class GLUTEmu {
                             instance->keyboardScrollLockState = !instance->keyboardScrollLockState;
                         }
 #endif
+#if defined(QB64_MACOSX)
+                        if (key == static_cast<int>(GLUTEmu_KeyboardKey::NumLock) && action == GLFW_RELEASE) {
+                            instance->keyboardNumLockState = !instance->keyboardNumLockState;
+                        }
+#endif
                         instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, mods);
                         if (instance->keyboardButtonFunction) {
                             instance->keyboardButtonFunction(GLUTEmu_KeyboardKey(key), scancode, GLUTEmu_ButtonAction(action), instance->keyboardModifiers);
@@ -1848,23 +1853,41 @@ class GLUTEmu {
 
 #elif defined(QB64_LINUX)
 
-        unsigned int n = 0;
-        if (XkbGetIndicatorState(glfwGetX11Display(), XkbUseCoreKbd, &n) == Success) {
-            switch (key) {
-            case GLUTEmu_KeyboardKey::ScrollLock:
-                mods = ((n & 0x04) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
-                break;
+        auto dpy = glfwGetX11Display();
+        if (dpy) {
+            static bool initialized = false;
+            static unsigned int capsMask = 0;
+            static unsigned int numMask = 0;
 
-            case GLUTEmu_KeyboardKey::CapsLock:
-                mods = ((n & 0x01) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
-                break;
+            if (!initialized) {
+                auto get_mask = [dpy](const char *name) -> unsigned int {
+                    auto atom = XInternAtom(dpy, name, True);
+                    if (atom == None)
+                        return 0;
+                    int ndx;
+                    Bool state;
+                    XkbIndicatorMapRec map;
+                    Bool real;
+                    if (XkbGetNamedIndicator(dpy, atom, &ndx, &state, &map, &real)) {
+                        return 1u << ndx;
+                    }
+                    return 0;
+                };
+                capsMask = get_mask("Caps Lock");
+                numMask = get_mask("Num Lock");
+                initialized = true;
+            }
 
-            case GLUTEmu_KeyboardKey::NumLock:
-                mods = ((n & 0x02) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
-                break;
+            unsigned int n = 0;
+            if (XkbGetIndicatorState(dpy, XkbUseCoreKbd, &n) == Success) {
+                if (capsMask) {
+                    mods = (n & capsMask) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
+                }
+                if (numMask) {
+                    mods = (n & numMask) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
+                }
 
-            default:
-                break;
+                mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
             }
         } else {
             // No indicator API, toggle manually
@@ -1878,17 +1901,13 @@ class GLUTEmu {
 
 #elif defined(QB64_MACOSX)
 
-        if (key == GLUTEmu_KeyboardKey::CapsLock) {
-            // Only Caps Lock is detectable via public API on macOS
-            CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+        // Only Caps Lock is detectable via public API on macOS
+        CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+        mods = (flags & kCGEventFlagMaskAlphaShift) != 0 ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
 
-            mods = (flags & kCGEventFlagMaskAlphaShift) != 0 ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
-        } else if (key == GLUTEmu_KeyboardKey::ScrollLock) {
-            // We need this for scroll lock only since GLFW supports caps lock and num lock natively
-            mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
-        } else {
-            libqb_log_warn("Lock key modifier query not available for key = %d on this platform", int(key));
-        }
+        // GLFW on macOS does not support NumLock or ScrollLock natively, so we emulate them both
+        mods = keyboardNumLockState ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
+        mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
 
 #endif
 
@@ -2190,6 +2209,9 @@ class GLUTEmu {
     int keyboardModifiers = 0;                                              // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
+#endif
+#if defined(QB64_MACOSX)
+    bool keyboardNumLockState = false; // num Lock state for macOS
 #endif
     GLUTEmu_CallbackWindowClose windowCloseFunction = nullptr;
     GLUTEmu_CallbackWindowResized windowResizedFunction = nullptr;
