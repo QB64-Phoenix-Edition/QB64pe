@@ -368,7 +368,7 @@ class GLUTEmu {
       public:
         GLUTEnum_MouseCursorMode mode;
 
-        MessageMouseSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(true), mode(mode) {}
+        MessageMouseSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(false), mode(mode) {}
 
         void Execute() override {
             GLUTEmu::Instance().MouseSetCursorMode(mode);
@@ -2588,9 +2588,7 @@ void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().MouseSetCursorMode(mode);
     } else {
-        GLUTEmu::MessageMouseSetCursorMode msg(mode);
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetCursorMode(mode));
     }
 }
 
