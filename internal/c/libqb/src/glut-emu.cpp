@@ -341,12 +341,11 @@ class GLUTEmu {
     class MessageMouseSetStandardCursor : public Message {
       public:
         GLUTEmu_MouseStandardCursor style;
-        bool responseValue;
 
-        MessageMouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(true), style(style), responseValue(false) {}
+        MessageMouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(false), style(style) {}
 
         void Execute() override {
-            responseValue = GLUTEmu::Instance().MouseSetStandardCursor(style);
+            GLUTEmu::Instance().MouseSetStandardCursor(style);
         }
     };
 
@@ -354,13 +353,12 @@ class GLUTEmu {
       public:
         int32_t imageHandle;
         int hotspotX, hotspotY;
-        bool responseValue;
 
         MessageMouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
-            : Message(true), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY), responseValue(false) {}
+            : Message(false), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY) {}
 
         void Execute() override {
-            responseValue = GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
+            GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
         }
     };
 
@@ -2568,20 +2566,16 @@ bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetStandardCursor(style);
     }
-    GLUTEmu::MessageMouseSetStandardCursor msg(style);
-    GLUTEmu::Instance().MessageQueue(&msg);
-    msg.WaitForResponse();
-    return msg.responseValue;
+    GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetStandardCursor(style));
+    return true;
 }
 
 bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
     }
-    GLUTEmu::MessageMouseSetCustomCursor msg(imageHandle, hotspotX, hotspotY);
-    GLUTEmu::Instance().MessageQueue(&msg);
-    msg.WaitForResponse();
-    return msg.responseValue;
+    GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetCustomCursor(imageHandle, hotspotX, hotspotY));
+    return true;
 }
 
 void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
