@@ -19,8 +19,6 @@
 #    include <windows.h>
 #endif
 
-static constexpr size_t ConsoleInputQueueSize = 4096;
-
 // A single console input event, preserving the order returned by the OS.
 struct ConsoleInputEvent {
     enum class Type { None = 0, Keyboard = 1, Mouse = 2 };
@@ -33,16 +31,16 @@ struct ConsoleInputEvent {
 };
 
 // This ia a temporary solutions for now until we can get the TermEmu library working properly on all platforms.
-static RingBuffer<int32_t, ConsoleInputQueueSize, true> g_consoleKeyQueue;             // A ring buffer that holds key scan codes.
-static RingBuffer<ConsoleInputEvent, ConsoleInputQueueSize, true> g_consoleInputQueue; // Ordered key/mouse events from the OS.
-static int32_t g_consoleMouseX = 0;                                                    // The current X position of the mouse in the console window.
-static int32_t g_consoleMouseY = 0;                                                    // The current Y position of the mouse in the console window.
-static uint32_t g_consoleMouseButtons = 0;                                             // The current state of the mouse buttons in the console window.
-static int32_t g_consoleMousePrevX = 0;                                                // Previous X position used to compute movement.
-static int32_t g_consoleMousePrevY = 0;                                                // Previous Y position used to compute movement.
-static int32_t g_consoleMouseMovementX = 0;                                            // Relative X movement from the last console mouse event.
-static int32_t g_consoleMouseMovementY = 0;                                            // Relative Y movement from the last console mouse event.
-static bool g_consoleMouseHasPrev = false;                                             // Whether a previous console mouse position exists.
+static RingBuffer<int32_t, 8192, true> g_consoleKeyQueue;             // A ring buffer that holds key scan codes.
+static RingBuffer<ConsoleInputEvent, 8192, true> g_consoleInputQueue; // Ordered key/mouse events from the OS.
+static int32_t g_consoleMouseX = 0;                                   // The current X position of the mouse in the console window.
+static int32_t g_consoleMouseY = 0;                                   // The current Y position of the mouse in the console window.
+static uint32_t g_consoleMouseButtons = 0;                            // The current state of the mouse buttons in the console window.
+static int32_t g_consoleMousePrevX = 0;                               // Previous X position used to compute movement.
+static int32_t g_consoleMousePrevY = 0;                               // Previous Y position used to compute movement.
+static int32_t g_consoleMouseMovementX = 0;                           // Relative X movement from the last console mouse event.
+static int32_t g_consoleMouseMovementY = 0;                           // Relative Y movement from the last console mouse event.
+static bool g_consoleMouseHasPrev = false;                            // Whether a previous console mouse position exists.
 
 int32_t console_active = 1;
 extern int32_t console_image;
@@ -103,7 +101,7 @@ void sub__consolefont(qbs *FontName, int32_t FontSize) {
         Sleep(500);
         OneTimePause = 1; // after the first pause, the console should be created, so we don't need any more delays in the future.
     }
-    CONSOLE_FONT_INFOEX info = {0};
+    CONSOLE_FONT_INFOEX info{};
     info.cbSize = sizeof(info);
     info.dwFontSize.Y = FontSize; // leave X as zero
     info.FontWeight = FW_NORMAL;
@@ -152,9 +150,7 @@ int32_t func__getconsoleinput() {
         GetConsoleScreenBufferInfo(hStdout, &cl_bufinfo);
 
     GetConsoleMode(hStdin, (LPDWORD)&dwMode);
-    fdwMode = ENABLE_EXTENDED_FLAGS;
-    SetConsoleMode(hStdin, fdwMode);
-    fdwMode = dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+    fdwMode = (dwMode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS) & ~(ENABLE_QUICK_EDIT_MODE);
     SetConsoleMode(hStdin, fdwMode);
 
     // Drain all pending OS console input into the internal queues so that  rapid mouse clicks / movements are not overwritten in the single-call global state

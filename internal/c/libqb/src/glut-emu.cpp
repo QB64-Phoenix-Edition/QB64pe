@@ -247,22 +247,22 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetWindowAspectRatio : public Message {
+    class MessageWindowSetAspectRatio : public Message {
       public:
         int width, height;
 
-        MessageSetWindowAspectRatio(int width, int height) : Message(false), width(width), height(height) {}
+        MessageWindowSetAspectRatio(int width, int height) : Message(false), width(width), height(height) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetAspectRatio(width, height);
         }
     };
 
-    class MessageSetWindowSizeLimits : public Message {
+    class MessageWindowSetSizeLimits : public Message {
       public:
         int minWidth, minHeight, maxWidth, maxHeight;
 
-        MessageSetWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
+        MessageWindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
             : Message(false), minWidth(minWidth), minHeight(minHeight), maxWidth(maxWidth), maxHeight(maxHeight) {}
 
         void Execute() override {
@@ -270,22 +270,22 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetWindowMinimumSizeLimits : public Message {
+    class MessageWindowSetMinimumSizeLimits : public Message {
       public:
         int minWidth, minHeight;
 
-        MessageSetWindowMinimumSizeLimits(int minWidth, int minHeight) : Message(false), minWidth(minWidth), minHeight(minHeight) {}
+        MessageWindowSetMinimumSizeLimits(int minWidth, int minHeight) : Message(false), minWidth(minWidth), minHeight(minHeight) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
         }
     };
 
-    class MessageSetWindowMaximumSizeLimits : public Message {
+    class MessageWindowSetMaximumSizeLimits : public Message {
       public:
         int maxWidth, maxHeight;
 
-        MessageSetWindowMaximumSizeLimits(int maxWidth, int maxHeight) : Message(false), maxWidth(maxWidth), maxHeight(maxHeight) {}
+        MessageWindowSetMaximumSizeLimits(int maxWidth, int maxHeight) : Message(false), maxWidth(maxWidth), maxHeight(maxHeight) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
@@ -325,37 +325,48 @@ class GLUTEmu {
         }
     };
 
-    class MessageSetStandardCursor : public Message {
+    class MessageKeyboardGetKeyName : public Message {
       public:
-        GLUTEmu_MouseStandardCursor style;
-        bool responseValue;
+        GLUTEmu_KeyboardKey key;
+        int scancode;
+        const char *keyName;
 
-        MessageSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(true), style(style), responseValue(false) {}
+        MessageKeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) : Message(true), key(key), scancode(scancode), keyName(nullptr) {}
 
         void Execute() override {
-            responseValue = GLUTEmu::Instance().MouseSetStandardCursor(style);
+            keyName = GLUTEmu::Instance().KeyboardGetKeyName(key, scancode);
         }
     };
 
-    class MessageSetCustomCursor : public Message {
+    class MessageMouseSetStandardCursor : public Message {
+      public:
+        GLUTEmu_MouseStandardCursor style;
+
+        MessageMouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) : Message(false), style(style) {}
+
+        void Execute() override {
+            GLUTEmu::Instance().MouseSetStandardCursor(style);
+        }
+    };
+
+    class MessageMouseSetCustomCursor : public Message {
       public:
         int32_t imageHandle;
         int hotspotX, hotspotY;
-        bool responseValue;
 
-        MessageSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
-            : Message(true), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY), responseValue(false) {}
+        MessageMouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY)
+            : Message(false), imageHandle(imageHandle), hotspotX(hotspotX), hotspotY(hotspotY) {}
 
         void Execute() override {
-            responseValue = GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
+            GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
         }
     };
 
-    class MessageSetCursorMode : public Message {
+    class MessageMouseSetCursorMode : public Message {
       public:
         GLUTEnum_MouseCursorMode mode;
 
-        MessageSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(true), mode(mode) {}
+        MessageMouseSetCursorMode(GLUTEnum_MouseCursorMode mode) : Message(false), mode(mode) {}
 
         void Execute() override {
             GLUTEmu::Instance().MouseSetCursorMode(mode);
@@ -606,6 +617,12 @@ class GLUTEmu {
 
                         libqb_log_trace("Window %s", focused == GLFW_TRUE ? "focused" : "unfocused");
 
+                        if (focused == GLFW_TRUE) {
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::CapsLock, instance->keyboardModifiers);
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, instance->keyboardModifiers);
+                            instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, instance->keyboardModifiers);
+                        }
+
                         if (instance->windowFocusedFunction) {
                             instance->windowFocusedFunction(focused == GLFW_TRUE);
                         }
@@ -621,6 +638,11 @@ class GLUTEmu {
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
                         if (key == static_cast<int>(GLUTEmu_KeyboardKey::ScrollLock) && action == GLFW_RELEASE) {
                             instance->keyboardScrollLockState = !instance->keyboardScrollLockState;
+                        }
+#endif
+#if defined(QB64_MACOSX)
+                        if (key == static_cast<int>(GLUTEmu_KeyboardKey::NumLock) && action == GLFW_RELEASE) {
+                            instance->keyboardNumLockState = !instance->keyboardNumLockState;
                         }
 #endif
                         instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, mods);
@@ -1195,6 +1217,10 @@ class GLUTEmu {
             // We are already listening for window focus changes
 
             libqb_log_trace("Window focused function set: %p", function);
+
+            if (windowFocusedFunction) {
+                windowFocusedFunction(isWindowFocused);
+            }
         } else {
             libqb_log_error("Window not created, cannot set focused function");
         }
@@ -1301,6 +1327,16 @@ class GLUTEmu {
 #endif
 
         return false;
+    }
+
+    const char *KeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) const {
+        if (window != nullptr) {
+            return glfwGetKeyName(static_cast<int>(key), scancode);
+        } else {
+            libqb_log_error("Window not created, cannot get key name");
+        }
+
+        return nullptr;
     }
 
     bool MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
@@ -1815,23 +1851,41 @@ class GLUTEmu {
 
 #elif defined(QB64_LINUX)
 
-        unsigned int n = 0;
-        if (XkbGetIndicatorState(glfwGetX11Display(), XkbUseCoreKbd, &n) == Success) {
-            switch (key) {
-            case GLUTEmu_KeyboardKey::ScrollLock:
-                mods = ((n & 0x04) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
-                break;
+        auto dpy = glfwGetX11Display();
+        if (dpy) {
+            static bool initialized = false;
+            static unsigned int capsMask = 0;
+            static unsigned int numMask = 0;
 
-            case GLUTEmu_KeyboardKey::CapsLock:
-                mods = ((n & 0x01) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
-                break;
+            if (!initialized) {
+                auto get_mask = [dpy](const char *name) -> unsigned int {
+                    auto atom = XInternAtom(dpy, name, True);
+                    if (atom == None)
+                        return 0;
+                    int ndx;
+                    Bool state;
+                    XkbIndicatorMapRec map;
+                    Bool real;
+                    if (XkbGetNamedIndicator(dpy, atom, &ndx, &state, &map, &real)) {
+                        return 1u << ndx;
+                    }
+                    return 0;
+                };
+                capsMask = get_mask("Caps Lock");
+                numMask = get_mask("Num Lock");
+                initialized = true;
+            }
 
-            case GLUTEmu_KeyboardKey::NumLock:
-                mods = ((n & 0x02) != 0u) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
-                break;
+            unsigned int n = 0;
+            if (XkbGetIndicatorState(dpy, XkbUseCoreKbd, &n) == Success) {
+                if (capsMask) {
+                    mods = (n & capsMask) ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
+                }
+                if (numMask) {
+                    mods = (n & numMask) ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
+                }
 
-            default:
-                break;
+                mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
             }
         } else {
             // No indicator API, toggle manually
@@ -1845,17 +1899,13 @@ class GLUTEmu {
 
 #elif defined(QB64_MACOSX)
 
-        if (key == GLUTEmu_KeyboardKey::CapsLock) {
-            // Only Caps Lock is detectable via public API on macOS
-            CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+        // Only Caps Lock is detectable via public API on macOS
+        CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+        mods = (flags & kCGEventFlagMaskAlphaShift) != 0 ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
 
-            mods = (flags & kCGEventFlagMaskAlphaShift) != 0 ? (mods | GLUTEmu_KeyboardKeyModifier::CapsLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::CapsLock);
-        } else if (key == GLUTEmu_KeyboardKey::ScrollLock) {
-            // We need this for scroll lock only since GLFW supports caps lock and num lock natively
-            mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
-        } else {
-            libqb_log_warn("Lock key modifier query not available for key = %d on this platform", int(key));
-        }
+        // GLFW on macOS does not support NumLock or ScrollLock natively, so we emulate them both
+        mods = keyboardNumLockState ? (mods | GLUTEmu_KeyboardKeyModifier::NumLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::NumLock);
+        mods = keyboardScrollLockState ? (mods | GLUTEmu_KeyboardKeyModifier::ScrollLock) : (mods & ~GLUTEmu_KeyboardKeyModifier::ScrollLock);
 
 #endif
 
@@ -2158,6 +2208,9 @@ class GLUTEmu {
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
 #endif
+#if defined(QB64_MACOSX)
+    bool keyboardNumLockState = false; // num Lock state for macOS
+#endif
     GLUTEmu_CallbackWindowClose windowCloseFunction = nullptr;
     GLUTEmu_CallbackWindowResized windowResizedFunction = nullptr;
     GLUTEmu_CallbackWindowFramebufferResized windowFramebufferResizedFunction = nullptr;
@@ -2390,7 +2443,7 @@ void GLUTEmu_WindowSetAspectRatio(int width, int height) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetAspectRatio(width, height);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowAspectRatio(width, height));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetAspectRatio(width, height));
     }
 }
 
@@ -2398,7 +2451,7 @@ void GLUTEmu_WindowSetSizeLimits(int minWidth, int minHeight, int maxWidth, int 
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetSizeLimits(minWidth, minHeight, maxWidth, maxHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowSizeLimits(minWidth, minHeight, maxWidth, maxHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetSizeLimits(minWidth, minHeight, maxWidth, maxHeight));
     }
 }
 
@@ -2406,7 +2459,7 @@ void GLUTEmu_WindowSetMinimumSizeLimits(int minWidth, int minHeight) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetMinimumSizeLimits(minWidth, minHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMinimumSizeLimits(minWidth, minHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetMinimumSizeLimits(minWidth, minHeight));
     }
 }
 
@@ -2414,7 +2467,7 @@ void GLUTEmu_WindowSetMaximumSizeLimits(int maxWidth, int maxHeight) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetMaximumSizeLimits(maxWidth, maxHeight);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageSetWindowMaximumSizeLimits(maxWidth, maxHeight));
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetMaximumSizeLimits(maxWidth, maxHeight));
     }
 }
 
@@ -2498,33 +2551,38 @@ bool GLUTEmu_KeyboardToggleLockKeyState(GLUTEmu_KeyboardKeyModifier lockKey) {
     return GLUTEmu::Instance().KeyboardToggleLockKeyState(lockKey);
 }
 
+const char *GLUTEmu_KeyboardGetKeyName(GLUTEmu_KeyboardKey key, int scancode) {
+    if (GLUTEmu::Instance().MessageIsMainThread()) {
+        return GLUTEmu::Instance().KeyboardGetKeyName(key, scancode);
+    } else {
+        GLUTEmu::MessageKeyboardGetKeyName msg(key, scancode);
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
+        return msg.keyName;
+    }
+}
+
 bool GLUTEmu_MouseSetStandardCursor(GLUTEmu_MouseStandardCursor style) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetStandardCursor(style);
     }
-    GLUTEmu::MessageSetStandardCursor msg(style);
-    GLUTEmu::Instance().MessageQueue(&msg);
-    msg.WaitForResponse();
-    return msg.responseValue;
+    GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetStandardCursor(style));
+    return true;
 }
 
 bool GLUTEmu_MouseSetCustomCursor(int32_t imageHandle, int hotspotX, int hotspotY) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         return GLUTEmu::Instance().MouseSetCustomCursor(imageHandle, hotspotX, hotspotY);
     }
-    GLUTEmu::MessageSetCustomCursor msg(imageHandle, hotspotX, hotspotY);
-    GLUTEmu::Instance().MessageQueue(&msg);
-    msg.WaitForResponse();
-    return msg.responseValue;
+    GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetCustomCursor(imageHandle, hotspotX, hotspotY));
+    return true;
 }
 
 void GLUTEmu_MouseSetCursorMode(GLUTEnum_MouseCursorMode mode) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().MouseSetCursorMode(mode);
     } else {
-        GLUTEmu::MessageSetCursorMode msg(mode);
-        GLUTEmu::Instance().MessageQueue(&msg);
-        msg.WaitForResponse();
+        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageMouseSetCursorMode(mode));
     }
 }
 

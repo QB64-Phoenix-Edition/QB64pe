@@ -32,8 +32,6 @@ int32_t y_offset = 0;
 int32_t x_limit = 0;
 int32_t y_limit = 0;
 
-static constexpr auto MouseRingBufferCapacity = 65536u; // Must be a power of two and >= 2
-
 // Mouse event produced by the GUI/GLFW callbacks and consumed by _MOUSEINPUT.
 // x/y are raw window pixel coordinates.
 struct mouse_event {
@@ -46,7 +44,7 @@ struct mouse_event {
     double wheelY;    // vertical wheel delta since latest _MOUSEINPUT event
 };
 
-static RingBuffer<mouse_event, MouseRingBufferCapacity, true> mouse_event_queue;
+static RingBuffer<mouse_event, 65536, true> mouse_event_queue;
 // Last event popped by _MOUSEINPUT.
 static mouse_event current_gui_state{};
 // Latest pushed GUI event — used by mouse_get_int33_status without requiring _MOUSEINPUT.

@@ -18880,7 +18880,7 @@ SUB GetInput
             IF release = 1 THEN KSHIFT = 0 ELSE KSHIFT = -1
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
-        IF k = _KEY_LALT OR k = _KEY_RALT THEN
+        IF k = _KEY_LALT THEN
             IF release = 1 THEN
                 KALT = 0: KALTRELEASE = -1
             ELSE

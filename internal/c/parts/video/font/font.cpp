@@ -14,6 +14,7 @@
 #include "image.h"
 #include "mutex.h"
 #include "rounding.h"
+#include "unicode.h"
 #include <codecvt>
 #include <cstdio>
 #include <locale>
@@ -30,96 +31,6 @@
 #define IS_VALID_UTF_ENCODING(_e_) ((_e_) == 0 || (_e_) == 8 || (_e_) == 16 || (_e_) == 32)
 
 void pset_and_clip(int32_t x, int32_t y, uint32_t col);
-
-/// @brief A simple class that manages conversions from various encodings to UTF-32.
-/// Note: This class uses the deprecated codecvt library from C++17.
-/// We will need to replace this with a better implementation in the future when we adopt C++26 or later.
-class UTF32 {
-    static constexpr uint32_t MAX_UNICODE_CODEPOINT = 0x10FFFFu;
-
-    // Internal reusable UTF-32 buffer
-    std::u32string string;
-    // Reused converters
-    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convUTF8;
-    std::wstring_convert<std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT,
-                                            static_cast<std::codecvt_mode>(std::codecvt_mode::consume_header | std::codecvt_mode::little_endian)>,
-                         char32_t>
-        convUTF16LEBOM;
-    std::wstring_convert<std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT, std::codecvt_mode::consume_header>, char32_t> convUTF16BEBOM;
-    std::wstring_convert<std::codecvt_utf16<char32_t, MAX_UNICODE_CODEPOINT, std::codecvt_mode::little_endian>, char32_t> convUTF16LENoBOM;
-
-  public:
-    UTF32() = default;
-    UTF32(const UTF32 &) = delete;
-    UTF32 &operator=(const UTF32 &) = delete;
-    UTF32(UTF32 &&) noexcept = default;
-    UTF32 &operator=(UTF32 &&) noexcept = default;
-
-    /// @brief Converts a code page 437 byte string to UTF-32.
-    /// @param str The code page 437 string.
-    /// @param len The size of the string in bytes.
-    /// @return Number of code points on success; 0 on failure.
-    [[nodiscard]] size_t ConvertCP437(const uint8_t *str, size_t len) noexcept {
-        string.resize(len);
-
-        for (size_t i = 0; i < len; i++) {
-            string[i] = codepage437_to_unicode16[str[i]]; // codepage437_to_unicode16 is from libqb
-        }
-
-        return string.size();
-    }
-
-    /// @brief Converts UTF-8 byte string to UTF-32.
-    /// @param str The UTF-8 string.
-    /// @param len The size of the string in bytes.
-    /// @return Number of code points on success; 0 on failure.
-    [[nodiscard]] size_t ConvertUTF8(const uint8_t *str, size_t len) {
-        try {
-            string = convUTF8.from_bytes(reinterpret_cast<const char *>(str), reinterpret_cast<const char *>(str + len));
-        } catch (...) {
-            string.clear();
-        }
-
-        return string.size();
-    }
-
-    /// @brief Converts UTF-16 (LE/BE) byte string to UTF-32.
-    /// @param str The UTF-16 string. If BOM is present, honors it; otherwise assumes little-endian without BOM.
-    /// @param len The size of the string in bytes.
-    /// @return Number of code points on success; 0 on failure.
-    [[nodiscard]] size_t ConvertUTF16(const uint8_t *str, size_t len) {
-        try {
-            bool hasLEBOM, hasBEBOM;
-            if (len >= 2) {
-                hasLEBOM = (str[0] == 0xFF && str[1] == 0xFE);
-                hasBEBOM = (str[0] == 0xFE && str[1] == 0xFF);
-            } else {
-                hasLEBOM = false;
-                hasBEBOM = false;
-            }
-
-            if (hasLEBOM) {
-                // Little-endian with BOM. Use consume_header.
-                string = convUTF16LEBOM.from_bytes(reinterpret_cast<const char *>(str), reinterpret_cast<const char *>(str + len));
-            } else if (hasBEBOM) {
-                // Big-endian with BOM. Use consume_header.
-                string = convUTF16BEBOM.from_bytes(reinterpret_cast<const char *>(str), reinterpret_cast<const char *>(str + len));
-            } else {
-                // No BOM. Assume little-endian. Do not use consume_header.
-                string = convUTF16LENoBOM.from_bytes(reinterpret_cast<const char *>(str), reinterpret_cast<const char *>(str + len));
-            }
-        } catch (...) {
-            string.clear();
-        }
-
-        return string.size();
-    }
-
-    /// @brief Returns the converted UTF-32 string.
-    [[nodiscard]] const std::u32string &GetString() const noexcept {
-        return string;
-    }
-};
 
 /// @brief This class manages all font handles, bitmaps, hashmaps of glyph bitmaps etc.
 struct FontManager {
@@ -854,7 +765,7 @@ int32_t FontPrintWidthUTF32(int32_t fh, const char32_t *codepoint, int32_t codep
 /// @param codepoints The number of codepoints
 /// @return Length in pixels
 int32_t FontPrintWidthASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints) {
-    static UTF32 utf32;
+    static Unicode utf32;
 
     if (codepoints > 0) {
         // IMAGE_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
@@ -960,7 +871,7 @@ bool FontRenderTextUTF32(int32_t fh, const char32_t *codepoint, int32_t codepoin
 /// @param out_y A pointer to the output height of the rendered text in pixels
 /// @return success = 1, failure = 0
 bool FontRenderTextASCII(int32_t fh, const uint8_t *codepoint, int32_t codepoints, int32_t options, uint8_t **out_data, int32_t *out_x, int32_t *out_y) {
-    static UTF32 utf32;
+    static Unicode utf32;
 
     if (codepoints > 0) {
         // IMAGE_DEBUG_CHECK(IS_VALID_FONT_HANDLE(fh));
@@ -1016,7 +927,7 @@ int32_t func__UFontHeight(int32_t qb64_fh, int32_t passed) {
 /// @param passed Optional arguments flag
 /// @return The width in pixels
 int32_t func__UPrintWidth(const qbs *text, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
-    static UTF32 utf32;
+    static Unicode utf32;
     libqb_mutex_guard lock(fontManager.m);
 
     if (is_error_pending() || !text->len)
@@ -1125,7 +1036,7 @@ int32_t func__ULineSpacing(int32_t qb64_fh, int32_t passed) {
 /// @param passed Optional arguments flag
 void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_t max_width, int32_t utf_encoding, int32_t qb64_fh, int32_t dst_img,
                        int32_t passed) {
-    static UTF32 utf32;
+    static Unicode utf32;
     libqb_mutex_guard lock(fontManager.m);
 
     if (is_error_pending() || !text->len)
@@ -1467,7 +1378,7 @@ void sub__UPrintString(int32_t start_x, int32_t start_y, const qbs *text, int32_
 /// @param passed Optional arguments flag
 /// @return Total codepoints in `text`
 int32_t func__UCharPos(const qbs *text, void *arr, int32_t utf_encoding, int32_t qb64_fh, int32_t passed) {
-    static UTF32 utf32;
+    static Unicode utf32;
     libqb_mutex_guard lock(fontManager.m);
 
     if (is_error_pending() || !text->len)
