@@ -16,6 +16,7 @@
 #include "qbs.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define audio_log_trace(...) libqb_log_with_scope_trace(logscope::Audio, __VA_ARGS__)
 #define audio_log_info(...) libqb_log_with_scope_info(logscope::Audio, __VA_ARGS__)
