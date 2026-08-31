@@ -2877,10 +2877,7 @@ DO
                                                 m = 3
                                                 GOTO gotaa
                                             END IF
-                                            IF m = 1 THEN
-                                                IF declaringlibrary = 0 THEN a$ = "Array parameters require empty parentheses ()": GOTO errmes
-                                                GOTO gotaa 'DECLARE LIBRARY keeps its legacy bracket contents
-                                            END IF
+                                            IF m = 1 THEN GOTO gotaa 'ignore contents of bracket
                                             IF m <> 3 THEN a$ = "Syntax error - check your brackets": GOTO errmes
                                             IF t2$ = "" THEN t2$ = e$ ELSE t2$ = t2$ + " " + e$
                                             gotaa:
@@ -5600,10 +5597,7 @@ DO
                                 l$ = l$ + sp + SCase$("As")
                                 GOTO gotaa2
                             END IF
-                            IF m = 1 THEN
-                                IF declaringlibrary = 0 THEN a$ = "Array parameters require empty parentheses ()": GOTO errmes
-                                l$ = l$ + sp + e$: GOTO gotaa2 'DECLARE LIBRARY keeps its legacy bracket contents
-                            END IF
+                            IF m = 1 THEN l$ = l$ + sp + e$: GOTO gotaa2 'ignore contents of option bracket telling how many dimensions (add to layout as is)
                             IF m <> 3 THEN a$ = "Syntax error - check your brackets": GOTO errmes
                             IF t2$ = "" THEN t2$ = e$ ELSE t2$ = t2$ + " " + e$
                             gotaa2:

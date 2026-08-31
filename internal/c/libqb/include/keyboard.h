@@ -4,19 +4,24 @@
 #include "qbs.h"
 #include <cstdint>
 
-void keyboard_set_bindkey(uint32_t key);
-void keydown(uint32_t key);
-void keyup(uint32_t key);
+void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
+void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers);
+void GLUT_KEYBOARD_FOCUS_FUNC(bool focused);
+
+void keyboard_keydown(uint32_t key);
+void keyboard_keyup(uint32_t key);
+void keyboard_update_shift_state();
+void keyboard_clear_keyhit_buffer();
+bool keyboard_pop_port60h_event(uint8_t *out);
+void keyboard_set_last_port60h_value(uint8_t v);
+uint8_t keyboard_get_last_port60h_value();
+
 int32_t func__capslock();
 int32_t func__scrolllock();
 int32_t func__numlock();
 void sub__capslock(int32_t options);
 void sub__scrolllock(int32_t options);
 void sub__numlock(int32_t options);
-void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
-void GLUT_KEYBOARD_CHARACTER_FUNC(char32_t codepoint, int modifiers);
-void GLUT_KEYBOARD_FOCUS_FUNC(bool focused);
-void update_shift_state();
 int32_t func__keyhit();
 int32_t func__keydown(int32_t key);
 qbs *qbs_inkey();

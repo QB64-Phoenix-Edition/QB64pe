@@ -98,7 +98,7 @@ void libqb_check_stack() {
     static thread_local uintptr_t stack_lower_bound;
     static thread_local bool stack_error_reported;
 
-    uint8_t stack_marker;
+    uint8_t stack_marker = 0;
 
     if (!stack_bounds_checked) {
 #ifdef QB64_WINDOWS
@@ -292,6 +292,73 @@ static void exit_after_fatal_error() {
     libqb_exit(0);
 }
 
+// QB64PE_NOPROMPT suppresses the dialogs that report a runtime error, which
+// avoids the need to interactively interact with the program on unhandled
+// errors.
+//
+//   =y              Reports to stderr and does not prompt, then exits.
+//
+//   =Continue       Reports to stderr and does not prompt, then for
+//                   non-critical errors we will continue to the next line.
+//
+//   unset or other  Reports and prompts as usual
+//
+// A critical error ends the program under either y or continue.
+enum noprompt_mode { NOPROMPT_NONE, NOPROMPT_UNSET, NOPROMPT_STOP, NOPROMPT_CONTINUE };
+
+static noprompt_mode noprompt_setting() {
+    static int cached = NOPROMPT_NONE;
+
+    if (cached == NOPROMPT_NONE) {
+        const char *value = getenv("QB64PE_NOPROMPT");
+
+        if (!value)
+            cached = NOPROMPT_UNSET;
+        else if (*value == 'Y' || *value == 'y')
+            cached = NOPROMPT_STOP;
+#if defined(_MSC_VER) || defined(__DMC__)
+        else if (_stricmp(value, "continue") == 0)
+#else
+        else if (strcasecmp(value, "continue") == 0)
+#endif
+            cached = NOPROMPT_CONTINUE;
+        else
+            cached = NOPROMPT_UNSET;
+    }
+
+    return (noprompt_mode)cached;
+}
+
+static bool noprompt_on_fatal_error() {
+    return noprompt_setting() != NOPROMPT_UNSET;
+}
+
+// Report a fatal error and waits for the user to acknowledge it. 
+// Respects the QB64PE_NOPROMPT setting if set.
+static void fatal_error_alert(const char *message, const char *title) {
+    if (!noprompt_on_fatal_error()) {
+        gui_alert(message, title, "ok");
+        return;
+    }
+    fprintf(stderr, "\nRuntime error: %s\n", message);
+    fflush(stderr);
+}
+
+// Report an unhandled error and ask whether to carry on regardless. Returns the
+// same values gui_alert's "yesno" does.
+//
+// Respects the QB64PE_NOPROMPT setting
+static int unhandled_error_alert(const char *message, const char *title) {
+    noprompt_mode mode = noprompt_setting();
+
+    if (mode == NOPROMPT_UNSET)
+        return gui_alert(message, title, "yesno");
+
+    fprintf(stderr, "\nRuntime error: %s\n", message);
+    fflush(stderr);
+    return mode == NOPROMPT_CONTINUE ? 1 : 2; // "yes" : "no"
+}
+
 extern void QBMAIN(void *);
 
 void fix_error() {
@@ -323,14 +390,14 @@ void fix_error() {
 #define FIXERRMSG_CRIT "Critical Error #"
 
         len = snprintf(errmess, 0, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
-                       (!prevent_handling ? FIXERRMSG_CONT : ""));
+                       ((!prevent_handling && !noprompt_on_fatal_error()) ? FIXERRMSG_CONT : ""));
         errmess = (char *)malloc(len + 1);
         if (!errmess) {
             exit_after_fatal_error(); // At this point we just give up
             return;
         }
         snprintf(errmess, len + 1, FIXERRMSG_BODY, (inclercl ? inclercl : ercl), (inclercl ? includedfilename : FIXERRMSG_MAINFILE), cp,
-                 (!prevent_handling ? FIXERRMSG_CONT : ""));
+                 ((!prevent_handling && !noprompt_on_fatal_error()) ? FIXERRMSG_CONT : ""));
 
         len = snprintf(errtitle, 0, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
         errtitle = (char *)malloc(len + 1);
@@ -341,11 +408,11 @@ void fix_error() {
         snprintf(errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error, binary_name->chr);
 
         if (prevent_handling) {
-            v = gui_alert(errmess, errtitle, "ok");
+            fatal_error_alert(errmess, errtitle);
             exit_after_fatal_error();
             return;
         } else {
-            v = gui_alert(errmess, errtitle, "yesno");
+            v = unhandled_error_alert(errmess, errtitle);
         }
 
         if ((v == 2) || (v == 0)) {
@@ -391,7 +458,7 @@ void error(int32_t error_number) {
             snprintf(errmess, sizeof(errmess), "Out of memory\nEnable $ErrorLocation:ON for source location details.");
 
         snprintf(errtitle, sizeof(errtitle), "Critical Error #%d", critical_number);
-        gui_alert(errmess, errtitle, "ok");
+        fatal_error_alert(errmess, errtitle);
         exit_after_fatal_error();
         return;
     }
@@ -424,7 +491,7 @@ void error(int32_t error_number) {
     }
 
     if (critical_message) {
-        gui_alert(critical_error_message(critical_message), "Critical Error", "ok");
+        fatal_error_alert(critical_error_message(critical_message), "Critical Error");
         exit_after_fatal_error();
         return;
     }
