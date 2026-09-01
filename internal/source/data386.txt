@@ -1,28 +1,511 @@
-#line 12943 "ide/ide_methods.bas"
-qbs*oldstr6000=NULL;
-#line 12943 "ide/ide_methods.bas"
-if(_SUB_IDEPAR_STRING_TITLE->tmp||_SUB_IDEPAR_STRING_TITLE->fixed||_SUB_IDEPAR_STRING_TITLE->readonly){
-#line 12943 "ide/ide_methods.bas"
-oldstr6000=_SUB_IDEPAR_STRING_TITLE;
-#line 12943 "ide/ide_methods.bas"
-if (oldstr6000->cmem_descriptor){
-#line 12943 "ide/ide_methods.bas"
-_SUB_IDEPAR_STRING_TITLE=qbs_new_cmem(oldstr6000->len,0);
-#line 12943 "ide/ide_methods.bas"
+qbs *_FUNC_IDEFILEDIALOG_STRING_IDEFILEDIALOG=NULL;
+#line 12515 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_IDEFILEDIALOG)_FUNC_IDEFILEDIALOG_STRING_IDEFILEDIALOG=qbs_new(0,0);
+#line 12515 "ide/ide_methods.bas"
+qbs*oldstr5976=NULL;
+#line 12515 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME->tmp||_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME->fixed||_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME->readonly){
+#line 12515 "ide/ide_methods.bas"
+oldstr5976=_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME;
+#line 12515 "ide/ide_methods.bas"
+if (oldstr5976->cmem_descriptor){
+#line 12515 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME=qbs_new_cmem(oldstr5976->len,0);
+#line 12515 "ide/ide_methods.bas"
 }else{
-#line 12943 "ide/ide_methods.bas"
-_SUB_IDEPAR_STRING_TITLE=qbs_new(oldstr6000->len,0);
-#line 12943 "ide/ide_methods.bas"
+#line 12515 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME=qbs_new(oldstr5976->len,0);
+#line 12515 "ide/ide_methods.bas"
 }
-#line 12943 "ide/ide_methods.bas"
-memcpy(_SUB_IDEPAR_STRING_TITLE->chr,oldstr6000->chr,oldstr6000->len);
-#line 12943 "ide/ide_methods.bas"
+#line 12515 "ide/ide_methods.bas"
+memcpy(_FUNC_IDEFILEDIALOG_STRING_PROGRAMNAME->chr,oldstr5976->chr,oldstr5976->len);
+#line 12515 "ide/ide_methods.bas"
 }
-#line 12948 "ide/ide_methods.bas"
+int32 *_FUNC_IDEFILEDIALOG_LONG_FOCUS=NULL;
+#line 12522 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_FOCUS==NULL){
+#line 12522 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_FOCUS=(int32*)mem_static_malloc(4);
+#line 12522 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_FOCUS=0;
+#line 12522 "ide/ide_methods.bas"
+}
+void *_FUNC_IDEFILEDIALOG_UDT_P=NULL;
+#line 12523 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_UDT_P==NULL){
+#line 12523 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_UDT_P=(void*)mem_static_malloc(20);
+#line 12523 "ide/ide_methods.bas"
+memset(_FUNC_IDEFILEDIALOG_UDT_P,0,20);
+#line 12523 "ide/ide_methods.bas"
+}
+ptrszint *_FUNC_IDEFILEDIALOG_ARRAY_UDT_O=NULL;
+#line 12524 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_ARRAY_UDT_O){
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O=(ptrszint*)mem_static_malloc(9*ptrsz);
+#line 12524 "ide/ide_methods.bas"
+new_mem_lock();
+#line 12524 "ide/ide_methods.bas"
+mem_lock_tmp->type=4;
+#line 12524 "ide/ide_methods.bas"
+((ptrszint*)_FUNC_IDEFILEDIALOG_ARRAY_UDT_O)[8]=(ptrszint)mem_lock_tmp;
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O[2]=0;
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O[4]=2147483647;
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O[5]=0;
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O[6]=0;
+#line 12524 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_ARRAY_UDT_O[0]=(ptrszint)nothingvalue;
+#line 12524 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING1_SEP=NULL;
+#line 12525 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_STRING1_SEP==NULL){
+#line 12525 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_STRING1_SEP=qbs_new_fixed((uint8*)mem_static_malloc(1),1,0);
+#line 12525 "ide/ide_methods.bas"
+memset(_FUNC_IDEFILEDIALOG_STRING1_SEP->chr,0,1);
+#line 12525 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_PATH=NULL;
+#line 12530 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_PATH)_FUNC_IDEFILEDIALOG_STRING_PATH=qbs_new(0,0);
+#line 12533 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5977=NULL;
+#line 12533 "ide/ide_methods.bas"
+if (!byte_element_5977){
+#line 12533 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5977=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5977=(byte_element_struct*)mem_static_malloc(12);
+#line 12533 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_OPRG=NULL;
+#line 12535 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_OPRG)_FUNC_IDEFILEDIALOG_STRING_OPRG=qbs_new(0,0);
+#line 12539 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5978=NULL;
+#line 12539 "ide/ide_methods.bas"
+if (!byte_element_5978){
+#line 12539 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5978=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5978=(byte_element_struct*)mem_static_malloc(12);
+#line 12539 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_FILELIST=NULL;
+#line 12541 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_FILELIST)_FUNC_IDEFILEDIALOG_STRING_FILELIST=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_PATHLIST=NULL;
+#line 12542 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_PATHLIST)_FUNC_IDEFILEDIALOG_STRING_PATHLIST=qbs_new(0,0);
+int32 *_FUNC_IDEFILEDIALOG_LONG_I=NULL;
+#line 12544 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_I==NULL){
+#line 12544 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_I=(int32*)mem_static_malloc(4);
+#line 12544 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_I=0;
+#line 12544 "ide/ide_methods.bas"
+}
+#line 12546 "ide/ide_methods.bas"
+int32 pass5979;
+#line 12546 "ide/ide_methods.bas"
+int32 pass5980;
+#line 12548 "ide/ide_methods.bas"
+int32 pass5981;
+#line 12548 "ide/ide_methods.bas"
+int32 pass5982;
+#line 12550 "ide/ide_methods.bas"
+int32 pass5983;
+#line 12550 "ide/ide_methods.bas"
+int32 pass5984;
+#line 12552 "ide/ide_methods.bas"
+int32 pass5985;
+#line 12552 "ide/ide_methods.bas"
+int32 pass5986;
+int32 *_FUNC_IDEFILEDIALOG_LONG_PREVFOCUS=NULL;
+#line 12555 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_PREVFOCUS==NULL){
+#line 12555 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_PREVFOCUS=(int32*)mem_static_malloc(4);
+#line 12555 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_PREVFOCUS=0;
+#line 12555 "ide/ide_methods.bas"
+}
+#line 12563 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5987=NULL;
+#line 12563 "ide/ide_methods.bas"
+if (!byte_element_5987){
+#line 12563 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5987=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5987=(byte_element_struct*)mem_static_malloc(12);
+#line 12563 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_PREVBASONLY=NULL;
+#line 12584 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_PREVBASONLY==NULL){
+#line 12584 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_PREVBASONLY=(int32*)mem_static_malloc(4);
+#line 12584 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_PREVBASONLY=0;
+#line 12584 "ide/ide_methods.bas"
+}
+#line 12598 "ide/ide_methods.bas"
+int64 fornext_value5989;
+#line 12598 "ide/ide_methods.bas"
+int64 fornext_finalvalue5989;
+#line 12598 "ide/ide_methods.bas"
+int64 fornext_step5989;
+#line 12598 "ide/ide_methods.bas"
+uint8 fornext_step_negative5989;
+#line 12601 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5990=NULL;
+#line 12601 "ide/ide_methods.bas"
+if (!byte_element_5990){
+#line 12601 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5990=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5990=(byte_element_struct*)mem_static_malloc(12);
+#line 12601 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_F=NULL;
+#line 12601 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_F)_FUNC_IDEFILEDIALOG_STRING_F=qbs_new(0,0);
+int32 *_FUNC_IDEFILEDIALOG_LONG_F=NULL;
+#line 12610 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_F==NULL){
+#line 12610 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_F=(int32*)mem_static_malloc(4);
+#line 12610 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_F=0;
+#line 12610 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_CX=NULL;
+#line 12610 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_CX==NULL){
+#line 12610 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_CX=(int32*)mem_static_malloc(4);
+#line 12610 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_CX=0;
+#line 12610 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_CY=NULL;
+#line 12610 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_CY==NULL){
+#line 12610 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_CY=(int32*)mem_static_malloc(4);
+#line 12610 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_CY=0;
+#line 12610 "ide/ide_methods.bas"
+}
+#line 12611 "ide/ide_methods.bas"
+int64 fornext_value5993;
+#line 12611 "ide/ide_methods.bas"
+int64 fornext_finalvalue5993;
+#line 12611 "ide/ide_methods.bas"
+int64 fornext_step5993;
+#line 12611 "ide/ide_methods.bas"
+uint8 fornext_step_negative5993;
+int32 *_FUNC_IDEFILEDIALOG_LONG_LASTFOCUS=NULL;
+#line 12620 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_LASTFOCUS==NULL){
+#line 12620 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_LASTFOCUS=(int32*)mem_static_malloc(4);
+#line 12620 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_LASTFOCUS=0;
+#line 12620 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_A=NULL;
+#line 12625 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_A)_FUNC_IDEFILEDIALOG_STRING_A=qbs_new(0,0);
+#line 12626 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5994=NULL;
+#line 12626 "ide/ide_methods.bas"
+if (!byte_element_5994){
+#line 12626 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5994=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5994=(byte_element_struct*)mem_static_malloc(12);
+#line 12626 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_W=NULL;
+#line 12627 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_W==NULL){
+#line 12627 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_W=(int32*)mem_static_malloc(4);
+#line 12627 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_W=0;
+#line 12627 "ide/ide_methods.bas"
+}
+#line 12628 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5995=NULL;
+#line 12628 "ide/ide_methods.bas"
+if (!byte_element_5995){
+#line 12628 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5995=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5995=(byte_element_struct*)mem_static_malloc(12);
+#line 12628 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_CHANGE=NULL;
+#line 12638 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_CHANGE==NULL){
+#line 12638 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_CHANGE=(int32*)mem_static_malloc(4);
+#line 12638 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_CHANGE=0;
+#line 12638 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_MOUSEDOWN=NULL;
+#line 12643 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_MOUSEDOWN==NULL){
+#line 12643 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_MOUSEDOWN=(int32*)mem_static_malloc(4);
+#line 12643 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_MOUSEDOWN=0;
+#line 12643 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_MOUSEUP=NULL;
+#line 12644 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_MOUSEUP==NULL){
+#line 12644 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_MOUSEUP=(int32*)mem_static_malloc(4);
+#line 12644 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_MOUSEUP=0;
+#line 12644 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_ALT=NULL;
+#line 12646 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_ALT==NULL){
+#line 12646 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_ALT=(int32*)mem_static_malloc(4);
+#line 12646 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_ALT=0;
+#line 12646 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_OLDALT=NULL;
+#line 12646 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_OLDALT==NULL){
+#line 12646 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_OLDALT=(int32*)mem_static_malloc(4);
+#line 12646 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_OLDALT=0;
+#line 12646 "ide/ide_methods.bas"
+}
+#line 12652 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5997=NULL;
+#line 12652 "ide/ide_methods.bas"
+if (!byte_element_5997){
+#line 12652 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5997=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5997=(byte_element_struct*)mem_static_malloc(12);
+#line 12652 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_ALTLETTER=NULL;
+#line 12663 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_ALTLETTER)_FUNC_IDEFILEDIALOG_STRING_ALTLETTER=qbs_new(0,0);
+#line 12665 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5998=NULL;
+#line 12665 "ide/ide_methods.bas"
+if (!byte_element_5998){
+#line 12665 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5998=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5998=(byte_element_struct*)mem_static_malloc(12);
+#line 12665 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_K=NULL;
+#line 12666 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_K==NULL){
+#line 12666 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_K=(int32*)mem_static_malloc(4);
+#line 12666 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_K=0;
+#line 12666 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_INFO=NULL;
+#line 12674 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_INFO==NULL){
+#line 12674 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_INFO=(int32*)mem_static_malloc(4);
+#line 12674 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_INFO=0;
+#line 12674 "ide/ide_methods.bas"
+}
+#line 12681 "ide/ide_methods.bas"
+int64 fornext_value6000;
+#line 12681 "ide/ide_methods.bas"
+int64 fornext_finalvalue6000;
+#line 12681 "ide/ide_methods.bas"
+int64 fornext_step6000;
+#line 12681 "ide/ide_methods.bas"
+uint8 fornext_step_negative6000;
+int32 *_FUNC_IDEFILEDIALOG_LONG_T=NULL;
+#line 12682 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_T==NULL){
+#line 12682 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_T=(int32*)mem_static_malloc(4);
+#line 12682 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_T=0;
+#line 12682 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_FOCUSOFFSET=NULL;
+#line 12684 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_FOCUSOFFSET==NULL){
+#line 12684 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_FOCUSOFFSET=(int32*)mem_static_malloc(4);
+#line 12684 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_FOCUSOFFSET=0;
+#line 12684 "ide/ide_methods.bas"
+}
+#line 12704 "ide/ide_methods.bas"
 byte_element_struct *byte_element_6001=NULL;
-#line 12948 "ide/ide_methods.bas"
+#line 12704 "ide/ide_methods.bas"
 if (!byte_element_6001){
-#line 12948 "ide/ide_methods.bas"
+#line 12704 "ide/ide_methods.bas"
 if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6001=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6001=(byte_element_struct*)mem_static_malloc(12);
-#line 12948 "ide/ide_methods.bas"
+#line 12704 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_NEWPATH=NULL;
+#line 12720 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_NEWPATH)_FUNC_IDEFILEDIALOG_STRING_NEWPATH=qbs_new(0,0);
+#line 12721 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6002=NULL;
+#line 12721 "ide/ide_methods.bas"
+if (!byte_element_6002){
+#line 12721 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6002=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6002=(byte_element_struct*)mem_static_malloc(12);
+#line 12721 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_PREVFILEBOXSEL=NULL;
+#line 12737 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_PREVFILEBOXSEL==NULL){
+#line 12737 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_PREVFILEBOXSEL=(int32*)mem_static_malloc(4);
+#line 12737 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_PREVFILEBOXSEL=0;
+#line 12737 "ide/ide_methods.bas"
+}
+#line 12788 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6003=NULL;
+#line 12788 "ide/ide_methods.bas"
+if (!byte_element_6003){
+#line 12788 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6003=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6003=(byte_element_struct*)mem_static_malloc(12);
+#line 12788 "ide/ide_methods.bas"
+}
+#line 12815 "ide/ide_methods.bas"
+int32 pass6004;
+#line 12817 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6005=NULL;
+#line 12817 "ide/ide_methods.bas"
+if (!byte_element_6005){
+#line 12817 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6005=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6005=(byte_element_struct*)mem_static_malloc(12);
+#line 12817 "ide/ide_methods.bas"
+}
+#line 12843 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6006=NULL;
+#line 12843 "ide/ide_methods.bas"
+if (!byte_element_6006){
+#line 12843 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6006=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6006=(byte_element_struct*)mem_static_malloc(12);
+#line 12843 "ide/ide_methods.bas"
+}
+#line 12861 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6007=NULL;
+#line 12861 "ide/ide_methods.bas"
+if (!byte_element_6007){
+#line 12861 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6007=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6007=(byte_element_struct*)mem_static_malloc(12);
+#line 12861 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_I2=NULL;
+#line 12862 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_I2==NULL){
+#line 12862 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_I2=(int32*)mem_static_malloc(4);
+#line 12862 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_I2=0;
+#line 12862 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_N=NULL;
+#line 12863 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_N==NULL){
+#line 12863 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_N=(int32*)mem_static_malloc(4);
+#line 12863 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_N=0;
+#line 12863 "ide/ide_methods.bas"
+}
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHRTAB=NULL;
+#line 12864 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHRTAB)_FUNC_IDEFILEDIALOG_STRING_CHRTAB=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_SPACE1=NULL;
+#line 12865 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_SPACE1)_FUNC_IDEFILEDIALOG_STRING_SPACE1=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_SPACE2=NULL;
+#line 12865 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_SPACE2)_FUNC_IDEFILEDIALOG_STRING_SPACE2=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_SPACE3=NULL;
+#line 12865 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_SPACE3)_FUNC_IDEFILEDIALOG_STRING_SPACE3=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_SPACE4=NULL;
+#line 12865 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_SPACE4)_FUNC_IDEFILEDIALOG_STRING_SPACE4=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR7=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR7)_FUNC_IDEFILEDIALOG_STRING_CHR7=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR11=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR11)_FUNC_IDEFILEDIALOG_STRING_CHR11=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR12=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR12)_FUNC_IDEFILEDIALOG_STRING_CHR12=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR28=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR28)_FUNC_IDEFILEDIALOG_STRING_CHR28=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR29=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR29)_FUNC_IDEFILEDIALOG_STRING_CHR29=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR30=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR30)_FUNC_IDEFILEDIALOG_STRING_CHR30=qbs_new(0,0);
+qbs *_FUNC_IDEFILEDIALOG_STRING_CHR31=NULL;
+#line 12866 "ide/ide_methods.bas"
+if (!_FUNC_IDEFILEDIALOG_STRING_CHR31)_FUNC_IDEFILEDIALOG_STRING_CHR31=qbs_new(0,0);
+int32 *_FUNC_IDEFILEDIALOG_LONG_L=NULL;
+#line 12869 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_L==NULL){
+#line 12869 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_L=(int32*)mem_static_malloc(4);
+#line 12869 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_L=0;
+#line 12869 "ide/ide_methods.bas"
+}
+#line 12869 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6009=NULL;
+#line 12869 "ide/ide_methods.bas"
+if (!byte_element_6009){
+#line 12869 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6009=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6009=(byte_element_struct*)mem_static_malloc(12);
+#line 12869 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_ASCA=NULL;
+#line 12870 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_ASCA==NULL){
+#line 12870 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_ASCA=(int32*)mem_static_malloc(4);
+#line 12870 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_ASCA=0;
+#line 12870 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_X=NULL;
+#line 12875 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_X==NULL){
+#line 12875 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_X=(int32*)mem_static_malloc(4);
+#line 12875 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_X=0;
+#line 12875 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEFILEDIALOG_LONG_X2=NULL;
+#line 12877 "ide/ide_methods.bas"
+if(_FUNC_IDEFILEDIALOG_LONG_X2==NULL){
+#line 12877 "ide/ide_methods.bas"
+_FUNC_IDEFILEDIALOG_LONG_X2=(int32*)mem_static_malloc(4);
+#line 12877 "ide/ide_methods.bas"
+*_FUNC_IDEFILEDIALOG_LONG_X2=0;
+#line 12877 "ide/ide_methods.bas"
 }

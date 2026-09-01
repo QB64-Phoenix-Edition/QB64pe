@@ -1,106 +1,100 @@
-#line 6 "utilities/file.bas"
-int32 FUNC_COPYFILE(qbs*_FUNC_COPYFILE_STRING_SOURCEFILE,qbs*_FUNC_COPYFILE_STRING_DESTFILE){
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
+int32 FUNC_READWRITELONGSETTINGVALUE(qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,int32*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT){
+#line 135 "utilities/strings.bas"
 qbs *tqbs;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 #include "data125.txt"
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 new_mem_lock();
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 libqb_check_stack();
-#line 6 "utilities/file.bas"
+#line 135 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 8 "utilities/file.bas"
+#line 136 "utilities/strings.bas"
 do{
-#line 8 "utilities/file.bas"
-qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
-#line 8 "utilities/file.bas"
-qbs_cleanup(qbs_tmp_base, 0);
-#line 8 "utilities/file.bas"
-error_goto_line=11;
-#line 8 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,8,"file.bas");}while(r);
-#line 9 "utilities/file.bas"
+#line 136 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,136,"strings.bas");}while(r);
+#line 137 "utilities/strings.bas"
 do{
-#line 9 "utilities/file.bas"
-*__LONG_E= 0 ;
-#line 9 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,9,"file.bas");}while(r);
-#line 9 "utilities/file.bas"
+#line 137 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,137,"strings.bas");}while(r);
+#line 138 "utilities/strings.bas"
 do{
-#line 9 "utilities/file.bas"
-qbs_set(_FUNC_COPYFILE_STRING_DAT,func__readfile(_FUNC_COPYFILE_STRING_SOURCEFILE));
-#line 9 "utilities/file.bas"
+#line 138 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,138,"strings.bas");}while(r);
+#line 140 "utilities/strings.bas"
+do{
+#line 140 "utilities/strings.bas"
+*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE);
+#line 140 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 9 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,9,"file.bas");}while(r);
-#line 10 "utilities/file.bas"
-S_37269:;
-#line 10 "utilities/file.bas"
-if ((-(*__LONG_E== 0 ))||is_error_pending()){
-#line 10 "utilities/file.bas"
-if(qbevent){evnt(28621,10,"file.bas");if(r)goto S_37269;}
-#line 10 "utilities/file.bas"
+#line 140 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,140,"strings.bas");}while(r);
+#line 142 "utilities/strings.bas"
 do{
-#line 10 "utilities/file.bas"
-sub__writefile(_FUNC_COPYFILE_STRING_DESTFILE,_FUNC_COPYFILE_STRING_DAT);
-#line 10 "utilities/file.bas"
+#line 142 "utilities/strings.bas"
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT=qbr(qbs_val<long double>(_FUNC_READWRITELONGSETTINGVALUE_STRING_VALUE));
+#line 142 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 10 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,10,"file.bas");}while(r);
-#line 10 "utilities/file.bas"
+#line 142 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,142,"strings.bas");}while(r);
+#line 144 "utilities/strings.bas"
+S_37291:;
+#line 144 "utilities/strings.bas"
+if (((-(*_FUNC_READWRITELONGSETTINGVALUE_INTEGER_RESULT== 0 ))|(-(*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT<= 0 )))||is_error_pending()){
+#line 144 "utilities/strings.bas"
+if(qbevent){evnt(28652,144,"strings.bas");if(r)goto S_37291;}
+#line 145 "utilities/strings.bas"
+do{
+#line 145 "utilities/strings.bas"
+SUB_WRITECONFIGSETTING(_FUNC_READWRITELONGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITELONGSETTINGVALUE_STRING_SETTING,qbs__tostr((int32)(*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT),NULL,0));
+#line 145 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 145 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,145,"strings.bas");}while(r);
+#line 146 "utilities/strings.bas"
+do{
+#line 146 "utilities/strings.bas"
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_DEFAULT;
+#line 146 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,146,"strings.bas");}while(r);
+#line 147 "utilities/strings.bas"
 }else{
-#line 10 "utilities/file.bas"
+#line 148 "utilities/strings.bas"
 do{
-#line 10 "utilities/file.bas"
-*__LONG_E= -1 ;
-#line 10 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,10,"file.bas");}while(r);
-#line 10 "utilities/file.bas"
+#line 148 "utilities/strings.bas"
+*_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE=*_FUNC_READWRITELONGSETTINGVALUE_LONG_CHECKRESULT;
+#line 148 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,148,"strings.bas");}while(r);
+#line 149 "utilities/strings.bas"
 }
-#line 11 "utilities/file.bas"
-do{
-#line 11 "utilities/file.bas"
-error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
-#line 11 "utilities/file.bas"
-qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
-#line 11 "utilities/file.bas"
-qbs_cleanup(qbs_tmp_base, 0);
-#line 11 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,11,"file.bas");}while(r);
-#line 13 "utilities/file.bas"
-do{
-#line 13 "utilities/file.bas"
-*_FUNC_COPYFILE_LONG_COPYFILE=*__LONG_E;
-#line 13 "utilities/file.bas"
-if(!qbevent)break;evnt(28621,13,"file.bas");}while(r);
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
 exit_subfunc:;
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
 #include "free125.txt"
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 14 "utilities/file.bas"
-return *_FUNC_COPYFILE_LONG_COPYFILE;
-#line 14 "utilities/file.bas"
+#line 150 "utilities/strings.bas"
+return *_FUNC_READWRITELONGSETTINGVALUE_LONG_READWRITELONGSETTINGVALUE;
+#line 150 "utilities/strings.bas"
 }

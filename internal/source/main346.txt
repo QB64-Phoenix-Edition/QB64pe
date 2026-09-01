@@ -1,290 +1,2986 @@
-#line 35 "ide/ide_methods.bas"
-int32 FUNC_IDE(int32*_FUNC_IDE_LONG_IGNORE){
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
+void SUB_READINITIALCONFIG(){
+#line 79 "ide/config/cfg_methods.bas"
 qbs *tqbs;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 ptrszint tmp_long;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 int32 tmp_fileno;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 #include "data346.txt"
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 mem_lock *sf_mem_lock;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 new_mem_lock();
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 sf_mem_lock->type=3;
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 libqb_check_stack();
-#line 35 "ide/ide_methods.bas"
+#line 79 "ide/config/cfg_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 38 "ide/ide_methods.bas"
+#line 81 "ide/config/cfg_methods.bas"
 do{
-#line 38 "ide/ide_methods.bas"
-*_FUNC_IDE_LONG_IGNORE=*_FUNC_IDE_LONG_IGNORE;
-#line 38 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,38,"ide_methods.bas");}while(r);
-#line 39 "ide/ide_methods.bas"
-S_44802:;
-#line 39 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(__STRING_IDECOMMAND,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 39 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,39,"ide_methods.bas");if(r)goto S_44802;}
-#line 39 "ide/ide_methods.bas"
-do{
-#line 39 "ide/ide_methods.bas"
-*_FUNC_IDE_LONG_CMD=qbs_asc(__STRING_IDECOMMAND);
-#line 39 "ide/ide_methods.bas"
+#line 81 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DisableSyntaxHighlighter",24),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 81 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 39 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,39,"ide_methods.bas");}while(r);
-#line 39 "ide/ide_methods.bas"
+#line 81 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,81,"cfg_methods.bas");}while(r);
+#line 82 "ide/config/cfg_methods.bas"
+S_44298:;
+#line 82 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 82 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,82,"cfg_methods.bas");if(r)goto S_44298;}
+#line 83 "ide/config/cfg_methods.bas"
+do{
+#line 83 "ide/config/cfg_methods.bas"
+*__BYTE_DISABLESYNTAXHIGHLIGHTER= -1ll ;
+#line 83 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,83,"cfg_methods.bas");}while(r);
+#line 84 "ide/config/cfg_methods.bas"
+do{
+#line 84 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DisableSyntaxHighlighter",24),qbs_new_txt_len("True",4));
+#line 84 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 84 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,84,"cfg_methods.bas");}while(r);
+#line 85 "ide/config/cfg_methods.bas"
+}else{
+#line 86 "ide/config/cfg_methods.bas"
+do{
+#line 86 "ide/config/cfg_methods.bas"
+*__BYTE_DISABLESYNTAXHIGHLIGHTER= 0ll ;
+#line 86 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,86,"cfg_methods.bas");}while(r);
+#line 87 "ide/config/cfg_methods.bas"
+do{
+#line 87 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DisableSyntaxHighlighter",24),qbs_new_txt_len("False",5));
+#line 87 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 87 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,87,"cfg_methods.bas");}while(r);
+#line 88 "ide/config/cfg_methods.bas"
 }
-#line 40 "ide/ide_methods.bas"
+#line 90 "ide/config/cfg_methods.bas"
+S_44305:;
+#line 90 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("PasteCursorAtEnd",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 90 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,90,"cfg_methods.bas");if(r)goto S_44305;}
+#line 91 "ide/config/cfg_methods.bas"
+S_44306:;
+#line 91 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 91 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,91,"cfg_methods.bas");if(r)goto S_44306;}
+#line 92 "ide/config/cfg_methods.bas"
+do{
+#line 92 "ide/config/cfg_methods.bas"
+*__BYTE_PASTECURSORATEND= -1ll ;
+#line 92 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,92,"cfg_methods.bas");}while(r);
+#line 93 "ide/config/cfg_methods.bas"
+}else{
+#line 94 "ide/config/cfg_methods.bas"
+do{
+#line 94 "ide/config/cfg_methods.bas"
+*__BYTE_PASTECURSORATEND= 0ll ;
+#line 94 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,94,"cfg_methods.bas");}while(r);
+#line 95 "ide/config/cfg_methods.bas"
+do{
+#line 95 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("PasteCursorAtEnd",16),qbs_new_txt_len("False",5));
+#line 95 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 95 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,95,"cfg_methods.bas");}while(r);
+#line 96 "ide/config/cfg_methods.bas"
+}
+#line 97 "ide/config/cfg_methods.bas"
+}else{
+#line 98 "ide/config/cfg_methods.bas"
+do{
+#line 98 "ide/config/cfg_methods.bas"
+*__BYTE_PASTECURSORATEND= -1ll ;
+#line 98 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,98,"cfg_methods.bas");}while(r);
+#line 99 "ide/config/cfg_methods.bas"
+do{
+#line 99 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("PasteCursorAtEnd",16),qbs_new_txt_len("True",4));
+#line 99 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 99 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,99,"cfg_methods.bas");}while(r);
+#line 100 "ide/config/cfg_methods.bas"
+}
+#line 102 "ide/config/cfg_methods.bas"
+S_44316:;
+#line 102 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("AutoCloseBrackets",17),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 102 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,102,"cfg_methods.bas");if(r)goto S_44316;}
+#line 103 "ide/config/cfg_methods.bas"
+S_44317:;
+#line 103 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 103 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,103,"cfg_methods.bas");if(r)goto S_44317;}
+#line 104 "ide/config/cfg_methods.bas"
+do{
+#line 104 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOCLOSEBRACKETS= -1ll ;
+#line 104 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,104,"cfg_methods.bas");}while(r);
+#line 105 "ide/config/cfg_methods.bas"
+}else{
+#line 106 "ide/config/cfg_methods.bas"
+do{
+#line 106 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOCLOSEBRACKETS= 0ll ;
+#line 106 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,106,"cfg_methods.bas");}while(r);
+#line 107 "ide/config/cfg_methods.bas"
+do{
+#line 107 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("AutoCloseBrackets",17),qbs_new_txt_len("False",5));
+#line 107 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 107 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,107,"cfg_methods.bas");}while(r);
+#line 108 "ide/config/cfg_methods.bas"
+}
+#line 109 "ide/config/cfg_methods.bas"
+}else{
+#line 110 "ide/config/cfg_methods.bas"
+do{
+#line 110 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOCLOSEBRACKETS= -1ll ;
+#line 110 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,110,"cfg_methods.bas");}while(r);
+#line 111 "ide/config/cfg_methods.bas"
+do{
+#line 111 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("AutoCloseBrackets",17),qbs_new_txt_len("True",4));
+#line 111 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 111 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,111,"cfg_methods.bas");}while(r);
+#line 112 "ide/config/cfg_methods.bas"
+}
+#line 114 "ide/config/cfg_methods.bas"
+S_44327:;
+#line 114 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ExeToSourceFolderFirstTimeMsg",29),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 114 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,114,"cfg_methods.bas");if(r)goto S_44327;}
+#line 115 "ide/config/cfg_methods.bas"
+S_44328:;
+#line 115 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 115 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,115,"cfg_methods.bas");if(r)goto S_44328;}
+#line 116 "ide/config/cfg_methods.bas"
+do{
+#line 116 "ide/config/cfg_methods.bas"
+*__BYTE_EXETOSOURCEFOLDERFIRSTTIMEMSG= -1ll ;
+#line 116 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,116,"cfg_methods.bas");}while(r);
+#line 117 "ide/config/cfg_methods.bas"
+}else{
+#line 118 "ide/config/cfg_methods.bas"
+do{
+#line 118 "ide/config/cfg_methods.bas"
+*__BYTE_EXETOSOURCEFOLDERFIRSTTIMEMSG= 0ll ;
+#line 118 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,118,"cfg_methods.bas");}while(r);
+#line 119 "ide/config/cfg_methods.bas"
+do{
+#line 119 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ExeToSourceFolderFirstTimeMsg",29),qbs_new_txt_len("False",5));
+#line 119 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 119 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,119,"cfg_methods.bas");}while(r);
+#line 120 "ide/config/cfg_methods.bas"
+}
+#line 121 "ide/config/cfg_methods.bas"
+}else{
+#line 122 "ide/config/cfg_methods.bas"
+do{
+#line 122 "ide/config/cfg_methods.bas"
+*__BYTE_EXETOSOURCEFOLDERFIRSTTIMEMSG= 0ll ;
+#line 122 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,122,"cfg_methods.bas");}while(r);
+#line 123 "ide/config/cfg_methods.bas"
+do{
+#line 123 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ExeToSourceFolderFirstTimeMsg",29),qbs_new_txt_len("False",5));
+#line 123 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 123 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,123,"cfg_methods.bas");}while(r);
+#line 124 "ide/config/cfg_methods.bas"
+}
+#line 126 "ide/config/cfg_methods.bas"
+S_44338:;
+#line 126 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WhiteListQB64FirstTimeMsg",25),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 126 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,126,"cfg_methods.bas");if(r)goto S_44338;}
+#line 127 "ide/config/cfg_methods.bas"
+S_44339:;
+#line 127 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 127 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,127,"cfg_methods.bas");if(r)goto S_44339;}
+#line 128 "ide/config/cfg_methods.bas"
+do{
+#line 128 "ide/config/cfg_methods.bas"
+*__BYTE_WHITELISTQB64FIRSTTIMEMSG= -1ll ;
+#line 128 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,128,"cfg_methods.bas");}while(r);
+#line 129 "ide/config/cfg_methods.bas"
+}else{
+#line 130 "ide/config/cfg_methods.bas"
+do{
+#line 130 "ide/config/cfg_methods.bas"
+*__BYTE_WHITELISTQB64FIRSTTIMEMSG= 0ll ;
+#line 130 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,130,"cfg_methods.bas");}while(r);
+#line 131 "ide/config/cfg_methods.bas"
+do{
+#line 131 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WhiteListQB64FirstTimeMsg",25),qbs_new_txt_len("False",5));
+#line 131 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 131 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,131,"cfg_methods.bas");}while(r);
+#line 132 "ide/config/cfg_methods.bas"
+}
+#line 133 "ide/config/cfg_methods.bas"
+}else{
+#line 134 "ide/config/cfg_methods.bas"
+do{
+#line 134 "ide/config/cfg_methods.bas"
+*__BYTE_WHITELISTQB64FIRSTTIMEMSG= 0ll ;
+#line 134 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,134,"cfg_methods.bas");}while(r);
+#line 135 "ide/config/cfg_methods.bas"
+do{
+#line 135 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WhiteListQB64FirstTimeMsg",25),qbs_new_txt_len("False",5));
+#line 135 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 135 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,135,"cfg_methods.bas");}while(r);
+#line 136 "ide/config/cfg_methods.bas"
+}
+#line 138 "ide/config/cfg_methods.bas"
+do{
+#line 138 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_DEFAULTEXESAVEFOLDER,qbs_new_txt_len("",0));
+#line 138 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 138 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,138,"cfg_methods.bas");}while(r);
+#line 139 "ide/config/cfg_methods.bas"
+S_44350:;
+#line 139 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultExeSaveFolder",20),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 139 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,139,"cfg_methods.bas");if(r)goto S_44350;}
+#line 140 "ide/config/cfg_methods.bas"
+S_44351:;
+#line 140 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,func__direxists(_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 140 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,140,"cfg_methods.bas");if(r)goto S_44351;}
+#line 141 "ide/config/cfg_methods.bas"
+S_44352:;
+#line 141 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_right(_SUB_READINITIALCONFIG_STRING_VALUE, 1 ),__STRING1_PATHSEP)))||is_error_pending()){
+#line 141 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,141,"cfg_methods.bas");if(r)goto S_44352;}
+#line 141 "ide/config/cfg_methods.bas"
+do{
+#line 141 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_READINITIALCONFIG_STRING_VALUE,qbs_add(_SUB_READINITIALCONFIG_STRING_VALUE,__STRING1_PATHSEP));
+#line 141 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 141 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,141,"cfg_methods.bas");}while(r);
+#line 141 "ide/config/cfg_methods.bas"
+}
+#line 142 "ide/config/cfg_methods.bas"
+do{
+#line 142 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_DEFAULTEXESAVEFOLDER,_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 142 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 142 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,142,"cfg_methods.bas");}while(r);
+#line 143 "ide/config/cfg_methods.bas"
+}
+#line 144 "ide/config/cfg_methods.bas"
+}
+#line 146 "ide/config/cfg_methods.bas"
+S_44358:;
+#line 146 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("SaveExeWithSource",17),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 146 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,146,"cfg_methods.bas");if(r)goto S_44358;}
+#line 147 "ide/config/cfg_methods.bas"
+S_44359:;
+#line 147 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 147 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,147,"cfg_methods.bas");if(r)goto S_44359;}
+#line 148 "ide/config/cfg_methods.bas"
+do{
+#line 148 "ide/config/cfg_methods.bas"
+*__LONG_SAVEEXEWITHSOURCE= -1ll ;
+#line 148 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,148,"cfg_methods.bas");}while(r);
+#line 149 "ide/config/cfg_methods.bas"
+}else{
+#line 150 "ide/config/cfg_methods.bas"
+do{
+#line 150 "ide/config/cfg_methods.bas"
+*__LONG_SAVEEXEWITHSOURCE= 0ll ;
+#line 150 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,150,"cfg_methods.bas");}while(r);
+#line 151 "ide/config/cfg_methods.bas"
+do{
+#line 151 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("SaveExeWithSource",17),qbs_new_txt_len("False",5));
+#line 151 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 151 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,151,"cfg_methods.bas");}while(r);
+#line 152 "ide/config/cfg_methods.bas"
+}
+#line 153 "ide/config/cfg_methods.bas"
+}else{
+#line 154 "ide/config/cfg_methods.bas"
+do{
+#line 154 "ide/config/cfg_methods.bas"
+*__LONG_SAVEEXEWITHSOURCE= 0ll ;
+#line 154 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,154,"cfg_methods.bas");}while(r);
+#line 155 "ide/config/cfg_methods.bas"
+do{
+#line 155 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("SaveExeWithSource",17),qbs_new_txt_len("False",5));
+#line 155 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 155 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,155,"cfg_methods.bas");}while(r);
+#line 156 "ide/config/cfg_methods.bas"
+}
+#line 158 "ide/config/cfg_methods.bas"
+S_44369:;
+#line 158 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("EnableQuickNav",14),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 158 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,158,"cfg_methods.bas");if(r)goto S_44369;}
+#line 159 "ide/config/cfg_methods.bas"
+S_44370:;
+#line 159 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 159 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,159,"cfg_methods.bas");if(r)goto S_44370;}
+#line 160 "ide/config/cfg_methods.bas"
+do{
+#line 160 "ide/config/cfg_methods.bas"
+*__BYTE_ENABLEQUICKNAV= -1ll ;
+#line 160 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,160,"cfg_methods.bas");}while(r);
+#line 161 "ide/config/cfg_methods.bas"
+}else{
+#line 162 "ide/config/cfg_methods.bas"
+do{
+#line 162 "ide/config/cfg_methods.bas"
+*__BYTE_ENABLEQUICKNAV= 0ll ;
+#line 162 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,162,"cfg_methods.bas");}while(r);
+#line 163 "ide/config/cfg_methods.bas"
+do{
+#line 163 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("EnableQuickNav",14),qbs_new_txt_len("False",5));
+#line 163 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 163 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,163,"cfg_methods.bas");}while(r);
+#line 164 "ide/config/cfg_methods.bas"
+}
+#line 165 "ide/config/cfg_methods.bas"
+}else{
+#line 166 "ide/config/cfg_methods.bas"
+do{
+#line 166 "ide/config/cfg_methods.bas"
+*__BYTE_ENABLEQUICKNAV= -1ll ;
+#line 166 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,166,"cfg_methods.bas");}while(r);
+#line 167 "ide/config/cfg_methods.bas"
+do{
+#line 167 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("EnableQuickNav",14),qbs_new_txt_len("True",4));
+#line 167 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 167 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,167,"cfg_methods.bas");}while(r);
+#line 168 "ide/config/cfg_methods.bas"
+}
+#line 170 "ide/config/cfg_methods.bas"
+S_44380:;
+#line 170 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowErrorsImmediately",21),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 170 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,170,"cfg_methods.bas");if(r)goto S_44380;}
+#line 171 "ide/config/cfg_methods.bas"
+S_44381:;
+#line 171 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 171 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,171,"cfg_methods.bas");if(r)goto S_44381;}
+#line 172 "ide/config/cfg_methods.bas"
+do{
+#line 172 "ide/config/cfg_methods.bas"
+*__BYTE_IDESHOWERRORSIMMEDIATELY= -1ll ;
+#line 172 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,172,"cfg_methods.bas");}while(r);
+#line 173 "ide/config/cfg_methods.bas"
+}else{
+#line 174 "ide/config/cfg_methods.bas"
+do{
+#line 174 "ide/config/cfg_methods.bas"
+*__BYTE_IDESHOWERRORSIMMEDIATELY= 0ll ;
+#line 174 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,174,"cfg_methods.bas");}while(r);
+#line 175 "ide/config/cfg_methods.bas"
+do{
+#line 175 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowErrorsImmediately",21),qbs_new_txt_len("False",5));
+#line 175 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 175 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,175,"cfg_methods.bas");}while(r);
+#line 176 "ide/config/cfg_methods.bas"
+}
+#line 177 "ide/config/cfg_methods.bas"
+}else{
+#line 178 "ide/config/cfg_methods.bas"
+do{
+#line 178 "ide/config/cfg_methods.bas"
+*__BYTE_IDESHOWERRORSIMMEDIATELY= -1ll ;
+#line 178 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,178,"cfg_methods.bas");}while(r);
+#line 179 "ide/config/cfg_methods.bas"
+do{
+#line 179 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowErrorsImmediately",21),qbs_new_txt_len("True",4));
+#line 179 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 179 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,179,"cfg_methods.bas");}while(r);
+#line 180 "ide/config/cfg_methods.bas"
+}
+#line 182 "ide/config/cfg_methods.bas"
+S_44391:;
+#line 182 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbers",15),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 182 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,182,"cfg_methods.bas");if(r)goto S_44391;}
+#line 183 "ide/config/cfg_methods.bas"
+S_44392:;
+#line 183 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 183 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,183,"cfg_methods.bas");if(r)goto S_44392;}
+#line 184 "ide/config/cfg_methods.bas"
+do{
+#line 184 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERS= -1ll ;
+#line 184 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,184,"cfg_methods.bas");}while(r);
+#line 185 "ide/config/cfg_methods.bas"
+}else{
+#line 186 "ide/config/cfg_methods.bas"
+do{
+#line 186 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERS= 0ll ;
+#line 186 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,186,"cfg_methods.bas");}while(r);
+#line 187 "ide/config/cfg_methods.bas"
+do{
+#line 187 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbers",15),qbs_new_txt_len("False",5));
+#line 187 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 187 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,187,"cfg_methods.bas");}while(r);
+#line 188 "ide/config/cfg_methods.bas"
+}
+#line 189 "ide/config/cfg_methods.bas"
+}else{
+#line 190 "ide/config/cfg_methods.bas"
+do{
+#line 190 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERS= -1ll ;
+#line 190 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,190,"cfg_methods.bas");}while(r);
+#line 191 "ide/config/cfg_methods.bas"
+do{
+#line 191 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbers",15),qbs_new_txt_len("True",4));
+#line 191 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 191 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,191,"cfg_methods.bas");}while(r);
+#line 192 "ide/config/cfg_methods.bas"
+}
+#line 194 "ide/config/cfg_methods.bas"
+S_44402:;
+#line 194 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersSeparator",24),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 194 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,194,"cfg_methods.bas");if(r)goto S_44402;}
+#line 195 "ide/config/cfg_methods.bas"
+S_44403:;
+#line 195 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 195 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,195,"cfg_methods.bas");if(r)goto S_44403;}
+#line 196 "ide/config/cfg_methods.bas"
+do{
+#line 196 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSSEPARATOR= -1ll ;
+#line 196 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,196,"cfg_methods.bas");}while(r);
+#line 197 "ide/config/cfg_methods.bas"
+}else{
+#line 198 "ide/config/cfg_methods.bas"
+do{
+#line 198 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSSEPARATOR= 0ll ;
+#line 198 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,198,"cfg_methods.bas");}while(r);
+#line 199 "ide/config/cfg_methods.bas"
+do{
+#line 199 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersSeparator",24),qbs_new_txt_len("False",5));
+#line 199 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 199 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,199,"cfg_methods.bas");}while(r);
+#line 200 "ide/config/cfg_methods.bas"
+}
+#line 201 "ide/config/cfg_methods.bas"
+}else{
+#line 202 "ide/config/cfg_methods.bas"
+do{
+#line 202 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSSEPARATOR= -1ll ;
+#line 202 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,202,"cfg_methods.bas");}while(r);
+#line 203 "ide/config/cfg_methods.bas"
+do{
+#line 203 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersSeparator",24),qbs_new_txt_len("True",4));
+#line 203 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 203 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,203,"cfg_methods.bas");}while(r);
+#line 204 "ide/config/cfg_methods.bas"
+}
+#line 206 "ide/config/cfg_methods.bas"
+S_44413:;
+#line 206 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersUseBG",20),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 206 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,206,"cfg_methods.bas");if(r)goto S_44413;}
+#line 207 "ide/config/cfg_methods.bas"
+S_44414:;
+#line 207 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 207 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,207,"cfg_methods.bas");if(r)goto S_44414;}
+#line 208 "ide/config/cfg_methods.bas"
+do{
+#line 208 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSUSEBG= -1ll ;
+#line 208 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,208,"cfg_methods.bas");}while(r);
+#line 209 "ide/config/cfg_methods.bas"
+}else{
+#line 210 "ide/config/cfg_methods.bas"
+do{
+#line 210 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSUSEBG= 0ll ;
+#line 210 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,210,"cfg_methods.bas");}while(r);
+#line 211 "ide/config/cfg_methods.bas"
+do{
+#line 211 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersUseBG",20),qbs_new_txt_len("False",5));
+#line 211 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 211 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,211,"cfg_methods.bas");}while(r);
+#line 212 "ide/config/cfg_methods.bas"
+}
+#line 213 "ide/config/cfg_methods.bas"
+}else{
+#line 214 "ide/config/cfg_methods.bas"
+do{
+#line 214 "ide/config/cfg_methods.bas"
+*__BYTE_SHOWLINENUMBERSUSEBG= -1ll ;
+#line 214 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,214,"cfg_methods.bas");}while(r);
+#line 215 "ide/config/cfg_methods.bas"
+do{
+#line 215 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("ShowLineNumbersUseBG",20),qbs_new_txt_len("True",4));
+#line 215 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 215 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,215,"cfg_methods.bas");}while(r);
+#line 216 "ide/config/cfg_methods.bas"
+}
+#line 218 "ide/config/cfg_methods.bas"
+S_44424:;
+#line 218 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("BracketHighlight",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 218 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,218,"cfg_methods.bas");if(r)goto S_44424;}
+#line 219 "ide/config/cfg_methods.bas"
+S_44425:;
+#line 219 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 219 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,219,"cfg_methods.bas");if(r)goto S_44425;}
+#line 220 "ide/config/cfg_methods.bas"
+do{
+#line 220 "ide/config/cfg_methods.bas"
+*__BYTE_BRACKETHIGHLIGHT= -1ll ;
+#line 220 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,220,"cfg_methods.bas");}while(r);
+#line 221 "ide/config/cfg_methods.bas"
+}else{
+#line 222 "ide/config/cfg_methods.bas"
+do{
+#line 222 "ide/config/cfg_methods.bas"
+*__BYTE_BRACKETHIGHLIGHT= 0ll ;
+#line 222 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,222,"cfg_methods.bas");}while(r);
+#line 223 "ide/config/cfg_methods.bas"
+do{
+#line 223 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("BracketHighlight",16),qbs_new_txt_len("False",5));
+#line 223 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 223 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,223,"cfg_methods.bas");}while(r);
+#line 224 "ide/config/cfg_methods.bas"
+}
+#line 225 "ide/config/cfg_methods.bas"
+}else{
+#line 226 "ide/config/cfg_methods.bas"
+do{
+#line 226 "ide/config/cfg_methods.bas"
+*__BYTE_BRACKETHIGHLIGHT= -1ll ;
+#line 226 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,226,"cfg_methods.bas");}while(r);
+#line 227 "ide/config/cfg_methods.bas"
+do{
+#line 227 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("BracketHighlight",16),qbs_new_txt_len("True",4));
+#line 227 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 227 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,227,"cfg_methods.bas");}while(r);
+#line 228 "ide/config/cfg_methods.bas"
+}
+#line 230 "ide/config/cfg_methods.bas"
+S_44435:;
+#line 230 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("KeywordHighlight",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 230 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,230,"cfg_methods.bas");if(r)goto S_44435;}
+#line 231 "ide/config/cfg_methods.bas"
+S_44436:;
+#line 231 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 231 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,231,"cfg_methods.bas");if(r)goto S_44436;}
+#line 232 "ide/config/cfg_methods.bas"
+do{
+#line 232 "ide/config/cfg_methods.bas"
+*__BYTE_KEYWORDHIGHLIGHT= -1ll ;
+#line 232 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,232,"cfg_methods.bas");}while(r);
+#line 233 "ide/config/cfg_methods.bas"
+}else{
+#line 234 "ide/config/cfg_methods.bas"
+do{
+#line 234 "ide/config/cfg_methods.bas"
+*__BYTE_KEYWORDHIGHLIGHT= 0ll ;
+#line 234 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,234,"cfg_methods.bas");}while(r);
+#line 235 "ide/config/cfg_methods.bas"
+do{
+#line 235 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("KeywordHighlight",16),qbs_new_txt_len("False",5));
+#line 235 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 235 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,235,"cfg_methods.bas");}while(r);
+#line 236 "ide/config/cfg_methods.bas"
+}
+#line 237 "ide/config/cfg_methods.bas"
+}else{
+#line 238 "ide/config/cfg_methods.bas"
+do{
+#line 238 "ide/config/cfg_methods.bas"
+*__BYTE_KEYWORDHIGHLIGHT= -1ll ;
+#line 238 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,238,"cfg_methods.bas");}while(r);
+#line 239 "ide/config/cfg_methods.bas"
+do{
+#line 239 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("KeywordHighlight",16),qbs_new_txt_len("True",4));
+#line 239 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 239 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,239,"cfg_methods.bas");}while(r);
+#line 240 "ide/config/cfg_methods.bas"
+}
+#line 242 "ide/config/cfg_methods.bas"
+S_44446:;
+#line 242 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MultiHighlight",14),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 242 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,242,"cfg_methods.bas");if(r)goto S_44446;}
+#line 243 "ide/config/cfg_methods.bas"
+S_44447:;
+#line 243 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 243 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,243,"cfg_methods.bas");if(r)goto S_44447;}
+#line 244 "ide/config/cfg_methods.bas"
+do{
+#line 244 "ide/config/cfg_methods.bas"
+*__BYTE_MULTIHIGHLIGHT= -1ll ;
+#line 244 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,244,"cfg_methods.bas");}while(r);
+#line 245 "ide/config/cfg_methods.bas"
+}else{
+#line 246 "ide/config/cfg_methods.bas"
+do{
+#line 246 "ide/config/cfg_methods.bas"
+*__BYTE_MULTIHIGHLIGHT= 0ll ;
+#line 246 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,246,"cfg_methods.bas");}while(r);
+#line 247 "ide/config/cfg_methods.bas"
+do{
+#line 247 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MultiHighlight",14),qbs_new_txt_len("False",5));
+#line 247 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 247 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,247,"cfg_methods.bas");}while(r);
+#line 248 "ide/config/cfg_methods.bas"
+}
+#line 249 "ide/config/cfg_methods.bas"
+}else{
+#line 250 "ide/config/cfg_methods.bas"
+do{
+#line 250 "ide/config/cfg_methods.bas"
+*__BYTE_MULTIHIGHLIGHT= -1ll ;
+#line 250 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,250,"cfg_methods.bas");}while(r);
+#line 251 "ide/config/cfg_methods.bas"
+do{
+#line 251 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MultiHighlight",14),qbs_new_txt_len("True",4));
+#line 251 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 251 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,251,"cfg_methods.bas");}while(r);
+#line 252 "ide/config/cfg_methods.bas"
+}
+#line 254 "ide/config/cfg_methods.bas"
+S_44457:;
+#line 254 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("IgnoreWarnings",14),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 254 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,254,"cfg_methods.bas");if(r)goto S_44457;}
+#line 255 "ide/config/cfg_methods.bas"
+S_44458:;
+#line 255 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 255 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,255,"cfg_methods.bas");if(r)goto S_44458;}
+#line 256 "ide/config/cfg_methods.bas"
+do{
+#line 256 "ide/config/cfg_methods.bas"
+*__BYTE_IGNOREWARNINGS= -1ll ;
+#line 256 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,256,"cfg_methods.bas");}while(r);
+#line 257 "ide/config/cfg_methods.bas"
+}else{
+#line 258 "ide/config/cfg_methods.bas"
+do{
+#line 258 "ide/config/cfg_methods.bas"
+*__BYTE_IGNOREWARNINGS= 0ll ;
+#line 258 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,258,"cfg_methods.bas");}while(r);
+#line 259 "ide/config/cfg_methods.bas"
+do{
+#line 259 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("IgnoreWarnings",14),qbs_new_txt_len("False",5));
+#line 259 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 259 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,259,"cfg_methods.bas");}while(r);
+#line 260 "ide/config/cfg_methods.bas"
+}
+#line 261 "ide/config/cfg_methods.bas"
+}else{
+#line 262 "ide/config/cfg_methods.bas"
+do{
+#line 262 "ide/config/cfg_methods.bas"
+*__BYTE_IGNOREWARNINGS= 0ll ;
+#line 262 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,262,"cfg_methods.bas");}while(r);
+#line 263 "ide/config/cfg_methods.bas"
+do{
+#line 263 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("IgnoreWarnings",14),qbs_new_txt_len("False",5));
+#line 263 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 263 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,263,"cfg_methods.bas");}while(r);
+#line 264 "ide/config/cfg_methods.bas"
+}
+#line 266 "ide/config/cfg_methods.bas"
+do{
+#line 266 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("BackupSize",10),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 266 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 266 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,266,"cfg_methods.bas");}while(r);
+#line 267 "ide/config/cfg_methods.bas"
+do{
+#line 267 "ide/config/cfg_methods.bas"
+*__LONG_IDEBACKUPSIZE=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 267 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 267 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,267,"cfg_methods.bas");}while(r);
+#line 268 "ide/config/cfg_methods.bas"
+S_44470:;
+#line 268 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEBACKUPSIZE< 10 ))|(-(*__LONG_IDEBACKUPSIZE> 2000 )))||is_error_pending()){
+#line 268 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,268,"cfg_methods.bas");if(r)goto S_44470;}
+#line 269 "ide/config/cfg_methods.bas"
+do{
+#line 269 "ide/config/cfg_methods.bas"
+*__LONG_IDEBACKUPSIZE= 500 ;
+#line 269 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,269,"cfg_methods.bas");}while(r);
+#line 269 "ide/config/cfg_methods.bas"
+do{
+#line 269 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("BackupSize",10),qbs_new_txt_len("500",3));
+#line 269 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 269 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,269,"cfg_methods.bas");}while(r);
+#line 270 "ide/config/cfg_methods.bas"
+}
+#line 272 "ide/config/cfg_methods.bas"
+do{
+#line 272 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MaxRecentFiles",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 272 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 272 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,272,"cfg_methods.bas");}while(r);
+#line 273 "ide/config/cfg_methods.bas"
+do{
+#line 273 "ide/config/cfg_methods.bas"
+*__LONG_IDEMAXRECENT=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 273 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 273 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,273,"cfg_methods.bas");}while(r);
+#line 274 "ide/config/cfg_methods.bas"
+S_44476:;
+#line 274 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEMAXRECENT< 5 ))|(-(*__LONG_IDEMAXRECENT> 200 )))||is_error_pending()){
+#line 274 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,274,"cfg_methods.bas");if(r)goto S_44476;}
+#line 275 "ide/config/cfg_methods.bas"
+do{
+#line 275 "ide/config/cfg_methods.bas"
+*__LONG_IDEMAXRECENT= 20 ;
+#line 275 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,275,"cfg_methods.bas");}while(r);
+#line 275 "ide/config/cfg_methods.bas"
+do{
+#line 275 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MaxRecentFiles",14),qbs_new_txt_len("20",2));
+#line 275 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 275 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,275,"cfg_methods.bas");}while(r);
+#line 276 "ide/config/cfg_methods.bas"
+}
+#line 278 "ide/config/cfg_methods.bas"
+do{
+#line 278 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MaxSearchStrings",16),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 278 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 278 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,278,"cfg_methods.bas");}while(r);
+#line 279 "ide/config/cfg_methods.bas"
+do{
+#line 279 "ide/config/cfg_methods.bas"
+*__LONG_IDEMAXSEARCH=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 279 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 279 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,279,"cfg_methods.bas");}while(r);
+#line 280 "ide/config/cfg_methods.bas"
+S_44482:;
+#line 280 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEMAXSEARCH< 5 ))|(-(*__LONG_IDEMAXSEARCH> 200 )))||is_error_pending()){
+#line 280 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,280,"cfg_methods.bas");if(r)goto S_44482;}
+#line 281 "ide/config/cfg_methods.bas"
+do{
+#line 281 "ide/config/cfg_methods.bas"
+*__LONG_IDEMAXSEARCH= 50 ;
+#line 281 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,281,"cfg_methods.bas");}while(r);
+#line 281 "ide/config/cfg_methods.bas"
+do{
+#line 281 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("MaxSearchStrings",16),qbs_new_txt_len("50",2));
+#line 281 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 281 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,281,"cfg_methods.bas");}while(r);
+#line 282 "ide/config/cfg_methods.bas"
+}
+#line 284 "ide/config/cfg_methods.bas"
+do{
+#line 284 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_WIKIBASEADDRESS,qbs_new_txt_len("https://qb64phoenix.com/qb64wiki",32));
+#line 284 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 284 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,284,"cfg_methods.bas");}while(r);
+#line 285 "ide/config/cfg_methods.bas"
+S_44487:;
+#line 285 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WikiBaseAddress",15),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 285 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,285,"cfg_methods.bas");if(r)goto S_44487;}
+#line 286 "ide/config/cfg_methods.bas"
+do{
+#line 286 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_WIKIBASEADDRESS,_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 286 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 286 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,286,"cfg_methods.bas");}while(r);
+#line 287 "ide/config/cfg_methods.bas"
+}else{
+#line 288 "ide/config/cfg_methods.bas"
+do{
+#line 288 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("WikiBaseAddress",15),__STRING_WIKIBASEADDRESS);
+#line 288 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 288 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,288,"cfg_methods.bas");}while(r);
+#line 289 "ide/config/cfg_methods.bas"
+}
+#line 291 "ide/config/cfg_methods.bas"
+do{
+#line 291 "ide/config/cfg_methods.bas"
+*__BYTE_USEGUIDIALOGS=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("UseGuiDialogs",13),&(pass4440= -1ll ));
+#line 291 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 291 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,291,"cfg_methods.bas");}while(r);
+#line 293 "ide/config/cfg_methods.bas"
+S_44493:;
+#line 293 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(__STRING_OS,qbs_new_txt_len("LNX",3)))&(-(*__LONG_MACOSX== 0 ))))||is_error_pending()){
+#line 293 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,293,"cfg_methods.bas");if(r)goto S_44493;}
+#line 294 "ide/config/cfg_methods.bas"
+do{
+#line 294 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_DEFAULTTERMINAL,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultTerminal",15),qbs_new_txt_len("",0)));
+#line 294 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 294 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,294,"cfg_methods.bas");}while(r);
+#line 295 "ide/config/cfg_methods.bas"
+S_44495:;
+#line 295 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_DEFAULTTERMINAL,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 295 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,295,"cfg_methods.bas");if(r)goto S_44495;}
+#line 296 "ide/config/cfg_methods.bas"
+do{
+#line 296 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_DEFAULTTERMINAL,FUNC_FINDWORKINGTERMINAL());
+#line 296 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 296 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,296,"cfg_methods.bas");}while(r);
+#line 297 "ide/config/cfg_methods.bas"
+do{
+#line 297 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultTerminal",15),__STRING_DEFAULTTERMINAL);
+#line 297 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 297 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,297,"cfg_methods.bas");}while(r);
+#line 298 "ide/config/cfg_methods.bas"
+}
+#line 299 "ide/config/cfg_methods.bas"
+}
+#line 302 "ide/config/cfg_methods.bas"
+do{
+#line 302 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_MOUSESETTINGSSECTION,qbs_new_txt_len("SwapMouseButton",15),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 302 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 302 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,302,"cfg_methods.bas");}while(r);
+#line 303 "ide/config/cfg_methods.bas"
+S_44501:;
+#line 303 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 303 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,303,"cfg_methods.bas");if(r)goto S_44501;}
+#line 304 "ide/config/cfg_methods.bas"
+do{
+#line 304 "ide/config/cfg_methods.bas"
+*__BYTE_MOUSEBUTTONSWAPPED= -1ll ;
+#line 304 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,304,"cfg_methods.bas");}while(r);
+#line 305 "ide/config/cfg_methods.bas"
+do{
+#line 305 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_MOUSESETTINGSSECTION,qbs_new_txt_len("SwapMouseButton",15),qbs_new_txt_len("True",4));
+#line 305 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 305 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,305,"cfg_methods.bas");}while(r);
+#line 306 "ide/config/cfg_methods.bas"
+}else{
+#line 307 "ide/config/cfg_methods.bas"
+do{
+#line 307 "ide/config/cfg_methods.bas"
+*__BYTE_MOUSEBUTTONSWAPPED= 0ll ;
+#line 307 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,307,"cfg_methods.bas");}while(r);
+#line 308 "ide/config/cfg_methods.bas"
+do{
+#line 308 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_MOUSESETTINGSSECTION,qbs_new_txt_len("SwapMouseButton",15),qbs_new_txt_len("False",5));
+#line 308 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 308 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,308,"cfg_methods.bas");}while(r);
+#line 309 "ide/config/cfg_methods.bas"
+}
+#line 312 "ide/config/cfg_methods.bas"
+do{
+#line 312 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 312 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 312 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,312,"cfg_methods.bas");}while(r);
+#line 313 "ide/config/cfg_methods.bas"
+do{
+#line 313 "ide/config/cfg_methods.bas"
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 313 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 313 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,313,"cfg_methods.bas");}while(r);
+#line 314 "ide/config/cfg_methods.bas"
+S_44510:;
+#line 314 "ide/config/cfg_methods.bas"
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+#line 314 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,314,"cfg_methods.bas");if(r)goto S_44510;}
+#line 314 "ide/config/cfg_methods.bas"
+do{
+#line 314 "ide/config/cfg_methods.bas"
+*__LONG_IDEBASETCPPORT= 9000 ;
+#line 314 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,314,"cfg_methods.bas");}while(r);
+#line 314 "ide/config/cfg_methods.bas"
+do{
+#line 314 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs_new_txt_len("9000",4));
+#line 314 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 314 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,314,"cfg_methods.bas");}while(r);
+#line 314 "ide/config/cfg_methods.bas"
+}
+#line 316 "ide/config/cfg_methods.bas"
+do{
+#line 316 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("WatchListToConsole",18),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 316 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 316 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,316,"cfg_methods.bas");}while(r);
+#line 317 "ide/config/cfg_methods.bas"
+S_44515:;
+#line 317 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 317 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,317,"cfg_methods.bas");if(r)goto S_44515;}
+#line 318 "ide/config/cfg_methods.bas"
+do{
+#line 318 "ide/config/cfg_methods.bas"
+*__BYTE_WATCHLISTTOCONSOLE= -1ll ;
+#line 318 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,318,"cfg_methods.bas");}while(r);
+#line 319 "ide/config/cfg_methods.bas"
+do{
+#line 319 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("WatchListToConsole",18),qbs_new_txt_len("True",4));
+#line 319 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 319 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,319,"cfg_methods.bas");}while(r);
+#line 320 "ide/config/cfg_methods.bas"
+}else{
+#line 321 "ide/config/cfg_methods.bas"
+do{
+#line 321 "ide/config/cfg_methods.bas"
+*__BYTE_WATCHLISTTOCONSOLE= 0ll ;
+#line 321 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,321,"cfg_methods.bas");}while(r);
+#line 322 "ide/config/cfg_methods.bas"
+do{
+#line 322 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("WatchListToConsole",18),qbs_new_txt_len("False",5));
+#line 322 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 322 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,322,"cfg_methods.bas");}while(r);
+#line 323 "ide/config/cfg_methods.bas"
+}
+#line 325 "ide/config/cfg_methods.bas"
+S_44522:;
+#line 325 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("AutoAddDebugCommand",19),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 325 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,325,"cfg_methods.bas");if(r)goto S_44522;}
+#line 326 "ide/config/cfg_methods.bas"
+S_44523:;
+#line 326 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 326 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,326,"cfg_methods.bas");if(r)goto S_44523;}
+#line 327 "ide/config/cfg_methods.bas"
+do{
+#line 327 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOADDDEBUGCOMMAND= -1ll ;
+#line 327 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,327,"cfg_methods.bas");}while(r);
+#line 328 "ide/config/cfg_methods.bas"
+}else{
+#line 329 "ide/config/cfg_methods.bas"
+do{
+#line 329 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOADDDEBUGCOMMAND= 0ll ;
+#line 329 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,329,"cfg_methods.bas");}while(r);
+#line 330 "ide/config/cfg_methods.bas"
+do{
+#line 330 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("AutoAddDebugCommand",19),qbs_new_txt_len("False",5));
+#line 330 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 330 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,330,"cfg_methods.bas");}while(r);
+#line 331 "ide/config/cfg_methods.bas"
+}
+#line 332 "ide/config/cfg_methods.bas"
+}else{
+#line 333 "ide/config/cfg_methods.bas"
+do{
+#line 333 "ide/config/cfg_methods.bas"
+*__BYTE_AUTOADDDEBUGCOMMAND= -1ll ;
+#line 333 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,333,"cfg_methods.bas");}while(r);
+#line 334 "ide/config/cfg_methods.bas"
+do{
+#line 334 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("AutoAddDebugCommand",19),qbs_new_txt_len("True",4));
+#line 334 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 334 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,334,"cfg_methods.bas");}while(r);
+#line 335 "ide/config/cfg_methods.bas"
+}
+#line 338 "ide/config/cfg_methods.bas"
+do{
+#line 338 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LOGMINLEVEL,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogMinLevel",11),qbs_new_txt_len("None",4)));
+#line 338 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 338 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,338,"cfg_methods.bas");}while(r);
+#line 339 "ide/config/cfg_methods.bas"
+do{
+#line 339 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LOGSCOPES,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogScopes",9),qbs_new_txt_len("qb64",4)));
+#line 339 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 339 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,339,"cfg_methods.bas");}while(r);
+#line 340 "ide/config/cfg_methods.bas"
+do{
+#line 340 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LOGHANDLERS,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogHandlers",11),qbs_new_txt_len("console",7)));
+#line 340 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 340 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,340,"cfg_methods.bas");}while(r);
+#line 341 "ide/config/cfg_methods.bas"
+do{
+#line 341 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LOGFILENAME,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogFileName",11),qbs_add(func__startdir(),qbs_new_txt_len("qb64pe-log.txt",14))));
+#line 341 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 341 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,341,"cfg_methods.bas");}while(r);
+#line 343 "ide/config/cfg_methods.bas"
+do{
+#line 343 "ide/config/cfg_methods.bas"
+*__BYTE_LOGGINGENABLED=(qbs_notequal(__STRING_LOGMINLEVEL,qbs_new_txt_len("None",4)));
+#line 343 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 343 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,343,"cfg_methods.bas");}while(r);
+#line 344 "ide/config/cfg_methods.bas"
+do{
+#line 344 "ide/config/cfg_methods.bas"
+*__BYTE_LOGTOCONSOLE=*__BYTE_LOGGINGENABLED&(-(func_instr(NULL,qbs_add(qbs_add(qbs_new_txt_len(",",1),__STRING_LOGHANDLERS),qbs_new_txt_len(",",1)),qbs_new_txt_len(",console,",9),0)> 0 ));
+#line 344 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 344 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,344,"cfg_methods.bas");}while(r);
+#line 347 "ide/config/cfg_methods.bas"
+S_44539:;
+#line 347 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SortSUBs",12),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 347 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,347,"cfg_methods.bas");if(r)goto S_44539;}
+#line 348 "ide/config/cfg_methods.bas"
+S_44540:;
+#line 348 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 348 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,348,"cfg_methods.bas");if(r)goto S_44540;}
+#line 349 "ide/config/cfg_methods.bas"
+do{
+#line 349 "ide/config/cfg_methods.bas"
+*__BYTE_IDESORTSUBS= -1ll ;
+#line 349 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,349,"cfg_methods.bas");}while(r);
+#line 350 "ide/config/cfg_methods.bas"
+}else{
+#line 351 "ide/config/cfg_methods.bas"
+do{
+#line 351 "ide/config/cfg_methods.bas"
+*__BYTE_IDESORTSUBS= 0ll ;
+#line 351 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,351,"cfg_methods.bas");}while(r);
+#line 352 "ide/config/cfg_methods.bas"
+do{
+#line 352 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SortSUBs",12),qbs_new_txt_len("False",5));
+#line 352 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 352 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,352,"cfg_methods.bas");}while(r);
+#line 353 "ide/config/cfg_methods.bas"
+}
+#line 354 "ide/config/cfg_methods.bas"
+}else{
+#line 355 "ide/config/cfg_methods.bas"
+do{
+#line 355 "ide/config/cfg_methods.bas"
+*__BYTE_IDESORTSUBS= 0ll ;
+#line 355 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,355,"cfg_methods.bas");}while(r);
+#line 356 "ide/config/cfg_methods.bas"
+do{
+#line 356 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SortSUBs",12),qbs_new_txt_len("False",5));
+#line 356 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 356 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,356,"cfg_methods.bas");}while(r);
+#line 357 "ide/config/cfg_methods.bas"
+}
+#line 359 "ide/config/cfg_methods.bas"
+do{
+#line 359 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWCAP= 0ll ;
+#line 359 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,359,"cfg_methods.bas");}while(r);
+#line 359 "ide/config/cfg_methods.bas"
+do{
+#line 359 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWLOW= 0ll ;
+#line 359 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,359,"cfg_methods.bas");}while(r);
+#line 360 "ide/config/cfg_methods.bas"
+S_44552:;
+#line 360 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordCapital",18),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 360 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,360,"cfg_methods.bas");if(r)goto S_44552;}
+#line 361 "ide/config/cfg_methods.bas"
+S_44553:;
+#line 361 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 361 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,361,"cfg_methods.bas");if(r)goto S_44553;}
+#line 361 "ide/config/cfg_methods.bas"
+do{
+#line 361 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWCAP= -1ll ;
+#line 361 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,361,"cfg_methods.bas");}while(r);
+#line 361 "ide/config/cfg_methods.bas"
+}else{
+#line 361 "ide/config/cfg_methods.bas"
+do{
+#line 361 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWCAP= 0ll ;
+#line 361 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,361,"cfg_methods.bas");}while(r);
+#line 361 "ide/config/cfg_methods.bas"
+}
+#line 362 "ide/config/cfg_methods.bas"
+}
+#line 363 "ide/config/cfg_methods.bas"
+S_44559:;
+#line 363 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordLowercase",20),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 363 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,363,"cfg_methods.bas");if(r)goto S_44559;}
+#line 364 "ide/config/cfg_methods.bas"
+S_44560:;
+#line 364 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 364 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,364,"cfg_methods.bas");if(r)goto S_44560;}
+#line 364 "ide/config/cfg_methods.bas"
+do{
+#line 364 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWLOW= -1ll ;
+#line 364 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,364,"cfg_methods.bas");}while(r);
+#line 364 "ide/config/cfg_methods.bas"
+}else{
+#line 364 "ide/config/cfg_methods.bas"
+do{
+#line 364 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_TMPKWLOW= 0ll ;
+#line 364 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,364,"cfg_methods.bas");}while(r);
+#line 364 "ide/config/cfg_methods.bas"
+}
+#line 365 "ide/config/cfg_methods.bas"
+}
+#line 366 "ide/config/cfg_methods.bas"
+S_44566:;
+#line 366 "ide/config/cfg_methods.bas"
+if ((-(*_SUB_READINITIALCONFIG_LONG_TMPKWCAP==*_SUB_READINITIALCONFIG_LONG_TMPKWLOW))||is_error_pending()){
+#line 366 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,366,"cfg_methods.bas");if(r)goto S_44566;}
+#line 367 "ide/config/cfg_methods.bas"
+do{
+#line 367 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUTKWSTYLE= 0ll ;
+#line 367 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,367,"cfg_methods.bas");}while(r);
+#line 368 "ide/config/cfg_methods.bas"
+do{
+#line 368 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordCapital",18),qbs_new_txt_len("False",5));
+#line 368 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 368 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,368,"cfg_methods.bas");}while(r);
+#line 369 "ide/config/cfg_methods.bas"
+do{
+#line 369 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordLowercase",20),qbs_new_txt_len("False",5));
+#line 369 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 369 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,369,"cfg_methods.bas");}while(r);
+#line 370 "ide/config/cfg_methods.bas"
+S_44570:;
+#line 370 "ide/config/cfg_methods.bas"
+}else{
+#line 370 "ide/config/cfg_methods.bas"
+if (-(*_SUB_READINITIALCONFIG_LONG_TMPKWCAP== -1ll )){
+#line 370 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,370,"cfg_methods.bas");if(r)goto S_44570;}
+#line 371 "ide/config/cfg_methods.bas"
+do{
+#line 371 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUTKWSTYLE= 1ll ;
+#line 371 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,371,"cfg_methods.bas");}while(r);
+#line 372 "ide/config/cfg_methods.bas"
+do{
+#line 372 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordLowercase",20),qbs_new_txt_len("False",5));
+#line 372 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 372 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,372,"cfg_methods.bas");}while(r);
+#line 373 "ide/config/cfg_methods.bas"
+S_44573:;
+#line 373 "ide/config/cfg_methods.bas"
+}else{
+#line 373 "ide/config/cfg_methods.bas"
+if (-(*_SUB_READINITIALCONFIG_LONG_TMPKWLOW== -1ll )){
+#line 373 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,373,"cfg_methods.bas");if(r)goto S_44573;}
+#line 374 "ide/config/cfg_methods.bas"
+do{
+#line 374 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUTKWSTYLE= -1ll ;
+#line 374 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,374,"cfg_methods.bas");}while(r);
+#line 375 "ide/config/cfg_methods.bas"
+do{
+#line 375 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_KeywordCapital",18),qbs_new_txt_len("False",5));
+#line 375 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 375 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,375,"cfg_methods.bas");}while(r);
+#line 376 "ide/config/cfg_methods.bas"
+}
+#line 376 "ide/config/cfg_methods.bas"
+}
+#line 376 "ide/config/cfg_methods.bas"
+}
+#line 378 "ide/config/cfg_methods.bas"
+S_44577:;
+#line 378 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SUBsLength",14),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 378 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,378,"cfg_methods.bas");if(r)goto S_44577;}
+#line 379 "ide/config/cfg_methods.bas"
+S_44578:;
+#line 379 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 379 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,379,"cfg_methods.bas");if(r)goto S_44578;}
+#line 380 "ide/config/cfg_methods.bas"
+do{
+#line 380 "ide/config/cfg_methods.bas"
+*__BYTE_IDESUBSLENGTH= -1ll ;
+#line 380 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,380,"cfg_methods.bas");}while(r);
+#line 381 "ide/config/cfg_methods.bas"
+}else{
+#line 382 "ide/config/cfg_methods.bas"
+do{
+#line 382 "ide/config/cfg_methods.bas"
+*__BYTE_IDESUBSLENGTH= 0ll ;
+#line 382 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,382,"cfg_methods.bas");}while(r);
+#line 383 "ide/config/cfg_methods.bas"
+do{
+#line 383 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SUBsLength",14),qbs_new_txt_len("False",5));
+#line 383 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 383 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,383,"cfg_methods.bas");}while(r);
+#line 384 "ide/config/cfg_methods.bas"
+}
+#line 385 "ide/config/cfg_methods.bas"
+}else{
+#line 386 "ide/config/cfg_methods.bas"
+do{
+#line 386 "ide/config/cfg_methods.bas"
+*__BYTE_IDESUBSLENGTH= -1ll ;
+#line 386 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,386,"cfg_methods.bas");}while(r);
+#line 387 "ide/config/cfg_methods.bas"
+do{
+#line 387 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_SUBsLength",14),qbs_new_txt_len("True",4));
+#line 387 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 387 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,387,"cfg_methods.bas");}while(r);
+#line 388 "ide/config/cfg_methods.bas"
+}
+#line 390 "ide/config/cfg_methods.bas"
+S_44588:;
+#line 390 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoPosition",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 390 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,390,"cfg_methods.bas");if(r)goto S_44588;}
+#line 391 "ide/config/cfg_methods.bas"
+S_44589:;
+#line 391 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 391 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,391,"cfg_methods.bas");if(r)goto S_44589;}
+#line 392 "ide/config/cfg_methods.bas"
+do{
+#line 392 "ide/config/cfg_methods.bas"
+*__BYTE_IDEAUTOPOSITION= -1ll ;
+#line 392 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,392,"cfg_methods.bas");}while(r);
+#line 393 "ide/config/cfg_methods.bas"
+}else{
+#line 394 "ide/config/cfg_methods.bas"
+do{
+#line 394 "ide/config/cfg_methods.bas"
+*__BYTE_IDEAUTOPOSITION= 0ll ;
+#line 394 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,394,"cfg_methods.bas");}while(r);
+#line 395 "ide/config/cfg_methods.bas"
+do{
+#line 395 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoPosition",16),qbs_new_txt_len("False",5));
+#line 395 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 395 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,395,"cfg_methods.bas");}while(r);
+#line 396 "ide/config/cfg_methods.bas"
+}
+#line 397 "ide/config/cfg_methods.bas"
+}else{
+#line 398 "ide/config/cfg_methods.bas"
+do{
+#line 398 "ide/config/cfg_methods.bas"
+*__BYTE_IDEAUTOPOSITION= -1ll ;
+#line 398 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,398,"cfg_methods.bas");}while(r);
+#line 399 "ide/config/cfg_methods.bas"
+do{
+#line 399 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoPosition",16),qbs_new_txt_len("True",4));
+#line 399 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 399 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,399,"cfg_methods.bas");}while(r);
+#line 400 "ide/config/cfg_methods.bas"
+}
+#line 402 "ide/config/cfg_methods.bas"
+do{
+#line 402 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_NormalCursorStart",21),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 402 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 402 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,402,"cfg_methods.bas");}while(r);
+#line 403 "ide/config/cfg_methods.bas"
+do{
+#line 403 "ide/config/cfg_methods.bas"
+*__LONG_IDENORMALCURSORSTART=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 403 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 403 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,403,"cfg_methods.bas");}while(r);
+#line 404 "ide/config/cfg_methods.bas"
+S_44601:;
+#line 404 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDENORMALCURSORSTART< 0 ))|(-(*__LONG_IDENORMALCURSORSTART> 31 ))|(-(*_SUB_READINITIALCONFIG_LONG_RESULT== 0 )))||is_error_pending()){
+#line 404 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,404,"cfg_methods.bas");if(r)goto S_44601;}
+#line 405 "ide/config/cfg_methods.bas"
+do{
+#line 405 "ide/config/cfg_methods.bas"
+*__LONG_IDENORMALCURSORSTART= 6 ;
+#line 405 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,405,"cfg_methods.bas");}while(r);
+#line 406 "ide/config/cfg_methods.bas"
+do{
+#line 406 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_NormalCursorStart",21),qbs_new_txt_len("6",1));
+#line 406 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 406 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,406,"cfg_methods.bas");}while(r);
+#line 407 "ide/config/cfg_methods.bas"
+}
+#line 409 "ide/config/cfg_methods.bas"
+do{
+#line 409 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_NormalCursorEnd",19),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 409 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 409 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,409,"cfg_methods.bas");}while(r);
+#line 410 "ide/config/cfg_methods.bas"
+do{
+#line 410 "ide/config/cfg_methods.bas"
+*__LONG_IDENORMALCURSOREND=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 410 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 410 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,410,"cfg_methods.bas");}while(r);
+#line 411 "ide/config/cfg_methods.bas"
+S_44607:;
+#line 411 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDENORMALCURSOREND< 0 ))|(-(*__LONG_IDENORMALCURSOREND> 31 ))|(-(*_SUB_READINITIALCONFIG_LONG_RESULT== 0 )))||is_error_pending()){
+#line 411 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,411,"cfg_methods.bas");if(r)goto S_44607;}
+#line 412 "ide/config/cfg_methods.bas"
+do{
+#line 412 "ide/config/cfg_methods.bas"
+*__LONG_IDENORMALCURSOREND= 8 ;
+#line 412 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,412,"cfg_methods.bas");}while(r);
+#line 413 "ide/config/cfg_methods.bas"
+do{
+#line 413 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_NormalCursorEnd",19),qbs_new_txt_len("8",1));
+#line 413 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 413 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,413,"cfg_methods.bas");}while(r);
+#line 414 "ide/config/cfg_methods.bas"
+}
+#line 416 "ide/config/cfg_methods.bas"
+do{
+#line 416 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoFormat",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 416 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 416 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,416,"cfg_methods.bas");}while(r);
+#line 417 "ide/config/cfg_methods.bas"
+do{
+#line 417 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUT=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 417 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 417 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,417,"cfg_methods.bas");}while(r);
+#line 418 "ide/config/cfg_methods.bas"
+S_44613:;
+#line 418 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(*__LONG_IDEAUTOLAYOUT!= 0 ))))||is_error_pending()){
+#line 418 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,418,"cfg_methods.bas");if(r)goto S_44613;}
+#line 419 "ide/config/cfg_methods.bas"
+do{
+#line 419 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUT= -1ll ;
+#line 419 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,419,"cfg_methods.bas");}while(r);
+#line 420 "ide/config/cfg_methods.bas"
+}else{
+#line 421 "ide/config/cfg_methods.bas"
+S_44616:;
+#line 421 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_notequal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("FALSE",5)))&(qbs_notequal(_SUB_READINITIALCONFIG_STRING_VALUE,qbs_new_txt_len("0",1)))))||is_error_pending()){
+#line 421 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,421,"cfg_methods.bas");if(r)goto S_44616;}
+#line 422 "ide/config/cfg_methods.bas"
+do{
+#line 422 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoFormat",14),qbs_new_txt_len("True",4));
+#line 422 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 422 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,422,"cfg_methods.bas");}while(r);
+#line 423 "ide/config/cfg_methods.bas"
+do{
+#line 423 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUT= -1ll ;
+#line 423 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,423,"cfg_methods.bas");}while(r);
+#line 424 "ide/config/cfg_methods.bas"
+}else{
+#line 425 "ide/config/cfg_methods.bas"
+do{
+#line 425 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOLAYOUT= 0ll ;
+#line 425 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,425,"cfg_methods.bas");}while(r);
+#line 426 "ide/config/cfg_methods.bas"
+}
+#line 427 "ide/config/cfg_methods.bas"
+}
+#line 428 "ide/config/cfg_methods.bas"
+do{
+#line 428 "ide/config/cfg_methods.bas"
+*__LONG_DEFAUTOLAYOUT=*__LONG_IDEAUTOLAYOUT;
+#line 428 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,428,"cfg_methods.bas");}while(r);
+#line 430 "ide/config/cfg_methods.bas"
+do{
+#line 430 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoIndent",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 430 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 430 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,430,"cfg_methods.bas");}while(r);
+#line 431 "ide/config/cfg_methods.bas"
+do{
+#line 431 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENT=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 431 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 431 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,431,"cfg_methods.bas");}while(r);
+#line 432 "ide/config/cfg_methods.bas"
+S_44626:;
+#line 432 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(*__LONG_IDEAUTOINDENT!= 0 ))))||is_error_pending()){
+#line 432 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,432,"cfg_methods.bas");if(r)goto S_44626;}
+#line 433 "ide/config/cfg_methods.bas"
+do{
+#line 433 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENT= -1ll ;
+#line 433 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,433,"cfg_methods.bas");}while(r);
+#line 434 "ide/config/cfg_methods.bas"
+}else{
+#line 435 "ide/config/cfg_methods.bas"
+S_44629:;
+#line 435 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_notequal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("FALSE",5)))&(qbs_notequal(_SUB_READINITIALCONFIG_STRING_VALUE,qbs_new_txt_len("0",1)))))||is_error_pending()){
+#line 435 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,435,"cfg_methods.bas");if(r)goto S_44629;}
+#line 436 "ide/config/cfg_methods.bas"
+do{
+#line 436 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_AutoIndent",14),qbs_new_txt_len("True",4));
+#line 436 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 436 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,436,"cfg_methods.bas");}while(r);
+#line 437 "ide/config/cfg_methods.bas"
+do{
+#line 437 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENT= -1ll ;
+#line 437 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,437,"cfg_methods.bas");}while(r);
+#line 438 "ide/config/cfg_methods.bas"
+}else{
+#line 439 "ide/config/cfg_methods.bas"
+do{
+#line 439 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENT= 0ll ;
+#line 439 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,439,"cfg_methods.bas");}while(r);
+#line 440 "ide/config/cfg_methods.bas"
+}
+#line 441 "ide/config/cfg_methods.bas"
+}
+#line 442 "ide/config/cfg_methods.bas"
+do{
+#line 442 "ide/config/cfg_methods.bas"
+*__LONG_DEFAUTOINDENT=*__LONG_IDEAUTOINDENT;
+#line 442 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,442,"cfg_methods.bas");}while(r);
+#line 444 "ide/config/cfg_methods.bas"
+do{
+#line 444 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_IndentSUBs",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 444 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 444 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,444,"cfg_methods.bas");}while(r);
+#line 445 "ide/config/cfg_methods.bas"
+do{
+#line 445 "ide/config/cfg_methods.bas"
+*__LONG_IDEINDENTSUBS=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 445 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 445 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,445,"cfg_methods.bas");}while(r);
+#line 446 "ide/config/cfg_methods.bas"
+S_44639:;
+#line 446 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(*__LONG_IDEINDENTSUBS!= 0 ))))||is_error_pending()){
+#line 446 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,446,"cfg_methods.bas");if(r)goto S_44639;}
+#line 447 "ide/config/cfg_methods.bas"
+do{
+#line 447 "ide/config/cfg_methods.bas"
+*__LONG_IDEINDENTSUBS= -1ll ;
+#line 447 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,447,"cfg_methods.bas");}while(r);
+#line 448 "ide/config/cfg_methods.bas"
+}else{
+#line 449 "ide/config/cfg_methods.bas"
+S_44642:;
+#line 449 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_notequal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("FALSE",5)))&(qbs_notequal(_SUB_READINITIALCONFIG_STRING_VALUE,qbs_new_txt_len("0",1)))))||is_error_pending()){
+#line 449 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,449,"cfg_methods.bas");if(r)goto S_44642;}
+#line 450 "ide/config/cfg_methods.bas"
+do{
+#line 450 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_IndentSUBs",14),qbs_new_txt_len("True",4));
+#line 450 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 450 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,450,"cfg_methods.bas");}while(r);
+#line 451 "ide/config/cfg_methods.bas"
+do{
+#line 451 "ide/config/cfg_methods.bas"
+*__LONG_IDEINDENTSUBS= -1ll ;
+#line 451 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,451,"cfg_methods.bas");}while(r);
+#line 452 "ide/config/cfg_methods.bas"
+}else{
+#line 453 "ide/config/cfg_methods.bas"
+do{
+#line 453 "ide/config/cfg_methods.bas"
+*__LONG_IDEINDENTSUBS= 0ll ;
+#line 453 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,453,"cfg_methods.bas");}while(r);
+#line 454 "ide/config/cfg_methods.bas"
+}
+#line 455 "ide/config/cfg_methods.bas"
+}
+#line 457 "ide/config/cfg_methods.bas"
+do{
+#line 457 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_IndentSize",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 457 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 457 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,457,"cfg_methods.bas");}while(r);
+#line 458 "ide/config/cfg_methods.bas"
+do{
+#line 458 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENTSIZE=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 458 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 458 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,458,"cfg_methods.bas");}while(r);
+#line 459 "ide/config/cfg_methods.bas"
+S_44651:;
+#line 459 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEAUTOINDENTSIZE< 1 ))|(-(*__LONG_IDEAUTOINDENTSIZE> 64 )))||is_error_pending()){
+#line 459 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,459,"cfg_methods.bas");if(r)goto S_44651;}
+#line 460 "ide/config/cfg_methods.bas"
+do{
+#line 460 "ide/config/cfg_methods.bas"
+*__LONG_IDEAUTOINDENTSIZE= 4 ;
+#line 460 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,460,"cfg_methods.bas");}while(r);
+#line 461 "ide/config/cfg_methods.bas"
+do{
+#line 461 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_IndentSize",14),qbs_new_txt_len("4",1));
+#line 461 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 461 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,461,"cfg_methods.bas");}while(r);
+#line 462 "ide/config/cfg_methods.bas"
+}
+#line 464 "ide/config/cfg_methods.bas"
+do{
+#line 464 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFont",14),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 464 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 464 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,464,"cfg_methods.bas");}while(r);
+#line 465 "ide/config/cfg_methods.bas"
+S_44656:;
+#line 465 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 465 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,465,"cfg_methods.bas");if(r)goto S_44656;}
+#line 466 "ide/config/cfg_methods.bas"
+do{
+#line 466 "ide/config/cfg_methods.bas"
+*__BYTE_IDECUSTOMFONT= -1ll ;
+#line 466 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,466,"cfg_methods.bas");}while(r);
+#line 467 "ide/config/cfg_methods.bas"
+}else{
+#line 468 "ide/config/cfg_methods.bas"
+do{
+#line 468 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFont",14),qbs_new_txt_len("False",5));
+#line 468 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 468 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,468,"cfg_methods.bas");}while(r);
+#line 469 "ide/config/cfg_methods.bas"
+do{
+#line 469 "ide/config/cfg_methods.bas"
+*__BYTE_IDECUSTOMFONT= 0ll ;
+#line 469 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,469,"cfg_methods.bas");}while(r);
+#line 470 "ide/config/cfg_methods.bas"
+}
+#line 472 "ide/config/cfg_methods.bas"
+do{
+#line 472 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_UseFont8",12),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 472 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 472 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,472,"cfg_methods.bas");}while(r);
+#line 473 "ide/config/cfg_methods.bas"
+S_44663:;
+#line 473 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE),qbs_new_txt_len("TRUE",4)))|(-(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE)!= 0 ))))||is_error_pending()){
+#line 473 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,473,"cfg_methods.bas");if(r)goto S_44663;}
+#line 474 "ide/config/cfg_methods.bas"
+do{
+#line 474 "ide/config/cfg_methods.bas"
+*__BYTE_IDEUSEFONT8= -1ll ;
+#line 474 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,474,"cfg_methods.bas");}while(r);
+#line 475 "ide/config/cfg_methods.bas"
+}else{
+#line 476 "ide/config/cfg_methods.bas"
+do{
+#line 476 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_UseFont8",12),qbs_new_txt_len("False",5));
+#line 476 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 476 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,476,"cfg_methods.bas");}while(r);
+#line 477 "ide/config/cfg_methods.bas"
+do{
+#line 477 "ide/config/cfg_methods.bas"
+*__BYTE_IDEUSEFONT8= 0ll ;
+#line 477 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,477,"cfg_methods.bas");}while(r);
+#line 478 "ide/config/cfg_methods.bas"
+}
+#line 480 "ide/config/cfg_methods.bas"
+do{
+#line 480 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFont$",15),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 480 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 480 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,480,"cfg_methods.bas");}while(r);
+#line 481 "ide/config/cfg_methods.bas"
+do{
+#line 481 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_IDECUSTOMFONTFILE,_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 481 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 481 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,481,"cfg_methods.bas");}while(r);
+#line 482 "ide/config/cfg_methods.bas"
+S_44671:;
+#line 482 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(*_SUB_READINITIALCONFIG_LONG_RESULT== 0 ))|(qbs_equal(__STRING_IDECUSTOMFONTFILE,qbs_new_txt_len("",0)))))||is_error_pending()){
+#line 482 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,482,"cfg_methods.bas");if(r)goto S_44671;}
+#line 483 "ide/config/cfg_methods.bas"
+S_44672:;
+#line 483 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("LNX",3))))||is_error_pending()){
+#line 483 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,483,"cfg_methods.bas");if(r)goto S_44672;}
+#line 484 "ide/config/cfg_methods.bas"
+do{
+#line 484 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_IDECUSTOMFONTFILE,qbs_add(func__dir(qbs_new_txt_len("fonts",5)),qbs_new_txt_len("truetype/liberation/LiberationMono-Regular.ttf",46)));
+#line 484 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 484 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,484,"cfg_methods.bas");}while(r);
+#line 485 "ide/config/cfg_methods.bas"
+S_44674:;
+#line 485 "ide/config/cfg_methods.bas"
+if ((*__LONG_MACOSX)||is_error_pending()){
+#line 485 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,485,"cfg_methods.bas");if(r)goto S_44674;}
+#line 485 "ide/config/cfg_methods.bas"
+do{
+#line 485 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_IDECUSTOMFONTFILE,qbs_add(func__dir(qbs_new_txt_len("fonts",5)),qbs_new_txt_len("Courier New.ttf",15)));
+#line 485 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 485 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,485,"cfg_methods.bas");}while(r);
+#line 485 "ide/config/cfg_methods.bas"
+}
+#line 486 "ide/config/cfg_methods.bas"
+}else{
+#line 487 "ide/config/cfg_methods.bas"
+do{
+#line 487 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_IDECUSTOMFONTFILE,qbs_add(func__dir(qbs_new_txt_len("fonts",5)),qbs_new_txt_len("lucon.ttf",9)));
+#line 487 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 487 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,487,"cfg_methods.bas");}while(r);
+#line 488 "ide/config/cfg_methods.bas"
+}
+#line 489 "ide/config/cfg_methods.bas"
+do{
+#line 489 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFont$",15),__STRING_IDECUSTOMFONTFILE);
+#line 489 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 489 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,489,"cfg_methods.bas");}while(r);
+#line 490 "ide/config/cfg_methods.bas"
+}
+#line 492 "ide/config/cfg_methods.bas"
+do{
+#line 492 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFontSize",18),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 492 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 492 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,492,"cfg_methods.bas");}while(r);
+#line 493 "ide/config/cfg_methods.bas"
+do{
+#line 493 "ide/config/cfg_methods.bas"
+*__BYTE_IDECUSTOMFONTHEIGHT=qbr_float_to_long(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 493 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 493 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,493,"cfg_methods.bas");}while(r);
+#line 494 "ide/config/cfg_methods.bas"
+S_44684:;
+#line 494 "ide/config/cfg_methods.bas"
+if (((-(*__BYTE_IDECUSTOMFONTHEIGHT< 8 ))|(-(*__BYTE_IDECUSTOMFONTHEIGHT> 99 )))||is_error_pending()){
+#line 494 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,494,"cfg_methods.bas");if(r)goto S_44684;}
+#line 495 "ide/config/cfg_methods.bas"
+do{
+#line 495 "ide/config/cfg_methods.bas"
+*__BYTE_IDECUSTOMFONTHEIGHT= 19 ;
+#line 495 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,495,"cfg_methods.bas");}while(r);
+#line 496 "ide/config/cfg_methods.bas"
+do{
+#line 496 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CustomFontSize",18),qbs__tostr((int8)(*__BYTE_IDECUSTOMFONTHEIGHT),NULL,0));
+#line 496 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 496 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,496,"cfg_methods.bas");}while(r);
+#line 497 "ide/config/cfg_methods.bas"
+}
+#line 499 "ide/config/cfg_methods.bas"
+do{
+#line 499 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CodePage",12),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 499 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 499 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,499,"cfg_methods.bas");}while(r);
+#line 500 "ide/config/cfg_methods.bas"
+do{
+#line 500 "ide/config/cfg_methods.bas"
+*__LONG_IDECPINDEX=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 500 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 500 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,500,"cfg_methods.bas");}while(r);
+#line 501 "ide/config/cfg_methods.bas"
+S_44690:;
+#line 501 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDECPINDEX< 0 ))|(-(*__LONG_IDECPINDEX> 27 )))||is_error_pending()){
+#line 501 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,501,"cfg_methods.bas");if(r)goto S_44690;}
+#line 501 "ide/config/cfg_methods.bas"
+do{
+#line 501 "ide/config/cfg_methods.bas"
+*__LONG_IDECPINDEX= 0 ;
+#line 501 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,501,"cfg_methods.bas");}while(r);
+#line 501 "ide/config/cfg_methods.bas"
+do{
+#line 501 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DISPLAYSETTINGSSECTION,qbs_new_txt_len("IDE_CodePage",12),qbs_new_txt_len("0",1));
+#line 501 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 501 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,501,"cfg_methods.bas");}while(r);
+#line 501 "ide/config/cfg_methods.bas"
+}
+#line 504 "ide/config/cfg_methods.bas"
+S_44694:;
+#line 504 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_CUSTOMDICTIONARYSECTION,qbs_new_txt_len("CustomKeywords$",15),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 504 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,504,"cfg_methods.bas");if(r)goto S_44694;}
+#line 505 "ide/config/cfg_methods.bas"
+do{
+#line 505 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_READINITIALCONFIG_STRING_TEMPLIST,qbs_new_txt_len("",0));
+#line 505 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 505 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,505,"cfg_methods.bas");}while(r);
+#line 506 "ide/config/cfg_methods.bas"
+do{
+#line 506 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LISTOFCUSTOMKEYWORDS,qbs_add(qbs_add(qbs_new_txt_len("@",1),qbs_ucase(_SUB_READINITIALCONFIG_STRING_VALUE)),qbs_new_txt_len("@",1)));
+#line 506 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 506 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,506,"cfg_methods.bas");}while(r);
+#line 507 "ide/config/cfg_methods.bas"
+S_44697:;
+#line 507 "ide/config/cfg_methods.bas"
+fornext_value4442= 1 ;
+#line 507 "ide/config/cfg_methods.bas"
+fornext_finalvalue4442=__STRING_LISTOFCUSTOMKEYWORDS->len;
+#line 507 "ide/config/cfg_methods.bas"
+fornext_step4442= 1 ;
+#line 507 "ide/config/cfg_methods.bas"
+if (fornext_step4442<0) fornext_step_negative4442=1; else fornext_step_negative4442=0;
+#line 507 "ide/config/cfg_methods.bas"
+if (is_error_pending()) goto fornext_error4442;
+#line 507 "ide/config/cfg_methods.bas"
+goto fornext_entrylabel4442;
+#line 507 "ide/config/cfg_methods.bas"
+while(1){
+#line 507 "ide/config/cfg_methods.bas"
+fornext_value4442=fornext_step4442+(*_SUB_READINITIALCONFIG_LONG_I);
+#line 507 "ide/config/cfg_methods.bas"
+fornext_entrylabel4442:
+#line 507 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_I=fornext_value4442;
+#line 507 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 507 "ide/config/cfg_methods.bas"
+if (fornext_step_negative4442){
+#line 507 "ide/config/cfg_methods.bas"
+if (fornext_value4442<fornext_finalvalue4442) break;
+#line 507 "ide/config/cfg_methods.bas"
+}else{
+#line 507 "ide/config/cfg_methods.bas"
+if (fornext_value4442>fornext_finalvalue4442) break;
+#line 507 "ide/config/cfg_methods.bas"
+}
+#line 507 "ide/config/cfg_methods.bas"
+fornext_error4442:;
+#line 507 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,507,"cfg_methods.bas");if(r)goto S_44697;}
+#line 508 "ide/config/cfg_methods.bas"
+do{
+#line 508 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_CHECKCHAR=qbs_asc(__STRING_LISTOFCUSTOMKEYWORDS,*_SUB_READINITIALCONFIG_LONG_I);
+#line 508 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 508 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,508,"cfg_methods.bas");}while(r);
+#line 509 "ide/config/cfg_methods.bas"
+S_44699:;
+#line 509 "ide/config/cfg_methods.bas"
+if ((-(*_SUB_READINITIALCONFIG_LONG_CHECKCHAR== 64 ))||is_error_pending()){
+#line 509 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,509,"cfg_methods.bas");if(r)goto S_44699;}
+#line 510 "ide/config/cfg_methods.bas"
+S_44700:;
+#line 510 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_right(_SUB_READINITIALCONFIG_STRING_TEMPLIST, 1 ),qbs_new_txt_len("@",1))))||is_error_pending()){
+#line 510 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,510,"cfg_methods.bas");if(r)goto S_44700;}
+#line 510 "ide/config/cfg_methods.bas"
+do{
+#line 510 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_READINITIALCONFIG_STRING_TEMPLIST,qbs_add(_SUB_READINITIALCONFIG_STRING_TEMPLIST,qbs_new_txt_len("@",1)));
+#line 510 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 510 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,510,"cfg_methods.bas");}while(r);
+#line 510 "ide/config/cfg_methods.bas"
+}
+#line 511 "ide/config/cfg_methods.bas"
+}else{
+#line 512 "ide/config/cfg_methods.bas"
+do{
+#line 512 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_READINITIALCONFIG_STRING_TEMPLIST,qbs_add(_SUB_READINITIALCONFIG_STRING_TEMPLIST,func_chr(*_SUB_READINITIALCONFIG_LONG_CHECKCHAR)));
+#line 512 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 512 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,512,"cfg_methods.bas");}while(r);
+#line 513 "ide/config/cfg_methods.bas"
+}
+#line 514 "ide/config/cfg_methods.bas"
+fornext_continue_4441:;
+#line 514 "ide/config/cfg_methods.bas"
+}
+#line 514 "ide/config/cfg_methods.bas"
+fornext_exit_4441:;
+#line 515 "ide/config/cfg_methods.bas"
+do{
+#line 515 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_LISTOFCUSTOMKEYWORDS,_SUB_READINITIALCONFIG_STRING_TEMPLIST);
+#line 515 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 515 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,515,"cfg_methods.bas");}while(r);
+#line 516 "ide/config/cfg_methods.bas"
+do{
+#line 516 "ide/config/cfg_methods.bas"
+*__LONG_CUSTOMKEYWORDSLENGTH=__STRING_LISTOFCUSTOMKEYWORDS->len;
+#line 516 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 516 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,516,"cfg_methods.bas");}while(r);
+#line 517 "ide/config/cfg_methods.bas"
+}else{
+#line 518 "ide/config/cfg_methods.bas"
+do{
+#line 518 "ide/config/cfg_methods.bas"
+SUB_INISETADDQUOTES(&(pass4445= -1ll ));
+#line 518 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,518,"cfg_methods.bas");}while(r);
+#line 519 "ide/config/cfg_methods.bas"
+do{
+#line 519 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_CUSTOMDICTIONARYSECTION,qbs_new_txt_len("Instructions1",13),qbs_new_txt_len("Add custom keywords separated by the 'at' sign.",47));
+#line 519 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 519 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,519,"cfg_methods.bas");}while(r);
+#line 520 "ide/config/cfg_methods.bas"
+do{
+#line 520 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_CUSTOMDICTIONARYSECTION,qbs_new_txt_len("Instructions2",13),qbs_new_txt_len("Useful to colorize constants (eg @true@false@).",47));
+#line 520 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 520 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,520,"cfg_methods.bas");}while(r);
+#line 521 "ide/config/cfg_methods.bas"
+do{
+#line 521 "ide/config/cfg_methods.bas"
+SUB_INISETADDQUOTES(&(pass4446= 0ll ));
+#line 521 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,521,"cfg_methods.bas");}while(r);
+#line 522 "ide/config/cfg_methods.bas"
+do{
+#line 522 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_CUSTOMDICTIONARYSECTION,qbs_new_txt_len("CustomKeywords$",15),qbs_new_txt_len("@",1));
+#line 522 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 522 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,522,"cfg_methods.bas");}while(r);
+#line 523 "ide/config/cfg_methods.bas"
+}
+#line 526 "ide/config/cfg_methods.bas"
+do{
+#line 526 "ide/config/cfg_methods.bas"
+SUB_INISETADDQUOTES(&(pass4447= -1ll ));
+#line 526 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,526,"cfg_methods.bas");}while(r);
+#line 527 "ide/config/cfg_methods.bas"
+do{
+#line 527 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSCHEMESSECTION,qbs_new_txt_len("Instructions1",13),qbs_new_txt_len("Create custom color schemes in the IDE (Options->IDE Colors).",61));
+#line 527 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 527 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,527,"cfg_methods.bas");}while(r);
+#line 528 "ide/config/cfg_methods.bas"
+do{
+#line 528 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSCHEMESSECTION,qbs_new_txt_len("Instructions2",13),qbs_new_txt_len("Custom color schemes will be stored in this section.",52));
+#line 528 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 528 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,528,"cfg_methods.bas");}while(r);
+#line 529 "ide/config/cfg_methods.bas"
+do{
+#line 529 "ide/config/cfg_methods.bas"
+SUB_INISETADDQUOTES(&(pass4448= 0ll ));
+#line 529 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,529,"cfg_methods.bas");}while(r);
+#line 532 "ide/config/cfg_methods.bas"
+S_44720:;
+#line 532 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_TopPosition",15),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 532 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,532,"cfg_methods.bas");if(r)goto S_44720;}
+#line 533 "ide/config/cfg_methods.bas"
+do{
+#line 533 "ide/config/cfg_methods.bas"
+*__INTEGER_IDETOPPOSITION=qbr_float_to_long(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 533 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 533 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,533,"cfg_methods.bas");}while(r);
+#line 534 "ide/config/cfg_methods.bas"
+do{
+#line 534 "ide/config/cfg_methods.bas"
+*__BYTE_IDEBYPASSAUTOPOSITION= 0ll ;
+#line 534 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,534,"cfg_methods.bas");}while(r);
+#line 535 "ide/config/cfg_methods.bas"
+}else{
+#line 536 "ide/config/cfg_methods.bas"
+do{
+#line 536 "ide/config/cfg_methods.bas"
+*__BYTE_IDEBYPASSAUTOPOSITION= -1ll ;
+#line 536 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,536,"cfg_methods.bas");}while(r);
+#line 537 "ide/config/cfg_methods.bas"
+do{
+#line 537 "ide/config/cfg_methods.bas"
+*__INTEGER_IDETOPPOSITION= 0 ;
+#line 537 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,537,"cfg_methods.bas");}while(r);
+#line 538 "ide/config/cfg_methods.bas"
+}
+#line 540 "ide/config/cfg_methods.bas"
+S_44727:;
+#line 540 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_LeftPosition",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 540 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,540,"cfg_methods.bas");if(r)goto S_44727;}
+#line 541 "ide/config/cfg_methods.bas"
+do{
+#line 541 "ide/config/cfg_methods.bas"
+*__INTEGER_IDELEFTPOSITION=qbr_float_to_long(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 541 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 541 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,541,"cfg_methods.bas");}while(r);
+#line 542 "ide/config/cfg_methods.bas"
+do{
+#line 542 "ide/config/cfg_methods.bas"
+*__BYTE_IDEBYPASSAUTOPOSITION= 0ll ;
+#line 542 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,542,"cfg_methods.bas");}while(r);
+#line 543 "ide/config/cfg_methods.bas"
+}else{
+#line 544 "ide/config/cfg_methods.bas"
+do{
+#line 544 "ide/config/cfg_methods.bas"
+*__BYTE_IDEBYPASSAUTOPOSITION= -1ll ;
+#line 544 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,544,"cfg_methods.bas");}while(r);
+#line 545 "ide/config/cfg_methods.bas"
+do{
+#line 545 "ide/config/cfg_methods.bas"
+*__INTEGER_IDELEFTPOSITION= 0 ;
+#line 545 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,545,"cfg_methods.bas");}while(r);
+#line 546 "ide/config/cfg_methods.bas"
+}
+#line 548 "ide/config/cfg_methods.bas"
+do{
+#line 548 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_Width",9),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 548 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 548 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,548,"cfg_methods.bas");}while(r);
+#line 549 "ide/config/cfg_methods.bas"
+do{
+#line 549 "ide/config/cfg_methods.bas"
+*__LONG_IDEWX=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 549 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 549 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,549,"cfg_methods.bas");}while(r);
+#line 550 "ide/config/cfg_methods.bas"
+S_44736:;
+#line 550 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEWX< 80 ))|(-(*__LONG_IDEWX> 999 )))||is_error_pending()){
+#line 550 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,550,"cfg_methods.bas");if(r)goto S_44736;}
+#line 550 "ide/config/cfg_methods.bas"
+do{
+#line 550 "ide/config/cfg_methods.bas"
+*__LONG_IDEWX= 120 ;
+#line 550 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,550,"cfg_methods.bas");}while(r);
+#line 550 "ide/config/cfg_methods.bas"
+do{
+#line 550 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_Width",9),qbs_new_txt_len("120",3));
+#line 550 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 550 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,550,"cfg_methods.bas");}while(r);
+#line 550 "ide/config/cfg_methods.bas"
+}
+#line 552 "ide/config/cfg_methods.bas"
+do{
+#line 552 "ide/config/cfg_methods.bas"
+*_SUB_READINITIALCONFIG_LONG_RESULT=FUNC_READCONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_Height",10),_SUB_READINITIALCONFIG_STRING_VALUE);
+#line 552 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 552 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,552,"cfg_methods.bas");}while(r);
+#line 553 "ide/config/cfg_methods.bas"
+do{
+#line 553 "ide/config/cfg_methods.bas"
+*__LONG_IDEWY=qbr(qbs_val<long double>(_SUB_READINITIALCONFIG_STRING_VALUE));
+#line 553 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 553 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,553,"cfg_methods.bas");}while(r);
+#line 554 "ide/config/cfg_methods.bas"
+S_44742:;
+#line 554 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_IDEWY< 25 ))|(-(*__LONG_IDEWY> 999 )))||is_error_pending()){
+#line 554 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,554,"cfg_methods.bas");if(r)goto S_44742;}
+#line 554 "ide/config/cfg_methods.bas"
+do{
+#line 554 "ide/config/cfg_methods.bas"
+*__LONG_IDEWY= 40 ;
+#line 554 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,554,"cfg_methods.bas");}while(r);
+#line 554 "ide/config/cfg_methods.bas"
+do{
+#line 554 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_WINDOWSETTINGSSECTION,qbs_new_txt_len("IDE_Height",10),qbs_new_txt_len("40",2));
+#line 554 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 554 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,554,"cfg_methods.bas");}while(r);
+#line 554 "ide/config/cfg_methods.bas"
+}
+#line 557 "ide/config/cfg_methods.bas"
+do{
+#line 557 "ide/config/cfg_methods.bas"
+*__ULONG_IDETEXTCOLOR=func__rgb32( 216 , 216 , 216 );
+#line 557 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,557,"cfg_methods.bas");}while(r);
+#line 558 "ide/config/cfg_methods.bas"
+do{
+#line 558 "ide/config/cfg_methods.bas"
+*__ULONG_IDEKEYWORDCOLOR=func__rgb32( 69 , 118 , 147 );
+#line 558 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,558,"cfg_methods.bas");}while(r);
+#line 559 "ide/config/cfg_methods.bas"
+do{
+#line 559 "ide/config/cfg_methods.bas"
+*__ULONG_IDENUMBERSCOLOR=func__rgb32( 216 , 98 , 78 );
+#line 559 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,559,"cfg_methods.bas");}while(r);
+#line 560 "ide/config/cfg_methods.bas"
+do{
+#line 560 "ide/config/cfg_methods.bas"
+*__ULONG_IDEERRORCOLOR=func__rgb32( 170 , 0 , 0 );
+#line 560 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,560,"cfg_methods.bas");}while(r);
+#line 561 "ide/config/cfg_methods.bas"
+do{
+#line 561 "ide/config/cfg_methods.bas"
+*__ULONG_IDEQUOTECOLOR=func__rgb32( 255 , 167 , 0 );
+#line 561 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,561,"cfg_methods.bas");}while(r);
+#line 562 "ide/config/cfg_methods.bas"
+do{
+#line 562 "ide/config/cfg_methods.bas"
+*__ULONG_IDEMETACOMMANDCOLOR=func__rgb32( 85 , 206 , 85 );
+#line 562 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,562,"cfg_methods.bas");}while(r);
+#line 563 "ide/config/cfg_methods.bas"
+do{
+#line 563 "ide/config/cfg_methods.bas"
+*__ULONG_IDECOMMENTCOLOR=func__rgb32( 98 , 98 , 98 );
+#line 563 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,563,"cfg_methods.bas");}while(r);
+#line 564 "ide/config/cfg_methods.bas"
+do{
+#line 564 "ide/config/cfg_methods.bas"
+*__ULONG_IDECHROMACOLOR=func__rgb32( 170 , 170 , 170 );
+#line 564 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,564,"cfg_methods.bas");}while(r);
+#line 565 "ide/config/cfg_methods.bas"
+do{
+#line 565 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBACKGROUNDCOLOR=func__rgb32( 0 , 0 , 39 );
+#line 565 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,565,"cfg_methods.bas");}while(r);
+#line 566 "ide/config/cfg_methods.bas"
+do{
+#line 566 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBACKGROUNDCOLOR2=func__rgb32( 0 , 49 , 78 );
+#line 566 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,566,"cfg_methods.bas");}while(r);
+#line 567 "ide/config/cfg_methods.bas"
+do{
+#line 567 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBRACKETHIGHLIGHTCOLOR=func__rgb32( 0 , 88 , 108 );
+#line 567 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,567,"cfg_methods.bas");}while(r);
+#line 570 "ide/config/cfg_methods.bas"
+S_44757:;
+#line 570 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("SchemeID",8),_SUB_READINITIALCONFIG_STRING_VALUE)== 0 )))||is_error_pending()){
+#line 570 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,570,"cfg_methods.bas");if(r)goto S_44757;}
+#line 571 "ide/config/cfg_methods.bas"
+do{
+#line 571 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("SchemeID",8),qbs_new_txt_len("1",1));
+#line 571 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 571 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,571,"cfg_methods.bas");}while(r);
+#line 572 "ide/config/cfg_methods.bas"
+}
+#line 574 "ide/config/cfg_methods.bas"
+S_44760:;
+#line 574 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("TextColor",9),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 574 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,574,"cfg_methods.bas");if(r)goto S_44760;}
+#line 575 "ide/config/cfg_methods.bas"
+do{
+#line 575 "ide/config/cfg_methods.bas"
+*__ULONG_IDETEXTCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDETEXTCOLOR);
+#line 575 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 575 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,575,"cfg_methods.bas");}while(r);
+#line 576 "ide/config/cfg_methods.bas"
+}else{
+#line 576 "ide/config/cfg_methods.bas"
+do{
+#line 576 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("TextColor",9),FUNC_RGBS(__ULONG_IDETEXTCOLOR));
+#line 576 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 576 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,576,"cfg_methods.bas");}while(r);
+#line 577 "ide/config/cfg_methods.bas"
+}
+#line 579 "ide/config/cfg_methods.bas"
+S_44765:;
+#line 579 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("KeywordColor",12),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 579 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,579,"cfg_methods.bas");if(r)goto S_44765;}
+#line 580 "ide/config/cfg_methods.bas"
+do{
+#line 580 "ide/config/cfg_methods.bas"
+*__ULONG_IDEKEYWORDCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEKEYWORDCOLOR);
+#line 580 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 580 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,580,"cfg_methods.bas");}while(r);
+#line 581 "ide/config/cfg_methods.bas"
+}else{
+#line 581 "ide/config/cfg_methods.bas"
+do{
+#line 581 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("KeywordColor",12),FUNC_RGBS(__ULONG_IDEKEYWORDCOLOR));
+#line 581 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 581 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,581,"cfg_methods.bas");}while(r);
+#line 582 "ide/config/cfg_methods.bas"
+}
+#line 584 "ide/config/cfg_methods.bas"
+S_44770:;
+#line 584 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("ErrorColor",10),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 584 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,584,"cfg_methods.bas");if(r)goto S_44770;}
+#line 585 "ide/config/cfg_methods.bas"
+do{
+#line 585 "ide/config/cfg_methods.bas"
+*__ULONG_IDEERRORCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDENUMBERSCOLOR);
+#line 585 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 585 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,585,"cfg_methods.bas");}while(r);
+#line 586 "ide/config/cfg_methods.bas"
+}else{
+#line 586 "ide/config/cfg_methods.bas"
+do{
+#line 586 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("ErrorColor",10),FUNC_RGBS(__ULONG_IDEERRORCOLOR));
+#line 586 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 586 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,586,"cfg_methods.bas");}while(r);
+#line 587 "ide/config/cfg_methods.bas"
+}
+#line 589 "ide/config/cfg_methods.bas"
+S_44775:;
+#line 589 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("NumbersColor",12),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 589 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,589,"cfg_methods.bas");if(r)goto S_44775;}
+#line 590 "ide/config/cfg_methods.bas"
+do{
+#line 590 "ide/config/cfg_methods.bas"
+*__ULONG_IDENUMBERSCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDENUMBERSCOLOR);
+#line 590 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 590 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,590,"cfg_methods.bas");}while(r);
+#line 591 "ide/config/cfg_methods.bas"
+}else{
+#line 591 "ide/config/cfg_methods.bas"
+do{
+#line 591 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("NumbersColor",12),FUNC_RGBS(__ULONG_IDENUMBERSCOLOR));
+#line 591 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 591 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,591,"cfg_methods.bas");}while(r);
+#line 592 "ide/config/cfg_methods.bas"
+}
+#line 594 "ide/config/cfg_methods.bas"
+S_44780:;
+#line 594 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("QuoteColor",10),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 594 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,594,"cfg_methods.bas");if(r)goto S_44780;}
+#line 595 "ide/config/cfg_methods.bas"
+do{
+#line 595 "ide/config/cfg_methods.bas"
+*__ULONG_IDEQUOTECOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEQUOTECOLOR);
+#line 595 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 595 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,595,"cfg_methods.bas");}while(r);
+#line 596 "ide/config/cfg_methods.bas"
+}else{
+#line 596 "ide/config/cfg_methods.bas"
+do{
+#line 596 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("QuoteColor",10),FUNC_RGBS(__ULONG_IDEQUOTECOLOR));
+#line 596 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 596 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,596,"cfg_methods.bas");}while(r);
+#line 597 "ide/config/cfg_methods.bas"
+}
+#line 599 "ide/config/cfg_methods.bas"
+S_44785:;
+#line 599 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("CommentColor",12),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 599 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,599,"cfg_methods.bas");if(r)goto S_44785;}
+#line 600 "ide/config/cfg_methods.bas"
+do{
+#line 600 "ide/config/cfg_methods.bas"
+*__ULONG_IDECOMMENTCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDECOMMENTCOLOR);
+#line 600 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 600 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,600,"cfg_methods.bas");}while(r);
+#line 601 "ide/config/cfg_methods.bas"
+}else{
+#line 601 "ide/config/cfg_methods.bas"
+do{
+#line 601 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("CommentColor",12),FUNC_RGBS(__ULONG_IDECOMMENTCOLOR));
+#line 601 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 601 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,601,"cfg_methods.bas");}while(r);
+#line 602 "ide/config/cfg_methods.bas"
+}
+#line 604 "ide/config/cfg_methods.bas"
+S_44790:;
+#line 604 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("ChromaColor",11),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 604 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,604,"cfg_methods.bas");if(r)goto S_44790;}
+#line 605 "ide/config/cfg_methods.bas"
+do{
+#line 605 "ide/config/cfg_methods.bas"
+*__ULONG_IDECHROMACOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDECHROMACOLOR);
+#line 605 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 605 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,605,"cfg_methods.bas");}while(r);
+#line 606 "ide/config/cfg_methods.bas"
+}else{
+#line 606 "ide/config/cfg_methods.bas"
+do{
+#line 606 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("ChromaColor",11),FUNC_RGBS(__ULONG_IDECHROMACOLOR));
+#line 606 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 606 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,606,"cfg_methods.bas");}while(r);
+#line 607 "ide/config/cfg_methods.bas"
+}
+#line 609 "ide/config/cfg_methods.bas"
+S_44795:;
+#line 609 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("MetaCommandColor",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 609 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,609,"cfg_methods.bas");if(r)goto S_44795;}
+#line 610 "ide/config/cfg_methods.bas"
+do{
+#line 610 "ide/config/cfg_methods.bas"
+*__ULONG_IDEMETACOMMANDCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEMETACOMMANDCOLOR);
+#line 610 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 610 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,610,"cfg_methods.bas");}while(r);
+#line 611 "ide/config/cfg_methods.bas"
+}else{
+#line 611 "ide/config/cfg_methods.bas"
+do{
+#line 611 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("MetaCommandColor",16),FUNC_RGBS(__ULONG_IDEMETACOMMANDCOLOR));
+#line 611 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 611 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,611,"cfg_methods.bas");}while(r);
+#line 612 "ide/config/cfg_methods.bas"
+}
+#line 614 "ide/config/cfg_methods.bas"
+S_44800:;
+#line 614 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("HighlightColor",14),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 614 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,614,"cfg_methods.bas");if(r)goto S_44800;}
+#line 615 "ide/config/cfg_methods.bas"
+do{
+#line 615 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBRACKETHIGHLIGHTCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEBRACKETHIGHLIGHTCOLOR);
+#line 615 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 615 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,615,"cfg_methods.bas");}while(r);
+#line 616 "ide/config/cfg_methods.bas"
+}else{
+#line 616 "ide/config/cfg_methods.bas"
+do{
+#line 616 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("HighlightColor",14),FUNC_RGBS(__ULONG_IDEBRACKETHIGHLIGHTCOLOR));
+#line 616 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 616 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,616,"cfg_methods.bas");}while(r);
+#line 617 "ide/config/cfg_methods.bas"
+}
+#line 619 "ide/config/cfg_methods.bas"
 S_44805:;
-#line 40 "ide/ide_methods.bas"
-if ((-(*_FUNC_IDE_LONG_CMD== 3 ))||is_error_pending()){
-#line 40 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,40,"ide_methods.bas");if(r)goto S_44805;}
-#line 41 "ide/ide_methods.bas"
-S_44806:;
-#line 41 "ide/ide_methods.bas"
-if ((-(*__LONG_IDECOMPILEDLINE<*__LONG_IDEN))||is_error_pending()){
-#line 41 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,41,"ide_methods.bas");if(r)goto S_44806;}
-#line 42 "ide/ide_methods.bas"
-S_44807:;
-#line 42 "ide/ide_methods.bas"
-if (((-(*__LONG_IDECOMPILEDLINE<*__LONG_IDESY))|(-(*__LONG_IDECOMPILEDLINE>(*__LONG_IDESY+(*__LONG_IDEWY- 9 )))))||is_error_pending()){
-#line 42 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,42,"ide_methods.bas");if(r)goto S_44807;}
-#line 43 "ide/ide_methods.bas"
-S_44808:;
-#line 43 "ide/ide_methods.bas"
-if ((func__exit()& 1 )||is_error_pending()){
-#line 43 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,43,"ide_methods.bas");if(r)goto S_44808;}
-#line 43 "ide/ide_methods.bas"
+#line 619 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("BackgroundColor",15),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 619 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,619,"cfg_methods.bas");if(r)goto S_44805;}
+#line 620 "ide/config/cfg_methods.bas"
 do{
-#line 43 "ide/ide_methods.bas"
-*__LONG_IDEEXIT= 1 ;
-#line 43 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,43,"ide_methods.bas");}while(r);
-#line 43 "ide/ide_methods.bas"
-}
-#line 44 "ide/ide_methods.bas"
-S_44811:;
-#line 44 "ide/ide_methods.bas"
-if ((-(*__LONG_IDEEXIT== 0 ))||is_error_pending()){
-#line 44 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,44,"ide_methods.bas");if(r)goto S_44811;}
-#line 45 "ide/ide_methods.bas"
-do{
-#line 45 "ide/ide_methods.bas"
-SUB_GETINPUT();
-#line 45 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,45,"ide_methods.bas");}while(r);
-#line 46 "ide/ide_methods.bas"
-S_44813:;
-#line 46 "ide/ide_methods.bas"
-if (((-(*__LONG_ICHANGED== 0 ))&(-(*__LONG_MB== 0 )))||is_error_pending()){
-#line 46 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,46,"ide_methods.bas");if(r)goto S_44813;}
-#line 47 "ide/ide_methods.bas"
-do{
-#line 47 "ide/ide_methods.bas"
-qbs_set(_FUNC_IDE_STRING_INDENTED,FUNC_APPLY_LAYOUT_INDENT(__STRING_IDECOMPILEDLINE));
-#line 47 "ide/ide_methods.bas"
+#line 620 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBACKGROUNDCOLOR=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEBACKGROUNDCOLOR);
+#line 620 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 47 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,47,"ide_methods.bas");}while(r);
-#line 48 "ide/ide_methods.bas"
-S_44815:;
-#line 48 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-((_FUNC_IDE_STRING_INDENTED->len)&&(qbs_notequal(__STRING_IDECOMPILEDLINE,_FUNC_IDE_STRING_INDENTED)))))||is_error_pending()){
-#line 48 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,48,"ide_methods.bas");if(r)goto S_44815;}
-#line 48 "ide/ide_methods.bas"
-do{
-#line 48 "ide/ide_methods.bas"
-SUB_IDESETLINE(__LONG_IDECOMPILEDLINE,_FUNC_IDE_STRING_INDENTED);
-#line 48 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 48 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,48,"ide_methods.bas");}while(r);
-#line 48 "ide/ide_methods.bas"
-}
-#line 50 "ide/ide_methods.bas"
-do{
-#line 50 "ide/ide_methods.bas"
-*__LONG_IDECOMPILEDLINE=*__LONG_IDECOMPILEDLINE+ 1 ;
-#line 50 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,50,"ide_methods.bas");}while(r);
-#line 51 "ide/ide_methods.bas"
-do{
-#line 51 "ide/ide_methods.bas"
-qbs_set(__STRING_IDECOMPILEDLINE,FUNC_IDEGETLINE(__LONG_IDECOMPILEDLINE));
-#line 51 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 51 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,51,"ide_methods.bas");}while(r);
-#line 52 "ide/ide_methods.bas"
-do{
-#line 52 "ide/ide_methods.bas"
-*_FUNC_IDE_LONG_IDE= 4 ;
-#line 52 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,52,"ide_methods.bas");}while(r);
-#line 53 "ide/ide_methods.bas"
-do{
-#line 53 "ide/ide_methods.bas"
-qbs_set(__STRING_IDERETURN,__STRING_IDECOMPILEDLINE);
-#line 53 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 53 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,53,"ide_methods.bas");}while(r);
-#line 56 "ide/ide_methods.bas"
-S_44822:;
-#line 56 "ide/ide_methods.bas"
-if ((-((-(*__LONG_IDEAUTORUN!= 0 ))||(-(*__LONG_IDEMANUALCHECK!= 0 ))))||is_error_pending()){
-#line 56 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,56,"ide_methods.bas");if(r)goto S_44822;}
-#line 57 "ide/ide_methods.bas"
-S_44823:;
-#line 57 "ide/ide_methods.bas"
-if ((*__LONG_PREPASS)||is_error_pending()){
-#line 57 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,57,"ide_methods.bas");if(r)goto S_44823;}
-#line 58 "ide/ide_methods.bas"
-do{
-#line 58 "ide/ide_methods.bas"
-qbs_set(_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS,qbs__tostr((long double)(std::floor((*__LONG_IDECOMPILEDLINE* 100 )/ ((long double)((*__LONG_IDEN* 2 ))))),NULL,0));
-#line 58 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 58 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,58,"ide_methods.bas");}while(r);
-#line 59 "ide/ide_methods.bas"
-do{
-#line 59 "ide/ide_methods.bas"
-qbs_set(_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS,qbs_add(qbs_add(func_string( 3 -_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS->len, 32 ),_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS),qbs_new_txt_len("%",1)));
-#line 59 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 59 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,59,"ide_methods.bas");}while(r);
-#line 60 "ide/ide_methods.bas"
+#line 620 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,620,"cfg_methods.bas");}while(r);
+#line 621 "ide/config/cfg_methods.bas"
 }else{
-#line 61 "ide/ide_methods.bas"
+#line 621 "ide/config/cfg_methods.bas"
 do{
-#line 61 "ide/ide_methods.bas"
-qbs_set(_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS,qbs__tostr((long double)(std::floor(((*__LONG_IDEN+*__LONG_IDECOMPILEDLINE)* 100 )/ ((long double)((*__LONG_IDEN* 2 ))))),NULL,0));
-#line 61 "ide/ide_methods.bas"
+#line 621 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("BackgroundColor",15),FUNC_RGBS(__ULONG_IDEBACKGROUNDCOLOR));
+#line 621 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 61 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,61,"ide_methods.bas");}while(r);
-#line 62 "ide/ide_methods.bas"
+#line 621 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,621,"cfg_methods.bas");}while(r);
+#line 622 "ide/config/cfg_methods.bas"
+}
+#line 624 "ide/config/cfg_methods.bas"
+S_44810:;
+#line 624 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_READCONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("BackgroundColor2",16),_SUB_READINITIALCONFIG_STRING_VALUE)))||is_error_pending()){
+#line 624 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,624,"cfg_methods.bas");if(r)goto S_44810;}
+#line 625 "ide/config/cfg_methods.bas"
 do{
-#line 62 "ide/ide_methods.bas"
-qbs_set(_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS,qbs_add(qbs_add(func_string( 3 -_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS->len, 32 ),_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS),qbs_new_txt_len("%",1)));
-#line 62 "ide/ide_methods.bas"
+#line 625 "ide/config/cfg_methods.bas"
+*__ULONG_IDEBACKGROUNDCOLOR2=FUNC_VRGBS(_SUB_READINITIALCONFIG_STRING_VALUE,__ULONG_IDEBACKGROUNDCOLOR2);
+#line 625 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 62 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,62,"ide_methods.bas");}while(r);
-#line 63 "ide/ide_methods.bas"
-}
-#line 64 "ide/ide_methods.bas"
-do{
-#line 64 "ide/ide_methods.bas"
-qbs_set(__STRING_IDEINFO,qbs_add(func_chr( 0 ),_FUNC_IDE_STRING_STATUS__ASCII_CHR_046__PROGRESS));
-#line 64 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 64 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,64,"ide_methods.bas");}while(r);
-#line 65 "ide/ide_methods.bas"
-}
-#line 66 "ide/ide_methods.bas"
-do{
-#line 66 "ide/ide_methods.bas"
-SUB_UPDATEIDEINFO();
-#line 66 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,66,"ide_methods.bas");}while(r);
-#line 68 "ide/ide_methods.bas"
-do{
-#line 68 "ide/ide_methods.bas"
-goto exit_subfunc;
-#line 68 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,68,"ide_methods.bas");}while(r);
-#line 69 "ide/ide_methods.bas"
-}
-#line 70 "ide/ide_methods.bas"
-S_44835:;
-#line 70 "ide/ide_methods.bas"
-if ((*__LONG_ICHANGED)||is_error_pending()){
-#line 70 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,70,"ide_methods.bas");if(r)goto S_44835;}
-#line 70 "ide/ide_methods.bas"
-do{
-#line 70 "ide/ide_methods.bas"
-*__LONG_ICHECKLATER= 1 ;
-#line 70 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,70,"ide_methods.bas");}while(r);
-#line 70 "ide/ide_methods.bas"
-}
-#line 71 "ide/ide_methods.bas"
-}
-#line 72 "ide/ide_methods.bas"
-}
-#line 73 "ide/ide_methods.bas"
+#line 625 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,625,"cfg_methods.bas");}while(r);
+#line 626 "ide/config/cfg_methods.bas"
 }else{
-#line 74 "ide/ide_methods.bas"
-S_44841:;
-#line 74 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,(-(*__LONG_IDESYSTEM!= 3 ))|(qbs_notequal(qbs_left(__STRING_IDEINFO, 19 ),qbs_new_txt_len("Selection length = ",19)))))||is_error_pending()){
-#line 74 "ide/ide_methods.bas"
-if(qbevent){evnt(28640,74,"ide_methods.bas");if(r)goto S_44841;}
-#line 74 "ide/ide_methods.bas"
+#line 626 "ide/config/cfg_methods.bas"
 do{
-#line 74 "ide/ide_methods.bas"
-qbs_set(__STRING_IDEINFO,qbs_new_txt_len("",0));
-#line 74 "ide/ide_methods.bas"
+#line 626 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COLORSETTINGSSECTION,qbs_new_txt_len("BackgroundColor2",16),FUNC_RGBS(__ULONG_IDEBACKGROUNDCOLOR2));
+#line 626 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 74 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,74,"ide_methods.bas");}while(r);
-#line 74 "ide/ide_methods.bas"
+#line 626 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,626,"cfg_methods.bas");}while(r);
+#line 627 "ide/config/cfg_methods.bas"
 }
-#line 75 "ide/ide_methods.bas"
+#line 630 "ide/config/cfg_methods.bas"
 do{
-#line 75 "ide/ide_methods.bas"
-SUB_UPDATEIDEINFO();
-#line 75 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,75,"ide_methods.bas");}while(r);
-#line 76 "ide/ide_methods.bas"
-}
-#line 77 "ide/ide_methods.bas"
-}
-#line 79 "ide/ide_methods.bas"
+#line 630 "ide/config/cfg_methods.bas"
+*__LONG_OPTIMIZECPPPROGRAM=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("OptimizeCppProgram",18),&(pass4449= 0 ));
+#line 630 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 630 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,630,"cfg_methods.bas");}while(r);
+#line 631 "ide/config/cfg_methods.bas"
 do{
-#line 79 "ide/ide_methods.bas"
-*_FUNC_IDE_LONG_IDE=FUNC_IDE2(&(pass4449= 0 ));
-#line 79 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28640,79,"ide_methods.bas");}while(r);
-#line 80 "ide/ide_methods.bas"
+#line 631 "ide/config/cfg_methods.bas"
+*__LONG_STRIPDEBUGSYMBOLS=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("StripDebugSymbols",17),&(pass4450= -1 ));
+#line 631 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 631 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,631,"cfg_methods.bas");}while(r);
+#line 632 "ide/config/cfg_methods.bas"
+do{
+#line 632 "ide/config/cfg_methods.bas"
+*__LONG_INCLUDEDEBUGINFO=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("IncludeDebugInfo",16),&(pass4451= 0 ));
+#line 632 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 632 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,632,"cfg_methods.bas");}while(r);
+#line 633 "ide/config/cfg_methods.bas"
+do{
+#line 633 "ide/config/cfg_methods.bas"
+*__LONG_ABSOLUTEDEBUGPATHS=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("AbsoluteDebugPaths",18),&(pass4452= 0 ));
+#line 633 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 633 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,633,"cfg_methods.bas");}while(r);
+#line 635 "ide/config/cfg_methods.bas"
+do{
+#line 635 "ide/config/cfg_methods.bas"
+*__LONG_MAXPARALLELPROCESSES=FUNC_READWRITELONGSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("MaxParallelProcesses",20),&(pass4453= 3 ));
+#line 635 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 635 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,635,"cfg_methods.bas");}while(r);
+#line 636 "ide/config/cfg_methods.bas"
+S_44820:;
+#line 636 "ide/config/cfg_methods.bas"
+if (((-(*__LONG_MAXPARALLELPROCESSES< 1 ))|(-(*__LONG_MAXPARALLELPROCESSES> 128 )))||is_error_pending()){
+#line 636 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,636,"cfg_methods.bas");if(r)goto S_44820;}
+#line 637 "ide/config/cfg_methods.bas"
+do{
+#line 637 "ide/config/cfg_methods.bas"
+*__LONG_MAXPARALLELPROCESSES= 3 ;
+#line 637 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,637,"cfg_methods.bas");}while(r);
+#line 638 "ide/config/cfg_methods.bas"
+do{
+#line 638 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("MaxParallelProcesses",20),qbs_new_txt_len("3",1));
+#line 638 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 638 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,638,"cfg_methods.bas");}while(r);
+#line 639 "ide/config/cfg_methods.bas"
+}
+#line 641 "ide/config/cfg_methods.bas"
+do{
+#line 641 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_EXTRACPPFLAGS,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("ExtraCppFlags",13),qbs_new_txt_len("",0)));
+#line 641 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 641 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,641,"cfg_methods.bas");}while(r);
+#line 642 "ide/config/cfg_methods.bas"
+do{
+#line 642 "ide/config/cfg_methods.bas"
+qbs_set(__STRING_EXTRALINKERFLAGS,FUNC_READWRITESTRINGSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("ExtraLinkerFlags",16),qbs_new_txt_len("",0)));
+#line 642 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 642 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,642,"cfg_methods.bas");}while(r);
+#line 644 "ide/config/cfg_methods.bas"
+do{
+#line 644 "ide/config/cfg_methods.bas"
+*__LONG_GENERATELICENSEFILE=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("GenerateLicenseFile",19),&(pass4454= 0 ));
+#line 644 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 644 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,644,"cfg_methods.bas");}while(r);
+#line 646 "ide/config/cfg_methods.bas"
+S_44827:;
+#line 646 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+#line 646 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28671,646,"cfg_methods.bas");if(r)goto S_44827;}
+#line 647 "ide/config/cfg_methods.bas"
+do{
+#line 647 "ide/config/cfg_methods.bas"
+*__LONG_USESYSTEMMINGW=FUNC_READWRITEBOOLEANSETTINGVALUE(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("UseSystemMinGW",14),&(pass4455= 0ll ));
+#line 647 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 647 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,647,"cfg_methods.bas");}while(r);
+#line 648 "ide/config/cfg_methods.bas"
+}else{
+#line 649 "ide/config/cfg_methods.bas"
+do{
+#line 649 "ide/config/cfg_methods.bas"
+*__LONG_USESYSTEMMINGW= -1ll ;
+#line 649 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28671,649,"cfg_methods.bas");}while(r);
+#line 650 "ide/config/cfg_methods.bas"
+}
+#line 651 "ide/config/cfg_methods.bas"
 exit_subfunc:;
-#line 80 "ide/ide_methods.bas"
+#line 651 "ide/config/cfg_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 80 "ide/ide_methods.bas"
+#line 651 "ide/config/cfg_methods.bas"
 #include "free346.txt"
-#line 80 "ide/ide_methods.bas"
+#line 651 "ide/config/cfg_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 80 "ide/ide_methods.bas"
+#line 651 "ide/config/cfg_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 80 "ide/ide_methods.bas"
-return *_FUNC_IDE_LONG_IDE;
-#line 80 "ide/ide_methods.bas"
+#line 651 "ide/config/cfg_methods.bas"
 }

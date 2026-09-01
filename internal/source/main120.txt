@@ -1,48 +1,92 @@
-#line 84 "utilities/strings.bas"
-void SUB_WRITECONFIGSETTING(qbs*_SUB_WRITECONFIGSETTING_STRING_SECTION,qbs*_SUB_WRITECONFIGSETTING_STRING_ITEM,qbs*_SUB_WRITECONFIGSETTING_STRING_VALUE){
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
+int16 FUNC_TFSTRINGTOBOOL(qbs*_FUNC_TFSTRINGTOBOOL_STRING_S){
+#line 71 "utilities/strings.bas"
 qbs *tqbs;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 #include "data120.txt"
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 new_mem_lock();
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 libqb_check_stack();
-#line 84 "utilities/strings.bas"
+#line 71 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 85 "utilities/strings.bas"
+#line 72 "utilities/strings.bas"
 do{
-#line 85 "utilities/strings.bas"
-SUB_WRITESETTING(__STRING_CONFIGFILE,_SUB_WRITECONFIGSETTING_STRING_SECTION,_SUB_WRITECONFIGSETTING_STRING_ITEM,_SUB_WRITECONFIGSETTING_STRING_VALUE);
-#line 85 "utilities/strings.bas"
+#line 72 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,72,"strings.bas");}while(r);
+#line 73 "utilities/strings.bas"
+do{
+#line 73 "utilities/strings.bas"
+qbs_set(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs__trim(qbs_ucase(_FUNC_TFSTRINGTOBOOL_STRING_S)));
+#line 73 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 85 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,85,"strings.bas");}while(r);
-#line 86 "utilities/strings.bas"
+#line 73 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,73,"strings.bas");}while(r);
+#line 75 "utilities/strings.bas"
+S_37256:;
+#line 75 "utilities/strings.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("TRUE",4))))||is_error_pending()){
+#line 75 "utilities/strings.bas"
+if(qbevent){evnt(28652,75,"strings.bas");if(r)goto S_37256;}
+#line 76 "utilities/strings.bas"
+do{
+#line 76 "utilities/strings.bas"
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -1 ;
+#line 76 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,76,"strings.bas");}while(r);
+#line 77 "utilities/strings.bas"
+S_37258:;
+#line 77 "utilities/strings.bas"
+}else{
+#line 77 "utilities/strings.bas"
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TFSTRINGTOBOOL_STRING_S2,qbs_new_txt_len("FALSE",5)))){
+#line 77 "utilities/strings.bas"
+if(qbevent){evnt(28652,77,"strings.bas");if(r)goto S_37258;}
+#line 78 "utilities/strings.bas"
+do{
+#line 78 "utilities/strings.bas"
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= 0 ;
+#line 78 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,78,"strings.bas");}while(r);
+#line 79 "utilities/strings.bas"
+}else{
+#line 80 "utilities/strings.bas"
+do{
+#line 80 "utilities/strings.bas"
+*_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL= -2 ;
+#line 80 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,80,"strings.bas");}while(r);
+#line 81 "utilities/strings.bas"
+}
+#line 81 "utilities/strings.bas"
+}
+#line 82 "utilities/strings.bas"
 exit_subfunc:;
-#line 86 "utilities/strings.bas"
+#line 82 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 86 "utilities/strings.bas"
+#line 82 "utilities/strings.bas"
 #include "free120.txt"
-#line 86 "utilities/strings.bas"
+#line 82 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 86 "utilities/strings.bas"
+#line 82 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 86 "utilities/strings.bas"
+#line 82 "utilities/strings.bas"
+return *_FUNC_TFSTRINGTOBOOL_INTEGER_TFSTRINGTOBOOL;
+#line 82 "utilities/strings.bas"
 }

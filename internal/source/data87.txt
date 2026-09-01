@@ -1,120 +1,218 @@
-#line 27322 "qb64pe.bas"
-qbs*oldstr3284=NULL;
-#line 27322 "qb64pe.bas"
-if(_SUB_XFILEWRITE_STRING_CA->tmp||_SUB_XFILEWRITE_STRING_CA->fixed||_SUB_XFILEWRITE_STRING_CA->readonly){
-#line 27322 "qb64pe.bas"
-oldstr3284=_SUB_XFILEWRITE_STRING_CA;
-#line 27322 "qb64pe.bas"
-if (oldstr3284->cmem_descriptor){
-#line 27322 "qb64pe.bas"
-_SUB_XFILEWRITE_STRING_CA=qbs_new_cmem(oldstr3284->len,0);
-#line 27322 "qb64pe.bas"
+#line 27126 "qb64pe.bas"
+qbs*oldstr3277=NULL;
+#line 27126 "qb64pe.bas"
+if(_SUB_XFILEPRINT_STRING_A->tmp||_SUB_XFILEPRINT_STRING_A->fixed||_SUB_XFILEPRINT_STRING_A->readonly){
+#line 27126 "qb64pe.bas"
+oldstr3277=_SUB_XFILEPRINT_STRING_A;
+#line 27126 "qb64pe.bas"
+if (oldstr3277->cmem_descriptor){
+#line 27126 "qb64pe.bas"
+_SUB_XFILEPRINT_STRING_A=qbs_new_cmem(oldstr3277->len,0);
+#line 27126 "qb64pe.bas"
 }else{
-#line 27322 "qb64pe.bas"
-_SUB_XFILEWRITE_STRING_CA=qbs_new(oldstr3284->len,0);
-#line 27322 "qb64pe.bas"
+#line 27126 "qb64pe.bas"
+_SUB_XFILEPRINT_STRING_A=qbs_new(oldstr3277->len,0);
+#line 27126 "qb64pe.bas"
 }
-#line 27322 "qb64pe.bas"
-memcpy(_SUB_XFILEWRITE_STRING_CA->chr,oldstr3284->chr,oldstr3284->len);
-#line 27322 "qb64pe.bas"
+#line 27126 "qb64pe.bas"
+memcpy(_SUB_XFILEPRINT_STRING_A->chr,oldstr3277->chr,oldstr3277->len);
+#line 27126 "qb64pe.bas"
 }
-qbs *_SUB_XFILEWRITE_STRING_L=NULL;
-#line 27323 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_L)_SUB_XFILEWRITE_STRING_L=qbs_new(0,0);
-qbs *_SUB_XFILEWRITE_STRING_U=NULL;
+#line 27126 "qb64pe.bas"
+qbs*oldstr3278=NULL;
+#line 27126 "qb64pe.bas"
+if(_SUB_XFILEPRINT_STRING_CA->tmp||_SUB_XFILEPRINT_STRING_CA->fixed||_SUB_XFILEPRINT_STRING_CA->readonly){
+#line 27126 "qb64pe.bas"
+oldstr3278=_SUB_XFILEPRINT_STRING_CA;
+#line 27126 "qb64pe.bas"
+if (oldstr3278->cmem_descriptor){
+#line 27126 "qb64pe.bas"
+_SUB_XFILEPRINT_STRING_CA=qbs_new_cmem(oldstr3278->len,0);
+#line 27126 "qb64pe.bas"
+}else{
+#line 27126 "qb64pe.bas"
+_SUB_XFILEPRINT_STRING_CA=qbs_new(oldstr3278->len,0);
+#line 27126 "qb64pe.bas"
+}
+#line 27126 "qb64pe.bas"
+memcpy(_SUB_XFILEPRINT_STRING_CA->chr,oldstr3278->chr,oldstr3278->len);
+#line 27126 "qb64pe.bas"
+}
+qbs *_SUB_XFILEPRINT_STRING_U=NULL;
+#line 27127 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_U)_SUB_XFILEPRINT_STRING_U=qbs_new(0,0);
+qbs *_SUB_XFILEPRINT_STRING_A3=NULL;
+#line 27130 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_A3)_SUB_XFILEPRINT_STRING_A3=qbs_new(0,0);
+int32 *_SUB_XFILEPRINT_LONG_B=NULL;
+#line 27131 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_B==NULL){
+#line 27131 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_B=(int32*)mem_static_malloc(4);
+#line 27131 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_B=0;
+#line 27131 "qb64pe.bas"
+}
+int32 *_SUB_XFILEPRINT_LONG_I=NULL;
+#line 27132 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_I==NULL){
+#line 27132 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_I=(int32*)mem_static_malloc(4);
+#line 27132 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_I=0;
+#line 27132 "qb64pe.bas"
+}
+#line 27132 "qb64pe.bas"
+int64 fornext_value3280;
+#line 27132 "qb64pe.bas"
+int64 fornext_finalvalue3280;
+#line 27132 "qb64pe.bas"
+int64 fornext_step3280;
+#line 27132 "qb64pe.bas"
+uint8 fornext_step_negative3280;
+qbs *_SUB_XFILEPRINT_STRING_A2=NULL;
+#line 27133 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_A2)_SUB_XFILEPRINT_STRING_A2=qbs_new(0,0);
+qbs *_SUB_XFILEPRINT_STRING_E=NULL;
+#line 27144 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_E)_SUB_XFILEPRINT_STRING_E=qbs_new(0,0);
+qbs *_SUB_XFILEPRINT_STRING_L=NULL;
+#line 27146 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_L)_SUB_XFILEPRINT_STRING_L=qbs_new(0,0);
+#line 27147 "qb64pe.bas"
+int32 pass3281;
+qbs *_SUB_XFILEPRINT_STRING_PUFORMAT=NULL;
+#line 27159 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_PUFORMAT)_SUB_XFILEPRINT_STRING_PUFORMAT=qbs_new(0,0);
+#line 27160 "qb64pe.bas"
+int64 fornext_value3283;
+#line 27160 "qb64pe.bas"
+int64 fornext_finalvalue3283;
+#line 27160 "qb64pe.bas"
+int64 fornext_step3283;
+#line 27160 "qb64pe.bas"
+uint8 fornext_step_negative3283;
+int32 *_SUB_XFILEPRINT_LONG_TYP=NULL;
+#line 27170 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_TYP==NULL){
+#line 27170 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_TYP=(int32*)mem_static_malloc(4);
+#line 27170 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_TYP=0;
+#line 27170 "qb64pe.bas"
+}
+#line 27172 "qb64pe.bas"
+int32 pass3284;
+#line 27179 "qb64pe.bas"
+byte_element_struct *byte_element_3285=NULL;
+#line 27179 "qb64pe.bas"
+if (!byte_element_3285){
+#line 27179 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_3285=(byte_element_struct*)(mem_static_pointer-12); else byte_element_3285=(byte_element_struct*)mem_static_malloc(12);
+#line 27179 "qb64pe.bas"
+}
+qbs *_SUB_XFILEPRINT_STRING_PUF=NULL;
+#line 27188 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_PUF)_SUB_XFILEPRINT_STRING_PUF=qbs_new(0,0);
+int32 *_SUB_XFILEPRINT_LONG_LAST=NULL;
+#line 27199 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_LAST==NULL){
+#line 27199 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_LAST=(int32*)mem_static_malloc(4);
+#line 27199 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_LAST=0;
+#line 27199 "qb64pe.bas"
+}
+#line 27200 "qb64pe.bas"
+int64 fornext_value3287;
+#line 27200 "qb64pe.bas"
+int64 fornext_finalvalue3287;
+#line 27200 "qb64pe.bas"
+int64 fornext_step3287;
+#line 27200 "qb64pe.bas"
+uint8 fornext_step_negative3287;
+#line 27212 "qb64pe.bas"
+int32 pass3288;
+#line 27255 "qb64pe.bas"
+byte_element_struct *byte_element_3289=NULL;
+#line 27255 "qb64pe.bas"
+if (!byte_element_3289){
+#line 27255 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_3289=(byte_element_struct*)(mem_static_pointer-12); else byte_element_3289=(byte_element_struct*)mem_static_malloc(12);
+#line 27255 "qb64pe.bas"
+}
+int32 *_SUB_XFILEPRINT_LONG_NL=NULL;
+#line 27264 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_NL==NULL){
+#line 27264 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_NL=(int32*)mem_static_malloc(4);
+#line 27264 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_NL=0;
+#line 27264 "qb64pe.bas"
+}
+#line 27285 "qb64pe.bas"
+int64 fornext_value3291;
+#line 27285 "qb64pe.bas"
+int64 fornext_finalvalue3291;
+#line 27285 "qb64pe.bas"
+int64 fornext_step3291;
+#line 27285 "qb64pe.bas"
+uint8 fornext_step_negative3291;
+int32 *_SUB_XFILEPRINT_LONG_GOTOFPU=NULL;
+#line 27294 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_GOTOFPU==NULL){
+#line 27294 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_GOTOFPU=(int32*)mem_static_malloc(4);
+#line 27294 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_GOTOFPU=0;
+#line 27294 "qb64pe.bas"
+}
+int32 *_SUB_XFILEPRINT_LONG_USETAB=NULL;
+#line 27297 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_USETAB==NULL){
+#line 27297 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_USETAB=(int32*)mem_static_malloc(4);
+#line 27297 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_USETAB=0;
+#line 27297 "qb64pe.bas"
+}
+int32 *_SUB_XFILEPRINT_LONG_NEWLINE=NULL;
+#line 27298 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_NEWLINE==NULL){
+#line 27298 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_NEWLINE=(int32*)mem_static_malloc(4);
+#line 27298 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_NEWLINE=0;
+#line 27298 "qb64pe.bas"
+}
+int32 *_SUB_XFILEPRINT_LONG_EXTRASPACE=NULL;
+#line 27299 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_EXTRASPACE==NULL){
+#line 27299 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_EXTRASPACE=(int32*)mem_static_malloc(4);
+#line 27299 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_EXTRASPACE=0;
+#line 27299 "qb64pe.bas"
+}
+#line 27301 "qb64pe.bas"
+byte_element_struct *byte_element_3292=NULL;
+#line 27301 "qb64pe.bas"
+if (!byte_element_3292){
+#line 27301 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_3292=(byte_element_struct*)(mem_static_pointer-12); else byte_element_3292=(byte_element_struct*)mem_static_malloc(12);
+#line 27301 "qb64pe.bas"
+}
+qbs *_SUB_XFILEPRINT_STRING_EBAK=NULL;
+#line 27302 "qb64pe.bas"
+if (!_SUB_XFILEPRINT_STRING_EBAK)_SUB_XFILEPRINT_STRING_EBAK=qbs_new(0,0);
+int32 *_SUB_XFILEPRINT_LONG_PNRTNUM=NULL;
+#line 27303 "qb64pe.bas"
+if(_SUB_XFILEPRINT_LONG_PNRTNUM==NULL){
+#line 27303 "qb64pe.bas"
+_SUB_XFILEPRINT_LONG_PNRTNUM=(int32*)mem_static_malloc(4);
+#line 27303 "qb64pe.bas"
+*_SUB_XFILEPRINT_LONG_PNRTNUM=0;
+#line 27303 "qb64pe.bas"
+}
 #line 27324 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_U)_SUB_XFILEWRITE_STRING_U=qbs_new(0,0);
-qbs *_SUB_XFILEWRITE_STRING_A3=NULL;
-#line 27327 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_A3)_SUB_XFILEWRITE_STRING_A3=qbs_new(0,0);
-int32 *_SUB_XFILEWRITE_LONG_B=NULL;
-#line 27328 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_B==NULL){
-#line 27328 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_B=(int32*)mem_static_malloc(4);
-#line 27328 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_B=0;
-#line 27328 "qb64pe.bas"
-}
-int32 *_SUB_XFILEWRITE_LONG_I=NULL;
-#line 27329 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_I==NULL){
-#line 27329 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_I=(int32*)mem_static_malloc(4);
-#line 27329 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_I=0;
-#line 27329 "qb64pe.bas"
-}
-#line 27329 "qb64pe.bas"
-int64 fornext_value3286;
-#line 27329 "qb64pe.bas"
-int64 fornext_finalvalue3286;
-#line 27329 "qb64pe.bas"
-int64 fornext_step3286;
-#line 27329 "qb64pe.bas"
-uint8 fornext_step_negative3286;
-qbs *_SUB_XFILEWRITE_STRING_A2=NULL;
-#line 27330 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_A2)_SUB_XFILEWRITE_STRING_A2=qbs_new(0,0);
-qbs *_SUB_XFILEWRITE_STRING_E=NULL;
-#line 27341 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_E)_SUB_XFILEWRITE_STRING_E=qbs_new(0,0);
-#line 27344 "qb64pe.bas"
-int32 pass3287;
-int32 *_SUB_XFILEWRITE_LONG_LAST=NULL;
-#line 27355 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_LAST==NULL){
-#line 27355 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_LAST=(int32*)mem_static_malloc(4);
-#line 27355 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_LAST=0;
-#line 27355 "qb64pe.bas"
-}
-#line 27356 "qb64pe.bas"
-int64 fornext_value3289;
-#line 27356 "qb64pe.bas"
-int64 fornext_finalvalue3289;
-#line 27356 "qb64pe.bas"
-int64 fornext_step3289;
-#line 27356 "qb64pe.bas"
-uint8 fornext_step_negative3289;
-int32 *_SUB_XFILEWRITE_LONG_NEWLINE=NULL;
-#line 27363 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_NEWLINE==NULL){
-#line 27363 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_NEWLINE=(int32*)mem_static_malloc(4);
-#line 27363 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_NEWLINE=0;
-#line 27363 "qb64pe.bas"
-}
-qbs *_SUB_XFILEWRITE_STRING_EBAK=NULL;
-#line 27364 "qb64pe.bas"
-if (!_SUB_XFILEWRITE_STRING_EBAK)_SUB_XFILEWRITE_STRING_EBAK=qbs_new(0,0);
-int32 *_SUB_XFILEWRITE_LONG_REEVALED=NULL;
-#line 27365 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_REEVALED==NULL){
-#line 27365 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_REEVALED=(int32*)mem_static_malloc(4);
-#line 27365 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_REEVALED=0;
-#line 27365 "qb64pe.bas"
-}
-int32 *_SUB_XFILEWRITE_LONG_TYP=NULL;
-#line 27373 "qb64pe.bas"
-if(_SUB_XFILEWRITE_LONG_TYP==NULL){
-#line 27373 "qb64pe.bas"
-_SUB_XFILEWRITE_LONG_TYP=(int32*)mem_static_malloc(4);
-#line 27373 "qb64pe.bas"
-*_SUB_XFILEWRITE_LONG_TYP=0;
-#line 27373 "qb64pe.bas"
-}
-#line 27388 "qb64pe.bas"
-int32 pass3290;
-#line 27407 "qb64pe.bas"
-byte_element_struct *byte_element_3291=NULL;
-#line 27407 "qb64pe.bas"
-if (!byte_element_3291){
-#line 27407 "qb64pe.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_3291=(byte_element_struct*)(mem_static_pointer-12); else byte_element_3291=(byte_element_struct*)mem_static_malloc(12);
-#line 27407 "qb64pe.bas"
-}
+int32 pass3293;

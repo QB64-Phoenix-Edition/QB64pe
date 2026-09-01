@@ -1,100 +1,58 @@
-#line 96 "utilities/strings.bas"
-int16 FUNC_READWRITEBOOLEANSETTINGVALUE(qbs*_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,int16*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT){
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
+int32 FUNC_READCONFIGSETTING(qbs*_FUNC_READCONFIGSETTING_STRING_SECTION,qbs*_FUNC_READCONFIGSETTING_STRING_ITEM,qbs*_FUNC_READCONFIGSETTING_STRING_VALUE){
+#line 88 "utilities/strings.bas"
 qbs *tqbs;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 #include "data122.txt"
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 new_mem_lock();
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 libqb_check_stack();
-#line 96 "utilities/strings.bas"
+#line 88 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 97 "utilities/strings.bas"
+#line 89 "utilities/strings.bas"
 do{
-#line 97 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,97,"strings.bas");}while(r);
-#line 98 "utilities/strings.bas"
-do{
-#line 98 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,98,"strings.bas");}while(r);
-#line 99 "utilities/strings.bas"
-do{
-#line 99 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,99,"strings.bas");}while(r);
-#line 101 "utilities/strings.bas"
-do{
-#line 101 "utilities/strings.bas"
-*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_VALUE);
-#line 101 "utilities/strings.bas"
+#line 89 "utilities/strings.bas"
+qbs_set(_FUNC_READCONFIGSETTING_STRING_VALUE,FUNC_READSETTING(__STRING_CONFIGFILE,_FUNC_READCONFIGSETTING_STRING_SECTION,_FUNC_READCONFIGSETTING_STRING_ITEM));
+#line 89 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 101 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,101,"strings.bas");}while(r);
-#line 103 "utilities/strings.bas"
+#line 89 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,89,"strings.bas");}while(r);
+#line 90 "utilities/strings.bas"
 do{
-#line 103 "utilities/strings.bas"
-*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT=FUNC_TFSTRINGTOBOOL(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_VALUE);
-#line 103 "utilities/strings.bas"
+#line 90 "utilities/strings.bas"
+*_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING=(-(_FUNC_READCONFIGSETTING_STRING_VALUE->len> 0 ));
+#line 90 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 103 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,103,"strings.bas");}while(r);
-#line 105 "utilities/strings.bas"
-S_37240:;
-#line 105 "utilities/strings.bas"
-if ((-(*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT== -2 ))||is_error_pending()){
-#line 105 "utilities/strings.bas"
-if(qbevent){evnt(28620,105,"strings.bas");if(r)goto S_37240;}
-#line 106 "utilities/strings.bas"
-do{
-#line 106 "utilities/strings.bas"
-SUB_WRITECONFIGSETTING(_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SECTION,_FUNC_READWRITEBOOLEANSETTINGVALUE_STRING_SETTING,FUNC_BOOLTOTFSTRING(&(pass3524=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT)));
-#line 106 "utilities/strings.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 106 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,106,"strings.bas");}while(r);
-#line 107 "utilities/strings.bas"
-do{
-#line 107 "utilities/strings.bas"
-*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_DEFAULT;
-#line 107 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,107,"strings.bas");}while(r);
-#line 108 "utilities/strings.bas"
-}else{
-#line 109 "utilities/strings.bas"
-do{
-#line 109 "utilities/strings.bas"
-*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE=*_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_CHECKRESULT;
-#line 109 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,109,"strings.bas");}while(r);
-#line 110 "utilities/strings.bas"
-}
-#line 111 "utilities/strings.bas"
+#line 90 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,90,"strings.bas");}while(r);
+#line 91 "utilities/strings.bas"
 exit_subfunc:;
-#line 111 "utilities/strings.bas"
+#line 91 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 111 "utilities/strings.bas"
+#line 91 "utilities/strings.bas"
 #include "free122.txt"
-#line 111 "utilities/strings.bas"
+#line 91 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 111 "utilities/strings.bas"
+#line 91 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 111 "utilities/strings.bas"
-return *_FUNC_READWRITEBOOLEANSETTINGVALUE_INTEGER_READWRITEBOOLEANSETTINGVALUE;
-#line 111 "utilities/strings.bas"
+#line 91 "utilities/strings.bas"
+return *_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING;
+#line 91 "utilities/strings.bas"
 }
