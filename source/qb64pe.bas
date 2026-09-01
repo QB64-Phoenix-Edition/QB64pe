@@ -23634,7 +23634,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 IF b1 THEN
                     IF isoperator(a2$) THEN
-                        IF a2$ <> "^" AND a2$ <> CHR$(241) THEN
+                        IF a2$ <> "^" AND a2$ <> CHR$(241) AND UCASE$(a2$) <> "NOT" THEN  'solve issue #23
                             insertelements a$, i - 1, "}"
                             insertelements a$, b1, "{"
                             n = n + 2
