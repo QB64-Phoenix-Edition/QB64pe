@@ -139,7 +139,7 @@ ELSE
     PRINT "OR: Test failed."
 END IF
 
-'SYSTEM
+SYSTEM
 
 FUNCTION GetValue& (x AS LONG)
     PRINT "Function called for value:"; x
