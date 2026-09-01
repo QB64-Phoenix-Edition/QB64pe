@@ -18,3 +18,11 @@ IF INSTR(_OS$, "WIN") THEN NATIVE_LINEENDING = _STR_CRLF ELSE NATIVE_LINEENDING 
 DIM SHARED OS_BITS AS LONG: OS_BITS = 64
 IF INSTR(_OS$, "[32BIT]") THEN OS_BITS = 32
 
+' TARGET_BITS is the pointer width of the program being compiled. This is used
+' for various layout decisions and thus impacts the generated C++.
+'
+' Typically this is equal to OS_BITS, the bitness of qb64pe.exe itself. It is
+' however possible to change this if the C++ compiler supports cross-compiling
+' for another bitness.
+DIM SHARED TARGET_BITS AS LONG: TARGET_BITS = OS_BITS
+

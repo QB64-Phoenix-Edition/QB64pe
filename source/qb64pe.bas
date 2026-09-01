@@ -398,6 +398,7 @@ DIM SHARED compilelog$
 ReadInitialConfig
 
 CMDLineSrcFile$ = ParseCMDLineArgs$
+
 IF LEN(CMDLineSrcFile$) > 0 _ANDALSO _FILEEXISTS(_STARTDIR$ + CMDLineSrcFile$) THEN
     CMDLineSrcFile$ = _STARTDIR$ + CMDLineSrcFile$
 END IF
@@ -1148,6 +1149,28 @@ IF idemode = 0 AND NOT QuietMode THEN
     PRINT "Beginning C++ output from QB64 code... "
 END IF
 
+IF TARGET_BITS <> OS_BITS THEN RecalcTargetBitsTypes
+
+' The compiled libqb object files are not normally cleaned between builds, but
+' since they're tied to a specific bitness then if the bitness has changed we
+' have to clean them to avoid linking files of the wrong bitness.
+'
+' Note: This is not safe if running multiple builds. You can only run builds in
+'       parallel if they are for the same bitness.
+bitsmarkerfile$ = "internal/c/.qb64_target_bits"
+lastbuiltbits$ = ""
+IF _FILEEXISTS(bitsmarkerfile$) THEN
+    lastbuiltbits$ = _READFILE$(bitsmarkerfile$)
+    _LogInfo "Last built bits: " + lastbuiltbits$ + ", val: " + _ToStr$(val(lastbuiltbits$))
+END IF
+' No marker will typically mean it was built with the OS_BITs, since it likely
+' is from before cross-compilation was introduced.
+IF LEN(lastbuiltbits$) = 0 THEN lastbuiltbits$ = _TOSTR$(OS_BITS)
+IF VAL(lastbuiltbits$) <> TARGET_BITS THEN
+    PurgeTemporaryBuildFiles (os$), (MacOSX)
+    _WRITEFILE bitsmarkerfile$, _ToStr$(TARGET_BITS)
+END IF
+
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 
 Error_Happened = 0
@@ -1548,7 +1571,7 @@ maxLineNumber = 0
 uniquenumbern = 0
 
 'import _MEM type
-ptrsz = OS_BITS \ 8
+ptrsz = TARGET_BITS \ 8
 
 lasttype = lasttype + 1: i = lasttype
 udtxname(i) = "_MEM"
@@ -13637,6 +13660,8 @@ makeline$ = makeline$ + " " + AddQuotes$("CFLAGS_EXTRA=" + CxxFlagsExtra$)
 makeline$ = makeline$ + " " + AddQuotes$("CXXLIBS_EXTRA=" + CxxLibsExtra$)
 makeline$ = makeline$ + " -j" + AddQuotes$(_TOSTR$(MaxParallelProcesses))
 
+makeline$ = makeline$ + " " + AddQuotes$("BITS=" + _TOSTR$(TARGET_BITS))
+
 IF NOT StripDebugSymbols THEN
     makeline$ = makeline$ + " STRIP_SYMBOLS=n"
 END IF
@@ -13714,7 +13739,7 @@ IF os$ = "WIN" THEN
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         ' clang's nm outputs LF line endings
-                        IF OS_BITS = 32 THEN
+                        IF TARGET_BITS = 32 THEN
                             ' On 32-bit Windows function names are decorated by a leading underscore
                             ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
                             x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
@@ -13775,7 +13800,7 @@ IF os$ = "WIN" THEN
                     IF LEN(a$) THEN
                         'search for SPACE+functionname
                         ' clang's nm outputs LF line endings
-                        IF OS_BITS = 32 THEN
+                        IF TARGET_BITS = 32 THEN
                             ' On 32-bit Windows function names are decorated by a leading underscore
                             ' gcc's nm hides the leading underscore in the output, whereas clang's nm does not
                             x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$) _ORELSE (RIGHT$(a$, LEN(s$) + 2) = " _" + s$)
@@ -14406,6 +14431,9 @@ FUNCTION ParseCMDLineArgs$ ()
                     CASE ":maxcompilerprocesses"
                         IF NOT ParseLongSetting&(token$, MaxParallelProcesses) THEN CMDLineSettingsError token$, 2, 1
                         IF MaxParallelProcesses < 1 OR MaxParallelProcesses > 128 THEN CMDLineSettingsError "MaxCompilerProcesses must be in range 1-128.", 0, 1
+                    CASE ":targetbits"
+                        IF NOT ParseLongSetting&(token$, TARGET_BITS) THEN CMDLineSettingsError token$, 2, 1
+                        IF TARGET_BITS <> 32 AND TARGET_BITS <> 64 THEN CMDLineSettingsError "TargetBits must be 32 or 64.", 0, 1
                     CASE ":generatelicensefile"
                         IF NOT ParseBooleanSetting&(token$, GenerateLicenseFile) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":usesystemcompiler"
@@ -14530,6 +14558,10 @@ SUB CMDLineTemporarySettingsHelp
     PRINT "  -f:ExtraCppFlags=[string]             Extra flags for the C++ Compiler"
     PRINT "  -f:ExtraLinkerFlags=[string]          Extra flags for the Linker"
     PRINT "  -f:MaxCompilerProcesses=[integer]     Max C++ Compiler processes to use"
+    PRINT "  -f:TargetBits=[32|64]                 Compile targeting a different pointer"
+    PRINT "                                        width than this compiler binary itself"
+    PRINT "                                        (requires a multilib-capable C++"
+    PRINT "                                        toolchain)"
     PRINT "  -f:GenerateLicenseFile=[true|false]   Produce a license.txt file for program"
     PRINT "  -f:UseSystemCompiler=[true|false]     Use the system C++ compiler instead of"
     PRINT "                                        the bundled one (Windows only)"
@@ -18372,7 +18404,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
                     E = arrayelementslist(idn + 1): IF E THEN elements$ = elements$ + _TOSTR$(E) 'eg. "?3" for a 3 dimensional array
                 END IF
-                nume = allocarray(n$, elements$, OS_BITS \ 8, 0)
+                nume = allocarray(n$, elements$, TARGET_BITS \ 8, 0)
                 IF Error_Happened THEN EXIT FUNCTION
                 l$ = l$ + sp + tlayout$
                 IF arraydesc THEN GOTO dim2exitfunc
@@ -18403,11 +18435,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
-                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(OS_BITS \ 8) + ";"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(TARGET_BITS \ 8) + ";"
                 IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
                 IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
             ELSE
-                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(" + _TOSTR$(OS_BITS \ 8) + ");"
+                IF f = 1 THEN WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)mem_static_malloc(" + _TOSTR$(TARGET_BITS \ 8) + ");"
             END IF
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "}"
