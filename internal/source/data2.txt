@@ -1,20 +1,256 @@
-#line 14483 "qb64pe.bas"
-qbs*oldstr1925=NULL;
-#line 14483 "qb64pe.bas"
-if(_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR->tmp||_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR->fixed||_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR->readonly){
-#line 14483 "qb64pe.bas"
-oldstr1925=_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR;
-#line 14483 "qb64pe.bas"
-if (oldstr1925->cmem_descriptor){
-#line 14483 "qb64pe.bas"
-_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR=qbs_new_cmem(oldstr1925->len,0);
-#line 14483 "qb64pe.bas"
-}else{
-#line 14483 "qb64pe.bas"
-_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR=qbs_new(oldstr1925->len,0);
-#line 14483 "qb64pe.bas"
+qbs *_FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS=NULL;
+#line 14252 "qb64pe.bas"
+if (!_FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS)_FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS=qbs_new(0,0);
+int32 *_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP=NULL;
+#line 14256 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP==NULL){
+#line 14256 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP=(int32*)mem_static_malloc(4);
+#line 14256 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP=0;
+#line 14256 "qb64pe.bas"
 }
-#line 14483 "qb64pe.bas"
-memcpy(_SUB_CMDLINESETTINGSERROR_STRING_ERRSTR->chr,oldstr1925->chr,oldstr1925->len);
-#line 14483 "qb64pe.bas"
+int32 *_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW=NULL;
+#line 14256 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW==NULL){
+#line 14256 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW=(int32*)mem_static_malloc(4);
+#line 14256 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW=0;
+#line 14256 "qb64pe.bas"
+}
+int32 *_FUNC_PARSECMDLINEARGS_LONG_I=NULL;
+#line 14257 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_I==NULL){
+#line 14257 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_I=(int32*)mem_static_malloc(4);
+#line 14257 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_I=0;
+#line 14257 "qb64pe.bas"
+}
+#line 14257 "qb64pe.bas"
+int64 fornext_value1806;
+#line 14257 "qb64pe.bas"
+int64 fornext_finalvalue1806;
+#line 14257 "qb64pe.bas"
+int64 fornext_step1806;
+#line 14257 "qb64pe.bas"
+uint8 fornext_step_negative1806;
+qbs *_FUNC_PARSECMDLINEARGS_STRING_TOKEN=NULL;
+#line 14258 "qb64pe.bas"
+if (!_FUNC_PARSECMDLINEARGS_STRING_TOKEN)_FUNC_PARSECMDLINEARGS_STRING_TOKEN=qbs_new(0,0);
+#line 14260 "qb64pe.bas"
+static qbs *sc_1807=qbs_new(0,0);
+int32 *_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH=NULL;
+#line 14321 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH==NULL){
+#line 14321 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH=(int32*)mem_static_malloc(4);
+#line 14321 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH=0;
+#line 14321 "qb64pe.bas"
+}
+#line 14350 "qb64pe.bas"
+int32 pass1856;
+int32 *_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE=NULL;
+#line 14358 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE==NULL){
+#line 14358 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE=(int32*)mem_static_malloc(4);
+#line 14358 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE=0;
+#line 14358 "qb64pe.bas"
+}
+qbs *_FUNC_PARSECMDLINEARGS_STRING_SETTING=NULL;
+#line 14359 "qb64pe.bas"
+if (!_FUNC_PARSECMDLINEARGS_STRING_SETTING)_FUNC_PARSECMDLINEARGS_STRING_SETTING=qbs_new(0,0);
+int32 *_FUNC_PARSECMDLINEARGS_LONG_DELIM=NULL;
+#line 14363 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_DELIM==NULL){
+#line 14363 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_DELIM=(int32*)mem_static_malloc(4);
+#line 14363 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_DELIM=0;
+#line 14363 "qb64pe.bas"
+}
+int32 *_FUNC_PARSECMDLINEARGS_LONG_EOS=NULL;
+#line 14363 "qb64pe.bas"
+if(_FUNC_PARSECMDLINEARGS_LONG_EOS==NULL){
+#line 14363 "qb64pe.bas"
+_FUNC_PARSECMDLINEARGS_LONG_EOS=(int32*)mem_static_malloc(4);
+#line 14363 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_EOS=0;
+#line 14363 "qb64pe.bas"
+}
+#line 14364 "qb64pe.bas"
+byte_element_struct *byte_element_1859=NULL;
+#line 14364 "qb64pe.bas"
+if (!byte_element_1859){
+#line 14364 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1859=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1859=(byte_element_struct*)mem_static_malloc(12);
+#line 14364 "qb64pe.bas"
+}
+#line 14365 "qb64pe.bas"
+static qbs *sc_1860=qbs_new(0,0);
+#line 14369 "qb64pe.bas"
+byte_element_struct *byte_element_1864=NULL;
+#line 14369 "qb64pe.bas"
+if (!byte_element_1864){
+#line 14369 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1864=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1864=(byte_element_struct*)mem_static_malloc(12);
+#line 14369 "qb64pe.bas"
+}
+#line 14372 "qb64pe.bas"
+int16 pass1865;
+#line 14372 "qb64pe.bas"
+int16 pass1866;
+#line 14375 "qb64pe.bas"
+int16 pass1867;
+#line 14375 "qb64pe.bas"
+int16 pass1868;
+#line 14377 "qb64pe.bas"
+int32 pass1869;
+#line 14382 "qb64pe.bas"
+int16 pass1871;
+#line 14382 "qb64pe.bas"
+int16 pass1872;
+qbs *_FUNC_PARSECMDLINEARGS_STRING_DEXF=NULL;
+#line 14388 "qb64pe.bas"
+if (!_FUNC_PARSECMDLINEARGS_STRING_DEXF)_FUNC_PARSECMDLINEARGS_STRING_DEXF=qbs_new(0,0);
+#line 14388 "qb64pe.bas"
+int16 pass1874;
+#line 14388 "qb64pe.bas"
+int16 pass1875;
+#line 14389 "qb64pe.bas"
+byte_element_struct *byte_element_1876=NULL;
+#line 14389 "qb64pe.bas"
+if (!byte_element_1876){
+#line 14389 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1876=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1876=(byte_element_struct*)mem_static_malloc(12);
+#line 14389 "qb64pe.bas"
+}
+#line 14398 "qb64pe.bas"
+int16 pass1877;
+#line 14398 "qb64pe.bas"
+int16 pass1878;
+#line 14400 "qb64pe.bas"
+byte_element_struct *byte_element_1880=NULL;
+#line 14400 "qb64pe.bas"
+if (!byte_element_1880){
+#line 14400 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1880=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1880=(byte_element_struct*)mem_static_malloc(12);
+#line 14400 "qb64pe.bas"
+}
+#line 14402 "qb64pe.bas"
+int16 pass1881;
+#line 14402 "qb64pe.bas"
+int16 pass1882;
+#line 14412 "qb64pe.bas"
+byte_element_struct *byte_element_1883=NULL;
+#line 14412 "qb64pe.bas"
+if (!byte_element_1883){
+#line 14412 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1883=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1883=(byte_element_struct*)mem_static_malloc(12);
+#line 14412 "qb64pe.bas"
+}
+#line 14413 "qb64pe.bas"
+static qbs *sc_1884=qbs_new(0,0);
+#line 14420 "qb64pe.bas"
+int16 pass1887;
+#line 14420 "qb64pe.bas"
+int16 pass1888;
+#line 14422 "qb64pe.bas"
+int16 pass1889;
+#line 14422 "qb64pe.bas"
+int16 pass1890;
+#line 14424 "qb64pe.bas"
+int16 pass1891;
+#line 14424 "qb64pe.bas"
+int16 pass1892;
+#line 14426 "qb64pe.bas"
+int16 pass1893;
+#line 14426 "qb64pe.bas"
+int16 pass1894;
+#line 14428 "qb64pe.bas"
+int16 pass1895;
+#line 14428 "qb64pe.bas"
+int16 pass1896;
+#line 14430 "qb64pe.bas"
+int16 pass1897;
+#line 14430 "qb64pe.bas"
+int16 pass1898;
+#line 14432 "qb64pe.bas"
+int16 pass1899;
+#line 14432 "qb64pe.bas"
+int16 pass1900;
+#line 14433 "qb64pe.bas"
+int16 pass1901;
+#line 14433 "qb64pe.bas"
+int16 pass1902;
+#line 14435 "qb64pe.bas"
+int16 pass1903;
+#line 14435 "qb64pe.bas"
+int16 pass1904;
+#line 14436 "qb64pe.bas"
+int16 pass1905;
+#line 14436 "qb64pe.bas"
+int16 pass1906;
+#line 14438 "qb64pe.bas"
+int16 pass1907;
+#line 14438 "qb64pe.bas"
+int16 pass1908;
+#line 14440 "qb64pe.bas"
+int16 pass1909;
+#line 14440 "qb64pe.bas"
+int16 pass1910;
+#line 14442 "qb64pe.bas"
+int16 pass1911;
+#line 14442 "qb64pe.bas"
+int16 pass1912;
+#line 14445 "qb64pe.bas"
+int16 pass1913;
+#line 14445 "qb64pe.bas"
+int16 pass1914;
+#line 14446 "qb64pe.bas"
+int16 pass1915;
+#line 14446 "qb64pe.bas"
+int16 pass1916;
+#line 14448 "qb64pe.bas"
+int16 pass1917;
+#line 14448 "qb64pe.bas"
+int16 pass1918;
+#line 14450 "qb64pe.bas"
+int16 pass1919;
+#line 14450 "qb64pe.bas"
+int16 pass1920;
+#line 14453 "qb64pe.bas"
+int16 pass1921;
+#line 14453 "qb64pe.bas"
+int16 pass1922;
+#line 14455 "qb64pe.bas"
+int16 pass1923;
+#line 14455 "qb64pe.bas"
+int16 pass1924;
+#line 14457 "qb64pe.bas"
+int16 pass1925;
+#line 14457 "qb64pe.bas"
+int16 pass1926;
+qbs *_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME=NULL;
+#line 14482 "qb64pe.bas"
+if (!_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME)_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME=qbs_new(0,0);
+#line 14498 "qb64pe.bas"
+byte_element_struct *byte_element_1928=NULL;
+#line 14498 "qb64pe.bas"
+if (!byte_element_1928){
+#line 14498 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1928=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1928=(byte_element_struct*)mem_static_malloc(12);
+#line 14498 "qb64pe.bas"
+}
+#line 14504 "qb64pe.bas"
+byte_element_struct *byte_element_1930=NULL;
+#line 14504 "qb64pe.bas"
+if (!byte_element_1930){
+#line 14504 "qb64pe.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_1930=(byte_element_struct*)(mem_static_pointer-12); else byte_element_1930=(byte_element_struct*)mem_static_malloc(12);
+#line 14504 "qb64pe.bas"
 }

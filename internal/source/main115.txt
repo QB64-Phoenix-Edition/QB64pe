@@ -1,58 +1,138 @@
-#line 35 "utilities/strings.bas"
-int8 FUNC_HASSTRINGENCLOSINGPAIR(qbs*_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT,qbs*_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR){
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
+qbs* FUNC_STRREPLACE(qbs*_FUNC_STRREPLACE_STRING_MYSTRING,qbs*_FUNC_STRREPLACE_STRING_FIND,qbs*_FUNC_STRREPLACE_STRING_REPLACEWITH){
+#line 18 "utilities/strings.bas"
 qbs *tqbs;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 #include "data115.txt"
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 new_mem_lock();
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 libqb_check_stack();
-#line 35 "utilities/strings.bas"
+#line 18 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 36 "utilities/strings.bas"
-S_37209:;
-#line 36 "utilities/strings.bas"
-if ((qbs_cleanup(qbs_tmp_base,(-(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT->len> 1 ))&(-(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR->len> 1 ))))||is_error_pending()){
-#line 36 "utilities/strings.bas"
-if(qbevent){evnt(28620,36,"strings.bas");if(r)goto S_37209;}
-#line 37 "utilities/strings.bas"
+#line 19 "utilities/strings.bas"
 do{
-#line 37 "utilities/strings.bas"
-*_FUNC_HASSTRINGENCLOSINGPAIR_BYTE_HASSTRINGENCLOSINGPAIR=(-(qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR, 1 )==qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT, 1 )))&(-(qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR, 2 )==qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT,_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT->len)));
-#line 37 "utilities/strings.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 37 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,37,"strings.bas");}while(r);
-#line 38 "utilities/strings.bas"
+#line 19 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,19,"strings.bas");}while(r);
+#line 20 "utilities/strings.bas"
+do{
+#line 20 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,20,"strings.bas");}while(r);
+#line 21 "utilities/strings.bas"
+S_37227:;
+#line 21 "utilities/strings.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_STRREPLACE_STRING_MYSTRING->len== 0 )))||is_error_pending()){
+#line 21 "utilities/strings.bas"
+if(qbevent){evnt(28652,21,"strings.bas");if(r)goto S_37227;}
+#line 21 "utilities/strings.bas"
+do{
+#line 21 "utilities/strings.bas"
+goto exit_subfunc;
+#line 21 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,21,"strings.bas");}while(r);
+#line 21 "utilities/strings.bas"
 }
-#line 39 "utilities/strings.bas"
+#line 22 "utilities/strings.bas"
+do{
+#line 22 "utilities/strings.bas"
+qbs_set(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_MYSTRING);
+#line 22 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 22 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,22,"strings.bas");}while(r);
+#line 23 "utilities/strings.bas"
+do{
+#line 23 "utilities/strings.bas"
+qbs_set(_FUNC_STRREPLACE_STRING_B,qbs_lcase(_FUNC_STRREPLACE_STRING_FIND));
+#line 23 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 23 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,23,"strings.bas");}while(r);
+#line 24 "utilities/strings.bas"
+do{
+#line 24 "utilities/strings.bas"
+*_FUNC_STRREPLACE_LONG_BASEI= 1 ;
+#line 24 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,24,"strings.bas");}while(r);
+#line 25 "utilities/strings.bas"
+do{
+#line 25 "utilities/strings.bas"
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+#line 25 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 25 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,25,"strings.bas");}while(r);
+#line 26 "utilities/strings.bas"
+S_37234:;
+#line 26 "utilities/strings.bas"
+while((*_FUNC_STRREPLACE_LONG_I)||is_error_pending()){
+#line 26 "utilities/strings.bas"
+if(qbevent){evnt(28652,26,"strings.bas");if(r)goto S_37234;}
+#line 27 "utilities/strings.bas"
+do{
+#line 27 "utilities/strings.bas"
+qbs_set(_FUNC_STRREPLACE_STRING_A,qbs_add(qbs_add(qbs_left(_FUNC_STRREPLACE_STRING_A,*_FUNC_STRREPLACE_LONG_I- 1 ),_FUNC_STRREPLACE_STRING_REPLACEWITH),qbs_right(_FUNC_STRREPLACE_STRING_A,_FUNC_STRREPLACE_STRING_A->len-*_FUNC_STRREPLACE_LONG_I-_FUNC_STRREPLACE_STRING_B->len+ 1 )));
+#line 27 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 27 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,27,"strings.bas");}while(r);
+#line 28 "utilities/strings.bas"
+do{
+#line 28 "utilities/strings.bas"
+*_FUNC_STRREPLACE_LONG_BASEI=*_FUNC_STRREPLACE_LONG_I+_FUNC_STRREPLACE_STRING_REPLACEWITH->len;
+#line 28 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,28,"strings.bas");}while(r);
+#line 29 "utilities/strings.bas"
+do{
+#line 29 "utilities/strings.bas"
+*_FUNC_STRREPLACE_LONG_I=func_instr(*_FUNC_STRREPLACE_LONG_BASEI,qbs_lcase(_FUNC_STRREPLACE_STRING_A),_FUNC_STRREPLACE_STRING_B,0|1);
+#line 29 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 29 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,29,"strings.bas");}while(r);
+#line 30 "utilities/strings.bas"
+dl_continue_3511:;
+#line 30 "utilities/strings.bas"
+}
+#line 30 "utilities/strings.bas"
+dl_exit_3511:;
+#line 31 "utilities/strings.bas"
+do{
+#line 31 "utilities/strings.bas"
+qbs_set(_FUNC_STRREPLACE_STRING_STRREPLACE,_FUNC_STRREPLACE_STRING_A);
+#line 31 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 31 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,31,"strings.bas");}while(r);
+#line 32 "utilities/strings.bas"
 exit_subfunc:;
-#line 39 "utilities/strings.bas"
+#line 32 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 39 "utilities/strings.bas"
+#line 32 "utilities/strings.bas"
 #include "free115.txt"
-#line 39 "utilities/strings.bas"
+#line 32 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 39 "utilities/strings.bas"
+#line 32 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 39 "utilities/strings.bas"
-return *_FUNC_HASSTRINGENCLOSINGPAIR_BYTE_HASSTRINGENCLOSINGPAIR;
-#line 39 "utilities/strings.bas"
+#line 32 "utilities/strings.bas"
+qbs_maketmp(_FUNC_STRREPLACE_STRING_STRREPLACE);return _FUNC_STRREPLACE_STRING_STRREPLACE;
+#line 32 "utilities/strings.bas"
 }

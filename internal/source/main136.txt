@@ -1,68 +1,92 @@
-#line 20 "utilities/build.bas"
-qbs* FUNC_GETMAKEEXECUTABLE(){
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
+void SUB_PURGETEMPORARYBUILDFILES(qbs*_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,int32*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC){
+#line 5 "utilities/build.bas"
 qbs *tqbs;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 ptrszint tmp_long;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 int32 tmp_fileno;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 #include "data136.txt"
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 mem_lock *sf_mem_lock;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 new_mem_lock();
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 sf_mem_lock->type=3;
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 libqb_check_stack();
-#line 20 "utilities/build.bas"
+#line 5 "utilities/build.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 21 "utilities/build.bas"
-S_37419:;
-#line 21 "utilities/build.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
-#line 21 "utilities/build.bas"
-if(qbevent){evnt(28622,21,"build.bas");if(r)goto S_37419;}
-#line 22 "utilities/build.bas"
+#line 6 "utilities/build.bas"
+S_37441:;
+#line 6 "utilities/build.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+#line 6 "utilities/build.bas"
+if(qbevent){evnt(28654,6,"build.bas");if(r)goto S_37441;}
+#line 7 "utilities/build.bas"
 do{
-#line 22 "utilities/build.bas"
-qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_add(FUNC_GETCOMPILERPATH(),qbs_new_txt_len("mingw32-make.exe",16)));
-#line 22 "utilities/build.bas"
+#line 7 "utilities/build.bas"
+sub_shell2(qbs_add(qbs_add(qbs_new_txt_len("cmd /c ",7),FUNC_GETMAKEEXECUTABLE()),qbs_new_txt_len(" OS=win clean",13)),2);
+#line 7 "utilities/build.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 22 "utilities/build.bas"
-if(!qbevent)break;evnt(28622,22,"build.bas");}while(r);
-#line 23 "utilities/build.bas"
+#line 7 "utilities/build.bas"
+if(!qbevent)break;evnt(28654,7,"build.bas");}while(r);
+#line 8 "utilities/build.bas"
+S_37443:;
+#line 8 "utilities/build.bas"
 }else{
-#line 24 "utilities/build.bas"
+#line 8 "utilities/build.bas"
+if (qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PURGETEMPORARYBUILDFILES_STRING_OS,qbs_new_txt_len("LNX",3)))){
+#line 8 "utilities/build.bas"
+if(qbevent){evnt(28654,8,"build.bas");if(r)goto S_37443;}
+#line 9 "utilities/build.bas"
+S_37444:;
+#line 9 "utilities/build.bas"
+if ((*_SUB_PURGETEMPORARYBUILDFILES_LONG_MAC)||is_error_pending()){
+#line 9 "utilities/build.bas"
+if(qbevent){evnt(28654,9,"build.bas");if(r)goto S_37444;}
+#line 10 "utilities/build.bas"
 do{
-#line 24 "utilities/build.bas"
-qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_new_txt_len("make",4));
-#line 24 "utilities/build.bas"
+#line 10 "utilities/build.bas"
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=osx clean",13)),2);
+#line 10 "utilities/build.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 24 "utilities/build.bas"
-if(!qbevent)break;evnt(28622,24,"build.bas");}while(r);
-#line 25 "utilities/build.bas"
+#line 10 "utilities/build.bas"
+if(!qbevent)break;evnt(28654,10,"build.bas");}while(r);
+#line 11 "utilities/build.bas"
+}else{
+#line 12 "utilities/build.bas"
+do{
+#line 12 "utilities/build.bas"
+sub_shell2(qbs_add(FUNC_GETMAKEEXECUTABLE(),qbs_new_txt_len(" OS=lnx clean",13)),2);
+#line 12 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/build.bas"
+if(!qbevent)break;evnt(28654,12,"build.bas");}while(r);
+#line 13 "utilities/build.bas"
 }
-#line 26 "utilities/build.bas"
+#line 14 "utilities/build.bas"
+}
+#line 14 "utilities/build.bas"
+}
+#line 15 "utilities/build.bas"
 exit_subfunc:;
-#line 26 "utilities/build.bas"
+#line 15 "utilities/build.bas"
 free_mem_lock(sf_mem_lock);
-#line 26 "utilities/build.bas"
+#line 15 "utilities/build.bas"
 #include "free136.txt"
-#line 26 "utilities/build.bas"
+#line 15 "utilities/build.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 26 "utilities/build.bas"
+#line 15 "utilities/build.bas"
 cmem_sp=tmp_cmem_sp;
-#line 26 "utilities/build.bas"
-qbs_maketmp(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE);return _FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE;
-#line 26 "utilities/build.bas"
+#line 15 "utilities/build.bas"
 }

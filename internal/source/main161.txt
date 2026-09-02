@@ -1,86 +1,78 @@
-#line 619 "utilities/elements.bas"
-qbs* FUNC_ELEMENTSTRINGCONCAT(qbs*_FUNC_ELEMENTSTRINGCONCAT_STRING_OS1,qbs*_FUNC_ELEMENTSTRINGCONCAT_STRING_OS2){
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
+qbs* FUNC_CREATEELEMENTSTRING(qbs*_FUNC_CREATEELEMENTSTRING_STRING_S){
+#line 609 "utilities/elements.bas"
 qbs *tqbs;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 ptrszint tmp_long;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 int32 tmp_fileno;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 #include "data161.txt"
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 mem_lock *sf_mem_lock;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 new_mem_lock();
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 sf_mem_lock->type=3;
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 libqb_check_stack();
-#line 619 "utilities/elements.bas"
+#line 609 "utilities/elements.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 620 "utilities/elements.bas"
+#line 610 "utilities/elements.bas"
 do{
-#line 620 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,620,"elements.bas");}while(r);
-#line 622 "utilities/elements.bas"
+#line 610 "utilities/elements.bas"
+if(!qbevent)break;evnt(28655,610,"elements.bas");}while(r);
+#line 611 "utilities/elements.bas"
 do{
-#line 622 "utilities/elements.bas"
-qbs_set(_FUNC_ELEMENTSTRINGCONCAT_STRING_S1,func_mid(_FUNC_ELEMENTSTRINGCONCAT_STRING_OS1, 2 ,func__instrrev(NULL,_FUNC_ELEMENTSTRINGCONCAT_STRING_OS1,func_chr( 34 ),0)- 2 ,0|1));
-#line 622 "utilities/elements.bas"
+#line 611 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 ));
+#line 611 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 622 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,622,"elements.bas");}while(r);
-#line 623 "utilities/elements.bas"
+#line 611 "utilities/elements.bas"
+if(!qbevent)break;evnt(28655,611,"elements.bas");}while(r);
+#line 613 "utilities/elements.bas"
 do{
-#line 623 "utilities/elements.bas"
-*_FUNC_ELEMENTSTRINGCONCAT_LONG_S1SIZE=qbr(qbs_val<long double>(qbs_right(_FUNC_ELEMENTSTRINGCONCAT_STRING_OS1,_FUNC_ELEMENTSTRINGCONCAT_STRING_OS1->len-_FUNC_ELEMENTSTRINGCONCAT_STRING_S1->len- 3 )));
-#line 623 "utilities/elements.bas"
+#line 613 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,FUNC_ESCAPESTRING(_FUNC_CREATEELEMENTSTRING_STRING_S)));
+#line 613 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 623 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,623,"elements.bas");}while(r);
-#line 625 "utilities/elements.bas"
+#line 613 "utilities/elements.bas"
+if(!qbevent)break;evnt(28655,613,"elements.bas");}while(r);
+#line 615 "utilities/elements.bas"
 do{
-#line 625 "utilities/elements.bas"
-qbs_set(_FUNC_ELEMENTSTRINGCONCAT_STRING_S2,func_mid(_FUNC_ELEMENTSTRINGCONCAT_STRING_OS2, 2 ,func__instrrev(NULL,_FUNC_ELEMENTSTRINGCONCAT_STRING_OS2,func_chr( 34 ),0)- 2 ,0|1));
-#line 625 "utilities/elements.bas"
+#line 615 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_ELE,qbs_add(qbs_add(qbs_add(_FUNC_CREATEELEMENTSTRING_STRING_ELE,func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int32)(_FUNC_CREATEELEMENTSTRING_STRING_S->len),NULL,0)));
+#line 615 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 625 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,625,"elements.bas");}while(r);
-#line 626 "utilities/elements.bas"
+#line 615 "utilities/elements.bas"
+if(!qbevent)break;evnt(28655,615,"elements.bas");}while(r);
+#line 616 "utilities/elements.bas"
 do{
-#line 626 "utilities/elements.bas"
-*_FUNC_ELEMENTSTRINGCONCAT_LONG_S2SIZE=qbr(qbs_val<long double>(qbs_right(_FUNC_ELEMENTSTRINGCONCAT_STRING_OS2,_FUNC_ELEMENTSTRINGCONCAT_STRING_OS2->len-_FUNC_ELEMENTSTRINGCONCAT_STRING_S2->len- 3 )));
-#line 626 "utilities/elements.bas"
+#line 616 "utilities/elements.bas"
+qbs_set(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING,_FUNC_CREATEELEMENTSTRING_STRING_ELE);
+#line 616 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 626 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,626,"elements.bas");}while(r);
-#line 628 "utilities/elements.bas"
-do{
-#line 628 "utilities/elements.bas"
-qbs_set(_FUNC_ELEMENTSTRINGCONCAT_STRING_ELEMENTSTRINGCONCAT,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(func_chr( 34 ),_FUNC_ELEMENTSTRINGCONCAT_STRING_S1),_FUNC_ELEMENTSTRINGCONCAT_STRING_S2),func_chr( 34 )),qbs_new_txt_len(",",1)),qbs__tostr((int64)(*_FUNC_ELEMENTSTRINGCONCAT_LONG_S1SIZE+*_FUNC_ELEMENTSTRINGCONCAT_LONG_S2SIZE),NULL,0)));
-#line 628 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 628 "utilities/elements.bas"
-if(!qbevent)break;evnt(28623,628,"elements.bas");}while(r);
-#line 629 "utilities/elements.bas"
+#line 616 "utilities/elements.bas"
+if(!qbevent)break;evnt(28655,616,"elements.bas");}while(r);
+#line 617 "utilities/elements.bas"
 exit_subfunc:;
-#line 629 "utilities/elements.bas"
+#line 617 "utilities/elements.bas"
 free_mem_lock(sf_mem_lock);
-#line 629 "utilities/elements.bas"
+#line 617 "utilities/elements.bas"
 #include "free161.txt"
-#line 629 "utilities/elements.bas"
+#line 617 "utilities/elements.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 629 "utilities/elements.bas"
+#line 617 "utilities/elements.bas"
 cmem_sp=tmp_cmem_sp;
-#line 629 "utilities/elements.bas"
-qbs_maketmp(_FUNC_ELEMENTSTRINGCONCAT_STRING_ELEMENTSTRINGCONCAT);return _FUNC_ELEMENTSTRINGCONCAT_STRING_ELEMENTSTRINGCONCAT;
-#line 629 "utilities/elements.bas"
+#line 617 "utilities/elements.bas"
+qbs_maketmp(_FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING);return _FUNC_CREATEELEMENTSTRING_STRING_CREATEELEMENTSTRING;
+#line 617 "utilities/elements.bas"
 }

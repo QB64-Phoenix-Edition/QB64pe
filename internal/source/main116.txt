@@ -1,68 +1,58 @@
-#line 43 "utilities/strings.bas"
-qbs* FUNC_REMOVESTRINGENCLOSINGPAIR(qbs*_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_TEXT,qbs*_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_PAIR){
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
+int8 FUNC_HASSTRINGENCLOSINGPAIR(qbs*_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT,qbs*_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR){
+#line 35 "utilities/strings.bas"
 qbs *tqbs;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 #include "data116.txt"
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 new_mem_lock();
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 libqb_check_stack();
-#line 43 "utilities/strings.bas"
+#line 35 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 44 "utilities/strings.bas"
-S_37212:;
-#line 44 "utilities/strings.bas"
-if ((qbs_cleanup(qbs_tmp_base,FUNC_HASSTRINGENCLOSINGPAIR(_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_TEXT,_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_PAIR)))||is_error_pending()){
-#line 44 "utilities/strings.bas"
-if(qbevent){evnt(28620,44,"strings.bas");if(r)goto S_37212;}
-#line 45 "utilities/strings.bas"
+#line 36 "utilities/strings.bas"
+S_37240:;
+#line 36 "utilities/strings.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT->len> 1 ))&(-(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR->len> 1 ))))||is_error_pending()){
+#line 36 "utilities/strings.bas"
+if(qbevent){evnt(28652,36,"strings.bas");if(r)goto S_37240;}
+#line 37 "utilities/strings.bas"
 do{
-#line 45 "utilities/strings.bas"
-qbs_set(_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_REMOVESTRINGENCLOSINGPAIR,func_mid(_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_TEXT, 2 ,_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_TEXT->len- 2 ,0|1));
-#line 45 "utilities/strings.bas"
+#line 37 "utilities/strings.bas"
+*_FUNC_HASSTRINGENCLOSINGPAIR_BYTE_HASSTRINGENCLOSINGPAIR=(-(qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR, 1 )==qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT, 1 )))&(-(qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_PAIR, 2 )==qbs_asc(_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT,_FUNC_HASSTRINGENCLOSINGPAIR_STRING_TEXT->len)));
+#line 37 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 45 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,45,"strings.bas");}while(r);
-#line 46 "utilities/strings.bas"
-}else{
-#line 47 "utilities/strings.bas"
-do{
-#line 47 "utilities/strings.bas"
-qbs_set(_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_REMOVESTRINGENCLOSINGPAIR,_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_TEXT);
-#line 47 "utilities/strings.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 47 "utilities/strings.bas"
-if(!qbevent)break;evnt(28620,47,"strings.bas");}while(r);
-#line 48 "utilities/strings.bas"
+#line 37 "utilities/strings.bas"
+if(!qbevent)break;evnt(28652,37,"strings.bas");}while(r);
+#line 38 "utilities/strings.bas"
 }
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
 exit_subfunc:;
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
 #include "free116.txt"
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 49 "utilities/strings.bas"
-qbs_maketmp(_FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_REMOVESTRINGENCLOSINGPAIR);return _FUNC_REMOVESTRINGENCLOSINGPAIR_STRING_REMOVESTRINGENCLOSINGPAIR;
-#line 49 "utilities/strings.bas"
+#line 39 "utilities/strings.bas"
+return *_FUNC_HASSTRINGENCLOSINGPAIR_BYTE_HASSTRINGENCLOSINGPAIR;
+#line 39 "utilities/strings.bas"
 }
