@@ -2112,100 +2112,175 @@ FUNCTION udt_array_member_bytes& (element)
 END FUNCTION
 
 SUB initialise_udt_varstrings (n$, udt, buf, base_offset)
-    IF NOT udtxvariable(udt) THEN EXIT SUB
-    element = udtxnext(udt)
-    offset = base_offset
-    DO WHILE element
-        IF udtearrayelements(element) THEN
-            elem_bytes = udt_array_member_bytes(element)
-            FOR array_i = 0 TO udtearrayelements(element) - 1
-                array_offset = offset + array_i * elem_bytes
-                IF udtetype(element) AND ISSTRING THEN
-                    IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                        WriteBufLineCpp buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ") = qbs_new(0,0);"
-                    END IF
-                ELSEIF udtetype(element) AND ISUDT THEN
-                    initialise_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
-                END IF
-            NEXT
-        ELSEIF udtetype(element) AND ISSTRING THEN
-            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLineCpp buf, "*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ") = qbs_new(0,0);"
-            END IF
-        ELSEIF udtetype(element) AND ISUDT THEN
-            initialise_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
-        END IF
-        offset = offset + udtesize(element) \ 8
-        element = udtenext(element)
-    LOOP
+    ' Keep this established entry point for every legacy inline-layout scalar UDT caller.
+    ' The old implementation expanded every fixed member-array element while the BASIC
+    ' compiler was running. A large array of UDTs containing variable STRING members could
+    ' therefore produce hundreds of thousands of distinct qbs_new statements. Pass the
+    ' constant root offset to an expression-aware emitter instead; that emitter generates
+    ' compact C++ runtime loops for member arrays while preserving the exact inline offsets.
+    AppendLegacyUDTVarInit n$, udt, buf, LTRIM$(STR$(base_offset)), 0
 END SUB
 
 SUB free_udt_varstrings (n$, udt, buf, base_offset)
+    ' Free must mirror initialization exactly. In particular, every qbs* created inside a
+    ' nested fixed member array is released once before the enclosing scalar storage dies.
+    ' Runtime loops prevent executable growth without changing qbs ownership or free order.
+    AppendLegacyUDTVarFree n$, udt, buf, LTRIM$(STR$(base_offset)), 0
+END SUB
+
+SUB clear_udt_with_varstrings (n$, udt, buf, base_offset)
+    ' CLEAR keeps live qbs objects and resets only their lengths, while numeric and fixed-
+    ' length storage is zeroed. Emit the same member-wise behavior through compact runtime
+    ' loops so CLEAR generation remains bounded for large nested inline member arrays.
+    AppendLegacyUDTVarClear n$, udt, buf, LTRIM$(STR$(base_offset)), 0
+END SUB
+
+' Emit legacy inline-layout variable-STRING initialization at an offset expression.
+' Scalar members are still emitted directly. Fixed member arrays are represented by one
+' generated C++ loop per array dimension, so generated source size depends on TYPE shape
+' rather than the compile-time element count. loop_depth gives every nested loop a distinct
+' identifier; this is required because a deeper offset expression still references all of
+' its enclosing loop indices.
+SUB AppendLegacyUDTVarInit (n$, udt, buf, root_expr$, loop_depth)
+    DIM AS LONG element, member_offset, elem_bytes, nested_udt
+    DIM AS STRING member_expr, item_expr, loop_name, count_text, stride_text
+
     IF NOT udtxvariable(udt) THEN EXIT SUB
+
+    member_offset = 0
     element = udtxnext(udt)
-    offset = base_offset
     DO WHILE element
+        member_expr = "(" + root_expr$ + "+" + LTRIM$(STR$(member_offset)) + ")"
         IF udtearrayelements(element) THEN
             elem_bytes = udt_array_member_bytes(element)
-            FOR array_i = 0 TO udtearrayelements(element) - 1
-                array_offset = offset + array_i * elem_bytes
-                IF udtetype(element) AND ISSTRING THEN
-                    IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                        WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + ")));"
-                    END IF
-                ELSEIF udtetype(element) AND ISUDT THEN
-                    free_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
+            count_text = LTRIM$(STR$(udtearrayelements(element)))
+            stride_text = LTRIM$(STR$(elem_bytes))
+            IF ((udtetype(element) AND ISSTRING) <> 0) AND ((udtetype(element) AND ISFIXEDLENGTH) = 0) THEN
+                loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                WriteBufLineCpp buf, "*(qbs**)(((char*)(" + n$ + "))+(" + item_expr + "))=qbs_new(0,0);"
+                WriteBufLineCpp buf, "}"
+            ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(element) AND UDTMASK
+                IF udtxvariable(nested_udt) THEN
+                    loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                    WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                    item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                    AppendLegacyUDTVarInit n$, nested_udt, buf, item_expr, loop_depth + 1
+                    WriteBufLineCpp buf, "}"
                 END IF
-            NEXT
-        ELSEIF udtetype(element) AND ISSTRING THEN
-            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)" + n$ + ")+" + STR$(offset) + ")));"
             END IF
-        ELSEIF udtetype(element) AND ISUDT THEN
-            free_udt_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
+        ELSEIF ((udtetype(element) AND ISSTRING) <> 0) AND ((udtetype(element) AND ISFIXEDLENGTH) = 0) THEN
+            WriteBufLineCpp buf, "*(qbs**)(((char*)(" + n$ + "))+(" + member_expr + "))=qbs_new(0,0);"
+        ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(element) AND UDTMASK
+            IF udtxvariable(nested_udt) THEN AppendLegacyUDTVarInit n$, nested_udt, buf, member_expr, loop_depth
         END IF
-        offset = offset + udtesize(element) \ 8
+        member_offset = member_offset + udtesize(element) \ 8
         element = udtenext(element)
     LOOP
 END SUB
 
-SUB clear_udt_with_varstrings (n$, udt, buf, base_offset)
-    ' Clear one UDT value member-by-member. This covers numeric members, fixed-length strings,
-    ' variable-length strings, nested UDTs, and inline member arrays (unmarked or _Static).
+' Emit the ownership mirror of AppendLegacyUDTVarInit. Only variable STRING slots own
+' qbs objects in this legacy inline layout; numeric and fixed-length members require no
+' destruction. The loop structure and offset expressions intentionally match init.
+SUB AppendLegacyUDTVarFree (n$, udt, buf, root_expr$, loop_depth)
+    DIM AS LONG element, member_offset, elem_bytes, nested_udt
+    DIM AS STRING member_expr, item_expr, loop_name, count_text, stride_text
+
+    IF NOT udtxvariable(udt) THEN EXIT SUB
+
+    member_offset = 0
     element = udtxnext(udt)
-    offset = base_offset
     DO WHILE element
+        member_expr = "(" + root_expr$ + "+" + LTRIM$(STR$(member_offset)) + ")"
         IF udtearrayelements(element) THEN
             elem_bytes = udt_array_member_bytes(element)
-            IF udtetype(element) AND ISSTRING THEN
-                IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                    FOR array_i = 0 TO udtearrayelements(element) - 1
-                        array_offset = offset + array_i * elem_bytes
-                        WriteBufLineCpp buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(array_offset) + "))->len=0;"
-                    NEXT
-                ELSE
-                    WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+            count_text = LTRIM$(STR$(udtearrayelements(element)))
+            stride_text = LTRIM$(STR$(elem_bytes))
+            IF ((udtetype(element) AND ISSTRING) <> 0) AND ((udtetype(element) AND ISFIXEDLENGTH) = 0) THEN
+                loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)(" + n$ + "))+(" + item_expr + "))));"
+                WriteBufLineCpp buf, "}"
+            ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(element) AND UDTMASK
+                IF udtxvariable(nested_udt) THEN
+                    loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                    WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                    item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                    AppendLegacyUDTVarFree n$, nested_udt, buf, item_expr, loop_depth + 1
+                    WriteBufLineCpp buf, "}"
                 END IF
-            ELSEIF udtetype(element) AND ISUDT THEN
-                FOR array_i = 0 TO udtearrayelements(element) - 1
-                    array_offset = offset + array_i * elem_bytes
-                    clear_udt_with_varstrings n$, udtetype(element) AND UDTMASK, buf, array_offset
-                NEXT
-            ELSE
-                WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
             END IF
-        ELSEIF udtetype(element) AND ISSTRING THEN
-            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
-                WriteBufLineCpp buf, "(*(qbs**)(((char*)" + n$ + ")+" + STR$(offset) + "))->len=0;"
-            ELSE
-                WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
-            END IF
-        ELSEIF udtetype(element) AND ISUDT THEN
-            clear_udt_with_varstrings n$, udtetype(element) AND UDTMASK, buf, offset
-        ELSE
-            WriteBufLineCpp buf, "memset((char*)" + n$ + "+" + STR$(offset) + ",0," + STR$(udtesize(element) \ 8) + ");"
+        ELSEIF ((udtetype(element) AND ISSTRING) <> 0) AND ((udtetype(element) AND ISFIXEDLENGTH) = 0) THEN
+            WriteBufLineCpp buf, "qbs_free(*((qbs**)(((char*)(" + n$ + "))+(" + member_expr + "))));"
+        ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(element) AND UDTMASK
+            IF udtxvariable(nested_udt) THEN AppendLegacyUDTVarFree n$, nested_udt, buf, member_expr, loop_depth
         END IF
-        offset = offset + udtesize(element) \ 8
+        member_offset = member_offset + udtesize(element) \ 8
+        element = udtenext(element)
+    LOOP
+END SUB
+
+' Emit legacy CLEAR behavior using runtime loops for owner arrays. Fixed-layout nested
+' UDTs contain no live qbs owners and can be zeroed as one contiguous block. Owner UDTs
+' must instead be visited element-by-element so their existing qbs objects survive and
+' only qbs::len is reset. This distinction preserves both ownership and CLEAR semantics.
+SUB AppendLegacyUDTVarClear (n$, udt, buf, root_expr$, loop_depth)
+    DIM AS LONG element, member_offset, elem_bytes, nested_udt, member_bytes
+    DIM AS STRING member_expr, item_expr, loop_name, count_text, stride_text, bytes_text
+
+    member_offset = 0
+    element = udtxnext(udt)
+    DO WHILE element
+        member_expr = "(" + root_expr$ + "+" + LTRIM$(STR$(member_offset)) + ")"
+        member_bytes = udtesize(element) \ 8
+        bytes_text = LTRIM$(STR$(member_bytes))
+        IF udtearrayelements(element) THEN
+            elem_bytes = udt_array_member_bytes(element)
+            count_text = LTRIM$(STR$(udtearrayelements(element)))
+            stride_text = LTRIM$(STR$(elem_bytes))
+            IF ((udtetype(element) AND ISSTRING) <> 0) AND ((udtetype(element) AND ISFIXEDLENGTH) = 0) THEN
+                loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                WriteBufLineCpp buf, "(*(qbs**)(((char*)(" + n$ + "))+(" + item_expr + ")))->len=0;"
+                WriteBufLineCpp buf, "}"
+            ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+                nested_udt = udtetype(element) AND UDTMASK
+                IF udtxvariable(nested_udt) THEN
+                    loop_name = "legacy_udt_i" + LTRIM$(STR$(loop_depth))
+                    WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                    item_expr = "(" + member_expr + "+" + loop_name + "*" + stride_text + ")"
+                    AppendLegacyUDTVarClear n$, nested_udt, buf, item_expr, loop_depth + 1
+                    WriteBufLineCpp buf, "}"
+                ELSE
+                    WriteBufLineCpp buf, "memset(((char*)(" + n$ + "))+(" + member_expr + "),0," + bytes_text + ");"
+                END IF
+            ELSE
+                WriteBufLineCpp buf, "memset(((char*)(" + n$ + "))+(" + member_expr + "),0," + bytes_text + ");"
+            END IF
+        ELSEIF (udtetype(element) AND ISSTRING) <> 0 THEN
+            IF (udtetype(element) AND ISFIXEDLENGTH) = 0 THEN
+                WriteBufLineCpp buf, "(*(qbs**)(((char*)(" + n$ + "))+(" + member_expr + ")))->len=0;"
+            ELSE
+                WriteBufLineCpp buf, "memset(((char*)(" + n$ + "))+(" + member_expr + "),0," + bytes_text + ");"
+            END IF
+        ELSEIF (udtetype(element) AND ISUDT) <> 0 THEN
+            nested_udt = udtetype(element) AND UDTMASK
+            IF udtxvariable(nested_udt) THEN
+                AppendLegacyUDTVarClear n$, nested_udt, buf, member_expr, loop_depth
+            ELSE
+                WriteBufLineCpp buf, "memset(((char*)(" + n$ + "))+(" + member_expr + "),0," + bytes_text + ");"
+            END IF
+        ELSE
+            WriteBufLineCpp buf, "memset(((char*)(" + n$ + "))+(" + member_expr + "),0," + bytes_text + ");"
+        END IF
+        member_offset = member_offset + member_bytes
         element = udtenext(element)
     LOOP
 END SUB
