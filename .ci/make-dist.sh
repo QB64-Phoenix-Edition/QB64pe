@@ -2,15 +2,23 @@
 
 buildPlatform=$1
 version=$2
+
+# "release" indicates to grab an update copy of help
+buildType=$3
+
 format=
 
 ARCHIVE_ROOT=qb64pe
 DIST_ROOT=./dist/$ARCHIVE_ROOT
 
 # populate internal/help from static download and updates from Wiki
-curl --silent --retry 3 -o ./help.zip https://qb64phoenix.com/qb64_files/help.zip
-unzip -oqq ./help.zip -d ./internal
-./qb64pe -u
+# This only happens on release builds to avoid hitting the Wiki so much
+if [ "$buildType" = "release" ]; then
+    curl --silent --retry 3 -o ./help.zip https://qb64phoenix.com/qb64_files/help.zip
+    unzip -oqq ./help.zip -d ./internal
+    ./qb64pe -u
+fi
+mkdir -p ./internal/help
 # end internal/help
 
 case "$buildPlatform" in
