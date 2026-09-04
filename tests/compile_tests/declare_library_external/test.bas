@@ -7,9 +7,15 @@ PRINT 5
 
 $ELSE
 
-DECLARE LIBRARY "./lib"
-    FUNCTION add_values&(BYVAL v1 AS LONG, BYVAL v2 as LONG)
-END DECLARE
+$IF 32BIT THEN
+    DECLARE LIBRARY "./lib32"
+        FUNCTION add_values&(BYVAL v1 AS LONG, BYVAL v2 as LONG)
+    END DECLARE
+$ELSE
+    DECLARE LIBRARY "./lib"
+        FUNCTION add_values&(BYVAL v1 AS LONG, BYVAL v2 as LONG)
+    END DECLARE
+$END IF
 
 result = add_values&(2, 3)
 PRINT result
