@@ -1547,7 +1547,11 @@ void division_by_zero_handler(int ignore) {
 
 void segv_handler(int ignore) {
     libqb_log_error("Recieved SIGSEGV! Review below stacktrace:");
-    exit(1);
+
+    // Trigger the SIGSEGV again to crash the program (this allows for things
+    // like coredumps to be collected)
+    signal(SIGSEGV, SIG_DFL);
+    raise(SIGSEGV);
 }
 
 // void SIGSEGV_handler(int ignore){

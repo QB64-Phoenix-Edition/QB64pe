@@ -39,7 +39,7 @@ TEST_TESTS :=
 define TEST_template
 TEST_TESTS += ./tests/exes/cpp/$(1)_test$(EXTENSION)
 tests/exes/cpp/$(1)_test$(EXTENSION): $$(TEST_DEF_OBJS) $$($(1).src-y) $$($(1).exe-libs-y) | tests/exes/cpp
-	$$(CXX) $$(TEST_CFLAGS-y) $$($(1).cflags-y) $$^ -o $$@ $$($(1).exe-libs-y) $$($(1).libs-y)
+	$$(CXX) $$(CXXFLAGS) $$(TEST_CFLAGS-y) $$($(1).cflags-y) $$^ -o $$@ $$($(1).exe-libs-y) $$($(1).libs-y)
 endef
 
 $(foreach test,$(TESTS),$(eval $(call TEST_template,$(test))))
