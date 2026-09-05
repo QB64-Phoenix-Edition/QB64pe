@@ -3,7 +3,7 @@ $Unstable:TypeFields
 Option _Explicit
 
 Type LeafDesc
-    Nums(0 To 1) _Dynamic As Long
+    Nums(0 To 2) _Dynamic As Long
 End Type
 
 Type MidDesc
@@ -36,4 +36,4 @@ src.Groups(0).Leaves(0).Nums(1) = 555
 If dst.Groups(0).Leaves(0).Nums(1) <> 102 Then Print "FAIL type_nested_descriptor_payload_clone": System
 
 Print "PASS type_nested_descriptor_payload_clone"
-System
+'System
