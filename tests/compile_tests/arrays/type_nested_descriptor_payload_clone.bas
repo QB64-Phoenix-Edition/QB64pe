@@ -36,4 +36,4 @@ src.Groups(0).Leaves(0).Nums(1) = 555
 If dst.Groups(0).Leaves(0).Nums(1) <> 102 Then Print "FAIL type_nested_descriptor_payload_clone": System
 
 Print "PASS type_nested_descriptor_payload_clone"
-'System
+System
