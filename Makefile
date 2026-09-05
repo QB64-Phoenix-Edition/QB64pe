@@ -208,8 +208,8 @@ ifeq ($(BITS),32)
 else
 	CXXFLAGS += -m64
 	CXXLIBS += -m64
-	CXXFLAGS += -m64
-	CXXLIBS += -m64
+	CFLAGS += -m64
+	CLIBS += -m64
 endif
 
 ifdef BUILD_QB64

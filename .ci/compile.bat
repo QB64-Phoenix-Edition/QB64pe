@@ -1,7 +1,12 @@
 @ECHO OFF
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-qb64pe_bootstrap.exe -x -w source\qb64pe.bas
+REM qb64pe_bootstrap.exe is always 64-bit (see bootstrap.bat). For PLATFORM=x86
+REM cross-compile the real qb64pe.exe down to 32-bit instead.
+SET TARGETBITS_FLAG=
+IF "%PLATFORM%"=="x86" SET TARGETBITS_FLAG=-f:TargetBits=32
+
+qb64pe_bootstrap.exe -x -w %TARGETBITS_FLAG% source\qb64pe.bas
 IF ERRORLEVEL 1 exit /b 1
 
 del qb64pe_bootstrap.exe

@@ -201,6 +201,8 @@ do
         (exit $ERR)
         assert_success_named "run" "Execution Error:" cat "$runOutput"
 
+        (exit $ERR) || (echo "Log from failed run is below:"; cat "$RESULTS_DIR/$category-$testName-log.txt")
+
         compare_output_files "./tests/compile_tests/$category/$testName.output" "$runOutput"
         assert_success_named "result" "Result is wrong:" \
             diff "./tests/compile_tests/$category/$testName.output" "$runOutput"

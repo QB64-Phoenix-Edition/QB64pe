@@ -985,7 +985,7 @@ void sub__saveimage(qbs *qbsFileName, int32_t imageHandle, qbs *qbsRequirements,
         }
     }
 
-    image_log_info("Saving to: %s (%i x %i), %llu pixels, %s", fileName.c_str(), width, height, pixels.size(), formatName[size_t(format)]);
+    image_log_info("Saving to: %s (%i x %i), %zd pixels, %s", fileName.c_str(), width, height, pixels.size(), formatName[size_t(format)]);
 
     switch (format) {
     case SaveFormat::PNG: {

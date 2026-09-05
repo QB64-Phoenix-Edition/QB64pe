@@ -23,6 +23,18 @@ pkg_install() {
   fi
 }
 
+if [ -f ./internal/source/.bits ]; then
+    BITS=$(< ./internal/source/.bits)
+else
+    BITS=64 # Building from a git clone, presumably
+fi
+
+if [ "$(getconf LONG_BIT)" == "32" ] && [ "$BITS" == "64" ]; then
+  echo "This is a 64-bit release of QB64-PE for Linux, we detected you're running in a 32-bit environment."
+  echo "Please download the 32-bit release of QB64-PE for Linux to build on this machine."
+  exit 1
+fi
+
 #Make sure we're not running as root
 if [ $EUID == "0" ]; then
   echo "You are trying to run this script as root. This is highly unrecommended."
@@ -107,9 +119,11 @@ elif [ -z "$DISTRO" ]; then
   echo "  libpng"
 fi
 
+echo "Building $BITS-bit QB64-PE"
+
 echo "Compiling and installing QB64-PE..."
-make clean OS=lnx
-make OS=lnx BUILD_QB64=y -j3
+make clean OS=lnx BITS=$BITS
+make OS=lnx BITS=$BITS BUILD_QB64=y -j3
 
 if [ -e "./qb64pe" ]; then
   echo "Done compiling!!"

@@ -12,15 +12,23 @@ jobs:
           - os: ubuntu-24.04
             platform: x64
             prefix: lnx
+
+          - os: ubuntu-24.04
+            platform: x86
+            prefix: lnx
+
           - os: macos-15-intel
             platform: x64
             prefix: osx
+
           - os: windows-2022
             platform: x64
             prefix: win
+
           - os: windows-2022
             platform: x86
             prefix: win
+
           - os: windows-11-arm
             platform: arm64
             prefix: win
@@ -33,9 +41,6 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        allow-unsafe-pr-checkout: true
         fetch-depth: 0
 
     - uses: maxim-lobanov/setup-xcode@v1
@@ -46,13 +51,52 @@ jobs:
       # A deploy key is setup so that the potential push of ./internal/source can
       # trigger a new build. Care is taken to make sure loops cannot happen.
     - uses: webfactory/ssh-agent@v0.10.0
-      if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' }}
+      if: ${{ github.event_name == 'push' && matrix.prefix == 'lnx' && matrix.platform == 'x64' }}
       with:
         ssh-private-key: ${{ secrets.ACTION_DEPLOY_KEY }}
 
     - name: Install dependencies
       if: ${{ matrix.prefix == 'lnx' }}
-      run: sudo apt update && sudo apt install build-essential x11-utils mesa-common-dev libglu1-mesa-dev libasound2-dev libpng-dev pulseaudio dbus-x11 libportaudio2 libcurl4-openssl-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+      run: |
+        sudo apt update && sudo apt install -y \
+          build-essential \
+          x11-utils \
+          pulseaudio \
+          dbus-x11 \
+          mesa-common-dev \
+          libglu1-mesa-dev \
+          libasound2-dev \
+          libpng-dev \
+          libportaudio2 \
+          libcurl4-openssl-dev \
+          libx11-dev \
+          libxcursor-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxi-dev
+
+      # The 32-bit Linux run builds a real 32-bit binary, so requires all the
+      # multilib packages matching the above list.
+      #
+      # The libcurl4-openssl-dev multilib package is bugged and requires an
+      # override to install alongside the amd64 version.
+    - name: Install 32-bit dependencies
+      if: ${{ matrix.prefix == 'lnx' && matrix.platform == 'x86' }}
+      run: |
+        sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install -y \
+          -o Dpkg::Options::="--force-overwrite" \
+          gcc-multilib \
+          g++-multilib \
+          libgl1-mesa-dev:i386 \
+          libglu1-mesa-dev:i386 \
+          libasound2-dev:i386 \
+          libpng-dev:i386 \
+          libcurl4-openssl-dev:i386 \
+          libx11-dev:i386 \
+          libxcursor-dev:i386 \
+          libxrandr-dev:i386 \
+          libxinerama-dev:i386 \
+          libxi-dev:i386
 
       # Pulseaudio puts a dummy ALSA device in place, which allows us to do
       # audio testing on Linux
@@ -99,6 +143,7 @@ jobs:
     # which should be more than enough time for the propagation.
     - name: Whitelist runner IP at Cloudflare
       id: whitelist
+      if: ${{ startsWith(github.ref, 'refs/tags/v') }}
       uses: DiyRex/gh-cf-ip-whitelist@v1
       with:
         api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -120,7 +165,7 @@ jobs:
     - name: Create QB64-PE Artifact
       timeout-minutes: 45
       shell: bash
-      run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}"
+      run: .ci/make-dist.sh ${{ matrix.prefix }} "${{ env.version }}" "${{ startsWith(github.ref, 'refs/tags/v') && 'release' || 'ci' }}"
 
       # Note that compiling programs in dist does modify the ./dist and make it
       # dirty, but that's ok because we've already create the .7z or .tar.gz
@@ -133,13 +178,13 @@ jobs:
       # the main branch, and building a Pull request merge. Otherwise the repo
       # is left alone.
     - name: Update ./internal/source
-      if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
+      if: ${{ github.event_name == 'push' &&  matrix.prefix == 'lnx' && matrix.platform == 'x64' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Merge pull request') }}
       run: .ci/push-internal-source.sh
 
     - uses: actions/upload-artifact@v6
       if: always()
       with:
-        name: qb64pe-${{ matrix.prefix }}${{ matrix.prefix == 'win' && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
+        name: qb64pe-${{ matrix.prefix }}${{ (matrix.prefix == 'win' || matrix.prefix == 'lnx') && format('-{0}', matrix.platform) || '' }}-${{ env.version }}
         path: |
           tests/results/
           qb64pe_win-x86*.7z
@@ -162,7 +207,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Remove Cloudflare IP whitelisting
-      if: always() || cancelled()
+      if: ${{ (always() || cancelled()) && startsWith(github.ref, 'refs/tags/v') }}
       uses: DiyRex/gh-cf-ip-whitelist@v1
       with:
         api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
