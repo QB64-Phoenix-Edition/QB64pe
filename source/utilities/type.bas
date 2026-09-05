@@ -7,175 +7,175 @@
 'Numeric/fixed-size descriptor payloads can be copied with memcpy, but variable
 'strings and nested owner UDTs need ownership-aware qbs/descriptor cloning so the
 'source and destination never share owned payloads.
-Sub AppendDynUDTDescCopy (dstbase$, srcbase$, udt As Long, dstoff$, srcoff$, bytesperelement$, acc$, layout_mode As Long)
-    If udtxvariable(udt) Then
+SUB AppendDynUDTDescCopy (dstbase$, srcbase$, udt AS LONG, dstoff$, srcoff$, bytesperelement$, acc$, layout_mode AS LONG)
+    IF udtxvariable(udt) THEN
         AppendDynUDTOwnSetAt "((uint8*)(" + dstbase$ + ")+(" + dstoff$ + "))", "((uint8*)(" + srcbase$ + ")+(" + srcoff$ + "))", udt, 0, 0, bytesperelement$, "0", "0", acc$, layout_mode
-        Exit Sub
-    End If
+        EXIT SUB
+    END IF
 
     ' udtxvariable propagates from every nested UDT into its parent at TYPE-definition
     ' time. Therefore the descriptor-only traversal below cannot encounter a nested
     ' owner UDT; any such graph was handled by the owner branch above.
-    Dim elemnum As Long
-    Dim nestedudt As Long
-    Dim dynoffbytes As Long
-    Dim memberelembytes As Long
-    Dim elemvarstr As Long
-    Dim copycode As String
-    Dim nesteddst$
-    Dim nestedsrc$
-    Dim inline_bytes As Long
-    Dim loop_name As String
+    DIM elemnum AS LONG
+    DIM nestedudt AS LONG
+    DIM dynoffbytes AS LONG
+    DIM memberelembytes AS LONG
+    DIM elemvarstr AS LONG
+    DIM copycode AS STRING
+    DIM nesteddst$
+    DIM nestedsrc$
+    DIM inline_bytes AS LONG
+    DIM loop_name AS STRING
 
     elemnum = udtxnext(udt)
-    Do While elemnum
+    DO WHILE elemnum
         dynoffbytes = UDTDynMemberOffset&(elemnum) \ 8
-        If UDTMemberDynDesc%(elemnum) Then
+        IF UDTMemberDynDesc%(elemnum) THEN
             memberelembytes = udt_dyn_array_elem_bytes(elemnum)
             elemvarstr = DynMemVarStr%(elemnum)
             nestedudt = 0
-            If (udtetype(elemnum) And ISUDT) <> 0 Then
-                nestedudt = udtetype(elemnum) And UDTMASK
-            End If
+            IF (udtetype(elemnum) AND ISUDT) <> 0 THEN
+                nestedudt = udtetype(elemnum) AND UDTMASK
+            END IF
 
             ' The generated C block clones one live member-array descriptor. It validates
             ' the source descriptor, allocates a fresh destination descriptor/data block,
             ' copies or deep-clones payload elements, and only then releases the old
             ' destination descriptor so failed allocation cannot destroy the target.
-            copycode = "{" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint **dyn_dst_slot=(ptrszint**)(((uint8*)(" + dstbase$ + "))+(" + dstoff$ + "+" + _ToStr$(dynoffbytes) + "));" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint **dyn_src_slot=(ptrszint**)(((uint8*)(" + srcbase$ + "))+(" + srcoff$ + "+" + _ToStr$(dynoffbytes) + "));" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint *dyn_src_desc=*dyn_src_slot;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint *dyn_dst_desc=*dyn_dst_slot;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_src_desc&&(dyn_src_desc[2]&1)&&(dyn_src_desc[3]>0)){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint dyn_dims=dyn_src_desc[3];" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint dyn_slots=dyn_dims*4+4+1;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint dyn_lock_index=dyn_dims*4+4;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "uint64 dyn_total=1;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "for(ptrszint dyn_i=1; dyn_i<=dyn_dims; dyn_i++){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint dyn_arg=(dyn_dims-dyn_i)*4+4;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_src_desc[dyn_arg+1]<0) error(257);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_src_desc[dyn_arg+1]&&dyn_total>(18446744073709551615ull/(uint64)dyn_src_desc[dyn_arg+1])) error(257);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "dyn_total*=(uint64)dyn_src_desc[dyn_arg+1];" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint *dyn_new_desc=(ptrszint*)calloc((size_t)dyn_slots,ptrsz);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (!dyn_new_desc) error(257);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "memcpy((void*)dyn_new_desc,(void*)dyn_src_desc,(size_t)(dyn_slots-1)*ptrsz);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "new_mem_lock();" + Chr$(13) + Chr$(10)
-            copycode = copycode + "mem_lock_tmp->type=4;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "dyn_new_desc[dyn_lock_index]=(ptrszint)mem_lock_tmp;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "dyn_new_desc[0]=(ptrszint)nothingvalue;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "uint64 dyn_bytes=dyn_total*(uint64)" + _ToStr$(memberelembytes) + ";" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_bytes&&dyn_src_desc[0]&&dyn_src_desc[0]!=(ptrszint)nothingvalue){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_src_desc[2]&4){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "dyn_new_desc[0]=(ptrszint)cmem_dynamic_malloc((size_t)dyn_bytes);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}else{" + Chr$(13) + Chr$(10)
-            copycode = copycode + "dyn_new_desc[0]=(ptrszint)malloc((size_t)dyn_bytes);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (!dyn_new_desc[0]) error(257);" + Chr$(13) + Chr$(10)
-            If elemvarstr Then
+            copycode = "{" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint **dyn_dst_slot=(ptrszint**)(((uint8*)(" + dstbase$ + "))+(" + dstoff$ + "+" + _TOSTR$(dynoffbytes) + "));" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint **dyn_src_slot=(ptrszint**)(((uint8*)(" + srcbase$ + "))+(" + srcoff$ + "+" + _TOSTR$(dynoffbytes) + "));" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint *dyn_src_desc=*dyn_src_slot;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint *dyn_dst_desc=*dyn_dst_slot;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_src_desc&&(dyn_src_desc[2]&1)&&(dyn_src_desc[3]>0)){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint dyn_dims=dyn_src_desc[3];" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint dyn_slots=dyn_dims*4+4+1;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint dyn_lock_index=dyn_dims*4+4;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "uint64 dyn_total=1;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "for(ptrszint dyn_i=1; dyn_i<=dyn_dims; dyn_i++){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint dyn_arg=(dyn_dims-dyn_i)*4+4;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_src_desc[dyn_arg+1]<0) error(257);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_src_desc[dyn_arg+1]&&dyn_total>(18446744073709551615ull/(uint64)dyn_src_desc[dyn_arg+1])) error(257);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "dyn_total*=(uint64)dyn_src_desc[dyn_arg+1];" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint *dyn_new_desc=(ptrszint*)calloc((size_t)dyn_slots,ptrsz);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (!dyn_new_desc) error(257);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "memcpy((void*)dyn_new_desc,(void*)dyn_src_desc,(size_t)(dyn_slots-1)*ptrsz);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "new_mem_lock();" + CHR$(13) + CHR$(10)
+            copycode = copycode + "mem_lock_tmp->type=4;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "dyn_new_desc[dyn_lock_index]=(ptrszint)mem_lock_tmp;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "dyn_new_desc[0]=(ptrszint)nothingvalue;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "uint64 dyn_bytes=dyn_total*(uint64)" + _TOSTR$(memberelembytes) + ";" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_bytes&&dyn_src_desc[0]&&dyn_src_desc[0]!=(ptrszint)nothingvalue){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_src_desc[2]&4){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "dyn_new_desc[0]=(ptrszint)cmem_dynamic_malloc((size_t)dyn_bytes);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}else{" + CHR$(13) + CHR$(10)
+            copycode = copycode + "dyn_new_desc[0]=(ptrszint)malloc((size_t)dyn_bytes);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (!dyn_new_desc[0]) error(257);" + CHR$(13) + CHR$(10)
+            IF elemvarstr THEN
                 AppendDynStrInit "(void*)dyn_new_desc[0]", "(ptrszint)dyn_total", memberelembytes, copycode
                 AppendDynStrSet "(void*)dyn_new_desc[0]", "(void*)dyn_src_desc[0]", "(ptrszint)dyn_total", memberelembytes, copycode
-            ElseIf nestedudt <> 0 And UDTDynHasMemberArrays%(nestedudt, layout_mode) Then
-                copycode = copycode + "for(ptrszint dyn_elem_i=0; dyn_elem_i<(ptrszint)dyn_total; dyn_elem_i++){" + Chr$(13) + Chr$(10)
-                AppendDynUDTOwnInitAt "(void*)dyn_new_desc[0]", nestedudt, 0, _ToStr$(memberelembytes), "dyn_elem_i", copycode, layout_mode
-                If Error_Happened Then Exit Sub
-                copycode = copycode + "}" + Chr$(13) + Chr$(10)
-                copycode = copycode + "for(ptrszint dyn_elem_i=0; dyn_elem_i<(ptrszint)dyn_total; dyn_elem_i++){" + Chr$(13) + Chr$(10)
-                AppendDynUDTOwnSetAt "(void*)dyn_new_desc[0]", "(void*)dyn_src_desc[0]", nestedudt, 0, 0, _ToStr$(memberelembytes), "dyn_elem_i", "dyn_elem_i", copycode, layout_mode
-                If Error_Happened Then Exit Sub
-                copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            Else
-                copycode = copycode + "memcpy((void*)dyn_new_desc[0],(void*)dyn_src_desc[0],(size_t)dyn_bytes);" + Chr$(13) + Chr$(10)
-            End If
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_dst_desc){" + Chr$(13) + Chr$(10)
-            If elemvarstr Then
-                copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue&&dyn_dst_desc[3]>0){" + Chr$(13) + Chr$(10)
-                copycode = copycode + "uint64 dyn_dst_total=1;" + Chr$(13) + Chr$(10)
-                copycode = copycode + "for(ptrszint dyn_dst_i=1; dyn_dst_i<=dyn_dst_desc[3]; dyn_dst_i++){ptrszint dyn_dst_arg=(dyn_dst_desc[3]-dyn_dst_i)*4+4; dyn_dst_total*=(uint64)dyn_dst_desc[dyn_dst_arg+1];}" + Chr$(13) + Chr$(10)
+            ELSEIF nestedudt <> 0 AND UDTDynHasMemberArrays%(nestedudt, layout_mode) THEN
+                copycode = copycode + "for(ptrszint dyn_elem_i=0; dyn_elem_i<(ptrszint)dyn_total; dyn_elem_i++){" + CHR$(13) + CHR$(10)
+                AppendDynUDTOwnInitAt "(void*)dyn_new_desc[0]", nestedudt, 0, _TOSTR$(memberelembytes), "dyn_elem_i", copycode, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                copycode = copycode + "}" + CHR$(13) + CHR$(10)
+                copycode = copycode + "for(ptrszint dyn_elem_i=0; dyn_elem_i<(ptrszint)dyn_total; dyn_elem_i++){" + CHR$(13) + CHR$(10)
+                AppendDynUDTOwnSetAt "(void*)dyn_new_desc[0]", "(void*)dyn_src_desc[0]", nestedudt, 0, 0, _TOSTR$(memberelembytes), "dyn_elem_i", "dyn_elem_i", copycode, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            ELSE
+                copycode = copycode + "memcpy((void*)dyn_new_desc[0],(void*)dyn_src_desc[0],(size_t)dyn_bytes);" + CHR$(13) + CHR$(10)
+            END IF
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_dst_desc){" + CHR$(13) + CHR$(10)
+            IF elemvarstr THEN
+                copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue&&dyn_dst_desc[3]>0){" + CHR$(13) + CHR$(10)
+                copycode = copycode + "uint64 dyn_dst_total=1;" + CHR$(13) + CHR$(10)
+                copycode = copycode + "for(ptrszint dyn_dst_i=1; dyn_dst_i<=dyn_dst_desc[3]; dyn_dst_i++){ptrszint dyn_dst_arg=(dyn_dst_desc[3]-dyn_dst_i)*4+4; dyn_dst_total*=(uint64)dyn_dst_desc[dyn_dst_arg+1];}" + CHR$(13) + CHR$(10)
                 AppendDynStrFree "(void*)dyn_dst_desc[0]", "(ptrszint)dyn_dst_total", memberelembytes, copycode
-                copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            End If
-            If nestedudt <> 0 And UDTDynHasMemberArrays%(nestedudt, layout_mode) Then
-                copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue&&dyn_dst_desc[3]>0){" + Chr$(13) + Chr$(10)
-                copycode = copycode + "uint64 dyn_dst_total=1;" + Chr$(13) + Chr$(10)
-                copycode = copycode + "for(ptrszint dyn_dst_i=1; dyn_dst_i<=dyn_dst_desc[3]; dyn_dst_i++){ptrszint dyn_dst_arg=(dyn_dst_desc[3]-dyn_dst_i)*4+4; dyn_dst_total*=(uint64)dyn_dst_desc[dyn_dst_arg+1];}" + Chr$(13) + Chr$(10)
-                copycode = copycode + "for(ptrszint dyn_dst_elem=0; dyn_dst_elem<(ptrszint)dyn_dst_total; dyn_dst_elem++){" + Chr$(13) + Chr$(10)
-                AppendDynUDTOwnFreeAt "(void*)dyn_dst_desc[0]", nestedudt, 0, _ToStr$(memberelembytes), "dyn_dst_elem", copycode, layout_mode
-                If Error_Happened Then Exit Sub
-                copycode = copycode + "}" + Chr$(13) + Chr$(10)
-                copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            End If
-            copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_dst_desc[2]&4) cmem_dynamic_free((uint8*)dyn_dst_desc[0]); else free((void*)dyn_dst_desc[0]);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_dst_desc[3]>0){" + Chr$(13) + Chr$(10)
-            copycode = copycode + "ptrszint dyn_dst_lock_index=dyn_dst_desc[3]*4+4;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "if (dyn_dst_desc[dyn_dst_lock_index]) free_mem_lock((mem_lock*)dyn_dst_desc[dyn_dst_lock_index]);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "free((void*)dyn_dst_desc);" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "*dyn_dst_slot=dyn_new_desc;" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
-            copycode = copycode + "}" + Chr$(13) + Chr$(10)
+                copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            END IF
+            IF nestedudt <> 0 AND UDTDynHasMemberArrays%(nestedudt, layout_mode) THEN
+                copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue&&dyn_dst_desc[3]>0){" + CHR$(13) + CHR$(10)
+                copycode = copycode + "uint64 dyn_dst_total=1;" + CHR$(13) + CHR$(10)
+                copycode = copycode + "for(ptrszint dyn_dst_i=1; dyn_dst_i<=dyn_dst_desc[3]; dyn_dst_i++){ptrszint dyn_dst_arg=(dyn_dst_desc[3]-dyn_dst_i)*4+4; dyn_dst_total*=(uint64)dyn_dst_desc[dyn_dst_arg+1];}" + CHR$(13) + CHR$(10)
+                copycode = copycode + "for(ptrszint dyn_dst_elem=0; dyn_dst_elem<(ptrszint)dyn_dst_total; dyn_dst_elem++){" + CHR$(13) + CHR$(10)
+                AppendDynUDTOwnFreeAt "(void*)dyn_dst_desc[0]", nestedudt, 0, _TOSTR$(memberelembytes), "dyn_dst_elem", copycode, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                copycode = copycode + "}" + CHR$(13) + CHR$(10)
+                copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            END IF
+            copycode = copycode + "if ((dyn_dst_desc[2]&1)&&dyn_dst_desc[0]&&dyn_dst_desc[0]!=(ptrszint)nothingvalue){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_dst_desc[2]&4) cmem_dynamic_free((uint8*)dyn_dst_desc[0]); else free((void*)dyn_dst_desc[0]);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_dst_desc[3]>0){" + CHR$(13) + CHR$(10)
+            copycode = copycode + "ptrszint dyn_dst_lock_index=dyn_dst_desc[3]*4+4;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "if (dyn_dst_desc[dyn_dst_lock_index]) free_mem_lock((mem_lock*)dyn_dst_desc[dyn_dst_lock_index]);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "free((void*)dyn_dst_desc);" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "*dyn_dst_slot=dyn_new_desc;" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
+            copycode = copycode + "}" + CHR$(13) + CHR$(10)
             acc$ = acc$ + copycode
-        ElseIf (udtetype(elemnum) And ISUDT) <> 0 Then
-            nestedudt = udtetype(elemnum) And UDTMASK
-            If UDTDynHasMemberArrays%(nestedudt, layout_mode) Then
-                If udtearrayelements(elemnum) Then
+        ELSEIF (udtetype(elemnum) AND ISUDT) <> 0 THEN
+            nestedudt = udtetype(elemnum) AND UDTMASK
+            IF UDTDynHasMemberArrays%(nestedudt, layout_mode) THEN
+                IF udtearrayelements(elemnum) THEN
                     ' Inline arrays of nested descriptor-bearing UDTs must clone every element.
                     ' Emit one compact C++ runtime loop so generated source size depends on TYPE
                     ' shape, not on the declared element count. The member id is globally unique
                     ' in the UDT metadata and therefore gives nested loops a collision-free name.
                     inline_bytes = UDTDynInlineElemBytes&(elemnum, layout_mode)
-                    loop_name = "dyn_desc_copy_i" + _ToStr$(elemnum)
-                    acc$ = acc$ + "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + _ToStr$(udtearrayelements(elemnum)) + ";" + loop_name + "++){" + Chr$(13) + Chr$(10)
-                    nesteddst$ = "(" + dstoff$ + "+" + _ToStr$(dynoffbytes) + "+" + loop_name + "*" + _ToStr$(inline_bytes) + ")"
-                    nestedsrc$ = "(" + srcoff$ + "+" + _ToStr$(dynoffbytes) + "+" + loop_name + "*" + _ToStr$(inline_bytes) + ")"
-                    AppendDynUDTDescCopy dstbase$, srcbase$, nestedudt, nesteddst$, nestedsrc$, _ToStr$(inline_bytes), acc$, layout_mode
-                    If Error_Happened Then Exit Sub
-                    acc$ = acc$ + "}" + Chr$(13) + Chr$(10)
-                Else
-                    nesteddst$ = "(" + dstoff$ + "+" + _ToStr$(dynoffbytes) + ")"
-                    nestedsrc$ = "(" + srcoff$ + "+" + _ToStr$(dynoffbytes) + ")"
-                    AppendDynUDTDescCopy dstbase$, srcbase$, nestedudt, nesteddst$, nestedsrc$, _ToStr$(UDTDynMemberSize&(elemnum) \ 8), acc$, layout_mode
-                    If Error_Happened Then Exit Sub
-                End If
-            End If
-        End If
+                    loop_name = "dyn_desc_copy_i" + _TOSTR$(elemnum)
+                    acc$ = acc$ + "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + _TOSTR$(udtearrayelements(elemnum)) + ";" + loop_name + "++){" + CHR$(13) + CHR$(10)
+                    nesteddst$ = "(" + dstoff$ + "+" + _TOSTR$(dynoffbytes) + "+" + loop_name + "*" + _TOSTR$(inline_bytes) + ")"
+                    nestedsrc$ = "(" + srcoff$ + "+" + _TOSTR$(dynoffbytes) + "+" + loop_name + "*" + _TOSTR$(inline_bytes) + ")"
+                    AppendDynUDTDescCopy dstbase$, srcbase$, nestedudt, nesteddst$, nestedsrc$, _TOSTR$(inline_bytes), acc$, layout_mode
+                    IF Error_Happened THEN EXIT SUB
+                    acc$ = acc$ + "}" + CHR$(13) + CHR$(10)
+                ELSE
+                    nesteddst$ = "(" + dstoff$ + "+" + _TOSTR$(dynoffbytes) + ")"
+                    nestedsrc$ = "(" + srcoff$ + "+" + _TOSTR$(dynoffbytes) + ")"
+                    AppendDynUDTDescCopy dstbase$, srcbase$, nestedudt, nesteddst$, nestedsrc$, _TOSTR$(UDTDynMemberSize&(elemnum) \ 8), acc$, layout_mode
+                    IF Error_Happened THEN EXIT SUB
+                END IF
+            END IF
+        END IF
         elemnum = udtenext(elemnum)
-    Loop
-End Sub
+    LOOP
+END SUB
 
 ' Parse one lower-bound/element-count pair from serialized TYPE member-array bounds metadata.
-Function ParseNextUDTArrayDescriptorDim& (descriptor$, descriptor_position As Long, lower_bound As Long, element_count As Long)
-    If descriptor_position <= 0 Then descriptor_position = 1
-    If descriptor_position > Len(descriptor$) Then Exit Function
+FUNCTION ParseNextUDTArrayDescriptorDim& (descriptor$, descriptor_position AS LONG, lower_bound AS LONG, element_count AS LONG)
+    IF descriptor_position <= 0 THEN descriptor_position = 1
+    IF descriptor_position > LEN(descriptor$) THEN EXIT FUNCTION
 
-    next_separator = InStr(descriptor_position, descriptor$, ";")
-    If next_separator Then
-        pair$ = Mid$(descriptor$, descriptor_position, next_separator - descriptor_position)
+    next_separator = INSTR(descriptor_position, descriptor$, ";")
+    IF next_separator THEN
+        pair$ = MID$(descriptor$, descriptor_position, next_separator - descriptor_position)
         descriptor_position = next_separator + 1
-    Else
-        pair$ = Mid$(descriptor$, descriptor_position)
-        descriptor_position = Len(descriptor$) + 1
-    End If
+    ELSE
+        pair$ = MID$(descriptor$, descriptor_position)
+        descriptor_position = LEN(descriptor$) + 1
+    END IF
 
-    comma_pos = InStr(pair$, ",")
-    If comma_pos = 0 Then Exit Function
+    comma_pos = INSTR(pair$, ",")
+    IF comma_pos = 0 THEN EXIT FUNCTION
 
-    lower_bound = Val(Left$(pair$, comma_pos - 1))
-    element_count = Val(Mid$(pair$, comma_pos + 1))
-    If element_count <= 0 Then Exit Function
+    lower_bound = VAL(LEFT$(pair$, comma_pos - 1))
+    element_count = VAL(MID$(pair$, comma_pos + 1))
+    IF element_count <= 0 THEN EXIT FUNCTION
 
     ParseNextUDTArrayDescriptorDim = -1
-End Function
+END FUNCTION
 
 
-Function typevalue2symbol$ (t)
+FUNCTION typevalue2symbol$ (t)
 
-    If t And ISSTRING Then
+    IF t AND ISSTRING THEN
         IF t AND ISFIXEDLENGTH THEN Give_Error "Cannot convert expression type to symbol": EXIT FUNCTION
         typevalue2symbol$ = "$"
         EXIT FUNCTION
