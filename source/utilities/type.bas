@@ -2069,14 +2069,8 @@ END SUB
 FUNCTION udt_dyn_array_elem_bytes& (element)
     IF udtearrayelements(element) = 0 THEN EXIT FUNCTION
 
-    ' Ordinary QB64 string arrays always store each qbs* in one uint64 slot,
-    ' including 32-bit builds. Descriptor-backed _Dynamic AS STRING payloads
-    ' must use the same 8-byte stride so they can be passed directly to a
-    ' normal items() AS STRING parameter. A pointer-sized stride would make
-    ' the parameter index the second element past the allocated payload on
-    ' 32-bit builds and can crash in qbs_set/qbs_free.
     IF DynMemVarStr%(element) THEN
-        udt_dyn_array_elem_bytes& = 8
+        udt_dyn_array_elem_bytes& = TARGET_BITS \ 8
         EXIT FUNCTION
     END IF
 

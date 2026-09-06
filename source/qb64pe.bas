@@ -8546,7 +8546,13 @@ DO
                 n$ = RTRIM$(id.callname)
                 bytesperelement$ = _TOSTR$((id.arraytype AND UDTMASK) \ 8)
                 udt = 0
-                IF id.arraytype AND ISSTRING THEN bytesperelement$ = _TOSTR$(id.tsize)
+                IF id.arraytype AND ISSTRING THEN
+                    IF id.arraytype AND ISFIXEDLENGTH THEN
+                        bytesperelement$ = _TOSTR$(id.tsize)
+                    ELSE
+                        bytesperelement$ = _TOSTR$(TARGET_BITS \ 8)
+                    END IF
+                END IF
                 IF id.arraytype AND ISOFFSETINBITS THEN bytesperelement$ = _TOSTR$((id.arraytype AND UDTMASK)) + "/8+1"
                 IF id.arraytype AND ISUDT THEN
                     udt = id.arraytype AND UDTMASK
@@ -8583,7 +8589,7 @@ DO
                     NEXT
                     WriteBufLineCpp MainTxtBuf, ";"
                     WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
-                    WriteBufLineCpp MainTxtBuf, "((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))->len=0;"
+                    WriteBufLineCpp MainTxtBuf, "(((qbs**)(" + n$ + "[0]))[tmp_long])->len=0;"
                     WriteBufLineCpp MainTxtBuf, "}"
                 ELSEIF udt > 0 AND udtxvariable(udt) AND NOT (id.dynudt AND UDTDynHasMemberArrays%(udt, id.dynudtmode)) THEN
                     ' Static arrays of UDTs must clear nested variable members element-by-element.
@@ -8619,7 +8625,7 @@ DO
                     NEXT
                     WriteBufLineCpp MainTxtBuf, ";"
                     WriteBufLineCpp MainTxtBuf, "while(tmp_long--){"
-                    WriteBufLineCpp MainTxtBuf, "qbs_free((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]));"
+                    WriteBufLineCpp MainTxtBuf, "qbs_free(((qbs**)(" + n$ + "[0]))[tmp_long]);"
                     WriteBufLineCpp MainTxtBuf, "}"
                     'free memory
                     WriteBufLineCpp MainTxtBuf, "free((void*)(" + n$ + "[0]));"
@@ -13245,7 +13251,7 @@ FOR x = 1 TO commonarraylistn
             WriteBufLineCpp MainTxtBuf, "bytei=0;"
             WriteBufLineCpp MainTxtBuf, "while(bytei<bytes){"
             WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'get size
-            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
+            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs**)(" + n2$ + "[0]))[bytei];" 'get element
             WriteBufLineCpp MainTxtBuf, "qbs_set(tqbs,qbs_new(int64val>>3,1));" 'change string size
             WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)tqbs->chr,int64val>>3," + NewByteElement$ + "),0);" 'get size
             WriteBufLineCpp MainTxtBuf, "bytei++;"
@@ -13325,7 +13331,7 @@ FOR x = 1 TO commonarraylistn
 
             WriteBufLineCpp MainTxtBuf, "bytei=0;"
             WriteBufLineCpp MainTxtBuf, "while(bytei<bytes){"
-            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs*)(((uint64*)(" + n2$ + "[0]))[bytei]));" 'get element
+            WriteBufLineCpp MainTxtBuf, "tqbs=((qbs**)(" + n2$ + "[0]))[bytei];" 'get element
             WriteBufLineCpp MainTxtBuf, "int64val=tqbs->len; int64val<<=3;"
             WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int64val,8," + NewByteElement$ + "),0);" 'size of element
             WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)tqbs->chr,tqbs->len," + NewByteElement$ + "),0);" 'element data
@@ -14683,7 +14689,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     'added 4 to [2] to indicate cmem array where appropriate
 
     e$ = elements$: n$ = n2$
-    IF elementsize = -2147483647 THEN stringarray = 1: elementsize = 8
+    IF elementsize = -2147483647 THEN stringarray = 1: elementsize = TARGET_BITS \ 8
 
     IF ASC(e$) = 63 THEN '?
         l$ = "(" + sp2 + ")"
@@ -14916,9 +14922,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 WriteBufLineCpp DataTxtBuf, "tmp_long=" + elesizestr$ + ";"
                 WriteBufLineCpp DataTxtBuf, "while(tmp_long--){"
                 IF cmem THEN
-                    WriteBufLineCpp DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                    WriteBufLineCpp DataTxtBuf, "((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
                 ELSE
-                    WriteBufLineCpp DataTxtBuf, "((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                    WriteBufLineCpp DataTxtBuf, "((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
                 END IF
                 WriteBufLineCpp DataTxtBuf, "}"
             ELSE
@@ -15079,9 +15085,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     'init individual strings / var-len UDT members in the NEW array
                     IF stringarray THEN
                         WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array/string content in cmem
-                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
                         WriteBufLine f12Buf%, "}else{" 'not in cmem
-                        WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                        WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
                         WriteBufLine f12Buf%, "}" 'not in cmem
                     ELSE
                         WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
@@ -15095,7 +15101,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                         WriteBufLine f12Buf%, "tmp_long=preserve_copy_count;"
                         WriteBufLine f12Buf%, "while(tmp_long--){"
                         IF stringarray THEN
-                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                            WriteBufLine f12Buf%, "qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);"
                         ELSE
                             acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", acc$
@@ -15119,7 +15125,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                         NEXT
 
                         IF stringarray THEN
-                            WriteBufLine f12Buf%, "qbs_set((qbs*)((uint64*)(preserve_new_ptr))[preserve_new_off],(qbs*)((uint64*)(preserve_old_ptr))[preserve_old_off]);"
+                            WriteBufLine f12Buf%, "qbs_set(((qbs**)(preserve_new_ptr))[preserve_new_off],((qbs**)(preserve_old_ptr))[preserve_old_off]);"
                         ELSE
                             acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", acc$
@@ -15141,7 +15147,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     'free OLD array content and OLD raw block
                     IF stringarray THEN
                         WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
-                        WriteBufLine f12Buf%, "while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);"
+                        WriteBufLine f12Buf%, "while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);"
                         WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
                     ELSE
                         WriteBufLine f12Buf%, n$ + "[0]=preserve_old_ptr;"
@@ -15167,9 +15173,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 'init individual strings
                 IF stringarray THEN
                     WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array is in cmem
-                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);"
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
                     WriteBufLine f12Buf%, "}else{" 'not in cmem
-                    WriteBufLine f12Buf%, "while(tmp_long--) ((uint64*)(" + n$ + "[0]))[tmp_long]=(uint64)qbs_new(0,0);"
+                    WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
                     WriteBufLine f12Buf%, "}" 'not in cmem
                 ELSE 'initialise udt's
                     WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
@@ -15194,7 +15200,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                         free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
                         WriteBufLine FreeTxtBuf, acc$ + "}"
                     ELSE
-                        WriteBufLine FreeTxtBuf, "while(tmp_long--) qbs_free((qbs*)((uint64*)(" + n$ + "[0]))[tmp_long]);"
+                        WriteBufLine FreeTxtBuf, "while(tmp_long--) qbs_free(((qbs**)(" + n$ + "[0]))[tmp_long]);"
                     END IF
                     WriteBufLine FreeTxtBuf, "free((void*)(" + n$ + "[0]));"
                     WriteBufLine FreeTxtBuf, "}"
@@ -17299,7 +17305,7 @@ SUB AppendWholeArrayAssign (dstarr AS STRING, srcarr AS STRING, arrtyp AS LONG, 
             WriteBufLine MainTxtBuf, "if (!is_error_pending()) memmove((void*)whole_arr_dst[0],(void*)whole_arr_src[0],(size_t)(whole_arr_total*(uint64)" + elemtext + "));"
         ELSE
             WriteBufLine MainTxtBuf, "for(ptrszint whole_arr_i=0; whole_arr_i<(ptrszint)whole_arr_total; whole_arr_i++){"
-            WriteBufLine MainTxtBuf, "qbs_set((qbs*)(((uint64*)whole_arr_dst[0])[whole_arr_i]),(qbs*)(((uint64*)whole_arr_src[0])[whole_arr_i]));"
+            WriteBufLine MainTxtBuf, "qbs_set(((qbs**)whole_arr_dst[0])[whole_arr_i],((qbs**)whole_arr_src[0])[whole_arr_i]);"
             WriteBufLine MainTxtBuf, "}"
         END IF
     ELSE
@@ -25678,7 +25684,7 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
                 offset$ = "&((uint8*)(" + n$ + "[0]))[(" + a$ + ")*" + _TOSTR$(id.tsize) + "]"
                 r$ = "qbs_new_fixed(" + offset$ + "," + _TOSTR$(id.tsize) + ",1)"
             ELSE
-                r$ = "((qbs*)(((uint64*)(" + n$ + "[0]))[" + a$ + "]))"
+                r$ = "(((qbs**)(" + n$ + "[0]))[" + a$ + "])"
             END IF
             stringprocessinghappened = 1
             refer$ = r$
@@ -26831,10 +26837,10 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             ELSE
                 WriteBufLineCpp MainTxtBuf, "tmp_long=" + a$ + ";"
                 IF method = 0 THEN
-                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + evaluatetotyp(e$, typ) + ");"
+                    l$ = "if (!is_error_pending()) qbs_set( ((qbs**)(" + n$ + "[0]))[tmp_long]," + evaluatetotyp(e$, typ) + ");"
                     IF Error_Happened THEN EXIT SUB
                 ELSE
-                    l$ = "if (!is_error_pending()) qbs_set( ((qbs*)(((uint64*)(" + n$ + "[0]))[tmp_long]))," + e$ + ");"
+                    l$ = "if (!is_error_pending()) qbs_set( ((qbs**)(" + n$ + "[0]))[tmp_long]," + e$ + ");"
                 END IF
                 WriteBufLineCpp MainTxtBuf, l$
             END IF
