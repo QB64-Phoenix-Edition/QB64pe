@@ -57,7 +57,7 @@ set MAKE_ARGS=USE_SYSTEM_MINGW=y
 rem The bootstrap compiler is built from ./internal/source, which is generated
 rem as 64-bit only. A 32-bit host cannot run the built bootstrap so it cannot
 rem build QB64-PE this way.
-powershell -NoProfile -Command "if ((Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq '64-bit') { exit 0 } else { exit 1 }" > nul 2> nul
+powershell -NoProfile -Command "if ([Environment]::Is64BitOperatingSystem) { exit 0 } else { exit 1 }" > nul 2> nul
 if errorlevel 1 (
     echo.
     echo Error: 32-bit Windows is not supported for building QB64-PE.
