@@ -57,8 +57,15 @@ set MAKE_ARGS=USE_SYSTEM_MINGW=y
 rem The bootstrap compiler is built from ./internal/source, which is generated
 rem as 64-bit only. A 32-bit host cannot run the built bootstrap so it cannot
 rem build QB64-PE this way.
-powershell -NoProfile -Command "if ((Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq '64-bit') { exit 0 } else { exit 1 }" > nul 2> nul
-if errorlevel 1 (
+rem
+rem Detect the OS bitness using standard environment variables. This avoids
+rem localized OSArchitecture strings and remains compatible with Windows 7.
+rem On native 64-bit cmd.exe, PROCESSOR_ARCHITECTURE names a 64-bit architecture.
+rem Under a 32-bit cmd.exe on 64-bit Windows, WOW64 defines PROCESSOR_ARCHITEW6432.
+set QB64PE_HOST_64BIT=
+if defined PROCESSOR_ARCHITEW6432 set QB64PE_HOST_64BIT=1
+if /i "%PROCESSOR_ARCHITECTURE:~-2%"=="64" set QB64PE_HOST_64BIT=1
+if not defined QB64PE_HOST_64BIT (
     echo.
     echo Error: 32-bit Windows is not supported for building QB64-PE.
     echo.
@@ -68,6 +75,7 @@ if errorlevel 1 (
     goto report_error
 )
 echo Detected 64-bit Windows.
+set QB64PE_HOST_64BIT=
 
 if defined USE_SYSTEM_MINGW goto verify_system_mingw
 

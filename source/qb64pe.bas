@@ -8719,26 +8719,8 @@ DO
                             GOTO erasedarray
                         END IF
 
-                        memberbytes = udtesize(member_element_id) \ 8
-                        memberelems = udtearrayelements(member_element_id)
-                        IF memberelems <= 0 THEN a$ = "Expected array-name": GOTO errmes
-                        elementbytes = memberbytes \ memberelems
-
-                        IF (udtetype(member_element_id) AND ISSTRING) <> 0 AND (udtetype(member_element_id) AND ISFIXEDLENGTH) = 0 THEN
-                            FOR i2 = 0 TO memberelems - 1
-                                WriteBufLineCpp MainTxtBuf, "(*(qbs**)(" + ptr$ + "+" + _TOSTR$(i2 * elementbytes) + "))->len=0;"
-                            NEXT
-                        ELSEIF (udtetype(member_element_id) AND ISSTRING) <> 0 AND (udtetype(member_element_id) AND ISFIXEDLENGTH) <> 0 THEN
-                            ' Match ordinary QB64PE static-array reset semantics for STRING * N.
-                            ' Fixed-length string storage is cleared to NUL bytes here, not spaces.
-                            WriteBufLineCpp MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
-                        ELSEIF (udtetype(member_element_id) AND ISUDT) <> 0 AND udtxvariable(udtetype(member_element_id) AND UDTMASK) THEN
-                            FOR i2 = 0 TO memberelems - 1
-                                clear_udt_with_varstrings ptr$, udtetype(member_element_id) AND UDTMASK, MainTxtBuf, i2 * elementbytes
-                            NEXT
-                        ELSE
-                            WriteBufLineCpp MainTxtBuf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(memberbytes) + ");"
-                        END IF
+                        IF udtearrayelements(member_element_id) <= 0 THEN a$ = "Expected array-name": GOTO errmes
+                        AppendInlineMemberReset ptr$, member_element_id, MainTxtBuf
                         GOTO erasedarray
                     END IF
                 END IF
@@ -8984,28 +8966,10 @@ DO
                                 redimPtr$ = "((char*)" + redimBase$ + "+(" + redimOffset$ + "))"
 
                                 IF redimoption = 1 THEN
-                                    redimMemberBytes = udtesize(redimE) \ 8
-                                    redimMemberElems = udtearrayelements(redimE)
-                                    redimElementBytes = redimMemberBytes \ redimMemberElems
-
                                     ' Inline TYPE member arrays (unmarked or _Static) have compile-time fixed storage.
                                     ' Plain REDIM on a matching descriptor reinitializes that inline storage.
                                     ' REDIM _PRESERVE/_RETAIN on the same descriptor must leave the bytes untouched.
-                                    IF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) = 0 THEN
-                                        FOR redimI2 = 0 TO redimMemberElems - 1
-                                            WriteBufLineCpp MainTxtBuf, "(*(qbs**)(" + redimPtr$ + "+" + _TOSTR$(redimI2 * redimElementBytes) + "))->len=0;"
-                                        NEXT
-                                    ELSEIF (udtetype(redimE) AND ISSTRING) <> 0 AND (udtetype(redimE) AND ISFIXEDLENGTH) <> 0 THEN
-                                        ' Match ordinary QB64PE static-array REDIM semantics for STRING * N.
-                                        ' Fixed-length string storage is reinitialized to NUL bytes, not spaces.
-                                        WriteBufLineCpp MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
-                                    ELSEIF (udtetype(redimE) AND ISUDT) <> 0 AND udtxvariable(udtetype(redimE) AND UDTMASK) THEN
-                                        FOR redimI2 = 0 TO redimMemberElems - 1
-                                            clear_udt_with_varstrings redimPtr$, udtetype(redimE) AND UDTMASK, MainTxtBuf, redimI2 * redimElementBytes
-                                        NEXT
-                                    ELSE
-                                        WriteBufLineCpp MainTxtBuf, "memset((void*)" + redimPtr$ + ",0," + _TOSTR$(redimMemberBytes) + ");"
-                                    END IF
+                                    AppendInlineMemberReset redimPtr$, redimE, MainTxtBuf
                                 END IF
                             END IF
 
@@ -14676,8 +14640,131 @@ END FUNCTION
 
 
 
+'Emit the coordinate-intersection traversal shared by REDIM _RETAIN copy paths.
+'Callers supply exactly one payload copy block for the current logical element; this helper
+'deliberately does not know whether that payload is a qbs owner, a packed _BIT value, a
+'descriptor-aware UDT, or raw fixed-size storage. Keeping payload semantics at the caller
+'prevents ownership rules from being merged merely because the multidimensional walk is common.
+'Compile-time loops below scale only with the number of array dimensions. The number of
+'preserved elements is traversed by the generated C++ for(;;) loop at runtime.
+SUB AppendRetainCoordinateWalk (buf, dimension_count, payload_code$)
+    DIM walk_dim AS LONG
+    DIM desc_slot AS LONG
+
+    WriteBufLine buf, "if (preserve_any){"
+    FOR walk_dim = 0 TO dimension_count - 1
+        WriteBufLine buf, "preserve_idx[" + _TOSTR$(walk_dim) + "]=preserve_lo[" + _TOSTR$(walk_dim) + "];"
+    NEXT
+    WriteBufLine buf, "for(;;){"
+
+    desc_slot = (dimension_count - 1) * 4 + 4
+    WriteBufLine buf, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(desc_slot) + "];"
+    WriteBufLine buf, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(desc_slot) + "];"
+    FOR walk_dim = 2 TO dimension_count
+        desc_slot = (dimension_count - walk_dim) * 4 + 4
+        WriteBufLine buf, "preserve_old_off+=(preserve_idx[" + _TOSTR$(walk_dim - 1) + "]-preserve_old_desc[" + _TOSTR$(desc_slot) + "])*preserve_old_desc[" + _TOSTR$(desc_slot + 2) + "];"
+        WriteBufLine buf, "preserve_new_off+=(preserve_idx[" + _TOSTR$(walk_dim - 1) + "]-alloc_new_desc[" + _TOSTR$(desc_slot) + "])*alloc_new_desc[" + _TOSTR$(desc_slot + 2) + "];"
+    NEXT
+
+    IF LEN(payload_code$) THEN WriteBufLine buf, payload_code$
+
+    WriteBufLine buf, "preserve_dim=0;"
+    WriteBufLine buf, "while (preserve_dim<" + _TOSTR$(dimension_count) + "){"
+    WriteBufLine buf, "preserve_idx[preserve_dim]++;"
+    WriteBufLine buf, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
+    WriteBufLine buf, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
+    WriteBufLine buf, "preserve_dim++;"
+    WriteBufLine buf, "}"
+    WriteBufLine buf, "if (preserve_dim==" + _TOSTR$(dimension_count) + ") break;"
+    WriteBufLine buf, "}"
+    WriteBufLine buf, "}"
+END SUB
+
+SUB AppendRawRedimPreserve (buf, array_name$, dimension_count AS LONG, element_bits AS LONG, bytes_per_element$, udt_index AS LONG, layout_mode AS LONG, bit_array AS INTEGER, redim_mode AS LONG)
+    ' Emit the common post-allocation REDIM preservation body for fixed/non-string arrays.
+    ' The caller deliberately owns allocation: cmem_dynamic_malloc() and calloc() have
+    ' different storage contracts, but both hand this helper a zero-filled preserve_new_ptr.
+    ' Keep payload semantics separate here: packed _BIT copies logical elements, ordinary
+    ' fixed payload uses memcpy, and descriptor-layout UDTs perform their established
+    ' descriptor init/deep-copy/free lifecycle after the raw payload operation.
+    DIM acc AS STRING
+
+    IF redim_mode = 2 THEN
+        IF bit_array THEN
+            ' Packed _BIT elements share bytes. Copy only surviving logical elements so
+            ' bits removed by a shrink cannot reappear after a later grow.
+            WriteBufLine buf, "tmp_long=(ptrszint)preserve_copy_count;"
+            WriteBufLine buf, "while(tmp_long--) setbits(" + _TOSTR$(element_bits) + ",(uint8*)(preserve_new_ptr),tmp_long,(int64)getubits(" + _TOSTR$(element_bits) + ",(uint8*)(preserve_old_ptr),tmp_long));"
+        ELSE
+            WriteBufLine buf, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytes_per_element$ + ");"
+        END IF
+    ELSEIF redim_mode = 3 THEN
+        IF bit_array THEN
+            ' _RETAIN offsets are logical element indexes for packed _BIT arrays.
+            acc = "setbits(" + _TOSTR$(element_bits) + ",(uint8*)(preserve_new_ptr),preserve_new_off,(int64)getubits(" + _TOSTR$(element_bits) + ",(uint8*)(preserve_old_ptr),preserve_old_off));"
+        ELSE
+            acc = "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytes_per_element$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytes_per_element$ + "," + bytes_per_element$ + ");"
+        END IF
+        AppendRetainCoordinateWalk buf, dimension_count, acc
+    END IF
+
+    IF udt_index > 0 AND layout_mode <> 0 AND UDTDynHasMemberArrays%(udt_index, layout_mode) THEN
+        ' Descriptor-layout UDT arrays cannot retain raw descriptor pointers. For an old
+        ' descriptor graph, initialize the new graph and deep-copy preserved descriptors
+        ' for _PRESERVE/_RETAIN, then release every descriptor in the old graph.
+        WriteBufLine buf, "if (preserve_old_flags&8){"
+        IF redim_mode > 1 THEN
+            WriteBufLine buf, array_name$ + "[0]=preserve_new_ptr;"
+            WriteBufLine buf, array_name$ + "[2]|=8;"
+            WriteBufLine buf, "tmp_long=(ptrszint)alloc_req_elems;"
+            WriteBufLine buf, "while(tmp_long--){"
+            acc = ""
+            AppendDynUDTDescInit array_name$, udt_index, 0, bytes_per_element$, acc, layout_mode
+            IF Error_Happened THEN EXIT SUB
+            WriteBufLine buf, acc
+            WriteBufLine buf, "}"
+
+            IF redim_mode = 2 THEN
+                WriteBufLine buf, "tmp_long=(ptrszint)preserve_copy_count;"
+                WriteBufLine buf, "while(tmp_long--){"
+                acc = ""
+                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt_index, "(tmp_long*" + bytes_per_element$ + ")", "(tmp_long*" + bytes_per_element$ + ")", bytes_per_element$, acc, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                WriteBufLine buf, acc
+                WriteBufLine buf, "}"
+            ELSEIF redim_mode = 3 THEN
+                acc = ""
+                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt_index, "(preserve_new_off*" + bytes_per_element$ + ")", "(preserve_old_off*" + bytes_per_element$ + ")", bytes_per_element$, acc, layout_mode
+                IF Error_Happened THEN EXIT SUB
+                AppendRetainCoordinateWalk buf, dimension_count, acc
+            END IF
+        END IF
+
+        WriteBufLine buf, "tmp_long=(ptrszint)preserve_old_total;"
+        WriteBufLine buf, "while(tmp_long--){"
+        acc = ""
+        AppendDynUDTDescFree "preserve_old_ptr", udt_index, 0, bytes_per_element$, acc, layout_mode
+        IF Error_Happened THEN EXIT SUB
+        WriteBufLine buf, acc
+        WriteBufLine buf, "}"
+        WriteBufLine buf, "}"
+    END IF
+
+    ' The old block can have come from either allocator regardless of where the new block
+    ' was allocated. Preserve the historical flag-based release and then commit the new ptr.
+    WriteBufLine buf, "if (preserve_old_flags&4){"
+    WriteBufLine buf, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
+    WriteBufLine buf, "}else{"
+    WriteBufLine buf, "free((void*)(preserve_old_ptr));"
+    WriteBufLine buf, "}"
+    WriteBufLine buf, array_name$ + "[0]=preserve_new_ptr;"
+END SUB
+
+
 'udt is non-zero if this is an array of udt's, to allow examining each udt element
 FUNCTION allocarray (n2$, elements$, elementsize, udt)
+    DIM bitarray AS INTEGER
+
     dimsharedlast = dimshared: dimshared = 0
     dynarrmode = udt_alloc_dynmode
 
@@ -14853,8 +14940,14 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
 
 
+    ' A negative element size identifies the packed _BIT array representation.
+    ' Keep that information separately after normalizing elementsize because REDIM
+    ' preservation must operate on logical bit elements, not on the deliberately
+    ' over-allocated byte storage used by getbits()/setbits().
+    bitarray = 0
     bytesperelement$ = _TOSTR$(elementsize)
     IF elementsize < 0 THEN
+        bitarray = -1
         elementsize = -elementsize
         bytesperelement$ = _TOSTR$(elementsize) + "/8+1"
     END IF
@@ -15110,38 +15203,13 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                         WriteBufLine f12Buf%, "}"
                     ELSEIF redimoption = 3 THEN
                         'copy overlap region by coordinates
-                        WriteBufLine f12Buf%, "if (preserve_any){"
-                        FOR i = 0 TO nume - 1
-                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
-                        NEXT
-                        WriteBufLine f12Buf%, "for(;;){"
-                        argi = (nume - 1) * 4 + 4
-                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
-                        FOR i = 2 TO nume
-                            argi = (nume - i) * 4 + 4
-                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
-                        NEXT
-
+                        acc$ = ""
                         IF stringarray THEN
-                            WriteBufLine f12Buf%, "qbs_set(((qbs**)(preserve_new_ptr))[preserve_new_off],((qbs**)(preserve_old_ptr))[preserve_old_off]);"
+                            acc$ = "qbs_set(((qbs**)(preserve_new_ptr))[preserve_new_off],((qbs**)(preserve_old_ptr))[preserve_old_off]);"
                         ELSE
-                            acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", acc$
-                            WriteBufLine f12Buf%, acc$
                         END IF
-
-                        WriteBufLine f12Buf%, "preserve_dim=0;"
-                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
-                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        WriteBufLine f12Buf%, "preserve_dim++;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "}"
+                        AppendRetainCoordinateWalk f12Buf%, nume, acc$
                     END IF
 
                     'free OLD array content and OLD raw block
@@ -15219,102 +15287,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
                     WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
                     WriteBufLine f12Buf%, "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
-                    IF redimoption = 2 THEN
-                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
-                    ELSEIF redimoption = 3 THEN
-                        WriteBufLine f12Buf%, "if (preserve_any){"
-                        FOR i = 0 TO nume - 1
-                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
-                        NEXT
-                        WriteBufLine f12Buf%, "for(;;){"
-                        argi = (nume - 1) * 4 + 4
-                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
-                        FOR i = 2 TO nume
-                            argi = (nume - i) * 4 + 4
-                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
-                        NEXT
-                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
-                        WriteBufLine f12Buf%, "preserve_dim=0;"
-                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
-                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        WriteBufLine f12Buf%, "preserve_dim++;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "}"
-                    END IF
-                    IF udt > 0 AND dynarrmode <> 0 AND UDTDynHasMemberArrays%(udt, dynarrmode) THEN
-                        ' REDIM/_PRESERVE/_RETAIN over descriptor-layout UDT arrays cannot use a raw
-                        ' byte copy. Initialize the new descriptor graph, deep-copy the preserved
-                        ' intersection, then free the old descriptor graph before releasing old data.
-                        WriteBufLine f12Buf%, "if (preserve_old_flags&8){"
-                        IF redimoption > 1 THEN
-                            WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
-                            WriteBufLine f12Buf%, n$ + "[2]|=8;"
-                            WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
-                            WriteBufLine f12Buf%, "while(tmp_long--){"
-                            acc$ = ""
-                            AppendDynUDTDescInit n$, udt, 0, bytesperelement$, acc$, dynarrmode
-                            IF Error_Happened THEN EXIT FUNCTION
-                            WriteBufLine f12Buf%, acc$
-                            WriteBufLine f12Buf%, "}"
-                            IF redimoption = 2 THEN
-                                WriteBufLine f12Buf%, "tmp_long=(ptrszint)preserve_copy_count;"
-                                WriteBufLine f12Buf%, "while(tmp_long--){"
-                                acc$ = ""
-                                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", bytesperelement$, acc$, dynarrmode
-                                IF Error_Happened THEN EXIT FUNCTION
-                                WriteBufLine f12Buf%, acc$
-                                WriteBufLine f12Buf%, "}"
-                            ELSEIF redimoption = 3 THEN
-                                WriteBufLine f12Buf%, "if (preserve_any){"
-                                FOR i = 0 TO nume - 1
-                                    WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
-                                NEXT
-                                WriteBufLine f12Buf%, "for(;;){"
-                                argi = (nume - 1) * 4 + 4
-                                WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                                WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
-                                FOR i = 2 TO nume
-                                    argi = (nume - i) * 4 + 4
-                                    WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                                    WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
-                                NEXT
-                                acc$ = ""
-                                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", bytesperelement$, acc$, dynarrmode
-                                IF Error_Happened THEN EXIT FUNCTION
-                                WriteBufLine f12Buf%, acc$
-                                WriteBufLine f12Buf%, "preserve_dim=0;"
-                                WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                                WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
-                                WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                                WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                                WriteBufLine f12Buf%, "preserve_dim++;"
-                                WriteBufLine f12Buf%, "}"
-                                WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                                WriteBufLine f12Buf%, "}"
-                                WriteBufLine f12Buf%, "}"
-                            END IF
-                        END IF
-                        WriteBufLine f12Buf%, "tmp_long=(ptrszint)preserve_old_total;"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
-                        acc$ = ""
-                        AppendDynUDTDescFree "preserve_old_ptr", udt, 0, bytesperelement$, acc$, dynarrmode
-                        IF Error_Happened THEN EXIT FUNCTION
-                        WriteBufLine f12Buf%, acc$
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "}"
-                    END IF
-                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
-                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
-                    WriteBufLine f12Buf%, "}else{"
-                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
-                    WriteBufLine f12Buf%, "}"
-                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    AppendRawRedimPreserve f12Buf%, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
+                    IF Error_Happened THEN EXIT FUNCTION
                     WriteBufLine f12Buf%, "}else{"
                 END IF
 
@@ -15333,99 +15307,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                     WriteBufLine f12Buf%, "if (preserve_old_total){"
                     WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
                     WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
-                    IF redimoption = 2 THEN
-                        WriteBufLine f12Buf%, "if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*" + bytesperelement$ + ");"
-                    ELSEIF redimoption = 3 THEN
-                        WriteBufLine f12Buf%, "if (preserve_any){"
-                        FOR i = 0 TO nume - 1
-                            WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
-                        NEXT
-                        WriteBufLine f12Buf%, "for(;;){"
-                        argi = (nume - 1) * 4 + 4
-                        WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                        WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
-                        FOR i = 2 TO nume
-                            argi = (nume - i) * 4 + 4
-                            WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                            WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
-                        NEXT
-                        WriteBufLine f12Buf%, "memcpy(((uint8*)(preserve_new_ptr))+preserve_new_off*" + bytesperelement$ + ",((uint8*)(preserve_old_ptr))+preserve_old_off*" + bytesperelement$ + "," + bytesperelement$ + ");"
-                        WriteBufLine f12Buf%, "preserve_dim=0;"
-                        WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
-                        WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                        WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                        WriteBufLine f12Buf%, "preserve_dim++;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "}"
-                    END IF
-                    IF udt > 0 AND dynarrmode <> 0 AND UDTDynHasMemberArrays%(udt, dynarrmode) THEN
-                        WriteBufLine f12Buf%, "if (preserve_old_flags&8){"
-                        IF redimoption > 1 THEN
-                            WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
-                            WriteBufLine f12Buf%, n$ + "[2]|=8;"
-                            WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
-                            WriteBufLine f12Buf%, "while(tmp_long--){"
-                            acc$ = ""
-                            AppendDynUDTDescInit n$, udt, 0, bytesperelement$, acc$, dynarrmode
-                            IF Error_Happened THEN EXIT FUNCTION
-                            WriteBufLine f12Buf%, acc$
-                            WriteBufLine f12Buf%, "}"
-                            IF redimoption = 2 THEN
-                                WriteBufLine f12Buf%, "tmp_long=(ptrszint)preserve_copy_count;"
-                                WriteBufLine f12Buf%, "while(tmp_long--){"
-                                acc$ = ""
-                                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", bytesperelement$, acc$, dynarrmode
-                                IF Error_Happened THEN EXIT FUNCTION
-                                WriteBufLine f12Buf%, acc$
-                                WriteBufLine f12Buf%, "}"
-                            ELSEIF redimoption = 3 THEN
-                                WriteBufLine f12Buf%, "if (preserve_any){"
-                                FOR i = 0 TO nume - 1
-                                    WriteBufLine f12Buf%, "preserve_idx[" + _TOSTR$(i) + "]=preserve_lo[" + _TOSTR$(i) + "];"
-                                NEXT
-                                WriteBufLine f12Buf%, "for(;;){"
-                                argi = (nume - 1) * 4 + 4
-                                WriteBufLine f12Buf%, "preserve_old_off=preserve_idx[0]-preserve_old_desc[" + _TOSTR$(argi) + "];"
-                                WriteBufLine f12Buf%, "preserve_new_off=preserve_idx[0]-alloc_new_desc[" + _TOSTR$(argi) + "];"
-                                FOR i = 2 TO nume
-                                    argi = (nume - i) * 4 + 4
-                                    WriteBufLine f12Buf%, "preserve_old_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-preserve_old_desc[" + _TOSTR$(argi) + "])*preserve_old_desc[" + _TOSTR$(argi + 2) + "];"
-                                    WriteBufLine f12Buf%, "preserve_new_off+=(preserve_idx[" + _TOSTR$(i - 1) + "]-alloc_new_desc[" + _TOSTR$(argi) + "])*alloc_new_desc[" + _TOSTR$(argi + 2) + "];"
-                                NEXT
-                                acc$ = ""
-                                AppendDynUDTDescCopy "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", bytesperelement$, acc$, dynarrmode
-                                IF Error_Happened THEN EXIT FUNCTION
-                                WriteBufLine f12Buf%, acc$
-                                WriteBufLine f12Buf%, "preserve_dim=0;"
-                                WriteBufLine f12Buf%, "while (preserve_dim<" + _TOSTR$(nume) + "){"
-                                WriteBufLine f12Buf%, "preserve_idx[preserve_dim]++;"
-                                WriteBufLine f12Buf%, "if (preserve_idx[preserve_dim]<=preserve_hi[preserve_dim]) break;"
-                                WriteBufLine f12Buf%, "preserve_idx[preserve_dim]=preserve_lo[preserve_dim];"
-                                WriteBufLine f12Buf%, "preserve_dim++;"
-                                WriteBufLine f12Buf%, "}"
-                                WriteBufLine f12Buf%, "if (preserve_dim==" + _TOSTR$(nume) + ") break;"
-                                WriteBufLine f12Buf%, "}"
-                                WriteBufLine f12Buf%, "}"
-                            END IF
-                        END IF
-                        WriteBufLine f12Buf%, "tmp_long=(ptrszint)preserve_old_total;"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
-                        acc$ = ""
-                        AppendDynUDTDescFree "preserve_old_ptr", udt, 0, bytesperelement$, acc$, dynarrmode
-                        IF Error_Happened THEN EXIT FUNCTION
-                        WriteBufLine f12Buf%, acc$
-                        WriteBufLine f12Buf%, "}"
-                        WriteBufLine f12Buf%, "}"
-                    END IF
-                    WriteBufLine f12Buf%, "if (preserve_old_flags&4){"
-                    WriteBufLine f12Buf%, "cmem_dynamic_free((uint8*)(preserve_old_ptr));"
-                    WriteBufLine f12Buf%, "}else{"
-                    WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
-                    WriteBufLine f12Buf%, "}"
-                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
+                    AppendRawRedimPreserve f12Buf%, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
+                    IF Error_Happened THEN EXIT FUNCTION
                     WriteBufLine f12Buf%, "}else{"
                 END IF
                 'standard allocation method
@@ -23640,7 +23523,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 IF b1 THEN
                     IF isoperator(a2$) THEN
-                        IF a2$ <> "^" AND a2$ <> CHR$(241) THEN
+                        IF a2$ <> "^" AND a2$ <> CHR$(241) AND UCASE$(a2$) <> "NOT" THEN  'solve issue #23
                             insertelements a$, i - 1, "}"
                             insertelements a$, b1, "{"
                             n = n + 2
@@ -26013,19 +25896,85 @@ SUB regid
 
 END SUB
 
+SUB AppendInlineMemberReset (ptr$, member_id AS LONG, buf)
+    ' Emit the legacy reset semantics for one fixed inline TYPE member array. ERASE and
+    ' plain REDIM share this exact operation: variable STRING owners remain allocated but
+    ' their lengths become zero, owner UDT elements are recursively cleared, and fixed /
+    ' non-owning storage is zeroed. REDIM _PRESERVE/_RETAIN never call this helper.
+    '
+    ' Crucially, declared member-array element counts are runtime work. Do not iterate
+    ' udtearrayelements() in BASIC here: a large fixed member array must generate one compact
+    ' C++ loop rather than one statement block per element in the compiler output.
+    DIM member_bytes AS LONG
+    DIM member_elems AS LONG
+    DIM elem_bytes AS LONG
+    DIM nested_udt AS LONG
+    DIM count_text AS STRING
+    DIM stride_text AS STRING
+    DIM loop_name AS STRING
+
+    member_elems = udtearrayelements(member_id)
+    IF member_elems <= 0 THEN EXIT SUB
+
+    member_bytes = udtesize(member_id) \ 8
+    elem_bytes = member_bytes \ member_elems
+    count_text = _TOSTR$(member_elems)
+    stride_text = _TOSTR$(elem_bytes)
+    loop_name = "inline_member_reset_i"
+
+    IF (udtetype(member_id) AND ISSTRING) <> 0 AND (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+        ' qbs* slots already own live string objects. Reset content without replacing owners.
+        WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+        WriteBufLineCpp buf, "(*(qbs**)((" + ptr$ + ")+" + loop_name + "*" + stride_text + "))->len=0;"
+        WriteBufLineCpp buf, "}"
+    ELSEIF (udtetype(member_id) AND ISSTRING) <> 0 AND (udtetype(member_id) AND ISFIXEDLENGTH) <> 0 THEN
+        ' Match ordinary QB64PE static-array reset semantics for STRING * N: NUL bytes, not spaces.
+        WriteBufLineCpp buf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(member_bytes) + ");"
+    ELSEIF (udtetype(member_id) AND ISUDT) <> 0 AND udtxvariable(udtetype(member_id) AND UDTMASK) THEN
+        ' Each owner UDT element must preserve its live qbs objects while clearing payload.
+        ' Shift the base pointer by the runtime index and reuse the established scalar CLEAR
+        ' adapter with offset zero. This preserves its exact nested-owner semantics while the
+        ' outer member-array traversal is emitted only once.
+        nested_udt = udtetype(member_id) AND UDTMASK
+        WriteBufLineCpp buf, "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+        clear_udt_with_varstrings "((" + ptr$ + ")+" + loop_name + "*" + stride_text + ")", nested_udt, buf, 0
+        WriteBufLineCpp buf, "}"
+    ELSE
+        ' Numeric, fixed-string, and non-owning UDT arrays have no per-element ownership.
+        WriteBufLineCpp buf, "memset((void*)" + ptr$ + ",0," + _TOSTR$(member_bytes) + ");"
+    END IF
+END SUB
+
 SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff$, acc$) 'helper for _Preserve for UDT contains strings and strings array
+    ' Keep the historical entry point stable. The shared worker tracks generated-loop
+    ' nesting so fixed member-array element counts never expand into one C++ statement
+    ' per element during compiler execution.
+    copy_preserve_udt_varstrings_ex dstbase$, srcbase$, u, dstoff$, srcoff$, acc$, 0
+END SUB
+
+SUB copy_preserve_udt_varstrings_ex (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff$, acc$, loop_depth AS LONG)
+    ' Emit ownership-aware copy code for the legacy inline UDT layout used by
+    ' REDIM _PRESERVE/_RETAIN. TYPE metadata is still walked at compile time, but
+    ' fixed member-array payloads are traversed by generated C++ runtime loops.
+    ' This keeps generated source size independent of declared member-array count.
+    '
+    ' Variable STRING slots use qbs_set() so ownership remains deep-copied.
+    ' Nested owner UDT arrays recurse once inside the generated loop body.
+    ' Fixed/non-owning arrays remain one contiguous memcpy, matching legacy behavior.
     DIM e AS LONG
     DIM offbytes AS LONG
     DIM memberbytes AS LONG
     DIM elembytes AS LONG
     DIM t AS LONG
-    DIM i AS LONG
     DIM dstmember$
     DIM srcmember$
     DIM dstq$
     DIM srcq$
     DIM nextdstoff$
     DIM nextsrcoff$
+    DIM loop_name AS STRING
+    DIM count_text AS STRING
+    DIM stride_text AS STRING
 
     offbytes = 0
     e = udtxnext(u)
@@ -26036,21 +25985,25 @@ SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff
 
         IF udtearrayelements(e) THEN
             elembytes = memberbytes \ udtearrayelements(e)
+            count_text = _TOSTR$(udtearrayelements(e))
+            stride_text = _TOSTR$(elembytes)
 
             IF (t AND ISSTRING) <> 0 AND (t AND ISFIXEDLENGTH) = 0 THEN
-                FOR i = 0 TO udtearrayelements(e) - 1
-                    dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + "))"
-                    srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + "))"
-                    dstq$ = "(*(qbs**)(" + dstmember$ + "))"
-                    srcq$ = "(*(qbs**)(" + srcmember$ + "))"
-                    acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
-                NEXT
+                loop_name = "preserve_udt_i" + _TOSTR$(loop_depth)
+                acc$ = acc$ + CRLF + "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "+" + loop_name + "*" + stride_text + "))"
+                srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes) + "+" + loop_name + "*" + stride_text + "))"
+                dstq$ = "(*(qbs**)(" + dstmember$ + "))"
+                srcq$ = "(*(qbs**)(" + srcmember$ + "))"
+                acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
+                acc$ = acc$ + CRLF + "}"
             ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND UDTMASK) THEN
-                FOR i = 0 TO udtearrayelements(e) - 1
-                    nextdstoff$ = "((" + dstoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
-                    nextsrcoff$ = "((" + srcoff$ + ")+" + _TOSTR$(offbytes + i * elembytes) + ")"
-                    copy_preserve_udt_varstrings dstbase$, srcbase$, t AND UDTMASK, nextdstoff$, nextsrcoff$, acc$
-                NEXT
+                loop_name = "preserve_udt_i" + _TOSTR$(loop_depth)
+                acc$ = acc$ + CRLF + "for(ptrszint " + loop_name + "=0;" + loop_name + "<" + count_text + ";" + loop_name + "++){"
+                nextdstoff$ = "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "+" + loop_name + "*" + stride_text + ")"
+                nextsrcoff$ = "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + "+" + loop_name + "*" + stride_text + ")"
+                copy_preserve_udt_varstrings_ex dstbase$, srcbase$, t AND UDTMASK, nextdstoff$, nextsrcoff$, acc$, loop_depth + 1
+                acc$ = acc$ + CRLF + "}"
             ELSE
                 dstmember$ = "((char*)(" + dstbase$ + ")+((" + dstoff$ + ")+" + _TOSTR$(offbytes) + "))"
                 srcmember$ = "((char*)(" + srcbase$ + ")+((" + srcoff$ + ")+" + _TOSTR$(offbytes) + "))"
@@ -26066,7 +26019,7 @@ SUB copy_preserve_udt_varstrings (dstbase$, srcbase$, u AS LONG, dstoff$, srcoff
                 srcq$ = "(*(qbs**)(" + srcmember$ + "))"
                 acc$ = acc$ + CRLF + "qbs_set(" + dstq$ + "," + srcq$ + ");"
             ELSEIF (t AND ISUDT) <> 0 AND udtxvariable(t AND UDTMASK) THEN
-                copy_preserve_udt_varstrings dstbase$, srcbase$, t AND UDTMASK, "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + ")", "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + ")", acc$
+                copy_preserve_udt_varstrings_ex dstbase$, srcbase$, t AND UDTMASK, "((" + dstoff$ + ")+" + _TOSTR$(offbytes) + ")", "((" + srcoff$ + ")+" + _TOSTR$(offbytes) + ")", acc$, loop_depth
             ELSE
                 acc$ = acc$ + CRLF + "memcpy((void*)(" + dstmember$ + "),(void*)(" + srcmember$ + ")," + _TOSTR$(memberbytes) + ");"
             END IF
