@@ -1,9 +1,20 @@
-float *_FUNC_MAP_SINGLE_MAP=NULL;
-#line 8514 "ide/ide_methods.bas"
-if(_FUNC_MAP_SINGLE_MAP==NULL){
-#line 8514 "ide/ide_methods.bas"
-_FUNC_MAP_SINGLE_MAP=(float*)mem_static_malloc(4);
-#line 8514 "ide/ide_methods.bas"
-*_FUNC_MAP_SINGLE_MAP=0;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
+qbs*oldstr4415=NULL;
+#line 2 "utilities/give_error.bas"
+if(_SUB_GIVE_ERROR_STRING_A->tmp||_SUB_GIVE_ERROR_STRING_A->fixed||_SUB_GIVE_ERROR_STRING_A->readonly){
+#line 2 "utilities/give_error.bas"
+oldstr4415=_SUB_GIVE_ERROR_STRING_A;
+#line 2 "utilities/give_error.bas"
+if (oldstr4415->cmem_descriptor){
+#line 2 "utilities/give_error.bas"
+_SUB_GIVE_ERROR_STRING_A=qbs_new_cmem(oldstr4415->len,0);
+#line 2 "utilities/give_error.bas"
+}else{
+#line 2 "utilities/give_error.bas"
+_SUB_GIVE_ERROR_STRING_A=qbs_new(oldstr4415->len,0);
+#line 2 "utilities/give_error.bas"
+}
+#line 2 "utilities/give_error.bas"
+memcpy(_SUB_GIVE_ERROR_STRING_A->chr,oldstr4415->chr,oldstr4415->len);
+#line 2 "utilities/give_error.bas"
 }

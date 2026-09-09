@@ -1,178 +1,382 @@
-#line 8746 "ide/ide_methods.bas"
-int32 FUNC_MULTISEARCH(qbs*_FUNC_MULTISEARCH_STRING___FULLTEXT,qbs*_FUNC_MULTISEARCH_STRING___SEARCHSTRING){
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
+qbs* FUNC_FINDWORKINGTERMINAL(){
+#line 7 "utilities/terminal.bas"
 qbs *tqbs;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 ptrszint tmp_long;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 int32 tmp_fileno;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 #include "data353.txt"
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 mem_lock *sf_mem_lock;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 new_mem_lock();
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 sf_mem_lock->type=3;
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 libqb_check_stack();
-#line 8746 "ide/ide_methods.bas"
+#line 7 "utilities/terminal.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 8752 "ide/ide_methods.bas"
+#line 8 "utilities/terminal.bas"
 do{
-#line 8752 "ide/ide_methods.bas"
-qbs_set(_FUNC_MULTISEARCH_STRING_FULLTEXT,qbs__trim(qbs_ucase(_FUNC_MULTISEARCH_STRING___FULLTEXT)));
-#line 8752 "ide/ide_methods.bas"
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&1){
+if (!error_occurred) error(10);
+}else{
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=( 8 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&4){
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=qbs_new(0,0);
+}
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4]=alloc_new_desc[4];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]=alloc_new_desc[5];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[6]=alloc_new_desc[6];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[7]=alloc_new_desc[7];
+}
+}
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&1){
+if (!error_occurred) error(10);
+}else{
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=( 8 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(8);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&4){
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=qbs_new_cmem(0,0);
+}else{
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=qbs_new(0,0);
+}
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4]=alloc_new_desc[4];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]=alloc_new_desc[5];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[6]=alloc_new_desc[6];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[7]=alloc_new_desc[7];
+}
+}
+#line 8 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,8,"terminal.bas");}while(r);
+#line 9 "utilities/terminal.bas"
+do{
+#line 9 "utilities/terminal.bas"
+tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 9 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("gnome-terminal",14));
+#line 9 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 8752 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8752,"ide_methods.bas");}while(r);
-#line 8753 "ide/ide_methods.bas"
+#line 9 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,9,"terminal.bas");}while(r);
+#line 9 "utilities/terminal.bas"
 do{
-#line 8753 "ide/ide_methods.bas"
-qbs_set(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs__trim(qbs_ucase(_FUNC_MULTISEARCH_STRING___SEARCHSTRING)));
-#line 8753 "ide/ide_methods.bas"
+#line 9 "utilities/terminal.bas"
+tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 9 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-- $$ $@",8));
+#line 9 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 8753 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8753,"ide_methods.bas");}while(r);
-#line 8754 "ide/ide_methods.bas"
-S_54350:;
-#line 8754 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_MULTISEARCH_STRING_FULLTEXT->len== 0 )))||is_error_pending()){
-#line 8754 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8754,"ide_methods.bas");if(r)goto S_54350;}
-#line 8754 "ide/ide_methods.bas"
+#line 9 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,9,"terminal.bas");}while(r);
+#line 10 "utilities/terminal.bas"
 do{
-#line 8754 "ide/ide_methods.bas"
+#line 10 "utilities/terminal.bas"
+tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 10 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("konsole",7));
+#line 10 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 10 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,10,"terminal.bas");}while(r);
+#line 10 "utilities/terminal.bas"
+do{
+#line 10 "utilities/terminal.bas"
+tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 10 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 10 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 10 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,10,"terminal.bas");}while(r);
+#line 11 "utilities/terminal.bas"
+do{
+#line 11 "utilities/terminal.bas"
+tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 11 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("lxterminal",10));
+#line 11 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,11,"terminal.bas");}while(r);
+#line 11 "utilities/terminal.bas"
+do{
+#line 11 "utilities/terminal.bas"
+tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 11 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 11 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,11,"terminal.bas");}while(r);
+#line 12 "utilities/terminal.bas"
+do{
+#line 12 "utilities/terminal.bas"
+tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 12 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("mate-terminal",13));
+#line 12 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,12,"terminal.bas");}while(r);
+#line 12 "utilities/terminal.bas"
+do{
+#line 12 "utilities/terminal.bas"
+tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 12 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-x $$ $@",8));
+#line 12 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,12,"terminal.bas");}while(r);
+#line 13 "utilities/terminal.bas"
+do{
+#line 13 "utilities/terminal.bas"
+tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 13 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("xfce4-terminal",14));
+#line 13 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 13 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,13,"terminal.bas");}while(r);
+#line 13 "utilities/terminal.bas"
+do{
+#line 13 "utilities/terminal.bas"
+tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 13 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-x $$ $@",8));
+#line 13 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 13 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,13,"terminal.bas");}while(r);
+#line 14 "utilities/terminal.bas"
+do{
+#line 14 "utilities/terminal.bas"
+tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 14 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("urxvt",5));
+#line 14 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,14,"terminal.bas");}while(r);
+#line 14 "utilities/terminal.bas"
+do{
+#line 14 "utilities/terminal.bas"
+tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 14 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 14 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,14,"terminal.bas");}while(r);
+#line 15 "utilities/terminal.bas"
+do{
+#line 15 "utilities/terminal.bas"
+tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 15 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("xterm",5));
+#line 15 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,15,"terminal.bas");}while(r);
+#line 15 "utilities/terminal.bas"
+do{
+#line 15 "utilities/terminal.bas"
+tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 15 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 15 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,15,"terminal.bas");}while(r);
+#line 16 "utilities/terminal.bas"
+do{
+#line 16 "utilities/terminal.bas"
+tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 16 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("ptyxis",6));
+#line 16 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,16,"terminal.bas");}while(r);
+#line 16 "utilities/terminal.bas"
+do{
+#line 16 "utilities/terminal.bas"
+tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 16 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-- $$ $@",8));
+#line 16 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,16,"terminal.bas");}while(r);
+#line 18 "utilities/terminal.bas"
+S_43666:;
+#line 18 "utilities/terminal.bas"
+fornext_value4443= 1 ;
+#line 18 "utilities/terminal.bas"
+fornext_finalvalue4443=func_ubound(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES,1,1);
+#line 18 "utilities/terminal.bas"
+fornext_step4443= 1 ;
+#line 18 "utilities/terminal.bas"
+if (fornext_step4443<0) fornext_step_negative4443=1; else fornext_step_negative4443=0;
+#line 18 "utilities/terminal.bas"
+if (is_error_pending()) goto fornext_error4443;
+#line 18 "utilities/terminal.bas"
+goto fornext_entrylabel4443;
+#line 18 "utilities/terminal.bas"
+while(1){
+#line 18 "utilities/terminal.bas"
+fornext_value4443=fornext_step4443+(*_FUNC_FINDWORKINGTERMINAL_LONG_I);
+#line 18 "utilities/terminal.bas"
+fornext_entrylabel4443:
+#line 18 "utilities/terminal.bas"
+*_FUNC_FINDWORKINGTERMINAL_LONG_I=fornext_value4443;
+#line 18 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 18 "utilities/terminal.bas"
+if (fornext_step_negative4443){
+#line 18 "utilities/terminal.bas"
+if (fornext_value4443<fornext_finalvalue4443) break;
+#line 18 "utilities/terminal.bas"
+}else{
+#line 18 "utilities/terminal.bas"
+if (fornext_value4443>fornext_finalvalue4443) break;
+#line 18 "utilities/terminal.bas"
+}
+#line 18 "utilities/terminal.bas"
+fornext_error4443:;
+#line 18 "utilities/terminal.bas"
+if(qbevent){evnt(28624,18,"terminal.bas");if(r)goto S_43666;}
+#line 19 "utilities/terminal.bas"
+do{
+#line 19 "utilities/terminal.bas"
+*_FUNC_FINDWORKINGTERMINAL_LONG_RET=func_shell(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("command -v ",11),func_chr( 34 )),(((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])])),func_chr( 34 )),qbs_new_txt_len(" >/dev/null 2>&1",16)));
+#line 19 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 19 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,19,"terminal.bas");}while(r);
+#line 21 "utilities/terminal.bas"
+S_43668:;
+#line 21 "utilities/terminal.bas"
+if ((-(*_FUNC_FINDWORKINGTERMINAL_LONG_RET== 0 ))||is_error_pending()){
+#line 21 "utilities/terminal.bas"
+if(qbevent){evnt(28624,21,"terminal.bas");if(r)goto S_43668;}
+#line 22 "utilities/terminal.bas"
+do{
+#line 22 "utilities/terminal.bas"
+qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_add(qbs_add((((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])]),qbs_new_txt_len(" ",1)),(((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5])])));
+#line 22 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 22 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,22,"terminal.bas");}while(r);
+#line 23 "utilities/terminal.bas"
+do{
+#line 23 "utilities/terminal.bas"
 goto exit_subfunc;
-#line 8754 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8754,"ide_methods.bas");}while(r);
-#line 8754 "ide/ide_methods.bas"
+#line 23 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,23,"terminal.bas");}while(r);
+#line 24 "utilities/terminal.bas"
 }
-#line 8755 "ide/ide_methods.bas"
-S_54353:;
-#line 8755 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_MULTISEARCH_STRING_SEARCHSTRING->len== 0 )))||is_error_pending()){
-#line 8755 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8755,"ide_methods.bas");if(r)goto S_54353;}
-#line 8755 "ide/ide_methods.bas"
-do{
-#line 8755 "ide/ide_methods.bas"
-goto exit_subfunc;
-#line 8755 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8755,"ide_methods.bas");}while(r);
-#line 8755 "ide/ide_methods.bas"
+#line 25 "utilities/terminal.bas"
+fornext_continue_4442:;
+#line 25 "utilities/terminal.bas"
 }
-#line 8757 "ide/ide_methods.bas"
+#line 25 "utilities/terminal.bas"
+fornext_exit_4442:;
+#line 27 "utilities/terminal.bas"
 do{
-#line 8757 "ide/ide_methods.bas"
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= -1 ;
-#line 8757 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8757,"ide_methods.bas");}while(r);
-#line 8758 "ide/ide_methods.bas"
-do{
-#line 8758 "ide/ide_methods.bas"
-*_FUNC_MULTISEARCH_LONG_FINDPLUS=func_instr(NULL,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs_new_txt_len("+",1),0);
-#line 8758 "ide/ide_methods.bas"
+#line 27 "utilities/terminal.bas"
+qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_new_txt_len("",0));
+#line 27 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 8758 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8758,"ide_methods.bas");}while(r);
-#line 8759 "ide/ide_methods.bas"
-S_54358:;
-#line 8759 "ide/ide_methods.bas"
-while((*_FUNC_MULTISEARCH_LONG_FINDPLUS)||is_error_pending()){
-#line 8759 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8759,"ide_methods.bas");if(r)goto S_54358;}
-#line 8760 "ide/ide_methods.bas"
-do{
-#line 8760 "ide/ide_methods.bas"
-qbs_set(_FUNC_MULTISEARCH_STRING_THISTERM,qbs_left(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,*_FUNC_MULTISEARCH_LONG_FINDPLUS- 1 ));
-#line 8760 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 8760 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8760,"ide_methods.bas");}while(r);
-#line 8761 "ide/ide_methods.bas"
-do{
-#line 8761 "ide/ide_methods.bas"
-qbs_set(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,func_mid(_FUNC_MULTISEARCH_STRING_SEARCHSTRING,*_FUNC_MULTISEARCH_LONG_FINDPLUS+ 1 ,NULL,0));
-#line 8761 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 8761 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8761,"ide_methods.bas");}while(r);
-#line 8762 "ide/ide_methods.bas"
-S_54361:;
-#line 8762 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_MULTISEARCH_STRING_FULLTEXT,_FUNC_MULTISEARCH_STRING_THISTERM,0)== 0 )))||is_error_pending()){
-#line 8762 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8762,"ide_methods.bas");if(r)goto S_54361;}
-#line 8762 "ide/ide_methods.bas"
-do{
-#line 8762 "ide/ide_methods.bas"
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= 0 ;
-#line 8762 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8762,"ide_methods.bas");}while(r);
-#line 8762 "ide/ide_methods.bas"
-do{
-#line 8762 "ide/ide_methods.bas"
-goto exit_subfunc;
-#line 8762 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8762,"ide_methods.bas");}while(r);
-#line 8762 "ide/ide_methods.bas"
-}
-#line 8763 "ide/ide_methods.bas"
-do{
-#line 8763 "ide/ide_methods.bas"
-*_FUNC_MULTISEARCH_LONG_FINDPLUS=func_instr(NULL,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,qbs_new_txt_len("+",1),0);
-#line 8763 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 8763 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8763,"ide_methods.bas");}while(r);
-#line 8764 "ide/ide_methods.bas"
-ww_continue_5536:;
-#line 8764 "ide/ide_methods.bas"
-}
-#line 8764 "ide/ide_methods.bas"
-ww_exit_5536:;
-#line 8766 "ide/ide_methods.bas"
-S_54367:;
-#line 8766 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,_FUNC_MULTISEARCH_STRING_SEARCHSTRING->len))||is_error_pending()){
-#line 8766 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8766,"ide_methods.bas");if(r)goto S_54367;}
-#line 8767 "ide/ide_methods.bas"
-S_54368:;
-#line 8767 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_MULTISEARCH_STRING_FULLTEXT,_FUNC_MULTISEARCH_STRING_SEARCHSTRING,0)== 0 )))||is_error_pending()){
-#line 8767 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,8767,"ide_methods.bas");if(r)goto S_54368;}
-#line 8767 "ide/ide_methods.bas"
-do{
-#line 8767 "ide/ide_methods.bas"
-*_FUNC_MULTISEARCH_LONG_MULTISEARCH= 0 ;
-#line 8767 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8767,"ide_methods.bas");}while(r);
-#line 8767 "ide/ide_methods.bas"
-}
-#line 8768 "ide/ide_methods.bas"
-}
-#line 8769 "ide/ide_methods.bas"
+#line 27 "utilities/terminal.bas"
+if(!qbevent)break;evnt(28624,27,"terminal.bas");}while(r);
+#line 28 "utilities/terminal.bas"
 exit_subfunc:;
-#line 8769 "ide/ide_methods.bas"
+#line 28 "utilities/terminal.bas"
 free_mem_lock(sf_mem_lock);
-#line 8769 "ide/ide_methods.bas"
+#line 28 "utilities/terminal.bas"
 #include "free353.txt"
-#line 8769 "ide/ide_methods.bas"
+#line 28 "utilities/terminal.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 8769 "ide/ide_methods.bas"
+#line 28 "utilities/terminal.bas"
 cmem_sp=tmp_cmem_sp;
-#line 8769 "ide/ide_methods.bas"
-return *_FUNC_MULTISEARCH_LONG_MULTISEARCH;
-#line 8769 "ide/ide_methods.bas"
+#line 28 "utilities/terminal.bas"
+qbs_maketmp(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL);return _FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL;
+#line 28 "utilities/terminal.bas"
 }

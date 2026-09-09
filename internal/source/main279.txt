@@ -1,1824 +1,1324 @@
-#line 776 "utilities/type.bas"
-void SUB_INCREASEUDTARRAYS(){
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
+int32 FUNC_TYPNAME2TYP(qbs*_FUNC_TYPNAME2TYP_STRING_T2){
+#line 559 "utilities/type.bas"
 qbs *tqbs;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 ptrszint tmp_long;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 int32 tmp_fileno;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 #include "data279.txt"
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 mem_lock *sf_mem_lock;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 new_mem_lock();
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 sf_mem_lock->type=3;
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 libqb_check_stack();
-#line 776 "utilities/type.bas"
+#line 559 "utilities/type.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 780 "utilities/type.bas"
+#line 560 "utilities/type.bas"
 do{
-#line 780 "utilities/type.bas"
-*_SUB_INCREASEUDTARRAYS_LONG_X=func_ubound(__ARRAY_STRING256_UDTXNAME,1,1);
-#line 780 "utilities/type.bas"
+#line 560 "utilities/type.bas"
+*__LONG_TYPNAME2TYPSIZE= 0 ;
+#line 560 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,560,"type.bas");}while(r);
+#line 562 "utilities/type.bas"
+do{
+#line 562 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_T,_FUNC_TYPNAME2TYP_STRING_T2);
+#line 562 "utilities/type.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 780 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,780,"type.bas");}while(r);
-#line 781 "utilities/type.bas"
+#line 562 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,562,"type.bas");}while(r);
+#line 565 "utilities/type.bas"
 do{
-if (__ARRAY_STRING256_UDTXNAME[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTXNAME)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING256_UDTXNAME[2]&1){
-preserve_old_ptr=__ARRAY_STRING256_UDTXNAME[0];
-preserve_old_flags=__ARRAY_STRING256_UDTXNAME[2];
-preserve_old_total=__ARRAY_STRING256_UDTXNAME[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(256);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_STRING256_UDTXNAME[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTXNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTXNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING256_UDTXNAME[0]) error(257);
-memset((void*)(__ARRAY_STRING256_UDTXNAME[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTXNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTXNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_STRING256_UDTXNAME[0]) error(257);
-}
-}
-__ARRAY_STRING256_UDTXNAME[2]|=1;
-__ARRAY_STRING256_UDTXNAME[4]=alloc_new_desc[4];
-__ARRAY_STRING256_UDTXNAME[5]=alloc_new_desc[5];
-__ARRAY_STRING256_UDTXNAME[6]=alloc_new_desc[6];
-__ARRAY_STRING256_UDTXNAME[7]=alloc_new_desc[7];
-}
-#line 781 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,781,"type.bas");}while(r);
-#line 782 "utilities/type.bas"
+#line 565 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_TS,_FUNC_TYPNAME2TYP_STRING_T);
+#line 565 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 565 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,565,"type.bas");}while(r);
+#line 566 "utilities/type.bas"
+S_41971:;
+#line 566 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("$",1))))||is_error_pending()){
+#line 566 "utilities/type.bas"
+if(qbevent){evnt(28621,566,"type.bas");if(r)goto S_41971;}
+#line 566 "utilities/type.bas"
 do{
-if (__ARRAY_STRING256_UDTXCNAME[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTXCNAME)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING256_UDTXCNAME[2]&1){
-preserve_old_ptr=__ARRAY_STRING256_UDTXCNAME[0];
-preserve_old_flags=__ARRAY_STRING256_UDTXCNAME[2];
-preserve_old_total=__ARRAY_STRING256_UDTXCNAME[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(256);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_STRING256_UDTXCNAME[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTXCNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTXCNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING256_UDTXCNAME[0]) error(257);
-memset((void*)(__ARRAY_STRING256_UDTXCNAME[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTXCNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTXCNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_STRING256_UDTXCNAME[0]) error(257);
-}
-}
-__ARRAY_STRING256_UDTXCNAME[2]|=1;
-__ARRAY_STRING256_UDTXCNAME[4]=alloc_new_desc[4];
-__ARRAY_STRING256_UDTXCNAME[5]=alloc_new_desc[5];
-__ARRAY_STRING256_UDTXCNAME[6]=alloc_new_desc[6];
-__ARRAY_STRING256_UDTXCNAME[7]=alloc_new_desc[7];
-}
-#line 782 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,782,"type.bas");}while(r);
-#line 783 "utilities/type.bas"
+#line 566 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_STRINGTYPE;
+#line 566 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,566,"type.bas");}while(r);
+#line 566 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTXSIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXSIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTXSIZE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTXSIZE[0];
-preserve_old_flags=__ARRAY_LONG_UDTXSIZE[2];
-preserve_old_total=__ARRAY_LONG_UDTXSIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 566 "utilities/type.bas"
+goto exit_subfunc;
+#line 566 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,566,"type.bas");}while(r);
+#line 566 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTXSIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXSIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTXSIZE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTXSIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXSIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTXSIZE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTXSIZE[2]|=1;
-__ARRAY_LONG_UDTXSIZE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTXSIZE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTXSIZE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTXSIZE[7]=alloc_new_desc[7];
-}
-#line 783 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,783,"type.bas");}while(r);
-#line 784 "utilities/type.bas"
+#line 567 "utilities/type.bas"
+S_41975:;
+#line 567 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("!",1))))||is_error_pending()){
+#line 567 "utilities/type.bas"
+if(qbevent){evnt(28621,567,"type.bas");if(r)goto S_41975;}
+#line 567 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTXFDYNSIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXFDYNSIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTXFDYNSIZE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTXFDYNSIZE[0];
-preserve_old_flags=__ARRAY_LONG_UDTXFDYNSIZE[2];
-preserve_old_total=__ARRAY_LONG_UDTXFDYNSIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTXFDYNSIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXFDYNSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXFDYNSIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTXFDYNSIZE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTXFDYNSIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXFDYNSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXFDYNSIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTXFDYNSIZE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTXFDYNSIZE[2]|=1;
-__ARRAY_LONG_UDTXFDYNSIZE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTXFDYNSIZE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTXFDYNSIZE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTXFDYNSIZE[7]=alloc_new_desc[7];
-}
-#line 784 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,784,"type.bas");}while(r);
-#line 785 "utilities/type.bas"
+#line 567 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_SINGLETYPE;
+#line 567 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,567,"type.bas");}while(r);
+#line 567 "utilities/type.bas"
 do{
-if (__ARRAY_INTEGER_UDTXCANONMODE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTXCANONMODE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_INTEGER_UDTXCANONMODE[2]&1){
-preserve_old_ptr=__ARRAY_INTEGER_UDTXCANONMODE[0];
-preserve_old_flags=__ARRAY_INTEGER_UDTXCANONMODE[2];
-preserve_old_total=__ARRAY_INTEGER_UDTXCANONMODE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 567 "utilities/type.bas"
+goto exit_subfunc;
+#line 567 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,567,"type.bas");}while(r);
+#line 567 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(2);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_INTEGER_UDTXCANONMODE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER_UDTXCANONMODE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER_UDTXCANONMODE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_INTEGER_UDTXCANONMODE[0]) error(257);
-memset((void*)(__ARRAY_INTEGER_UDTXCANONMODE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER_UDTXCANONMODE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER_UDTXCANONMODE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_INTEGER_UDTXCANONMODE[0]) error(257);
-}
-}
-__ARRAY_INTEGER_UDTXCANONMODE[2]|=1;
-__ARRAY_INTEGER_UDTXCANONMODE[4]=alloc_new_desc[4];
-__ARRAY_INTEGER_UDTXCANONMODE[5]=alloc_new_desc[5];
-__ARRAY_INTEGER_UDTXCANONMODE[6]=alloc_new_desc[6];
-__ARRAY_INTEGER_UDTXCANONMODE[7]=alloc_new_desc[7];
-}
-#line 785 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,785,"type.bas");}while(r);
-#line 786 "utilities/type.bas"
+#line 568 "utilities/type.bas"
+S_41979:;
+#line 568 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("#",1))))||is_error_pending()){
+#line 568 "utilities/type.bas"
+if(qbevent){evnt(28621,568,"type.bas");if(r)goto S_41979;}
+#line 568 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTXNEXT[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTXNEXT)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTXNEXT[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTXNEXT[0];
-preserve_old_flags=__ARRAY_LONG_UDTXNEXT[2];
-preserve_old_total=__ARRAY_LONG_UDTXNEXT[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTXNEXT[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXNEXT[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXNEXT[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTXNEXT[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTXNEXT[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTXNEXT[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTXNEXT[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTXNEXT[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTXNEXT[2]|=1;
-__ARRAY_LONG_UDTXNEXT[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTXNEXT[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTXNEXT[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTXNEXT[7]=alloc_new_desc[7];
-}
-#line 786 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,786,"type.bas");}while(r);
-#line 787 "utilities/type.bas"
+#line 568 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_DOUBLETYPE;
+#line 568 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,568,"type.bas");}while(r);
+#line 568 "utilities/type.bas"
 do{
-if (__ARRAY_INTEGER_UDTXVARIABLE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTXVARIABLE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_INTEGER_UDTXVARIABLE[2]&1){
-preserve_old_ptr=__ARRAY_INTEGER_UDTXVARIABLE[0];
-preserve_old_flags=__ARRAY_INTEGER_UDTXVARIABLE[2];
-preserve_old_total=__ARRAY_INTEGER_UDTXVARIABLE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 568 "utilities/type.bas"
+goto exit_subfunc;
+#line 568 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,568,"type.bas");}while(r);
+#line 568 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(2);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_INTEGER_UDTXVARIABLE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER_UDTXVARIABLE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER_UDTXVARIABLE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_INTEGER_UDTXVARIABLE[0]) error(257);
-memset((void*)(__ARRAY_INTEGER_UDTXVARIABLE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*2);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER_UDTXVARIABLE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER_UDTXVARIABLE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_INTEGER_UDTXVARIABLE[0]) error(257);
-}
-}
-__ARRAY_INTEGER_UDTXVARIABLE[2]|=1;
-__ARRAY_INTEGER_UDTXVARIABLE[4]=alloc_new_desc[4];
-__ARRAY_INTEGER_UDTXVARIABLE[5]=alloc_new_desc[5];
-__ARRAY_INTEGER_UDTXVARIABLE[6]=alloc_new_desc[6];
-__ARRAY_INTEGER_UDTXVARIABLE[7]=alloc_new_desc[7];
-}
-#line 787 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,787,"type.bas");}while(r);
-#line 789 "utilities/type.bas"
+#line 569 "utilities/type.bas"
+S_41983:;
+#line 569 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("##",2))))||is_error_pending()){
+#line 569 "utilities/type.bas"
+if(qbevent){evnt(28621,569,"type.bas");if(r)goto S_41983;}
+#line 569 "utilities/type.bas"
 do{
-if (__ARRAY_STRING256_UDTENAME[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTENAME)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING256_UDTENAME[2]&1){
-preserve_old_ptr=__ARRAY_STRING256_UDTENAME[0];
-preserve_old_flags=__ARRAY_STRING256_UDTENAME[2];
-preserve_old_total=__ARRAY_STRING256_UDTENAME[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(256);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_STRING256_UDTENAME[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTENAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTENAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING256_UDTENAME[0]) error(257);
-memset((void*)(__ARRAY_STRING256_UDTENAME[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTENAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTENAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_STRING256_UDTENAME[0]) error(257);
-}
-}
-__ARRAY_STRING256_UDTENAME[2]|=1;
-__ARRAY_STRING256_UDTENAME[4]=alloc_new_desc[4];
-__ARRAY_STRING256_UDTENAME[5]=alloc_new_desc[5];
-__ARRAY_STRING256_UDTENAME[6]=alloc_new_desc[6];
-__ARRAY_STRING256_UDTENAME[7]=alloc_new_desc[7];
-}
-#line 789 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,789,"type.bas");}while(r);
-#line 790 "utilities/type.bas"
+#line 569 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_FLOATTYPE;
+#line 569 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,569,"type.bas");}while(r);
+#line 569 "utilities/type.bas"
 do{
-if (__ARRAY_STRING256_UDTECNAME[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING256_UDTECNAME)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING256_UDTECNAME[2]&1){
-preserve_old_ptr=__ARRAY_STRING256_UDTECNAME[0];
-preserve_old_flags=__ARRAY_STRING256_UDTECNAME[2];
-preserve_old_total=__ARRAY_STRING256_UDTECNAME[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 569 "utilities/type.bas"
+goto exit_subfunc;
+#line 569 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,569,"type.bas");}while(r);
+#line 569 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(256);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_STRING256_UDTECNAME[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTECNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTECNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING256_UDTECNAME[0]) error(257);
-memset((void*)(__ARRAY_STRING256_UDTECNAME[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*256);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_STRING256_UDTECNAME[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING256_UDTECNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_STRING256_UDTECNAME[0]) error(257);
-}
-}
-__ARRAY_STRING256_UDTECNAME[2]|=1;
-__ARRAY_STRING256_UDTECNAME[4]=alloc_new_desc[4];
-__ARRAY_STRING256_UDTECNAME[5]=alloc_new_desc[5];
-__ARRAY_STRING256_UDTECNAME[6]=alloc_new_desc[6];
-__ARRAY_STRING256_UDTECNAME[7]=alloc_new_desc[7];
-}
-#line 790 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,790,"type.bas");}while(r);
-#line 791 "utilities/type.bas"
+#line 572 "utilities/type.bas"
+S_41987:;
+#line 572 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_TS, 1 ),qbs_new_txt_len("$",1))))||is_error_pending()){
+#line 572 "utilities/type.bas"
+if(qbevent){evnt(28621,572,"type.bas");if(r)goto S_41987;}
+#line 573 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTESIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTESIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTESIZE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTESIZE[0];
-preserve_old_flags=__ARRAY_LONG_UDTESIZE[2];
-preserve_old_total=__ARRAY_LONG_UDTESIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTESIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTESIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTESIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTESIZE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTESIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTESIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTESIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTESIZE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTESIZE[2]|=1;
-__ARRAY_LONG_UDTESIZE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTESIZE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTESIZE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTESIZE[7]=alloc_new_desc[7];
-}
-#line 791 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,791,"type.bas");}while(r);
-#line 792 "utilities/type.bas"
+#line 573 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_N,qbs_right(_FUNC_TYPNAME2TYP_STRING_TS,_FUNC_TYPNAME2TYP_STRING_TS->len- 1 ));
+#line 573 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 573 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,573,"type.bas");}while(r);
+#line 574 "utilities/type.bas"
+S_41989:;
+#line 574 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_ISUINTEGER(_FUNC_TYPNAME2TYP_STRING_N)== 0 )))||is_error_pending()){
+#line 574 "utilities/type.bas"
+if(qbevent){evnt(28621,574,"type.bas");if(r)goto S_41989;}
+#line 574 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEFDYNOFFSET)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEFDYNOFFSET[0];
-preserve_old_flags=__ARRAY_LONG_UDTEFDYNOFFSET[2];
-preserve_old_total=__ARRAY_LONG_UDTEFDYNOFFSET[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEFDYNOFFSET[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEFDYNOFFSET[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEFDYNOFFSET[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEFDYNOFFSET[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEFDYNOFFSET[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEFDYNOFFSET[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEFDYNOFFSET[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEFDYNOFFSET[2]|=1;
-__ARRAY_LONG_UDTEFDYNOFFSET[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEFDYNOFFSET[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEFDYNOFFSET[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEFDYNOFFSET[7]=alloc_new_desc[7];
-}
-#line 792 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,792,"type.bas");}while(r);
-#line 793 "utilities/type.bas"
+#line 574 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid index after STRING * type",33));
+#line 574 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 574 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,574,"type.bas");}while(r);
+#line 574 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEFDYNSIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEFDYNSIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEFDYNSIZE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEFDYNSIZE[0];
-preserve_old_flags=__ARRAY_LONG_UDTEFDYNSIZE[2];
-preserve_old_total=__ARRAY_LONG_UDTEFDYNSIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 574 "utilities/type.bas"
+goto exit_subfunc;
+#line 574 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,574,"type.bas");}while(r);
+#line 574 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEFDYNSIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEFDYNSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEFDYNSIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEFDYNSIZE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEFDYNSIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEFDYNSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEFDYNSIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEFDYNSIZE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEFDYNSIZE[2]|=1;
-__ARRAY_LONG_UDTEFDYNSIZE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEFDYNSIZE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEFDYNSIZE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEFDYNSIZE[7]=alloc_new_desc[7];
-}
-#line 793 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,793,"type.bas");}while(r);
-#line 794 "utilities/type.bas"
+#line 575 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTETYPE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTETYPE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTETYPE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTETYPE[0];
-preserve_old_flags=__ARRAY_LONG_UDTETYPE[2];
-preserve_old_total=__ARRAY_LONG_UDTETYPE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTETYPE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTETYPE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTETYPE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTETYPE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTETYPE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTETYPE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTETYPE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTETYPE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTETYPE[2]|=1;
-__ARRAY_LONG_UDTETYPE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTETYPE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTETYPE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTETYPE[7]=alloc_new_desc[7];
-}
-#line 794 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,794,"type.bas");}while(r);
-#line 795 "utilities/type.bas"
+#line 575 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B=qbr(qbs_val<long double>(_FUNC_TYPNAME2TYP_STRING_N));
+#line 575 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 575 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,575,"type.bas");}while(r);
+#line 576 "utilities/type.bas"
+S_41994:;
+#line 576 "utilities/type.bas"
+if ((-(*_FUNC_TYPNAME2TYP_LONG_B== 0 ))||is_error_pending()){
+#line 576 "utilities/type.bas"
+if(qbevent){evnt(28621,576,"type.bas");if(r)goto S_41994;}
+#line 576 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTETYPESIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTETYPESIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTETYPESIZE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTETYPESIZE[0];
-preserve_old_flags=__ARRAY_LONG_UDTETYPESIZE[2];
-preserve_old_total=__ARRAY_LONG_UDTETYPESIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTETYPESIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTETYPESIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTETYPESIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTETYPESIZE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTETYPESIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTETYPESIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTETYPESIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTETYPESIZE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTETYPESIZE[2]|=1;
-__ARRAY_LONG_UDTETYPESIZE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTETYPESIZE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTETYPESIZE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTETYPESIZE[7]=alloc_new_desc[7];
-}
-#line 795 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,795,"type.bas");}while(r);
-#line 796 "utilities/type.bas"
+#line 576 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid index after STRING * type",33));
+#line 576 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 576 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,576,"type.bas");}while(r);
+#line 576 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYELEMENTS)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEARRAYELEMENTS[0];
-preserve_old_flags=__ARRAY_LONG_UDTEARRAYELEMENTS[2];
-preserve_old_total=__ARRAY_LONG_UDTEARRAYELEMENTS[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 576 "utilities/type.bas"
+goto exit_subfunc;
+#line 576 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,576,"type.bas");}while(r);
+#line 576 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEARRAYELEMENTS[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYELEMENTS[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYELEMENTS[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEARRAYELEMENTS[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEARRAYELEMENTS[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYELEMENTS[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYELEMENTS[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEARRAYELEMENTS[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEARRAYELEMENTS[2]|=1;
-__ARRAY_LONG_UDTEARRAYELEMENTS[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEARRAYELEMENTS[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEARRAYELEMENTS[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEARRAYELEMENTS[7]=alloc_new_desc[7];
-}
-#line 796 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,796,"type.bas");}while(r);
-#line 797 "utilities/type.bas"
+#line 577 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEARRAYBASE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYBASE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEARRAYBASE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEARRAYBASE[0];
-preserve_old_flags=__ARRAY_LONG_UDTEARRAYBASE[2];
-preserve_old_total=__ARRAY_LONG_UDTEARRAYBASE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEARRAYBASE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYBASE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYBASE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEARRAYBASE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEARRAYBASE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYBASE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYBASE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEARRAYBASE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEARRAYBASE[2]|=1;
-__ARRAY_LONG_UDTEARRAYBASE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEARRAYBASE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEARRAYBASE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEARRAYBASE[7]=alloc_new_desc[7];
-}
-#line 797 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,797,"type.bas");}while(r);
-#line 798 "utilities/type.bas"
+#line 577 "utilities/type.bas"
+*__LONG_TYPNAME2TYPSIZE=*_FUNC_TYPNAME2TYP_LONG_B;
+#line 577 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,577,"type.bas");}while(r);
+#line 578 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEARRAYDIMS[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYDIMS)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEARRAYDIMS[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEARRAYDIMS[0];
-preserve_old_flags=__ARRAY_LONG_UDTEARRAYDIMS[2];
-preserve_old_total=__ARRAY_LONG_UDTEARRAYDIMS[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEARRAYDIMS[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYDIMS[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYDIMS[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEARRAYDIMS[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEARRAYDIMS[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYDIMS[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYDIMS[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEARRAYDIMS[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEARRAYDIMS[2]|=1;
-__ARRAY_LONG_UDTEARRAYDIMS[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEARRAYDIMS[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEARRAYDIMS[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEARRAYDIMS[7]=alloc_new_desc[7];
-}
-#line 798 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,798,"type.bas");}while(r);
-#line 801 "utilities/type.bas"
+#line 578 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_STRINGTYPE+*__LONG_ISFIXEDLENGTH;
+#line 578 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,578,"type.bas");}while(r);
+#line 579 "utilities/type.bas"
 do{
-if (__ARRAY_STRING_UDTEARRAYDESC[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING_UDTEARRAYDESC)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING_UDTEARRAYDESC[2]&1){
-preserve_old_ptr=__ARRAY_STRING_UDTEARRAYDESC[0];
-preserve_old_flags=__ARRAY_STRING_UDTEARRAYDESC[2];
-preserve_old_total=__ARRAY_STRING_UDTEARRAYDESC[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 579 "utilities/type.bas"
+goto exit_subfunc;
+#line 579 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,579,"type.bas");}while(r);
+#line 580 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(8);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-__ARRAY_STRING_UDTEARRAYDESC[0]=preserve_new_ptr;
-__ARRAY_STRING_UDTEARRAYDESC[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_UDTEARRAYDESC[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-tmp_long=preserve_copy_count;
-while(tmp_long--){
-qbs_set((qbs*)((uint64*)(preserve_new_ptr))[tmp_long],(qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
-}
-tmp_long=preserve_old_total;
-while(tmp_long--) qbs_free((qbs*)((uint64*)(preserve_old_ptr))[tmp_long]);
-free((void*)(preserve_old_ptr));
-__ARRAY_STRING_UDTEARRAYDESC[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING_UDTEARRAYDESC[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING_UDTEARRAYDESC[0]) error(257);
-__ARRAY_STRING_UDTEARRAYDESC[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_UDTEARRAYDESC[2]&4){
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((uint64*)(__ARRAY_STRING_UDTEARRAYDESC[0]))[tmp_long]=(uint64)qbs_new(0,0);
-}
-}
-__ARRAY_STRING_UDTEARRAYDESC[4]=alloc_new_desc[4];
-__ARRAY_STRING_UDTEARRAYDESC[5]=alloc_new_desc[5];
-__ARRAY_STRING_UDTEARRAYDESC[6]=alloc_new_desc[6];
-__ARRAY_STRING_UDTEARRAYDESC[7]=alloc_new_desc[7];
-}
-#line 801 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,801,"type.bas");}while(r);
-#line 806 "utilities/type.bas"
+#line 583 "utilities/type.bas"
+S_42002:;
+#line 583 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_TS, 1 ),qbs_new_txt_len("~",1))))||is_error_pending()){
+#line 583 "utilities/type.bas"
+if(qbevent){evnt(28621,583,"type.bas");if(r)goto S_42002;}
+#line 583 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTEARRAYFIELDMODE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTEARRAYFIELDMODE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTEARRAYFIELDMODE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTEARRAYFIELDMODE[0];
-preserve_old_flags=__ARRAY_LONG_UDTEARRAYFIELDMODE[2];
-preserve_old_total=__ARRAY_LONG_UDTEARRAYFIELDMODE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTEARRAYFIELDMODE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYFIELDMODE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYFIELDMODE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTEARRAYFIELDMODE[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTEARRAYFIELDMODE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_UDTEARRAYFIELDMODE[0]=preserve_new_ptr;
-}else{
-__ARRAY_LONG_UDTEARRAYFIELDMODE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTEARRAYFIELDMODE[0]) error(257);
-}
-}
-__ARRAY_LONG_UDTEARRAYFIELDMODE[2]|=1;
-__ARRAY_LONG_UDTEARRAYFIELDMODE[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTEARRAYFIELDMODE[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTEARRAYFIELDMODE[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTEARRAYFIELDMODE[7]=alloc_new_desc[7];
-}
-#line 806 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,806,"type.bas");}while(r);
-#line 807 "utilities/type.bas"
+#line 583 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_UNSGN= 1 ;
+#line 583 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,583,"type.bas");}while(r);
+#line 583 "utilities/type.bas"
 do{
-if (__ARRAY_LONG_UDTENEXT[2]&2){
-error(10);
+#line 583 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_TS,qbs_right(_FUNC_TYPNAME2TYP_STRING_TS,_FUNC_TYPNAME2TYP_STRING_TS->len- 1 ));
+#line 583 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 583 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,583,"type.bas");}while(r);
+#line 583 "utilities/type.bas"
+}
+#line 586 "utilities/type.bas"
+S_42006:;
+#line 586 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_TS, 1 ),qbs_new_txt_len("`",1))))||is_error_pending()){
+#line 586 "utilities/type.bas"
+if(qbevent){evnt(28621,586,"type.bas");if(r)goto S_42006;}
+#line 587 "utilities/type.bas"
+do{
+#line 587 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_N,qbs_right(_FUNC_TYPNAME2TYP_STRING_TS,_FUNC_TYPNAME2TYP_STRING_TS->len- 1 ));
+#line 587 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 587 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,587,"type.bas");}while(r);
+#line 588 "utilities/type.bas"
+do{
+#line 588 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B= 1 ;
+#line 588 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,588,"type.bas");}while(r);
+#line 589 "utilities/type.bas"
+S_42009:;
+#line 589 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_TYPNAME2TYP_STRING_N,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 589 "utilities/type.bas"
+if(qbevent){evnt(28621,589,"type.bas");if(r)goto S_42009;}
+#line 590 "utilities/type.bas"
+S_42010:;
+#line 590 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_ISUINTEGER(_FUNC_TYPNAME2TYP_STRING_N)== 0 )))||is_error_pending()){
+#line 590 "utilities/type.bas"
+if(qbevent){evnt(28621,590,"type.bas");if(r)goto S_42010;}
+#line 590 "utilities/type.bas"
+do{
+#line 590 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid index after _BIT type",29));
+#line 590 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 590 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,590,"type.bas");}while(r);
+#line 590 "utilities/type.bas"
+do{
+#line 590 "utilities/type.bas"
+goto exit_subfunc;
+#line 590 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,590,"type.bas");}while(r);
+#line 590 "utilities/type.bas"
+}
+#line 591 "utilities/type.bas"
+do{
+#line 591 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B=qbr(qbs_val<long double>(_FUNC_TYPNAME2TYP_STRING_N));
+#line 591 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 591 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,591,"type.bas");}while(r);
+#line 592 "utilities/type.bas"
+S_42015:;
+#line 592 "utilities/type.bas"
+if ((-(*_FUNC_TYPNAME2TYP_LONG_B> 64 ))||is_error_pending()){
+#line 592 "utilities/type.bas"
+if(qbevent){evnt(28621,592,"type.bas");if(r)goto S_42015;}
+#line 592 "utilities/type.bas"
+do{
+#line 592 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid index after _BIT type",29));
+#line 592 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 592 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,592,"type.bas");}while(r);
+#line 592 "utilities/type.bas"
+do{
+#line 592 "utilities/type.bas"
+goto exit_subfunc;
+#line 592 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,592,"type.bas");}while(r);
+#line 592 "utilities/type.bas"
+}
+#line 593 "utilities/type.bas"
+}
+#line 594 "utilities/type.bas"
+S_42020:;
+#line 594 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_UNSGN)||is_error_pending()){
+#line 594 "utilities/type.bas"
+if(qbevent){evnt(28621,594,"type.bas");if(r)goto S_42020;}
+#line 594 "utilities/type.bas"
+do{
+#line 594 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_UBITTYPE+(*_FUNC_TYPNAME2TYP_LONG_B- 1 );
+#line 594 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,594,"type.bas");}while(r);
+#line 594 "utilities/type.bas"
 }else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_UDTENEXT)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_UDTENEXT[2]&1){
-preserve_old_ptr=__ARRAY_LONG_UDTENEXT[0];
-preserve_old_flags=__ARRAY_LONG_UDTENEXT[2];
-preserve_old_total=__ARRAY_LONG_UDTENEXT[5];
+#line 594 "utilities/type.bas"
+do{
+#line 594 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_BITTYPE+(*_FUNC_TYPNAME2TYP_LONG_B- 1 );
+#line 594 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,594,"type.bas");}while(r);
+#line 594 "utilities/type.bas"
+}
+#line 595 "utilities/type.bas"
+do{
+#line 595 "utilities/type.bas"
+goto exit_subfunc;
+#line 595 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,595,"type.bas");}while(r);
+#line 596 "utilities/type.bas"
+}
+#line 598 "utilities/type.bas"
+do{
+#line 598 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T= 0 ;
+#line 598 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,598,"type.bas");}while(r);
+#line 599 "utilities/type.bas"
+S_42028:;
+#line 599 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("%%",2))))||is_error_pending()){
+#line 599 "utilities/type.bas"
+if(qbevent){evnt(28621,599,"type.bas");if(r)goto S_42028;}
+#line 599 "utilities/type.bas"
+do{
+#line 599 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_BYTETYPE;
+#line 599 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,599,"type.bas");}while(r);
+#line 599 "utilities/type.bas"
+}
+#line 600 "utilities/type.bas"
+S_42031:;
+#line 600 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("%",1))))||is_error_pending()){
+#line 600 "utilities/type.bas"
+if(qbevent){evnt(28621,600,"type.bas");if(r)goto S_42031;}
+#line 600 "utilities/type.bas"
+do{
+#line 600 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_INTEGERTYPE;
+#line 600 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,600,"type.bas");}while(r);
+#line 600 "utilities/type.bas"
+}
+#line 601 "utilities/type.bas"
+S_42034:;
+#line 601 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("&",1))))||is_error_pending()){
+#line 601 "utilities/type.bas"
+if(qbevent){evnt(28621,601,"type.bas");if(r)goto S_42034;}
+#line 601 "utilities/type.bas"
+do{
+#line 601 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_LONGTYPE;
+#line 601 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,601,"type.bas");}while(r);
+#line 601 "utilities/type.bas"
+}
+#line 602 "utilities/type.bas"
+S_42037:;
+#line 602 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("&&",2))))||is_error_pending()){
+#line 602 "utilities/type.bas"
+if(qbevent){evnt(28621,602,"type.bas");if(r)goto S_42037;}
+#line 602 "utilities/type.bas"
+do{
+#line 602 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_INTEGER64TYPE;
+#line 602 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,602,"type.bas");}while(r);
+#line 602 "utilities/type.bas"
+}
+#line 603 "utilities/type.bas"
+S_42040:;
+#line 603 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_TS,qbs_new_txt_len("%&",2))))||is_error_pending()){
+#line 603 "utilities/type.bas"
+if(qbevent){evnt(28621,603,"type.bas");if(r)goto S_42040;}
+#line 603 "utilities/type.bas"
+do{
+#line 603 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_OFFSETTYPE;
+#line 603 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,603,"type.bas");}while(r);
+#line 603 "utilities/type.bas"
+}
+#line 605 "utilities/type.bas"
+S_42043:;
+#line 605 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_T)||is_error_pending()){
+#line 605 "utilities/type.bas"
+if(qbevent){evnt(28621,605,"type.bas");if(r)goto S_42043;}
+#line 606 "utilities/type.bas"
+S_42044:;
+#line 606 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_UNSGN)||is_error_pending()){
+#line 606 "utilities/type.bas"
+if(qbevent){evnt(28621,606,"type.bas");if(r)goto S_42044;}
+#line 606 "utilities/type.bas"
+do{
+#line 606 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*_FUNC_TYPNAME2TYP_LONG_T+*__LONG_ISUNSIGNED;
+#line 606 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,606,"type.bas");}while(r);
+#line 606 "utilities/type.bas"
+}
+#line 607 "utilities/type.bas"
+do{
+#line 607 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*_FUNC_TYPNAME2TYP_LONG_T;
+#line 607 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,607,"type.bas");}while(r);
+#line 607 "utilities/type.bas"
+do{
+#line 607 "utilities/type.bas"
+goto exit_subfunc;
+#line 607 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,607,"type.bas");}while(r);
+#line 608 "utilities/type.bas"
+}
+#line 612 "utilities/type.bas"
+S_42050:;
+#line 612 "utilities/type.bas"
+fornext_value4163= 1 ;
+#line 612 "utilities/type.bas"
+fornext_finalvalue4163=_FUNC_TYPNAME2TYP_STRING_T->len;
+#line 612 "utilities/type.bas"
+fornext_step4163= 1 ;
+#line 612 "utilities/type.bas"
+if (fornext_step4163<0) fornext_step_negative4163=1; else fornext_step_negative4163=0;
+#line 612 "utilities/type.bas"
+if (is_error_pending()) goto fornext_error4163;
+#line 612 "utilities/type.bas"
+goto fornext_entrylabel4163;
+#line 612 "utilities/type.bas"
+while(1){
+#line 612 "utilities/type.bas"
+fornext_value4163=fornext_step4163+(*_FUNC_TYPNAME2TYP_LONG_I);
+#line 612 "utilities/type.bas"
+fornext_entrylabel4163:
+#line 612 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_I=fornext_value4163;
+#line 612 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 612 "utilities/type.bas"
+if (fornext_step_negative4163){
+#line 612 "utilities/type.bas"
+if (fornext_value4163<fornext_finalvalue4163) break;
+#line 612 "utilities/type.bas"
 }else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+#line 612 "utilities/type.bas"
+if (fornext_value4163>fornext_finalvalue4163) break;
+#line 612 "utilities/type.bas"
 }
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_INCREASEUDTARRAYS_LONG_X+ 1000 )-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
+#line 612 "utilities/type.bas"
+fornext_error4163:;
+#line 612 "utilities/type.bas"
+if(qbevent){evnt(28621,612,"type.bas");if(r)goto S_42050;}
+#line 613 "utilities/type.bas"
+S_42051:;
+#line 613 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(func_mid(_FUNC_TYPNAME2TYP_STRING_T,*_FUNC_TYPNAME2TYP_LONG_I, 1 ,0|1),__STRING1_SP)))||is_error_pending()){
+#line 613 "utilities/type.bas"
+if(qbevent){evnt(28621,613,"type.bas");if(r)goto S_42051;}
+#line 613 "utilities/type.bas"
+do{
+#line 613 "utilities/type.bas"
+sub_mid(_FUNC_TYPNAME2TYP_STRING_T,*_FUNC_TYPNAME2TYP_LONG_I, 1 ,qbs_new_txt_len(" ",1),1);
+#line 613 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,613,"type.bas");}while(r);
+#line 613 "utilities/type.bas"
 }
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_UDTENEXT[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
+#line 614 "utilities/type.bas"
+fornext_continue_4162:;
+#line 614 "utilities/type.bas"
+}
+#line 614 "utilities/type.bas"
+fornext_exit_4162:;
+#line 615 "utilities/type.bas"
+S_42055:;
+#line 615 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("STRING",6))))||is_error_pending()){
+#line 615 "utilities/type.bas"
+if(qbevent){evnt(28621,615,"type.bas");if(r)goto S_42055;}
+#line 615 "utilities/type.bas"
+do{
+#line 615 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_STRINGTYPE;
+#line 615 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,615,"type.bas");}while(r);
+#line 615 "utilities/type.bas"
+do{
+#line 615 "utilities/type.bas"
+goto exit_subfunc;
+#line 615 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,615,"type.bas");}while(r);
+#line 615 "utilities/type.bas"
+}
+#line 617 "utilities/type.bas"
+S_42059:;
+#line 617 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_T, 9 ),qbs_new_txt_len("STRING * ",9))))||is_error_pending()){
+#line 617 "utilities/type.bas"
+if(qbevent){evnt(28621,617,"type.bas");if(r)goto S_42059;}
+#line 619 "utilities/type.bas"
+do{
+#line 619 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_N,qbs_right(_FUNC_TYPNAME2TYP_STRING_T,_FUNC_TYPNAME2TYP_STRING_T->len- 9 ));
+#line 619 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 619 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,619,"type.bas");}while(r);
+#line 622 "utilities/type.bas"
+do{
+#line 622 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHFOUND= 0 ;
+#line 622 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,622,"type.bas");}while(r);
+#line 623 "utilities/type.bas"
+do{
+#line 623 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_HASHNAME,_FUNC_TYPNAME2TYP_STRING_N);
+#line 623 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 623 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,623,"type.bas");}while(r);
+#line 624 "utilities/type.bas"
+do{
+#line 624 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHCHKFLAGS= 1024ll ;
+#line 624 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,624,"type.bas");}while(r);
+#line 625 "utilities/type.bas"
+do{
+#line 625 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHRES=FUNC_HASHFINDREV(_FUNC_TYPNAME2TYP_STRING_HASHNAME,_FUNC_TYPNAME2TYP_LONG_HASHCHKFLAGS,_FUNC_TYPNAME2TYP_LONG_HASHRESFLAGS,_FUNC_TYPNAME2TYP_LONG_HASHRESREF);
+#line 625 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 625 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,625,"type.bas");}while(r);
+#line 626 "utilities/type.bas"
+S_42065:;
+#line 626 "utilities/type.bas"
+while((*_FUNC_TYPNAME2TYP_LONG_HASHRES)||is_error_pending()){
+#line 626 "utilities/type.bas"
+if(qbevent){evnt(28621,626,"type.bas");if(r)goto S_42065;}
+#line 627 "utilities/type.bas"
+S_42066:;
+#line 627 "utilities/type.bas"
+if (((-(((int32*)(__ARRAY_LONG_CONSTSUBFUNC[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTSUBFUNC[4],__ARRAY_LONG_CONSTSUBFUNC[5])]==*__LONG_SUBFUNCN))|(-(((int32*)(__ARRAY_LONG_CONSTSUBFUNC[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTSUBFUNC[4],__ARRAY_LONG_CONSTSUBFUNC[5])]== 0 )))||is_error_pending()){
+#line 627 "utilities/type.bas"
+if(qbevent){evnt(28621,627,"type.bas");if(r)goto S_42066;}
+#line 628 "utilities/type.bas"
+S_42067:;
+#line 628 "utilities/type.bas"
+if ((((int32*)(__ARRAY_LONG_CONSTDEFINED[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTDEFINED[4],__ARRAY_LONG_CONSTDEFINED[5])])||is_error_pending()){
+#line 628 "utilities/type.bas"
+if(qbevent){evnt(28621,628,"type.bas");if(r)goto S_42067;}
+#line 629 "utilities/type.bas"
+do{
+#line 629 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHFOUND= 1 ;
+#line 629 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,629,"type.bas");}while(r);
+#line 630 "utilities/type.bas"
+do{
+#line 630 "utilities/type.bas"
+goto dl_exit_4166;
+#line 630 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,630,"type.bas");}while(r);
+#line 631 "utilities/type.bas"
+}
+#line 632 "utilities/type.bas"
+}
+#line 633 "utilities/type.bas"
+S_42072:;
+#line 633 "utilities/type.bas"
+if ((-(*_FUNC_TYPNAME2TYP_LONG_HASHRES!= 1 ))||is_error_pending()){
+#line 633 "utilities/type.bas"
+if(qbevent){evnt(28621,633,"type.bas");if(r)goto S_42072;}
+#line 633 "utilities/type.bas"
+do{
+#line 633 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHRES=FUNC_HASHFINDCONT(_FUNC_TYPNAME2TYP_LONG_HASHRESFLAGS,_FUNC_TYPNAME2TYP_LONG_HASHRESREF);
+#line 633 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,633,"type.bas");}while(r);
+#line 633 "utilities/type.bas"
 }else{
-free((void*)(preserve_old_ptr));
+#line 633 "utilities/type.bas"
+do{
+#line 633 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_HASHRES= 0 ;
+#line 633 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,633,"type.bas");}while(r);
+#line 633 "utilities/type.bas"
 }
-__ARRAY_LONG_UDTENEXT[0]=preserve_new_ptr;
+#line 634 "utilities/type.bas"
+dl_continue_4166:;
+#line 634 "utilities/type.bas"
+}
+#line 634 "utilities/type.bas"
+dl_exit_4166:;
+#line 635 "utilities/type.bas"
+S_42078:;
+#line 635 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_HASHFOUND)||is_error_pending()){
+#line 635 "utilities/type.bas"
+if(qbevent){evnt(28621,635,"type.bas");if(r)goto S_42078;}
+#line 636 "utilities/type.bas"
+do{
+#line 636 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_I2=*_FUNC_TYPNAME2TYP_LONG_HASHRESREF;
+#line 636 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,636,"type.bas");}while(r);
+#line 637 "utilities/type.bas"
+do{
+#line 637 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_I2)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])];
+#line 637 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,637,"type.bas");}while(r);
+#line 638 "utilities/type.bas"
+S_42081:;
+#line 638 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_T&*__LONG_ISSTRING)||is_error_pending()){
+#line 638 "utilities/type.bas"
+if(qbevent){evnt(28621,638,"type.bas");if(r)goto S_42081;}
+#line 638 "utilities/type.bas"
+do{
+#line 638 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Expected STRING * numeric-constant",34));
+#line 638 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 638 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,638,"type.bas");}while(r);
+#line 638 "utilities/type.bas"
+do{
+#line 638 "utilities/type.bas"
+goto exit_subfunc;
+#line 638 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,638,"type.bas");}while(r);
+#line 638 "utilities/type.bas"
+}
+#line 640 "utilities/type.bas"
+S_42085:;
+#line 640 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_T&*__LONG_ISFLOAT)||is_error_pending()){
+#line 640 "utilities/type.bas"
+if(qbevent){evnt(28621,640,"type.bas");if(r)goto S_42085;}
+#line 641 "utilities/type.bas"
+do{
+#line 641 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_FLOAT_V=((long double*)(__ARRAY_FLOAT_CONSTFLOAT[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_I2)-__ARRAY_FLOAT_CONSTFLOAT[4],__ARRAY_FLOAT_CONSTFLOAT[5])];
+#line 641 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,641,"type.bas");}while(r);
+#line 642 "utilities/type.bas"
+do{
+#line 642 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_INTEGER64_V=qbr(*_FUNC_TYPNAME2TYP_FLOAT_V);
+#line 642 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,642,"type.bas");}while(r);
+#line 643 "utilities/type.bas"
+do{
+#line 643 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_UINTEGER64_V=*_FUNC_TYPNAME2TYP_INTEGER64_V;
+#line 643 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,643,"type.bas");}while(r);
+#line 644 "utilities/type.bas"
 }else{
-__ARRAY_LONG_UDTENEXT[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_UDTENEXT[0]) error(257);
-memset((void*)(__ARRAY_LONG_UDTENEXT[0]),0,(size_t)alloc_req_bytes);
-}
+#line 645 "utilities/type.bas"
+S_42090:;
+#line 645 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_T&*__LONG_ISUNSIGNED)||is_error_pending()){
+#line 645 "utilities/type.bas"
+if(qbevent){evnt(28621,645,"type.bas");if(r)goto S_42090;}
+#line 646 "utilities/type.bas"
+do{
+#line 646 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_UINTEGER64_V=((uint64*)(__ARRAY_UINTEGER64_CONSTUINTEGER[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_I2)-__ARRAY_UINTEGER64_CONSTUINTEGER[4],__ARRAY_UINTEGER64_CONSTUINTEGER[5])];
+#line 646 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,646,"type.bas");}while(r);
+#line 647 "utilities/type.bas"
+do{
+#line 647 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_INTEGER64_V=*_FUNC_TYPNAME2TYP_UINTEGER64_V;
+#line 647 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,647,"type.bas");}while(r);
+#line 648 "utilities/type.bas"
+do{
+#line 648 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_FLOAT_V=*_FUNC_TYPNAME2TYP_INTEGER64_V;
+#line 648 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,648,"type.bas");}while(r);
+#line 649 "utilities/type.bas"
 }else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
+#line 650 "utilities/type.bas"
+do{
+#line 650 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_INTEGER64_V=((int64*)(__ARRAY_INTEGER64_CONSTINTEGER[0]))[array_check((*_FUNC_TYPNAME2TYP_LONG_I2)-__ARRAY_INTEGER64_CONSTINTEGER[4],__ARRAY_INTEGER64_CONSTINTEGER[5])];
+#line 650 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,650,"type.bas");}while(r);
+#line 651 "utilities/type.bas"
+do{
+#line 651 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_FLOAT_V=*_FUNC_TYPNAME2TYP_INTEGER64_V;
+#line 651 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,651,"type.bas");}while(r);
+#line 652 "utilities/type.bas"
+do{
+#line 652 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_UINTEGER64_V=*_FUNC_TYPNAME2TYP_INTEGER64_V;
+#line 652 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,652,"type.bas");}while(r);
+#line 653 "utilities/type.bas"
+}
+#line 654 "utilities/type.bas"
+}
+#line 655 "utilities/type.bas"
+S_42100:;
+#line 655 "utilities/type.bas"
+if (((-(*_FUNC_TYPNAME2TYP_INTEGER64_V< 1 ))|(-(*_FUNC_TYPNAME2TYP_INTEGER64_V> 9999999999ll )))||is_error_pending()){
+#line 655 "utilities/type.bas"
+if(qbevent){evnt(28621,655,"type.bas");if(r)goto S_42100;}
+#line 655 "utilities/type.bas"
+do{
+#line 655 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("STRING * out-of-range constant",30));
+#line 655 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 655 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,655,"type.bas");}while(r);
+#line 655 "utilities/type.bas"
+do{
+#line 655 "utilities/type.bas"
+goto exit_subfunc;
+#line 655 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,655,"type.bas");}while(r);
+#line 655 "utilities/type.bas"
+}
+#line 656 "utilities/type.bas"
+do{
+#line 656 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B=*_FUNC_TYPNAME2TYP_INTEGER64_V;
+#line 656 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,656,"type.bas");}while(r);
+#line 657 "utilities/type.bas"
+do{
+#line 657 "utilities/type.bas"
+goto LABEL_CONSTANTLENSTR;
+#line 657 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,657,"type.bas");}while(r);
+#line 658 "utilities/type.bas"
+}
+#line 660 "utilities/type.bas"
+S_42107:;
+#line 660 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(FUNC_ISUINTEGER(_FUNC_TYPNAME2TYP_STRING_N)== 0 ))|(-(_FUNC_TYPNAME2TYP_STRING_N->len> 10 ))))||is_error_pending()){
+#line 660 "utilities/type.bas"
+if(qbevent){evnt(28621,660,"type.bas");if(r)goto S_42107;}
+#line 660 "utilities/type.bas"
+do{
+#line 660 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid number/constant after STRING * type",43));
+#line 660 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 660 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,660,"type.bas");}while(r);
+#line 660 "utilities/type.bas"
+do{
+#line 660 "utilities/type.bas"
+goto exit_subfunc;
+#line 660 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,660,"type.bas");}while(r);
+#line 660 "utilities/type.bas"
+}
+#line 661 "utilities/type.bas"
+do{
+#line 661 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B=qbr(qbs_val<long double>(_FUNC_TYPNAME2TYP_STRING_N));
+#line 661 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 661 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,661,"type.bas");}while(r);
+#line 662 "utilities/type.bas"
+S_42112:;
+#line 662 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(*_FUNC_TYPNAME2TYP_LONG_B== 0 ))|(-(_FUNC_TYPNAME2TYP_STRING_N->len> 10 ))))||is_error_pending()){
+#line 662 "utilities/type.bas"
+if(qbevent){evnt(28621,662,"type.bas");if(r)goto S_42112;}
+#line 662 "utilities/type.bas"
+do{
+#line 662 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid number after STRING * type",34));
+#line 662 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 662 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,662,"type.bas");}while(r);
+#line 662 "utilities/type.bas"
+do{
+#line 662 "utilities/type.bas"
+goto exit_subfunc;
+#line 662 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,662,"type.bas");}while(r);
+#line 662 "utilities/type.bas"
+}
+#line 663 "utilities/type.bas"
+LABEL_CONSTANTLENSTR:;
+#line 663 "utilities/type.bas"
+if(qbevent){evnt(28621,663,"type.bas");r=0;}
+#line 664 "utilities/type.bas"
+do{
+#line 664 "utilities/type.bas"
+*__LONG_TYPNAME2TYPSIZE=*_FUNC_TYPNAME2TYP_LONG_B;
+#line 664 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,664,"type.bas");}while(r);
+#line 665 "utilities/type.bas"
+do{
+#line 665 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_STRINGTYPE+*__LONG_ISFIXEDLENGTH;
+#line 665 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,665,"type.bas");}while(r);
+#line 666 "utilities/type.bas"
+do{
+#line 666 "utilities/type.bas"
+goto exit_subfunc;
+#line 666 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,666,"type.bas");}while(r);
+#line 667 "utilities/type.bas"
+}
+#line 669 "utilities/type.bas"
+S_42120:;
+#line 669 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("SINGLE",6))))||is_error_pending()){
+#line 669 "utilities/type.bas"
+if(qbevent){evnt(28621,669,"type.bas");if(r)goto S_42120;}
+#line 669 "utilities/type.bas"
+do{
+#line 669 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_SINGLETYPE;
+#line 669 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,669,"type.bas");}while(r);
+#line 669 "utilities/type.bas"
+do{
+#line 669 "utilities/type.bas"
+goto exit_subfunc;
+#line 669 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,669,"type.bas");}while(r);
+#line 669 "utilities/type.bas"
+}
+#line 670 "utilities/type.bas"
+S_42124:;
+#line 670 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("DOUBLE",6))))||is_error_pending()){
+#line 670 "utilities/type.bas"
+if(qbevent){evnt(28621,670,"type.bas");if(r)goto S_42124;}
+#line 670 "utilities/type.bas"
+do{
+#line 670 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_DOUBLETYPE;
+#line 670 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,670,"type.bas");}while(r);
+#line 670 "utilities/type.bas"
+do{
+#line 670 "utilities/type.bas"
+goto exit_subfunc;
+#line 670 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,670,"type.bas");}while(r);
+#line 670 "utilities/type.bas"
+}
+#line 671 "utilities/type.bas"
+S_42128:;
+#line 671 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("_FLOAT",6))))||is_error_pending()){
+#line 671 "utilities/type.bas"
+if(qbevent){evnt(28621,671,"type.bas");if(r)goto S_42128;}
+#line 671 "utilities/type.bas"
+do{
+#line 671 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_FLOATTYPE;
+#line 671 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,671,"type.bas");}while(r);
+#line 671 "utilities/type.bas"
+do{
+#line 671 "utilities/type.bas"
+goto exit_subfunc;
+#line 671 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,671,"type.bas");}while(r);
+#line 671 "utilities/type.bas"
+}
+#line 672 "utilities/type.bas"
+S_42132:;
+#line 672 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_T, 10 ),qbs_new_txt_len("_UNSIGNED ",10))))||is_error_pending()){
+#line 672 "utilities/type.bas"
+if(qbevent){evnt(28621,672,"type.bas");if(r)goto S_42132;}
+#line 673 "utilities/type.bas"
+do{
+#line 673 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_U= 1 ;
+#line 673 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,673,"type.bas");}while(r);
+#line 674 "utilities/type.bas"
+do{
+#line 674 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_T,func_mid(_FUNC_TYPNAME2TYP_STRING_T,func_instr(NULL,_FUNC_TYPNAME2TYP_STRING_T,func_chr( 32 ),0)+ 1 ,NULL,0));
+#line 674 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 674 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,674,"type.bas");}while(r);
+#line 675 "utilities/type.bas"
+}
+#line 676 "utilities/type.bas"
+S_42136:;
+#line 676 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_T, 4 ),qbs_new_txt_len("_BIT",4))))||is_error_pending()){
+#line 676 "utilities/type.bas"
+if(qbevent){evnt(28621,676,"type.bas");if(r)goto S_42136;}
+#line 677 "utilities/type.bas"
+S_42137:;
+#line 677 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("_BIT",4))))||is_error_pending()){
+#line 677 "utilities/type.bas"
+if(qbevent){evnt(28621,677,"type.bas");if(r)goto S_42137;}
+#line 678 "utilities/type.bas"
+S_42138:;
+#line 678 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_U)||is_error_pending()){
+#line 678 "utilities/type.bas"
+if(qbevent){evnt(28621,678,"type.bas");if(r)goto S_42138;}
+#line 678 "utilities/type.bas"
+do{
+#line 678 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_UBITTYPE;
+#line 678 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,678,"type.bas");}while(r);
+#line 678 "utilities/type.bas"
 }else{
-free((void*)(preserve_old_ptr));
+#line 678 "utilities/type.bas"
+do{
+#line 678 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_BITTYPE;
+#line 678 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,678,"type.bas");}while(r);
+#line 678 "utilities/type.bas"
 }
-__ARRAY_LONG_UDTENEXT[0]=preserve_new_ptr;
+#line 679 "utilities/type.bas"
+do{
+#line 679 "utilities/type.bas"
+goto exit_subfunc;
+#line 679 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,679,"type.bas");}while(r);
+#line 680 "utilities/type.bas"
+}
+#line 682 "utilities/type.bas"
+S_42145:;
+#line 682 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_left(_FUNC_TYPNAME2TYP_STRING_T, 7 ),qbs_new_txt_len("_BIT * ",7))))||is_error_pending()){
+#line 682 "utilities/type.bas"
+if(qbevent){evnt(28621,682,"type.bas");if(r)goto S_42145;}
+#line 682 "utilities/type.bas"
+do{
+#line 682 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Expected _BIT * number",22));
+#line 682 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 682 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,682,"type.bas");}while(r);
+#line 682 "utilities/type.bas"
+do{
+#line 682 "utilities/type.bas"
+goto exit_subfunc;
+#line 682 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,682,"type.bas");}while(r);
+#line 682 "utilities/type.bas"
+}
+#line 684 "utilities/type.bas"
+S_42149:;
+#line 684 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_TYPNAME2TYP_STRING_T, 4 ),qbs_new_txt_len("_BIT",4))))||is_error_pending()){
+#line 684 "utilities/type.bas"
+if(qbevent){evnt(28621,684,"type.bas");if(r)goto S_42149;}
+#line 685 "utilities/type.bas"
+do{
+#line 685 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_N,qbs_right(_FUNC_TYPNAME2TYP_STRING_T,_FUNC_TYPNAME2TYP_STRING_T->len- 7 ));
+#line 685 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 685 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,685,"type.bas");}while(r);
+#line 686 "utilities/type.bas"
 }else{
-__ARRAY_LONG_UDTENEXT[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_UDTENEXT[0]) error(257);
+#line 687 "utilities/type.bas"
+do{
+#line 687 "utilities/type.bas"
+qbs_set(_FUNC_TYPNAME2TYP_STRING_N,qbs_right(_FUNC_TYPNAME2TYP_STRING_T,_FUNC_TYPNAME2TYP_STRING_T->len- 6 ));
+#line 687 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 687 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,687,"type.bas");}while(r);
+#line 688 "utilities/type.bas"
 }
+#line 690 "utilities/type.bas"
+S_42154:;
+#line 690 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_ISUINTEGER(_FUNC_TYPNAME2TYP_STRING_N)== 0 )))||is_error_pending()){
+#line 690 "utilities/type.bas"
+if(qbevent){evnt(28621,690,"type.bas");if(r)goto S_42154;}
+#line 690 "utilities/type.bas"
+do{
+#line 690 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid size after _BIT *",25));
+#line 690 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 690 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,690,"type.bas");}while(r);
+#line 690 "utilities/type.bas"
+do{
+#line 690 "utilities/type.bas"
+goto exit_subfunc;
+#line 690 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,690,"type.bas");}while(r);
+#line 690 "utilities/type.bas"
 }
-__ARRAY_LONG_UDTENEXT[2]|=1;
-__ARRAY_LONG_UDTENEXT[4]=alloc_new_desc[4];
-__ARRAY_LONG_UDTENEXT[5]=alloc_new_desc[5];
-__ARRAY_LONG_UDTENEXT[6]=alloc_new_desc[6];
-__ARRAY_LONG_UDTENEXT[7]=alloc_new_desc[7];
+#line 691 "utilities/type.bas"
+do{
+#line 691 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_B=qbr(qbs_val<long double>(_FUNC_TYPNAME2TYP_STRING_N));
+#line 691 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 691 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,691,"type.bas");}while(r);
+#line 692 "utilities/type.bas"
+S_42159:;
+#line 692 "utilities/type.bas"
+if (((-(*_FUNC_TYPNAME2TYP_LONG_B== 0 ))|(-(*_FUNC_TYPNAME2TYP_LONG_B> 64 )))||is_error_pending()){
+#line 692 "utilities/type.bas"
+if(qbevent){evnt(28621,692,"type.bas");if(r)goto S_42159;}
+#line 692 "utilities/type.bas"
+do{
+#line 692 "utilities/type.bas"
+SUB_GIVE_ERROR(qbs_new_txt_len("Invalid size after _BIT *",25));
+#line 692 "utilities/type.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 692 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,692,"type.bas");}while(r);
+#line 692 "utilities/type.bas"
+do{
+#line 692 "utilities/type.bas"
+goto exit_subfunc;
+#line 692 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,692,"type.bas");}while(r);
+#line 692 "utilities/type.bas"
 }
-#line 807 "utilities/type.bas"
-if(!qbevent)break;evnt(28668,807,"type.bas");}while(r);
-#line 808 "utilities/type.bas"
+#line 693 "utilities/type.bas"
+do{
+#line 693 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_BITTYPE- 1 +*_FUNC_TYPNAME2TYP_LONG_B;
+#line 693 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,693,"type.bas");}while(r);
+#line 693 "utilities/type.bas"
+S_42164:;
+#line 693 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_U)||is_error_pending()){
+#line 693 "utilities/type.bas"
+if(qbevent){evnt(28621,693,"type.bas");if(r)goto S_42164;}
+#line 693 "utilities/type.bas"
+do{
+#line 693 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*_FUNC_TYPNAME2TYP_LONG_T+*__LONG_ISUNSIGNED;
+#line 693 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,693,"type.bas");}while(r);
+#line 693 "utilities/type.bas"
+}
+#line 694 "utilities/type.bas"
+do{
+#line 694 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*_FUNC_TYPNAME2TYP_LONG_T;
+#line 694 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,694,"type.bas");}while(r);
+#line 695 "utilities/type.bas"
+do{
+#line 695 "utilities/type.bas"
+goto exit_subfunc;
+#line 695 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,695,"type.bas");}while(r);
+#line 696 "utilities/type.bas"
+}
+#line 698 "utilities/type.bas"
+do{
+#line 698 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T= 0 ;
+#line 698 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,698,"type.bas");}while(r);
+#line 699 "utilities/type.bas"
+S_42171:;
+#line 699 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("_BYTE",5))))||is_error_pending()){
+#line 699 "utilities/type.bas"
+if(qbevent){evnt(28621,699,"type.bas");if(r)goto S_42171;}
+#line 699 "utilities/type.bas"
+do{
+#line 699 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_BYTETYPE;
+#line 699 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,699,"type.bas");}while(r);
+#line 699 "utilities/type.bas"
+}
+#line 700 "utilities/type.bas"
+S_42174:;
+#line 700 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("INTEGER",7))))||is_error_pending()){
+#line 700 "utilities/type.bas"
+if(qbevent){evnt(28621,700,"type.bas");if(r)goto S_42174;}
+#line 700 "utilities/type.bas"
+do{
+#line 700 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_INTEGERTYPE;
+#line 700 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,700,"type.bas");}while(r);
+#line 700 "utilities/type.bas"
+}
+#line 701 "utilities/type.bas"
+S_42177:;
+#line 701 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("LONG",4))))||is_error_pending()){
+#line 701 "utilities/type.bas"
+if(qbevent){evnt(28621,701,"type.bas");if(r)goto S_42177;}
+#line 701 "utilities/type.bas"
+do{
+#line 701 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_LONGTYPE;
+#line 701 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,701,"type.bas");}while(r);
+#line 701 "utilities/type.bas"
+}
+#line 702 "utilities/type.bas"
+S_42180:;
+#line 702 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("_INTEGER64",10))))||is_error_pending()){
+#line 702 "utilities/type.bas"
+if(qbevent){evnt(28621,702,"type.bas");if(r)goto S_42180;}
+#line 702 "utilities/type.bas"
+do{
+#line 702 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_INTEGER64TYPE;
+#line 702 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,702,"type.bas");}while(r);
+#line 702 "utilities/type.bas"
+}
+#line 703 "utilities/type.bas"
+S_42183:;
+#line 703 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_new_txt_len("_OFFSET",7))))||is_error_pending()){
+#line 703 "utilities/type.bas"
+if(qbevent){evnt(28621,703,"type.bas");if(r)goto S_42183;}
+#line 703 "utilities/type.bas"
+do{
+#line 703 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*__LONG_OFFSETTYPE;
+#line 703 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,703,"type.bas");}while(r);
+#line 703 "utilities/type.bas"
+}
+#line 704 "utilities/type.bas"
+S_42186:;
+#line 704 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_T)||is_error_pending()){
+#line 704 "utilities/type.bas"
+if(qbevent){evnt(28621,704,"type.bas");if(r)goto S_42186;}
+#line 705 "utilities/type.bas"
+S_42187:;
+#line 705 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_U)||is_error_pending()){
+#line 705 "utilities/type.bas"
+if(qbevent){evnt(28621,705,"type.bas");if(r)goto S_42187;}
+#line 705 "utilities/type.bas"
+do{
+#line 705 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_T=*_FUNC_TYPNAME2TYP_LONG_T+*__LONG_ISUNSIGNED;
+#line 705 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,705,"type.bas");}while(r);
+#line 705 "utilities/type.bas"
+}
+#line 706 "utilities/type.bas"
+do{
+#line 706 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*_FUNC_TYPNAME2TYP_LONG_T;
+#line 706 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,706,"type.bas");}while(r);
+#line 707 "utilities/type.bas"
+do{
+#line 707 "utilities/type.bas"
+goto exit_subfunc;
+#line 707 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,707,"type.bas");}while(r);
+#line 708 "utilities/type.bas"
+}
+#line 709 "utilities/type.bas"
+S_42193:;
+#line 709 "utilities/type.bas"
+if ((*_FUNC_TYPNAME2TYP_LONG_U)||is_error_pending()){
+#line 709 "utilities/type.bas"
+if(qbevent){evnt(28621,709,"type.bas");if(r)goto S_42193;}
+#line 709 "utilities/type.bas"
+do{
+#line 709 "utilities/type.bas"
+goto exit_subfunc;
+#line 709 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,709,"type.bas");}while(r);
+#line 709 "utilities/type.bas"
+}
+#line 712 "utilities/type.bas"
+S_42196:;
+#line 712 "utilities/type.bas"
+fornext_value4172= 1 ;
+#line 712 "utilities/type.bas"
+fornext_finalvalue4172=*__LONG_LASTTYPE;
+#line 712 "utilities/type.bas"
+fornext_step4172= 1 ;
+#line 712 "utilities/type.bas"
+if (fornext_step4172<0) fornext_step_negative4172=1; else fornext_step_negative4172=0;
+#line 712 "utilities/type.bas"
+if (is_error_pending()) goto fornext_error4172;
+#line 712 "utilities/type.bas"
+goto fornext_entrylabel4172;
+#line 712 "utilities/type.bas"
+while(1){
+#line 712 "utilities/type.bas"
+fornext_value4172=fornext_step4172+(*_FUNC_TYPNAME2TYP_LONG_I);
+#line 712 "utilities/type.bas"
+fornext_entrylabel4172:
+#line 712 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_I=fornext_value4172;
+#line 712 "utilities/type.bas"
+if (fornext_step_negative4172){
+#line 712 "utilities/type.bas"
+if (fornext_value4172<fornext_finalvalue4172) break;
+#line 712 "utilities/type.bas"
+}else{
+#line 712 "utilities/type.bas"
+if (fornext_value4172>fornext_finalvalue4172) break;
+#line 712 "utilities/type.bas"
+}
+#line 712 "utilities/type.bas"
+fornext_error4172:;
+#line 712 "utilities/type.bas"
+if(qbevent){evnt(28621,712,"type.bas");if(r)goto S_42196;}
+#line 713 "utilities/type.bas"
+S_42197:;
+#line 713 "utilities/type.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_TYPNAME2TYP_STRING_T,qbs_rtrim(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_UDTXNAME[0]))[(array_check((*_FUNC_TYPNAME2TYP_LONG_I)-__ARRAY_STRING256_UDTXNAME[4],__ARRAY_STRING256_UDTXNAME[5]))*256],256,1)))))||is_error_pending()){
+#line 713 "utilities/type.bas"
+if(qbevent){evnt(28621,713,"type.bas");if(r)goto S_42197;}
+#line 714 "utilities/type.bas"
+do{
+#line 714 "utilities/type.bas"
+*_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP=*__LONG_ISUDT+*__LONG_ISPOINTER+*_FUNC_TYPNAME2TYP_LONG_I;
+#line 714 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,714,"type.bas");}while(r);
+#line 715 "utilities/type.bas"
+do{
+#line 715 "utilities/type.bas"
+goto exit_subfunc;
+#line 715 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,715,"type.bas");}while(r);
+#line 716 "utilities/type.bas"
+}
+#line 717 "utilities/type.bas"
+fornext_continue_4171:;
+#line 717 "utilities/type.bas"
+}
+#line 717 "utilities/type.bas"
+fornext_exit_4171:;
+#line 720 "utilities/type.bas"
 exit_subfunc:;
-#line 808 "utilities/type.bas"
+#line 720 "utilities/type.bas"
 free_mem_lock(sf_mem_lock);
-#line 808 "utilities/type.bas"
+#line 720 "utilities/type.bas"
 #include "free279.txt"
-#line 808 "utilities/type.bas"
+#line 720 "utilities/type.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 808 "utilities/type.bas"
+#line 720 "utilities/type.bas"
 cmem_sp=tmp_cmem_sp;
-#line 808 "utilities/type.bas"
+#line 720 "utilities/type.bas"
+return *_FUNC_TYPNAME2TYP_LONG_TYPNAME2TYP;
+#line 720 "utilities/type.bas"
 }

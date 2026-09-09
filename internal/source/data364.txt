@@ -1,80 +1,91 @@
-#line 11250 "ide/ide_methods.bas"
-qbs*oldstr5805=NULL;
-#line 11250 "ide/ide_methods.bas"
-if(_SUB_FINDQUOTECOMMENT_STRING_TEXT->tmp||_SUB_FINDQUOTECOMMENT_STRING_TEXT->fixed||_SUB_FINDQUOTECOMMENT_STRING_TEXT->readonly){
-#line 11250 "ide/ide_methods.bas"
-oldstr5805=_SUB_FINDQUOTECOMMENT_STRING_TEXT;
-#line 11250 "ide/ide_methods.bas"
-if (oldstr5805->cmem_descriptor){
-#line 11250 "ide/ide_methods.bas"
-_SUB_FINDQUOTECOMMENT_STRING_TEXT=qbs_new_cmem(oldstr5805->len,0);
-#line 11250 "ide/ide_methods.bas"
+int32 *_FUNC_MULTISEARCH_LONG_MULTISEARCH=NULL;
+#line 8746 "ide/ide_methods.bas"
+if(_FUNC_MULTISEARCH_LONG_MULTISEARCH==NULL){
+#line 8746 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_LONG_MULTISEARCH=(int32*)mem_static_malloc(4);
+#line 8746 "ide/ide_methods.bas"
+*_FUNC_MULTISEARCH_LONG_MULTISEARCH=0;
+#line 8746 "ide/ide_methods.bas"
+}
+#line 8746 "ide/ide_methods.bas"
+qbs*oldstr5554=NULL;
+#line 8746 "ide/ide_methods.bas"
+if(_FUNC_MULTISEARCH_STRING___FULLTEXT->tmp||_FUNC_MULTISEARCH_STRING___FULLTEXT->fixed||_FUNC_MULTISEARCH_STRING___FULLTEXT->readonly){
+#line 8746 "ide/ide_methods.bas"
+oldstr5554=_FUNC_MULTISEARCH_STRING___FULLTEXT;
+#line 8746 "ide/ide_methods.bas"
+if (oldstr5554->cmem_descriptor){
+#line 8746 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_STRING___FULLTEXT=qbs_new_cmem(oldstr5554->len,0);
+#line 8746 "ide/ide_methods.bas"
 }else{
-#line 11250 "ide/ide_methods.bas"
-_SUB_FINDQUOTECOMMENT_STRING_TEXT=qbs_new(oldstr5805->len,0);
-#line 11250 "ide/ide_methods.bas"
+#line 8746 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_STRING___FULLTEXT=qbs_new(oldstr5554->len,0);
+#line 8746 "ide/ide_methods.bas"
 }
-#line 11250 "ide/ide_methods.bas"
-memcpy(_SUB_FINDQUOTECOMMENT_STRING_TEXT->chr,oldstr5805->chr,oldstr5805->len);
-#line 11250 "ide/ide_methods.bas"
+#line 8746 "ide/ide_methods.bas"
+memcpy(_FUNC_MULTISEARCH_STRING___FULLTEXT->chr,oldstr5554->chr,oldstr5554->len);
+#line 8746 "ide/ide_methods.bas"
 }
-int32 *_SUB_FINDQUOTECOMMENT_LONG_CURSOR=NULL;
-#line 11252 "ide/ide_methods.bas"
-if(_SUB_FINDQUOTECOMMENT_LONG_CURSOR==NULL){
-#line 11252 "ide/ide_methods.bas"
-_SUB_FINDQUOTECOMMENT_LONG_CURSOR=(int32*)mem_static_malloc(4);
-#line 11252 "ide/ide_methods.bas"
-*_SUB_FINDQUOTECOMMENT_LONG_CURSOR=0;
-#line 11252 "ide/ide_methods.bas"
+#line 8746 "ide/ide_methods.bas"
+qbs*oldstr5555=NULL;
+#line 8746 "ide/ide_methods.bas"
+if(_FUNC_MULTISEARCH_STRING___SEARCHSTRING->tmp||_FUNC_MULTISEARCH_STRING___SEARCHSTRING->fixed||_FUNC_MULTISEARCH_STRING___SEARCHSTRING->readonly){
+#line 8746 "ide/ide_methods.bas"
+oldstr5555=_FUNC_MULTISEARCH_STRING___SEARCHSTRING;
+#line 8746 "ide/ide_methods.bas"
+if (oldstr5555->cmem_descriptor){
+#line 8746 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_STRING___SEARCHSTRING=qbs_new_cmem(oldstr5555->len,0);
+#line 8746 "ide/ide_methods.bas"
+}else{
+#line 8746 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_STRING___SEARCHSTRING=qbs_new(oldstr5555->len,0);
+#line 8746 "ide/ide_methods.bas"
 }
-#line 11253 "ide/ide_methods.bas"
-byte_element_struct *byte_element_5806=NULL;
-#line 11253 "ide/ide_methods.bas"
-if (!byte_element_5806){
-#line 11253 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5806=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5806=(byte_element_struct*)mem_static_malloc(12);
-#line 11253 "ide/ide_methods.bas"
+#line 8746 "ide/ide_methods.bas"
+memcpy(_FUNC_MULTISEARCH_STRING___SEARCHSTRING->chr,oldstr5555->chr,oldstr5555->len);
+#line 8746 "ide/ide_methods.bas"
 }
-#line 11253 "ide/ide_methods.bas"
-byte_element_struct *byte_element_5807=NULL;
-#line 11253 "ide/ide_methods.bas"
-if (!byte_element_5807){
-#line 11253 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5807=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5807=(byte_element_struct*)mem_static_malloc(12);
-#line 11253 "ide/ide_methods.bas"
+qbs *_FUNC_MULTISEARCH_STRING_FULLTEXT=NULL;
+#line 8752 "ide/ide_methods.bas"
+if (!_FUNC_MULTISEARCH_STRING_FULLTEXT)_FUNC_MULTISEARCH_STRING_FULLTEXT=qbs_new(0,0);
+qbs *_FUNC_MULTISEARCH_STRING_SEARCHSTRING=NULL;
+#line 8753 "ide/ide_methods.bas"
+if (!_FUNC_MULTISEARCH_STRING_SEARCHSTRING)_FUNC_MULTISEARCH_STRING_SEARCHSTRING=qbs_new(0,0);
+#line 8754 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5556=NULL;
+#line 8754 "ide/ide_methods.bas"
+if (!byte_element_5556){
+#line 8754 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5556=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5556=(byte_element_struct*)mem_static_malloc(12);
+#line 8754 "ide/ide_methods.bas"
 }
-int32 *_SUB_FINDQUOTECOMMENT_LONG_FIND_K=NULL;
-#line 11254 "ide/ide_methods.bas"
-if(_SUB_FINDQUOTECOMMENT_LONG_FIND_K==NULL){
-#line 11254 "ide/ide_methods.bas"
-_SUB_FINDQUOTECOMMENT_LONG_FIND_K=(int32*)mem_static_malloc(4);
-#line 11254 "ide/ide_methods.bas"
-*_SUB_FINDQUOTECOMMENT_LONG_FIND_K=0;
-#line 11254 "ide/ide_methods.bas"
+#line 8755 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5557=NULL;
+#line 8755 "ide/ide_methods.bas"
+if (!byte_element_5557){
+#line 8755 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5557=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5557=(byte_element_struct*)mem_static_malloc(12);
+#line 8755 "ide/ide_methods.bas"
 }
-#line 11254 "ide/ide_methods.bas"
-int64 fornext_value5809;
-#line 11254 "ide/ide_methods.bas"
-int64 fornext_finalvalue5809;
-#line 11254 "ide/ide_methods.bas"
-int64 fornext_step5809;
-#line 11254 "ide/ide_methods.bas"
-uint8 fornext_step_negative5809;
-#line 11255 "ide/ide_methods.bas"
-static qbs *sc_5810=qbs_new(0,0);
-#line 11265 "ide/ide_methods.bas"
-byte_element_struct *byte_element_5811=NULL;
-#line 11265 "ide/ide_methods.bas"
-if (!byte_element_5811){
-#line 11265 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5811=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5811=(byte_element_struct*)mem_static_malloc(12);
-#line 11265 "ide/ide_methods.bas"
+int32 *_FUNC_MULTISEARCH_LONG_FINDPLUS=NULL;
+#line 8758 "ide/ide_methods.bas"
+if(_FUNC_MULTISEARCH_LONG_FINDPLUS==NULL){
+#line 8758 "ide/ide_methods.bas"
+_FUNC_MULTISEARCH_LONG_FINDPLUS=(int32*)mem_static_malloc(4);
+#line 8758 "ide/ide_methods.bas"
+*_FUNC_MULTISEARCH_LONG_FINDPLUS=0;
+#line 8758 "ide/ide_methods.bas"
 }
-#line 11265 "ide/ide_methods.bas"
-byte_element_struct *byte_element_5812=NULL;
-#line 11265 "ide/ide_methods.bas"
-if (!byte_element_5812){
-#line 11265 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5812=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5812=(byte_element_struct*)mem_static_malloc(12);
-#line 11265 "ide/ide_methods.bas"
+qbs *_FUNC_MULTISEARCH_STRING_THISTERM=NULL;
+#line 8760 "ide/ide_methods.bas"
+if (!_FUNC_MULTISEARCH_STRING_THISTERM)_FUNC_MULTISEARCH_STRING_THISTERM=qbs_new(0,0);
+#line 8766 "ide/ide_methods.bas"
+byte_element_struct *byte_element_5559=NULL;
+#line 8766 "ide/ide_methods.bas"
+if (!byte_element_5559){
+#line 8766 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5559=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5559=(byte_element_struct*)mem_static_malloc(12);
+#line 8766 "ide/ide_methods.bas"
 }

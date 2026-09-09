@@ -1,88 +1,100 @@
-#line 18805 "ide/ide_methods.bas"
-int32 FUNC_COUNTITEMS(qbs*_FUNC_COUNTITEMS_STRING_SEARCHSTRING,qbs*_FUNC_COUNTITEMS_STRING_ITEM){
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
+void SUB_IDESETTCPPORTBOX(){
+#line 16277 "ide/ide_methods.bas"
 qbs *tqbs;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 ptrszint tmp_long;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 int32 tmp_fileno;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 #include "data420.txt"
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 new_mem_lock();
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 libqb_check_stack();
-#line 18805 "ide/ide_methods.bas"
+#line 16277 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 18806 "ide/ide_methods.bas"
-S_65426:;
-#line 18806 "ide/ide_methods.bas"
+#line 16278 "ide/ide_methods.bas"
 do{
-#line 18806 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,18806,"ide_methods.bas");if(r)goto S_65426;}
-#line 18807 "ide/ide_methods.bas"
-do{
-#line 18807 "ide/ide_methods.bas"
-*_FUNC_COUNTITEMS_LONG_FOUND=func_instr(*_FUNC_COUNTITEMS_LONG_FOUND+ 1 ,_FUNC_COUNTITEMS_STRING_SEARCHSTRING,_FUNC_COUNTITEMS_STRING_ITEM,0|1);
-#line 18807 "ide/ide_methods.bas"
+#line 16278 "ide/ide_methods.bas"
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+#line 16278 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 18807 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,18807,"ide_methods.bas");}while(r);
-#line 18808 "ide/ide_methods.bas"
-S_65428:;
-#line 18808 "ide/ide_methods.bas"
-if ((-(*_FUNC_COUNTITEMS_LONG_FOUND== 0 ))||is_error_pending()){
-#line 18808 "ide/ide_methods.bas"
-if(qbevent){evnt(28678,18808,"ide_methods.bas");if(r)goto S_65428;}
-#line 18808 "ide/ide_methods.bas"
+#line 16278 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16278,"ide_methods.bas");}while(r);
+#line 16279 "ide/ide_methods.bas"
 do{
-#line 18808 "ide/ide_methods.bas"
-goto dl_exit_6655;
-#line 18808 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,18808,"ide_methods.bas");}while(r);
-#line 18808 "ide/ide_methods.bas"
+#line 16279 "ide/ide_methods.bas"
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6419= 45 ),&(pass6420= 5 ),&(pass6421= 0 )));
+#line 16279 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16279 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16279,"ide_methods.bas");}while(r);
+#line 16280 "ide/ide_methods.bas"
+S_61932:;
+#line 16280 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 16280 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,16280,"ide_methods.bas");if(r)goto S_61932;}
+#line 16280 "ide/ide_methods.bas"
+do{
+#line 16280 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 16280 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16280,"ide_methods.bas");}while(r);
+#line 16280 "ide/ide_methods.bas"
 }
-#line 18809 "ide/ide_methods.bas"
+#line 16282 "ide/ide_methods.bas"
 do{
-#line 18809 "ide/ide_methods.bas"
-*_FUNC_COUNTITEMS_LONG_TOTAL=*_FUNC_COUNTITEMS_LONG_TOTAL+ 1 ;
-#line 18809 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,18809,"ide_methods.bas");}while(r);
-#line 18810 "ide/ide_methods.bas"
-dl_continue_6655:;
-#line 18810 "ide/ide_methods.bas"
-}while(1);
-#line 18810 "ide/ide_methods.bas"
-dl_exit_6655:;
-#line 18811 "ide/ide_methods.bas"
+#line 16282 "ide/ide_methods.bas"
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+#line 16282 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16282 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16282,"ide_methods.bas");}while(r);
+#line 16283 "ide/ide_methods.bas"
+S_61936:;
+#line 16283 "ide/ide_methods.bas"
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+#line 16283 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,16283,"ide_methods.bas");if(r)goto S_61936;}
+#line 16283 "ide/ide_methods.bas"
 do{
-#line 18811 "ide/ide_methods.bas"
-*_FUNC_COUNTITEMS_LONG_COUNTITEMS=*_FUNC_COUNTITEMS_LONG_TOTAL;
-#line 18811 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,18811,"ide_methods.bas");}while(r);
-#line 18812 "ide/ide_methods.bas"
+#line 16283 "ide/ide_methods.bas"
+*__LONG_IDEBASETCPPORT= 9000 ;
+#line 16283 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16283,"ide_methods.bas");}while(r);
+#line 16283 "ide/ide_methods.bas"
+}
+#line 16284 "ide/ide_methods.bas"
+do{
+#line 16284 "ide/ide_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+#line 16284 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16284 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,16284,"ide_methods.bas");}while(r);
+#line 16285 "ide/ide_methods.bas"
 exit_subfunc:;
-#line 18812 "ide/ide_methods.bas"
+#line 16285 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 18812 "ide/ide_methods.bas"
+#line 16285 "ide/ide_methods.bas"
 #include "free420.txt"
-#line 18812 "ide/ide_methods.bas"
+#line 16285 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 18812 "ide/ide_methods.bas"
+#line 16285 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 18812 "ide/ide_methods.bas"
-return *_FUNC_COUNTITEMS_LONG_COUNTITEMS;
-#line 18812 "ide/ide_methods.bas"
+#line 16285 "ide/ide_methods.bas"
 }

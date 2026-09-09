@@ -1,48 +1,54 @@
-#line 8514 "ide/ide_methods.bas"
-float FUNC_MAP(float*_FUNC_MAP_SINGLE_VALUE,float*_FUNC_MAP_SINGLE_MINRANGE,float*_FUNC_MAP_SINGLE_MAXRANGE,float*_FUNC_MAP_SINGLE_NEWMINRANGE,float*_FUNC_MAP_SINGLE_NEWMAXRANGE){
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
+void SUB_GIVE_ERROR(qbs*_SUB_GIVE_ERROR_STRING_A){
+#line 2 "utilities/give_error.bas"
 qbs *tqbs;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 ptrszint tmp_long;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 int32 tmp_fileno;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 #include "data351.txt"
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 mem_lock *sf_mem_lock;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 new_mem_lock();
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 sf_mem_lock->type=3;
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 libqb_check_stack();
-#line 8514 "ide/ide_methods.bas"
+#line 2 "utilities/give_error.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 8515 "ide/ide_methods.bas"
+#line 3 "utilities/give_error.bas"
 do{
-#line 8515 "ide/ide_methods.bas"
-*_FUNC_MAP_SINGLE_MAP=(((*_FUNC_MAP_SINGLE_VALUE-*_FUNC_MAP_SINGLE_MINRANGE)/ (*_FUNC_MAP_SINGLE_MAXRANGE-*_FUNC_MAP_SINGLE_MINRANGE))*(*_FUNC_MAP_SINGLE_NEWMAXRANGE-*_FUNC_MAP_SINGLE_NEWMINRANGE))+*_FUNC_MAP_SINGLE_NEWMINRANGE;
-#line 8515 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28678,8515,"ide_methods.bas");}while(r);
-#line 8516 "ide/ide_methods.bas"
+#line 3 "utilities/give_error.bas"
+*__LONG_ERROR_HAPPENED= 1 ;
+#line 3 "utilities/give_error.bas"
+if(!qbevent)break;evnt(28622,3,"give_error.bas");}while(r);
+#line 4 "utilities/give_error.bas"
+do{
+#line 4 "utilities/give_error.bas"
+qbs_set(__STRING_ERROR_MESSAGE,_SUB_GIVE_ERROR_STRING_A);
+#line 4 "utilities/give_error.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 4 "utilities/give_error.bas"
+if(!qbevent)break;evnt(28622,4,"give_error.bas");}while(r);
+#line 5 "utilities/give_error.bas"
 exit_subfunc:;
-#line 8516 "ide/ide_methods.bas"
+#line 5 "utilities/give_error.bas"
 free_mem_lock(sf_mem_lock);
-#line 8516 "ide/ide_methods.bas"
+#line 5 "utilities/give_error.bas"
 #include "free351.txt"
-#line 8516 "ide/ide_methods.bas"
+#line 5 "utilities/give_error.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 8516 "ide/ide_methods.bas"
+#line 5 "utilities/give_error.bas"
 cmem_sp=tmp_cmem_sp;
-#line 8516 "ide/ide_methods.bas"
-return *_FUNC_MAP_SINGLE_MAP;
-#line 8516 "ide/ide_methods.bas"
+#line 5 "utilities/give_error.bas"
 }

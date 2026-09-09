@@ -1,678 +1,424 @@
-#line 27 "ide/wiki/wiki_methods.bas"
-qbs* FUNC_WIKI(qbs*_FUNC_WIKI_STRING_PAGENAME){
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
+qbs* FUNC_GETWORDATCURSOR(){
+#line 20990 "ide/ide_methods.bas"
 qbs *tqbs;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 ptrszint tmp_long;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 int32 tmp_fileno;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 #include "data463.txt"
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 new_mem_lock();
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 libqb_check_stack();
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20990 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 28 "ide/wiki/wiki_methods.bas"
-S_68451:;
-#line 28 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_left(_FUNC_WIKI_STRING_PAGENAME, 9 ),qbs_new_txt_len("Template:",9))))||is_error_pending()){
-#line 28 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,28,"wiki_methods.bas");if(r)goto S_68451;}
-#line 28 "ide/wiki/wiki_methods.bas"
+#line 20991 "ide/ide_methods.bas"
 do{
-#line 28 "ide/wiki/wiki_methods.bas"
-qbs_set(__STRING_HELP_PAGELOADED,_FUNC_WIKI_STRING_PAGENAME);
-#line 28 "ide/wiki/wiki_methods.bas"
+#line 20991 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_A,FUNC_IDEGETLINE(__LONG_IDECY));
+#line 20991 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 28 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,28,"wiki_methods.bas");}while(r);
-#line 28 "ide/wiki/wiki_methods.bas"
+#line 20991 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,20991,"ide_methods.bas");}while(r);
+#line 20992 "ide/ide_methods.bas"
+do{
+#line 20992 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X=*__LONG_IDECX;
+#line 20992 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,20992,"ide_methods.bas");}while(r);
+#line 20993 "ide/ide_methods.bas"
+S_67352:;
+#line 20993 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(*_FUNC_GETWORDATCURSOR_LONG_X<=_FUNC_GETWORDATCURSOR_STRING_A->len)))||is_error_pending()){
+#line 20993 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,20993,"ide_methods.bas");if(r)goto S_67352;}
+#line 20994 "ide/ide_methods.bas"
+S_67353:;
+#line 20994 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(-(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X)== 32 ))&(-(*_FUNC_GETWORDATCURSOR_LONG_X> 1 ))))||is_error_pending()){
+#line 20994 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,20994,"ide_methods.bas");if(r)goto S_67353;}
+#line 20995 "ide/ide_methods.bas"
+S_67354:;
+#line 20995 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X- 1 )!= 32 )))||is_error_pending()){
+#line 20995 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,20995,"ide_methods.bas");if(r)goto S_67354;}
+#line 20995 "ide/ide_methods.bas"
+do{
+#line 20995 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X=*_FUNC_GETWORDATCURSOR_LONG_X- 1 ;
+#line 20995 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,20995,"ide_methods.bas");}while(r);
+#line 20995 "ide/ide_methods.bas"
 }
-#line 31 "ide/wiki/wiki_methods.bas"
+#line 20996 "ide/ide_methods.bas"
+}
+#line 20997 "ide/ide_methods.bas"
+LABEL_TRY:;
+#line 20997 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,20997,"ide_methods.bas");r=0;}
+#line 20998 "ide/ide_methods.bas"
+S_67358:;
+#line 20998 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,((int32*)(__ARRAY_LONG_ALPHANUMERIC[0]))[array_check((qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X))-__ARRAY_LONG_ALPHANUMERIC[4],__ARRAY_LONG_ALPHANUMERIC[5])]))||is_error_pending()){
+#line 20998 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,20998,"ide_methods.bas");if(r)goto S_67358;}
+#line 20999 "ide/ide_methods.bas"
 do{
-#line 31 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_PAGENAME2,qbs_new_txt_len("",0));
-#line 31 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 31 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,31,"wiki_methods.bas");}while(r);
-#line 32 "ide/wiki/wiki_methods.bas"
-S_68455:;
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_value6922= 1 ;
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_finalvalue6922=_FUNC_WIKI_STRING_PAGENAME->len;
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_step6922= 1 ;
-#line 32 "ide/wiki/wiki_methods.bas"
-if (fornext_step6922<0) fornext_step_negative6922=1; else fornext_step_negative6922=0;
-#line 32 "ide/wiki/wiki_methods.bas"
-if (is_error_pending()) goto fornext_error6922;
-#line 32 "ide/wiki/wiki_methods.bas"
-goto fornext_entrylabel6922;
-#line 32 "ide/wiki/wiki_methods.bas"
-while(1){
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_value6922=fornext_step6922+(*_FUNC_WIKI_LONG_I);
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_entrylabel6922:
-#line 32 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_I=fornext_value6922;
-#line 32 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 32 "ide/wiki/wiki_methods.bas"
-if (fornext_step_negative6922){
-#line 32 "ide/wiki/wiki_methods.bas"
-if (fornext_value6922<fornext_finalvalue6922) break;
-#line 32 "ide/wiki/wiki_methods.bas"
+#line 20999 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X1=*_FUNC_GETWORDATCURSOR_LONG_X;
+#line 20999 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,20999,"ide_methods.bas");}while(r);
+#line 21000 "ide/ide_methods.bas"
+S_67360:;
+#line 21000 "ide/ide_methods.bas"
+while((-(*_FUNC_GETWORDATCURSOR_LONG_X1> 1 ))||is_error_pending()){
+#line 21000 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21000,"ide_methods.bas");if(r)goto S_67360;}
+#line 21001 "ide/ide_methods.bas"
+S_67361:;
+#line 21001 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,((int32*)(__ARRAY_LONG_ALPHANUMERIC[0]))[array_check((qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X1- 1 ))-__ARRAY_LONG_ALPHANUMERIC[4],__ARRAY_LONG_ALPHANUMERIC[5])]|(-(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X1- 1 )== 36 ))))||is_error_pending()){
+#line 21001 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21001,"ide_methods.bas");if(r)goto S_67361;}
+#line 21001 "ide/ide_methods.bas"
+do{
+#line 21001 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X1=*_FUNC_GETWORDATCURSOR_LONG_X1- 1 ;
+#line 21001 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21001,"ide_methods.bas");}while(r);
+#line 21001 "ide/ide_methods.bas"
 }else{
-#line 32 "ide/wiki/wiki_methods.bas"
-if (fornext_value6922>fornext_finalvalue6922) break;
-#line 32 "ide/wiki/wiki_methods.bas"
+#line 21001 "ide/ide_methods.bas"
+do{
+#line 21001 "ide/ide_methods.bas"
+goto dl_exit_6890;
+#line 21001 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21001,"ide_methods.bas");}while(r);
+#line 21001 "ide/ide_methods.bas"
 }
-#line 32 "ide/wiki/wiki_methods.bas"
-fornext_error6922:;
-#line 32 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,32,"wiki_methods.bas");if(r)goto S_68455;}
-#line 33 "ide/wiki/wiki_methods.bas"
-do{
-#line 33 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_C=qbs_asc(_FUNC_WIKI_STRING_PAGENAME,*_FUNC_WIKI_LONG_I);
-#line 33 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 33 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,33,"wiki_methods.bas");}while(r);
-#line 34 "ide/wiki/wiki_methods.bas"
-S_68457:;
-#line 34 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,34,"wiki_methods.bas");if(r)goto S_68457;}
-#line 35 "ide/wiki/wiki_methods.bas"
-S_68458:;
-#line 35 "ide/wiki/wiki_methods.bas"
-if (((*_FUNC_WIKI_LONG_C==( 32 )))||is_error_pending()){
-#line 35 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,35,"wiki_methods.bas");if(r)goto S_68458;}
-#line 36 "ide/wiki/wiki_methods.bas"
-do{
-#line 36 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_PAGENAME2,qbs_add(_FUNC_WIKI_STRING_PAGENAME2,qbs_new_txt_len("_",1)));
-#line 36 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 36 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,36,"wiki_methods.bas");}while(r);
-#line 37 "ide/wiki/wiki_methods.bas"
-sc_ec_484_end:;
-#line 37 "ide/wiki/wiki_methods.bas"
-goto sc_6924_end;
-#line 37 "ide/wiki/wiki_methods.bas"
+#line 21002 "ide/ide_methods.bas"
+dl_continue_6890:;
+#line 21002 "ide/ide_methods.bas"
 }
-#line 37 "ide/wiki/wiki_methods.bas"
-S_68460:;
-#line 37 "ide/wiki/wiki_methods.bas"
-if (((*_FUNC_WIKI_LONG_C==( 34 ))||(*_FUNC_WIKI_LONG_C==( 36 ))||(*_FUNC_WIKI_LONG_C==( 38 ))||(*_FUNC_WIKI_LONG_C==( 42 ))||(*_FUNC_WIKI_LONG_C==( 43 ))||(*_FUNC_WIKI_LONG_C==( 47 ))||(*_FUNC_WIKI_LONG_C==( 58 ))||(*_FUNC_WIKI_LONG_C==( 60 ))||(*_FUNC_WIKI_LONG_C==( 62 ))||(*_FUNC_WIKI_LONG_C==( 63 ))||(*_FUNC_WIKI_LONG_C==( 92 ))||(*_FUNC_WIKI_LONG_C==( 124 )))||is_error_pending()){
-#line 37 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,37,"wiki_methods.bas");if(r)goto S_68460;}
-#line 38 "ide/wiki/wiki_methods.bas"
+#line 21002 "ide/ide_methods.bas"
+dl_exit_6890:;
+#line 21003 "ide/ide_methods.bas"
 do{
-#line 38 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_PAGENAME2,qbs_add(qbs_add(_FUNC_WIKI_STRING_PAGENAME2,qbs_new_txt_len("%",1)),func_hex(*_FUNC_WIKI_LONG_C,8)));
-#line 38 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 38 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,38,"wiki_methods.bas");}while(r);
-#line 39 "ide/wiki/wiki_methods.bas"
-sc_ec_485_end:;
-#line 39 "ide/wiki/wiki_methods.bas"
-goto sc_6924_end;
-#line 39 "ide/wiki/wiki_methods.bas"
+#line 21003 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X2=*_FUNC_GETWORDATCURSOR_LONG_X;
+#line 21003 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21003,"ide_methods.bas");}while(r);
+#line 21004 "ide/ide_methods.bas"
+S_67368:;
+#line 21004 "ide/ide_methods.bas"
+while((qbs_cleanup(qbs_tmp_base,-(*_FUNC_GETWORDATCURSOR_LONG_X2<_FUNC_GETWORDATCURSOR_STRING_A->len)))||is_error_pending()){
+#line 21004 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21004,"ide_methods.bas");if(r)goto S_67368;}
+#line 21005 "ide/ide_methods.bas"
+S_67369:;
+#line 21005 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,((int32*)(__ARRAY_LONG_ALPHANUMERIC[0]))[array_check((qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X2+ 1 ))-__ARRAY_LONG_ALPHANUMERIC[4],__ARRAY_LONG_ALPHANUMERIC[5])]|(-(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X2+ 1 )== 36 ))))||is_error_pending()){
+#line 21005 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21005,"ide_methods.bas");if(r)goto S_67369;}
+#line 21005 "ide/ide_methods.bas"
+do{
+#line 21005 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X2=*_FUNC_GETWORDATCURSOR_LONG_X2+ 1 ;
+#line 21005 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21005,"ide_methods.bas");}while(r);
+#line 21005 "ide/ide_methods.bas"
+}else{
+#line 21005 "ide/ide_methods.bas"
+do{
+#line 21005 "ide/ide_methods.bas"
+goto dl_exit_6892;
+#line 21005 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21005,"ide_methods.bas");}while(r);
+#line 21005 "ide/ide_methods.bas"
 }
-#line 40 "ide/wiki/wiki_methods.bas"
-do{
-#line 40 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_PAGENAME2,qbs_add(_FUNC_WIKI_STRING_PAGENAME2,func_chr(*_FUNC_WIKI_LONG_C)));
-#line 40 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 40 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,40,"wiki_methods.bas");}while(r);
-#line 41 "ide/wiki/wiki_methods.bas"
-sc_6924_end:;
-#line 42 "ide/wiki/wiki_methods.bas"
-fornext_continue_6921:;
-#line 42 "ide/wiki/wiki_methods.bas"
+#line 21006 "ide/ide_methods.bas"
+dl_continue_6892:;
+#line 21006 "ide/ide_methods.bas"
 }
-#line 42 "ide/wiki/wiki_methods.bas"
-fornext_exit_6921:;
-#line 43 "ide/wiki/wiki_methods.bas"
+#line 21006 "ide/ide_methods.bas"
+dl_exit_6892:;
+#line 21007 "ide/ide_methods.bas"
 do{
-#line 43 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_PAGENAME3,FUNC_WIKISAFENAME(_FUNC_WIKI_STRING_PAGENAME2));
-#line 43 "ide/wiki/wiki_methods.bas"
+#line 21007 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_A2,func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X1,*_FUNC_GETWORDATCURSOR_LONG_X2-*_FUNC_GETWORDATCURSOR_LONG_X1+ 1 ,0|1));
+#line 21007 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 43 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,43,"wiki_methods.bas");}while(r);
-#line 46 "ide/wiki/wiki_methods.bas"
-S_68467:;
-#line 46 "ide/wiki/wiki_methods.bas"
-if ((-(*__LONG_HELP_IGNORECACHE== 0 ))||is_error_pending()){
-#line 46 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,46,"wiki_methods.bas");if(r)goto S_68467;}
-#line 47 "ide/wiki/wiki_methods.bas"
-S_68468:;
-#line 47 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__fileexists(qbs_add(qbs_add(qbs_add(__STRING_CACHE_FOLDER,qbs_new_txt_len("/",1)),_FUNC_WIKI_STRING_PAGENAME3),qbs_new_txt_len(".txt",4)))))||is_error_pending()){
-#line 47 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,47,"wiki_methods.bas");if(r)goto S_68468;}
-#line 48 "ide/wiki/wiki_methods.bas"
+#line 21007 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21007,"ide_methods.bas");}while(r);
+#line 21008 "ide/ide_methods.bas"
+}else{
+#line 21009 "ide/ide_methods.bas"
 do{
-#line 48 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,func__readfile(qbs_add(qbs_add(qbs_add(__STRING_CACHE_FOLDER,qbs_new_txt_len("/",1)),_FUNC_WIKI_STRING_PAGENAME3),qbs_new_txt_len(".txt",4))));
-#line 48 "ide/wiki/wiki_methods.bas"
+#line 21009 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,func_chr(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X)));
+#line 21009 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 48 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,48,"wiki_methods.bas");}while(r);
-#line 49 "ide/wiki/wiki_methods.bas"
+#line 21009 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21009,"ide_methods.bas");}while(r);
+#line 21010 "ide/ide_methods.bas"
+S_67378:;
+#line 21010 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,func_chr( 32 ))))||is_error_pending()){
+#line 21010 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21010,"ide_methods.bas");if(r)goto S_67378;}
+#line 21010 "ide/ide_methods.bas"
 do{
-#line 49 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_WIKI,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_add(func_chr( 13 ),func_chr( 10 )),func_chr( 10 )));
-#line 49 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 49 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,49,"wiki_methods.bas");}while(r);
-#line 50 "ide/wiki/wiki_methods.bas"
-do{
-#line 50 "ide/wiki/wiki_methods.bas"
+#line 21010 "ide/ide_methods.bas"
 goto exit_subfunc;
-#line 50 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,50,"wiki_methods.bas");}while(r);
-#line 51 "ide/wiki/wiki_methods.bas"
+#line 21010 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21010,"ide_methods.bas");}while(r);
+#line 21010 "ide/ide_methods.bas"
 }
-#line 52 "ide/wiki/wiki_methods.bas"
+#line 21011 "ide/ide_methods.bas"
+S_67381:;
+#line 21011 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,qbs_new_txt_len("~",1))))||is_error_pending()){
+#line 21011 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21011,"ide_methods.bas");if(r)goto S_67381;}
+#line 21011 "ide/ide_methods.bas"
+do{
+#line 21011 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR,qbs_new_txt_len("~",1));
+#line 21011 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 21011 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21011,"ide_methods.bas");}while(r);
+#line 21011 "ide/ide_methods.bas"
+do{
+#line 21011 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 21011 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21011,"ide_methods.bas");}while(r);
+#line 21011 "ide/ide_methods.bas"
 }
-#line 55 "ide/wiki/wiki_methods.bas"
-S_68474:;
-#line 55 "ide/wiki/wiki_methods.bas"
-if ((-(*__LONG_HELP_RECACHING== 0 ))||is_error_pending()){
-#line 55 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,55,"wiki_methods.bas");if(r)goto S_68474;}
-#line 56 "ide/wiki/wiki_methods.bas"
+#line 21012 "ide/ide_methods.bas"
+S_67385:;
+#line 21012 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,qbs_new_txt_len("`",1))))||is_error_pending()){
+#line 21012 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21012,"ide_methods.bas");if(r)goto S_67385;}
+#line 21012 "ide/ide_methods.bas"
 do{
-#line 56 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(qbs_add(qbs_new_txt_len("Downloading '",13),_FUNC_WIKI_STRING_PAGENAME),qbs_new_txt_len("' page...",9)));
-#line 56 "ide/wiki/wiki_methods.bas"
+#line 21012 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR,qbs_new_txt_len("`",1));
+#line 21012 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 56 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,56,"wiki_methods.bas");}while(r);
-#line 57 "ide/wiki/wiki_methods.bas"
-S_68476:;
-#line 57 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_WIKI_STRING_A->len> 60 )))||is_error_pending()){
-#line 57 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,57,"wiki_methods.bas");if(r)goto S_68476;}
-#line 57 "ide/wiki/wiki_methods.bas"
+#line 21012 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21012,"ide_methods.bas");}while(r);
+#line 21012 "ide/ide_methods.bas"
 do{
-#line 57 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(qbs_left(_FUNC_WIKI_STRING_A, 57 ),func_string( 3 , 250 )));
-#line 57 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 57 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,57,"wiki_methods.bas");}while(r);
-#line 57 "ide/wiki/wiki_methods.bas"
+#line 21012 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 21012 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21012,"ide_methods.bas");}while(r);
+#line 21012 "ide/ide_methods.bas"
 }
-#line 58 "ide/wiki/wiki_methods.bas"
-S_68479:;
-#line 58 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(_FUNC_WIKI_STRING_A->len< 60 )))||is_error_pending()){
-#line 58 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,58,"wiki_methods.bas");if(r)goto S_68479;}
-#line 58 "ide/wiki/wiki_methods.bas"
+#line 21013 "ide/ide_methods.bas"
+S_67389:;
+#line 21013 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,qbs_new_txt_len("%",1)))&(qbs_equal(func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X+ 1 ,NULL,0),qbs_new_txt_len("&",1)))))||is_error_pending()){
+#line 21013 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21013,"ide_methods.bas");if(r)goto S_67389;}
+#line 21013 "ide/ide_methods.bas"
 do{
-#line 58 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(_FUNC_WIKI_STRING_A,func_space( 60 -_FUNC_WIKI_STRING_A->len)));
-#line 58 "ide/wiki/wiki_methods.bas"
+#line 21013 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR,qbs_new_txt_len("%&",2));
+#line 21013 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 58 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,58,"wiki_methods.bas");}while(r);
-#line 58 "ide/wiki/wiki_methods.bas"
+#line 21013 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21013,"ide_methods.bas");}while(r);
+#line 21013 "ide/ide_methods.bas"
+do{
+#line 21013 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 21013 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21013,"ide_methods.bas");}while(r);
+#line 21013 "ide/ide_methods.bas"
 }
-#line 60 "ide/wiki/wiki_methods.bas"
+#line 21014 "ide/ide_methods.bas"
+S_67393:;
+#line 21014 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_GETWORDATCURSOR_STRING_SYMBOL,qbs_new_txt_len("&",1)))&(qbs_equal(func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X- 1 ,NULL,0),qbs_new_txt_len("%",1)))))||is_error_pending()){
+#line 21014 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21014,"ide_methods.bas");if(r)goto S_67393;}
+#line 21014 "ide/ide_methods.bas"
 do{
-#line 60 "ide/wiki/wiki_methods.bas"
-qbg_sub_color( 0 , 3 ,NULL,NULL,3);
-#line 60 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,60,"wiki_methods.bas");}while(r);
-#line 60 "ide/wiki/wiki_methods.bas"
-do{
-#line 60 "ide/wiki/wiki_methods.bas"
-qbg_sub_locate(*__LONG_IDEWY+*__LONG_IDESUBWINDOW, 2 ,NULL,NULL,NULL,3);
-#line 60 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,60,"wiki_methods.bas");}while(r);
-#line 61 "ide/wiki/wiki_methods.bas"
-do{
-#line 61 "ide/wiki/wiki_methods.bas"
-tqbs=qbs_new(0,0);
-#line 61 "ide/wiki/wiki_methods.bas"
-qbs_set(tqbs,_FUNC_WIKI_STRING_A);
-#line 61 "ide/wiki/wiki_methods.bas"
-if (is_error_pending()) goto skip6928;
-#line 61 "ide/wiki/wiki_methods.bas"
-makefit(tqbs);
-#line 61 "ide/wiki/wiki_methods.bas"
-qbs_print(tqbs,0);
-#line 61 "ide/wiki/wiki_methods.bas"
-skip6928:
-#line 61 "ide/wiki/wiki_methods.bas"
-qbs_free(tqbs);
-#line 61 "ide/wiki/wiki_methods.bas"
+#line 21014 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR,qbs_new_txt_len("%&",2));
+#line 21014 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 61 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,61,"wiki_methods.bas");}while(r);
-#line 63 "ide/wiki/wiki_methods.bas"
+#line 21014 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21014,"ide_methods.bas");}while(r);
+#line 21014 "ide/ide_methods.bas"
 do{
-#line 63 "ide/wiki/wiki_methods.bas"
-sub_pcopy( 3 , 0 );
-#line 63 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,63,"wiki_methods.bas");}while(r);
-#line 64 "ide/wiki/wiki_methods.bas"
-S_68486:;
-#line 64 "ide/wiki/wiki_methods.bas"
+#line 21014 "ide/ide_methods.bas"
+goto exit_subfunc;
+#line 21014 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21014,"ide_methods.bas");}while(r);
+#line 21014 "ide/ide_methods.bas"
+}
+#line 21015 "ide/ide_methods.bas"
+do{
+#line 21015 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X1=*_FUNC_GETWORDATCURSOR_LONG_X;
+#line 21015 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21015,"ide_methods.bas");}while(r);
+#line 21016 "ide/ide_methods.bas"
+S_67398:;
+#line 21016 "ide/ide_methods.bas"
+while((-(*_FUNC_GETWORDATCURSOR_LONG_X1> 1 ))||is_error_pending()){
+#line 21016 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21016,"ide_methods.bas");if(r)goto S_67398;}
+#line 21017 "ide/ide_methods.bas"
+S_67399:;
+#line 21017 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X1- 1 , 1 ,0|1),_FUNC_GETWORDATCURSOR_STRING_SYMBOL)))||is_error_pending()){
+#line 21017 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21017,"ide_methods.bas");if(r)goto S_67399;}
+#line 21017 "ide/ide_methods.bas"
+do{
+#line 21017 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X1=*_FUNC_GETWORDATCURSOR_LONG_X1- 1 ;
+#line 21017 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21017,"ide_methods.bas");}while(r);
+#line 21017 "ide/ide_methods.bas"
 }else{
-#line 64 "ide/wiki/wiki_methods.bas"
-if (-(*__LONG_HELP_RECACHING== 2 )){
-#line 64 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,64,"wiki_methods.bas");if(r)goto S_68486;}
-#line 65 "ide/wiki/wiki_methods.bas"
+#line 21017 "ide/ide_methods.bas"
 do{
-#line 65 "ide/wiki/wiki_methods.bas"
-sub__dest(func__console());
-#line 65 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,65,"wiki_methods.bas");}while(r);
-#line 66 "ide/wiki/wiki_methods.bas"
-do{
-#line 66 "ide/wiki/wiki_methods.bas"
-tqbs=qbs_new(0,0);
-#line 66 "ide/wiki/wiki_methods.bas"
-qbs_set(tqbs,qbs_add(qbs_add(qbs_new_txt_len("Downloading '",13),_FUNC_WIKI_STRING_PAGENAME),qbs_new_txt_len("' page...",9)));
-#line 66 "ide/wiki/wiki_methods.bas"
-if (is_error_pending()) goto skip6929;
-#line 66 "ide/wiki/wiki_methods.bas"
-makefit(tqbs);
-#line 66 "ide/wiki/wiki_methods.bas"
-qbs_print(tqbs,0);
-#line 66 "ide/wiki/wiki_methods.bas"
-qbs_print(nothingstring,1);
-#line 66 "ide/wiki/wiki_methods.bas"
-skip6929:
-#line 66 "ide/wiki/wiki_methods.bas"
-qbs_free(tqbs);
-#line 66 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 66 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,66,"wiki_methods.bas");}while(r);
-#line 67 "ide/wiki/wiki_methods.bas"
+#line 21017 "ide/ide_methods.bas"
+goto dl_exit_6893;
+#line 21017 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21017,"ide_methods.bas");}while(r);
+#line 21017 "ide/ide_methods.bas"
 }
-#line 67 "ide/wiki/wiki_methods.bas"
+#line 21018 "ide/ide_methods.bas"
+dl_continue_6893:;
+#line 21018 "ide/ide_methods.bas"
 }
-#line 73 "ide/wiki/wiki_methods.bas"
+#line 21018 "ide/ide_methods.bas"
+dl_exit_6893:;
+#line 21019 "ide/ide_methods.bas"
 do{
-#line 73 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_URL,qbs_add(qbs_add(qbs_add(__STRING_WIKIBASEADDRESS,qbs_new_txt_len("/index.php?title=",17)),_FUNC_WIKI_STRING_PAGENAME2),qbs_new_txt_len("&qbide=1&action=edit",20)));
-#line 73 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 73 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,73,"wiki_methods.bas");}while(r);
-#line 74 "ide/wiki/wiki_methods.bas"
+#line 21019 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X2=*_FUNC_GETWORDATCURSOR_LONG_X;
+#line 21019 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21019,"ide_methods.bas");}while(r);
+#line 21020 "ide/ide_methods.bas"
+S_67406:;
+#line 21020 "ide/ide_methods.bas"
+while((qbs_cleanup(qbs_tmp_base,-(*_FUNC_GETWORDATCURSOR_LONG_X2<_FUNC_GETWORDATCURSOR_STRING_A->len)))||is_error_pending()){
+#line 21020 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21020,"ide_methods.bas");if(r)goto S_67406;}
+#line 21021 "ide/ide_methods.bas"
+S_67407:;
+#line 21021 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X2+ 1 , 1 ,0|1),_FUNC_GETWORDATCURSOR_STRING_SYMBOL)))||is_error_pending()){
+#line 21021 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21021,"ide_methods.bas");if(r)goto S_67407;}
+#line 21021 "ide/ide_methods.bas"
 do{
-#line 74 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_OUTPUTFILE,qbs_add(qbs_add(qbs_add(__STRING_CACHE_FOLDER,qbs_new_txt_len("/",1)),_FUNC_WIKI_STRING_PAGENAME3),qbs_new_txt_len(".txt",4)));
-#line 74 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 74 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,74,"wiki_methods.bas");}while(r);
-#line 76 "ide/wiki/wiki_methods.bas"
-do{
-#line 76 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_S1,qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("name=",5),func_chr( 34 )),qbs_new_txt_len("wpTextbox1",10)),func_chr( 34 )),qbs_new_txt_len(">",1)));
-#line 76 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 76 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,76,"wiki_methods.bas");}while(r);
-#line 77 "ide/wiki/wiki_methods.bas"
-do{
-#line 77 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_S2,qbs_new_txt_len("</textarea>",11));
-#line 77 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 77 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,77,"wiki_methods.bas");}while(r);
-#line 80 "ide/wiki/wiki_methods.bas"
-S_68494:;
-#line 80 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_WIKI_STRING_PAGENAME,qbs_new_txt_len("Initialize",10)))|(qbs_equal(_FUNC_WIKI_STRING_PAGENAME,qbs_new_txt_len("Update All",10)))))||is_error_pending()){
-#line 80 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,80,"wiki_methods.bas");if(r)goto S_68494;}
-#line 81 "ide/wiki/wiki_methods.bas"
-do{
-#line 81 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_new_txt_len("",0));
-#line 81 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 81 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,81,"wiki_methods.bas");}while(r);
-#line 82 "ide/wiki/wiki_methods.bas"
+#line 21021 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X2=*_FUNC_GETWORDATCURSOR_LONG_X2+ 1 ;
+#line 21021 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21021,"ide_methods.bas");}while(r);
+#line 21021 "ide/ide_methods.bas"
 }else{
-#line 83 "ide/wiki/wiki_methods.bas"
+#line 21021 "ide/ide_methods.bas"
 do{
-#line 83 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_WIKIDLPAGE(_FUNC_WIKI_STRING_URL,&(pass6930= 15 )));
-#line 83 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 83 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,83,"wiki_methods.bas");}while(r);
-#line 84 "ide/wiki/wiki_methods.bas"
-S_68498:;
-#line 84 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_WIKI_STRING_A,qbs_new_txt_len("Login required",14),0)> 0 )))||is_error_pending()){
-#line 84 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,84,"wiki_methods.bas");if(r)goto S_68498;}
-#line 84 "ide/wiki/wiki_methods.bas"
-do{
-#line 84 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(_FUNC_WIKI_STRING_S1,_FUNC_WIKI_STRING_S2));
-#line 84 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 84 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,84,"wiki_methods.bas");}while(r);
-#line 84 "ide/wiki/wiki_methods.bas"
+#line 21021 "ide/ide_methods.bas"
+goto dl_exit_6895;
+#line 21021 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21021,"ide_methods.bas");}while(r);
+#line 21021 "ide/ide_methods.bas"
 }
-#line 85 "ide/wiki/wiki_methods.bas"
+#line 21022 "ide/ide_methods.bas"
+dl_continue_6895:;
+#line 21022 "ide/ide_methods.bas"
 }
-#line 88 "ide/wiki/wiki_methods.bas"
+#line 21022 "ide/ide_methods.bas"
+dl_exit_6895:;
+#line 21023 "ide/ide_methods.bas"
 do{
-#line 88 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_S1=func_instr(NULL,_FUNC_WIKI_STRING_A,_FUNC_WIKI_STRING_S1,0);
-#line 88 "ide/wiki/wiki_methods.bas"
+#line 21023 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_A2,func_mid(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X1,*_FUNC_GETWORDATCURSOR_LONG_X2-*_FUNC_GETWORDATCURSOR_LONG_X1+ 1 ,0|1));
+#line 21023 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 88 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,88,"wiki_methods.bas");}while(r);
-#line 89 "ide/wiki/wiki_methods.bas"
-S_68503:;
-#line 89 "ide/wiki/wiki_methods.bas"
-if ((-(*_FUNC_WIKI_LONG_S1> 0 ))||is_error_pending()){
-#line 89 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,89,"wiki_methods.bas");if(r)goto S_68503;}
-#line 89 "ide/wiki/wiki_methods.bas"
+#line 21023 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21023,"ide_methods.bas");}while(r);
+#line 21024 "ide/ide_methods.bas"
+}
+#line 21025 "ide/ide_methods.bas"
 do{
-#line 89 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,func_mid(_FUNC_WIKI_STRING_A,*_FUNC_WIKI_LONG_S1+_FUNC_WIKI_STRING_S1->len,NULL,0));
-#line 89 "ide/wiki/wiki_methods.bas"
+#line 21025 "ide/ide_methods.bas"
+qbs_set(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR,_FUNC_GETWORDATCURSOR_STRING_A2);
+#line 21025 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 89 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,89,"wiki_methods.bas");}while(r);
-#line 89 "ide/wiki/wiki_methods.bas"
-do{
-#line 89 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_S2=func_instr(NULL,_FUNC_WIKI_STRING_A,_FUNC_WIKI_STRING_S2,0);
-#line 89 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 89 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,89,"wiki_methods.bas");}while(r);
-#line 89 "ide/wiki/wiki_methods.bas"
+#line 21025 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21025,"ide_methods.bas");}while(r);
+#line 21026 "ide/ide_methods.bas"
+S_67416:;
+#line 21026 "ide/ide_methods.bas"
 }else{
-#line 89 "ide/wiki/wiki_methods.bas"
+#line 21026 "ide/ide_methods.bas"
+if (qbs_cleanup(qbs_tmp_base,(-(*_FUNC_GETWORDATCURSOR_LONG_X==(_FUNC_GETWORDATCURSOR_STRING_A->len+ 1 )))&(-(*_FUNC_GETWORDATCURSOR_LONG_X> 1 )))){
+#line 21026 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21026,"ide_methods.bas");if(r)goto S_67416;}
+#line 21027 "ide/ide_methods.bas"
+S_67417:;
+#line 21027 "ide/ide_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_FUNC_GETWORDATCURSOR_STRING_A,*_FUNC_GETWORDATCURSOR_LONG_X- 1 )!= 32 )))||is_error_pending()){
+#line 21027 "ide/ide_methods.bas"
+if(qbevent){evnt(28631,21027,"ide_methods.bas");if(r)goto S_67417;}
+#line 21027 "ide/ide_methods.bas"
 do{
-#line 89 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_S2= 0 ;
-#line 89 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,89,"wiki_methods.bas");}while(r);
-#line 89 "ide/wiki/wiki_methods.bas"
+#line 21027 "ide/ide_methods.bas"
+*_FUNC_GETWORDATCURSOR_LONG_X=*_FUNC_GETWORDATCURSOR_LONG_X- 1 ;
+#line 21027 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21027,"ide_methods.bas");}while(r);
+#line 21027 "ide/ide_methods.bas"
+do{
+#line 21027 "ide/ide_methods.bas"
+goto LABEL_TRY;
+#line 21027 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28631,21027,"ide_methods.bas");}while(r);
+#line 21027 "ide/ide_methods.bas"
 }
-#line 90 "ide/wiki/wiki_methods.bas"
-S_68509:;
-#line 90 "ide/wiki/wiki_methods.bas"
-if ((-(*_FUNC_WIKI_LONG_S2> 0 ))||is_error_pending()){
-#line 90 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,90,"wiki_methods.bas");if(r)goto S_68509;}
-#line 90 "ide/wiki/wiki_methods.bas"
-do{
-#line 90 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_left(_FUNC_WIKI_STRING_A,*_FUNC_WIKI_LONG_S2- 1 ));
-#line 90 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 90 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,90,"wiki_methods.bas");}while(r);
-#line 90 "ide/wiki/wiki_methods.bas"
+#line 21028 "ide/ide_methods.bas"
 }
-#line 91 "ide/wiki/wiki_methods.bas"
-S_68512:;
-#line 91 "ide/wiki/wiki_methods.bas"
-if (((-(*_FUNC_WIKI_LONG_S1> 0 ))&(-(*_FUNC_WIKI_LONG_S2> 0 )))||is_error_pending()){
-#line 91 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,91,"wiki_methods.bas");if(r)goto S_68512;}
-#line 92 "ide/wiki/wiki_methods.bas"
-S_68513:;
-#line 92 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_WIKI_STRING_A,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 92 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,92,"wiki_methods.bas");if(r)goto S_68513;}
-#line 95 "ide/wiki/wiki_methods.bas"
-S_68514:;
-#line 95 "ide/wiki/wiki_methods.bas"
-while((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_WIKI_STRING_A,qbs_new_txt_len("&amp;",5),0)> 0 )))||is_error_pending()){
-#line 95 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,95,"wiki_methods.bas");if(r)goto S_68514;}
-#line 96 "ide/wiki/wiki_methods.bas"
-do{
-#line 96 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_new_txt_len("&amp;",5),qbs_new_txt_len("&",1)));
-#line 96 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 96 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,96,"wiki_methods.bas");}while(r);
-#line 97 "ide/wiki/wiki_methods.bas"
-ww_continue_6932:;
-#line 97 "ide/wiki/wiki_methods.bas"
+#line 21028 "ide/ide_methods.bas"
 }
-#line 97 "ide/wiki/wiki_methods.bas"
-ww_exit_6932:;
-#line 98 "ide/wiki/wiki_methods.bas"
-do{
-#line 98 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_new_txt_len("&lt;",4),qbs_new_txt_len("<",1)));
-#line 98 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 98 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,98,"wiki_methods.bas");}while(r);
-#line 99 "ide/wiki/wiki_methods.bas"
-do{
-#line 99 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_new_txt_len("&gt;",4),qbs_new_txt_len(">",1)));
-#line 99 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 99 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,99,"wiki_methods.bas");}while(r);
-#line 100 "ide/wiki/wiki_methods.bas"
-do{
-#line 100 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_new_txt_len("&quot;",6),func_chr( 34 )));
-#line 100 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 100 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,100,"wiki_methods.bas");}while(r);
-#line 102 "ide/wiki/wiki_methods.bas"
-do{
-#line 102 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_new_txt_len("#REDIRECT",9),qbs_new_txt_len("See page",8)));
-#line 102 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 102 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,102,"wiki_methods.bas");}while(r);
-#line 103 "ide/wiki/wiki_methods.bas"
-do{
-#line 103 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,FUNC_STRREPLACE(_FUNC_WIKI_STRING_A,qbs_add(func_chr( 13 ),func_chr( 10 )),func_chr( 10 )));
-#line 103 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 103 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,103,"wiki_methods.bas");}while(r);
-#line 104 "ide/wiki/wiki_methods.bas"
-S_68522:;
-#line 104 "ide/wiki/wiki_methods.bas"
-while((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_FUNC_WIKI_STRING_A, 1 ),func_chr( 10 ))))||is_error_pending()){
-#line 104 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,104,"wiki_methods.bas");if(r)goto S_68522;}
-#line 104 "ide/wiki/wiki_methods.bas"
-do{
-#line 104 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,func_mid(_FUNC_WIKI_STRING_A, 2 ,NULL,0));
-#line 104 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 104 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,104,"wiki_methods.bas");}while(r);
-#line 104 "ide/wiki/wiki_methods.bas"
-ww_continue_6933:;
-#line 104 "ide/wiki/wiki_methods.bas"
-}
-#line 104 "ide/wiki/wiki_methods.bas"
-ww_exit_6933:;
-#line 105 "ide/wiki/wiki_methods.bas"
-S_68525:;
-#line 105 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,(-(_FUNC_WIKI_STRING_A->len> 0 ))&(qbs_notequal(qbs_right(_FUNC_WIKI_STRING_A, 1 ),func_chr( 10 )))))||is_error_pending()){
-#line 105 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,105,"wiki_methods.bas");if(r)goto S_68525;}
-#line 105 "ide/wiki/wiki_methods.bas"
-do{
-#line 105 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(_FUNC_WIKI_STRING_A,func_chr( 10 )));
-#line 105 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 105 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,105,"wiki_methods.bas");}while(r);
-#line 105 "ide/wiki/wiki_methods.bas"
-}
-#line 107 "ide/wiki/wiki_methods.bas"
-do{
-#line 107 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("{{QBDLDATE:",11),func_date()),qbs_new_txt_len("}}",2)),func_chr( 10 )),qbs_new_txt_len("{{QBDLTIME:",11)),func_time()),qbs_new_txt_len("}}",2)),func_chr( 10 )),_FUNC_WIKI_STRING_A));
-#line 107 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 107 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,107,"wiki_methods.bas");}while(r);
-#line 109 "ide/wiki/wiki_methods.bas"
-do{
-#line 109 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_FH=func_freefile();
-#line 109 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,109,"wiki_methods.bas");}while(r);
-#line 110 "ide/wiki/wiki_methods.bas"
-do{
-#line 110 "ide/wiki/wiki_methods.bas"
-sub_open(_FUNC_WIKI_STRING_OUTPUTFILE, 4 ,NULL,NULL,*_FUNC_WIKI_LONG_FH,NULL,0);
-#line 110 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 110 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,110,"wiki_methods.bas");}while(r);
-#line 111 "ide/wiki/wiki_methods.bas"
-do{
-#line 111 "ide/wiki/wiki_methods.bas"
-tab_spc_cr_size=2;
-#line 111 "ide/wiki/wiki_methods.bas"
-tab_fileno=tmp_fileno=*_FUNC_WIKI_LONG_FH;
-#line 111 "ide/wiki/wiki_methods.bas"
-if (is_error_pending()) goto skip6935;
-#line 111 "ide/wiki/wiki_methods.bas"
-sub_file_print(tmp_fileno,_FUNC_WIKI_STRING_A, 0, 0, 0);
-#line 111 "ide/wiki/wiki_methods.bas"
-if (is_error_pending()) goto skip6935;
-#line 111 "ide/wiki/wiki_methods.bas"
-skip6935:
-#line 111 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 111 "ide/wiki/wiki_methods.bas"
-tab_spc_cr_size=1;
-#line 111 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,111,"wiki_methods.bas");}while(r);
-#line 112 "ide/wiki/wiki_methods.bas"
-do{
-#line 112 "ide/wiki/wiki_methods.bas"
-sub_close(*_FUNC_WIKI_LONG_FH,1);
-#line 112 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,112,"wiki_methods.bas");}while(r);
-#line 113 "ide/wiki/wiki_methods.bas"
-}else{
-#line 115 "ide/wiki/wiki_methods.bas"
-S_68534:;
-#line 115 "ide/wiki/wiki_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_WIKI_STRING_OUTPUTFILE)))||is_error_pending()){
-#line 115 "ide/wiki/wiki_methods.bas"
-if(qbevent){evnt(28678,115,"wiki_methods.bas");if(r)goto S_68534;}
-#line 116 "ide/wiki/wiki_methods.bas"
-do{
-#line 116 "ide/wiki/wiki_methods.bas"
-sub_kill(_FUNC_WIKI_STRING_OUTPUTFILE);
-#line 116 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 116 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,116,"wiki_methods.bas");}while(r);
-#line 117 "ide/wiki/wiki_methods.bas"
-}else{
-#line 122 "ide/wiki/wiki_methods.bas"
-do{
-#line 122 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(func_chr( 10 ),qbs_new_txt_len("{{PageInternalError}}",21)),func_chr( 10 )),qbs_new_txt_len("* The requested page is not yet available in the Wiki.",54)),func_chr( 10 )),qbs_new_txt_len("** If this is a new keyword, which was recently added to the language, then ",76)),qbs_new_txt_len("please allow some time for the developers to add it and recheck later.",70)),func_chr( 10 )));
-#line 122 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 122 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,122,"wiki_methods.bas");}while(r);
-#line 123 "ide/wiki/wiki_methods.bas"
-}
-#line 124 "ide/wiki/wiki_methods.bas"
-}
-#line 125 "ide/wiki/wiki_methods.bas"
-}else{
-#line 131 "ide/wiki/wiki_methods.bas"
-do{
-#line 131 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_A,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(func_chr( 10 ),qbs_new_txt_len("{{PageInternalError}}",21)),func_chr( 10 )),qbs_new_txt_len("* For some unknown reason the download of the requested page failed.",68)),func_chr( 10 )),qbs_new_txt_len("** You may try ''Update Current Page'' from the ''Help'' menu.",62)),func_chr( 10 )),qbs_new_txt_len(";Note:This may also just be a temporary server issue. If the problem persists ",78)),qbs_new_txt_len("after waiting some time, then please feel free to leave us a message.",69)),func_chr( 10 )));
-#line 131 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 131 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,131,"wiki_methods.bas");}while(r);
-#line 132 "ide/wiki/wiki_methods.bas"
-}
-#line 134 "ide/wiki/wiki_methods.bas"
-do{
-#line 134 "ide/wiki/wiki_methods.bas"
-qbs_set(_FUNC_WIKI_STRING_WIKI,_FUNC_WIKI_STRING_A);
-#line 134 "ide/wiki/wiki_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 134 "ide/wiki/wiki_methods.bas"
-if(!qbevent)break;evnt(28678,134,"wiki_methods.bas");}while(r);
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
 exit_subfunc:;
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
 #include "free463.txt"
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 135 "ide/wiki/wiki_methods.bas"
-qbs_maketmp(_FUNC_WIKI_STRING_WIKI);return _FUNC_WIKI_STRING_WIKI;
-#line 135 "ide/wiki/wiki_methods.bas"
+#line 21029 "ide/ide_methods.bas"
+qbs_maketmp(_FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR);return _FUNC_GETWORDATCURSOR_STRING_GETWORDATCURSOR;
+#line 21029 "ide/ide_methods.bas"
 }

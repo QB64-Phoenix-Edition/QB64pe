@@ -1,658 +1,398 @@
-#line 2 "ide/ide_converters.bas"
-int16 FUNC_BINARYFORMATCHECK(qbs*_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,qbs*_FUNC_BINARYFORMATCHECK_STRING_PATHSEPTOCHECK,qbs*_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK){
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
+void SUB_HELP_ADDTXT(qbs*_SUB_HELP_ADDTXT_STRING_T,int32*_SUB_HELP_ADDTXT_LONG_COL,int32*_SUB_HELP_ADDTXT_LONG_LINK){
+#line 137 "ide/wiki/wiki_methods.bas"
 qbs *tqbs;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 ptrszint tmp_long;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 int32 tmp_fileno;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 #include "data475.txt"
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 mem_lock *sf_mem_lock;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 new_mem_lock();
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 sf_mem_lock->type=3;
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 libqb_check_stack();
-#line 2 "ide/ide_converters.bas"
+#line 137 "ide/wiki/wiki_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 4 "ide/ide_converters.bas"
+#line 138 "ide/wiki/wiki_methods.bas"
+S_68048:;
+#line 138 "ide/wiki/wiki_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_HELP_ADDTXT_STRING_T,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 138 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,138,"wiki_methods.bas");if(r)goto S_68048;}
+#line 138 "ide/wiki/wiki_methods.bas"
 do{
-#line 4 "ide/ide_converters.bas"
-qbs_set(__STRING_FILE,qbs_add(qbs_add(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,_FUNC_BINARYFORMATCHECK_STRING_PATHSEPTOCHECK),_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK));
-#line 4 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 4 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,4,"ide_converters.bas");}while(r);
-#line 6 "ide/ide_converters.bas"
-do{
-#line 6 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_FH=func_freefile();
-#line 6 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,6,"ide_converters.bas");}while(r);
-#line 7 "ide/ide_converters.bas"
-do{
-#line 7 "ide/ide_converters.bas"
-sub_open(__STRING_FILE, 2 ,NULL,NULL,*_FUNC_BINARYFORMATCHECK_LONG_FH,NULL,0);
-#line 7 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 7 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,7,"ide_converters.bas");}while(r);
-#line 8 "ide/ide_converters.bas"
-do{
-#line 8 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_A,func_space(func_lof(*_FUNC_BINARYFORMATCHECK_LONG_FH)));
-#line 8 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 8 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,8,"ide_converters.bas");}while(r);
-#line 9 "ide/ide_converters.bas"
-do{
-#line 9 "ide/ide_converters.bas"
-sub_get2(*_FUNC_BINARYFORMATCHECK_LONG_FH, 1 ,_FUNC_BINARYFORMATCHECK_STRING_A,1);
-#line 9 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 9 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,9,"ide_converters.bas");}while(r);
-#line 10 "ide/ide_converters.bas"
-S_70145:;
-#line 10 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func_instr(NULL,_FUNC_BINARYFORMATCHECK_STRING_A,func_chr( 0 ),0)== 0 )))||is_error_pending()){
-#line 10 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,10,"ide_converters.bas");if(r)goto S_70145;}
-#line 10 "ide/ide_converters.bas"
-do{
-#line 10 "ide/ide_converters.bas"
-sub_close(*_FUNC_BINARYFORMATCHECK_LONG_FH,1);
-#line 10 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,10,"ide_converters.bas");}while(r);
-#line 10 "ide/ide_converters.bas"
-do{
-#line 10 "ide/ide_converters.bas"
+#line 138 "ide/wiki/wiki_methods.bas"
 goto exit_subfunc;
-#line 10 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,10,"ide_converters.bas");}while(r);
-#line 10 "ide/ide_converters.bas"
+#line 138 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,138,"wiki_methods.bas");}while(r);
+#line 138 "ide/wiki/wiki_methods.bas"
 }
-#line 11 "ide/ide_converters.bas"
+#line 139 "ide/wiki/wiki_methods.bas"
+S_68051:;
+#line 139 "ide/wiki/wiki_methods.bas"
+if ((-(*__LONG_HELP_CHKBLANK!= 0 ))||is_error_pending()){
+#line 139 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,139,"wiki_methods.bas");if(r)goto S_68051;}
+#line 139 "ide/wiki/wiki_methods.bas"
 do{
-#line 11 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_A,qbs_new_txt_len("",0));
-#line 11 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 11 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,11,"ide_converters.bas");}while(r);
-#line 12 "ide/ide_converters.bas"
-do{
-#line 12 "ide/ide_converters.bas"
-sub_get(*_FUNC_BINARYFORMATCHECK_LONG_FH, 1 ,byte_element((uint64)_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT,2,byte_element_7247),1);
-#line 12 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,12,"ide_converters.bas");}while(r);
-#line 13 "ide/ide_converters.bas"
-do{
-#line 13 "ide/ide_converters.bas"
-sub_get(*_FUNC_BINARYFORMATCHECK_LONG_FH,NULL,byte_element((uint64)_FUNC_BINARYFORMATCHECK_INTEGER_VERSION,2,byte_element_7248),0);
-#line 13 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,13,"ide_converters.bas");}while(r);
-#line 14 "ide/ide_converters.bas"
-do{
-#line 14 "ide/ide_converters.bas"
-sub_close(*_FUNC_BINARYFORMATCHECK_LONG_FH,1);
-#line 14 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,14,"ide_converters.bas");}while(r);
-#line 16 "ide/ide_converters.bas"
-S_70153:;
-#line 16 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,16,"ide_converters.bas");if(r)goto S_70153;}
-#line 17 "ide/ide_converters.bas"
-S_70154:;
-#line 17 "ide/ide_converters.bas"
-if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 2300 )))||is_error_pending()){
-#line 17 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,17,"ide_converters.bas");if(r)goto S_70154;}
-#line 18 "ide/ide_converters.bas"
-do{
-#line 18 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Invalid format",14),qbs_new_txt_len("VBDOS binary format not supported.",34),qbs_new_txt_len("",0));
-#line 18 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 18 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,18,"ide_converters.bas");}while(r);
-#line 19 "ide/ide_converters.bas"
-do{
-#line 19 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
-#line 19 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,19,"ide_converters.bas");}while(r);
-#line 20 "ide/ide_converters.bas"
-sc_ec_488_end:;
-#line 20 "ide/ide_converters.bas"
-goto sc_7249_end;
-#line 20 "ide/ide_converters.bas"
+#line 139 "ide/wiki/wiki_methods.bas"
+SUB_HELP_CHECKBLANKLINE();
+#line 139 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,139,"wiki_methods.bas");}while(r);
+#line 139 "ide/wiki/wiki_methods.bas"
 }
-#line 20 "ide/ide_converters.bas"
-S_70157:;
-#line 20 "ide/ide_converters.bas"
-if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 764 )))||is_error_pending()){
-#line 20 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,20,"ide_converters.bas");if(r)goto S_70157;}
-#line 21 "ide/ide_converters.bas"
-do{
-#line 21 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Invalid format",14),qbs_new_txt_len("QBX 7.1 binary format not supported.",36),qbs_new_txt_len("",0));
-#line 21 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 21 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,21,"ide_converters.bas");}while(r);
-#line 22 "ide/ide_converters.bas"
-do{
-#line 22 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
-#line 22 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,22,"ide_converters.bas");}while(r);
-#line 23 "ide/ide_converters.bas"
-sc_ec_489_end:;
-#line 23 "ide/ide_converters.bas"
-goto sc_7249_end;
-#line 23 "ide/ide_converters.bas"
-}
-#line 23 "ide/ide_converters.bas"
-S_70160:;
-#line 23 "ide/ide_converters.bas"
-if (((*_FUNC_BINARYFORMATCHECK_INTEGER_FORMAT==( 252 )))||is_error_pending()){
-#line 23 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,23,"ide_converters.bas");if(r)goto S_70160;}
-#line 24 "ide/ide_converters.bas"
-S_70161:;
-#line 24 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
-#line 24 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,24,"ide_converters.bas");if(r)goto S_70161;}
-#line 25 "ide/ide_converters.bas"
-do{
-#line 25 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len("internal\\utilities\\QB45BIN.exe",30));
-#line 25 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 25 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,25,"ide_converters.bas");}while(r);
-#line 26 "ide/ide_converters.bas"
-}else{
-#line 27 "ide/ide_converters.bas"
-do{
-#line 27 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len("./internal/utilities/QB45BIN",28));
-#line 27 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 27 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,27,"ide_converters.bas");}while(r);
-#line 28 "ide/ide_converters.bas"
-}
-#line 29 "ide/ide_converters.bas"
-S_70166:;
-#line 29 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY)))||is_error_pending()){
-#line 29 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,29,"ide_converters.bas");if(r)goto S_70166;}
-#line 30 "ide/ide_converters.bas"
-do{
-#line 30 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_WHAT,FUNC_IDEYESNOBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("QuickBASIC 4.5 binary format detected. Convert to plain text?",61)));
-#line 30 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 30 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,30,"ide_converters.bas");}while(r);
-#line 31 "ide/ide_converters.bas"
-S_70168:;
-#line 31 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_BINARYFORMATCHECK_STRING_WHAT,qbs_new_txt_len("Y",1))))||is_error_pending()){
-#line 31 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,31,"ide_converters.bas");if(r)goto S_70168;}
-#line 32 "ide/ide_converters.bas"
-LABEL_CONVERTIT:;
-#line 32 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,32,"ide_converters.bas");r=0;}
-#line 33 "ide/ide_converters.bas"
-S_70169:;
-#line 33 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,FUNC_FILEHASEXTENSION(__STRING_FILE)))||is_error_pending()){
-#line 33 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,33,"ide_converters.bas");if(r)goto S_70169;}
-#line 34 "ide/ide_converters.bas"
-S_70170:;
-#line 34 "ide/ide_converters.bas"
-fornext_value7251=__STRING_FILE->len;
-#line 34 "ide/ide_converters.bas"
-fornext_finalvalue7251= 1 ;
-#line 34 "ide/ide_converters.bas"
-fornext_step7251= -1 ;
-#line 34 "ide/ide_converters.bas"
-if (fornext_step7251<0) fornext_step_negative7251=1; else fornext_step_negative7251=0;
-#line 34 "ide/ide_converters.bas"
-if (is_error_pending()) goto fornext_error7251;
-#line 34 "ide/ide_converters.bas"
-goto fornext_entrylabel7251;
-#line 34 "ide/ide_converters.bas"
+#line 141 "ide/wiki/wiki_methods.bas"
+S_68054:;
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_value6960= 1 ;
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_finalvalue6960=_SUB_HELP_ADDTXT_STRING_T->len;
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_step6960= 1 ;
+#line 141 "ide/wiki/wiki_methods.bas"
+if (fornext_step6960<0) fornext_step_negative6960=1; else fornext_step_negative6960=0;
+#line 141 "ide/wiki/wiki_methods.bas"
+if (is_error_pending()) goto fornext_error6960;
+#line 141 "ide/wiki/wiki_methods.bas"
+goto fornext_entrylabel6960;
+#line 141 "ide/wiki/wiki_methods.bas"
 while(1){
-#line 34 "ide/ide_converters.bas"
-fornext_value7251=fornext_step7251+(*_FUNC_BINARYFORMATCHECK_LONG_I);
-#line 34 "ide/ide_converters.bas"
-fornext_entrylabel7251:
-#line 34 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_I=fornext_value7251;
-#line 34 "ide/ide_converters.bas"
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_value6960=fornext_step6960+(*_SUB_HELP_ADDTXT_LONG_I);
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_entrylabel6960:
+#line 141 "ide/wiki/wiki_methods.bas"
+*_SUB_HELP_ADDTXT_LONG_I=fornext_value6960;
+#line 141 "ide/wiki/wiki_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 34 "ide/ide_converters.bas"
-if (fornext_step_negative7251){
-#line 34 "ide/ide_converters.bas"
-if (fornext_value7251<fornext_finalvalue7251) break;
-#line 34 "ide/ide_converters.bas"
+#line 141 "ide/wiki/wiki_methods.bas"
+if (fornext_step_negative6960){
+#line 141 "ide/wiki/wiki_methods.bas"
+if (fornext_value6960<fornext_finalvalue6960) break;
+#line 141 "ide/wiki/wiki_methods.bas"
 }else{
-#line 34 "ide/ide_converters.bas"
-if (fornext_value7251>fornext_finalvalue7251) break;
-#line 34 "ide/ide_converters.bas"
+#line 141 "ide/wiki/wiki_methods.bas"
+if (fornext_value6960>fornext_finalvalue6960) break;
+#line 141 "ide/wiki/wiki_methods.bas"
 }
-#line 34 "ide/ide_converters.bas"
-fornext_error7251:;
-#line 34 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,34,"ide_converters.bas");if(r)goto S_70170;}
-#line 35 "ide/ide_converters.bas"
-S_70171:;
-#line 35 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I)== 46 )))||is_error_pending()){
-#line 35 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,35,"ide_converters.bas");if(r)goto S_70171;}
-#line 37 "ide/ide_converters.bas"
+#line 141 "ide/wiki/wiki_methods.bas"
+fornext_error6960:;
+#line 141 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,141,"wiki_methods.bas");if(r)goto S_68054;}
+#line 142 "ide/wiki/wiki_methods.bas"
 do{
-#line 37 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_OFILE,qbs_add(qbs_add(qbs_left(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I- 1 ),qbs_new_txt_len(" (converted)",12)),func_mid(__STRING_FILE,*_FUNC_BINARYFORMATCHECK_LONG_I,NULL,0)));
-#line 37 "ide/ide_converters.bas"
+#line 142 "ide/wiki/wiki_methods.bas"
+*_SUB_HELP_ADDTXT_LONG_C=qbs_asc(_SUB_HELP_ADDTXT_STRING_T,*_SUB_HELP_ADDTXT_LONG_I);
+#line 142 "ide/wiki/wiki_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 37 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,37,"ide_converters.bas");}while(r);
-#line 38 "ide/ide_converters.bas"
+#line 142 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,142,"wiki_methods.bas");}while(r);
+#line 144 "ide/wiki/wiki_methods.bas"
+S_68056:;
+#line 144 "ide/wiki/wiki_methods.bas"
+if (((((-(*__LONG_HELP_LOCKPARSE== -1 ))|(-(*__LONG_HELP_LOCKPARSE== 0 ))))&(-(*__LONG_HELP_LOCKWRAP== 0 )))||is_error_pending()){
+#line 144 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,144,"wiki_methods.bas");if(r)goto S_68056;}
+#line 146 "ide/wiki/wiki_methods.bas"
+S_68057:;
+#line 146 "ide/wiki/wiki_methods.bas"
+if ((-(*_SUB_HELP_ADDTXT_LONG_C== 32 ))||is_error_pending()){
+#line 146 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,146,"wiki_methods.bas");if(r)goto S_68057;}
+#line 147 "ide/wiki/wiki_methods.bas"
+S_68058:;
+#line 147 "ide/wiki/wiki_methods.bas"
+if ((-(*__LONG_HELP_POS==*__LONG_HELP_WW))||is_error_pending()){
+#line 147 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,147,"wiki_methods.bas");if(r)goto S_68058;}
+#line 147 "ide/wiki/wiki_methods.bas"
 do{
-#line 38 "ide/ide_converters.bas"
-goto fornext_exit_7250;
-#line 38 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,38,"ide_converters.bas");}while(r);
-#line 39 "ide/ide_converters.bas"
+#line 147 "ide/wiki/wiki_methods.bas"
+SUB_HELP_NEWLINE();
+#line 147 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,147,"wiki_methods.bas");}while(r);
+#line 147 "ide/wiki/wiki_methods.bas"
+do{
+#line 147 "ide/wiki/wiki_methods.bas"
+goto fornext_continue_6959;
+#line 147 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,147,"wiki_methods.bas");}while(r);
+#line 147 "ide/wiki/wiki_methods.bas"
 }
-#line 40 "ide/ide_converters.bas"
-fornext_continue_7250:;
-#line 40 "ide/ide_converters.bas"
+#line 149 "ide/wiki/wiki_methods.bas"
+do{
+#line 149 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 149 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,149,"wiki_methods.bas");}while(r);
+#line 149 "ide/wiki/wiki_methods.bas"
+do{
+#line 149 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 149 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 149 "ide/wiki/wiki_methods.bas"
+tmp_long= 32 ; if (!is_error_pending()){
+#line 149 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 149 "ide/wiki/wiki_methods.bas"
+}}}
+#line 149 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,149,"wiki_methods.bas");}while(r);
+#line 150 "ide/wiki/wiki_methods.bas"
+do{
+#line 150 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 150 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,150,"wiki_methods.bas");}while(r);
+#line 150 "ide/wiki/wiki_methods.bas"
+do{
+#line 150 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 150 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 150 "ide/wiki/wiki_methods.bas"
+tmp_long=*_SUB_HELP_ADDTXT_LONG_COL+(*__LONG_HELP_BG_COL* 16 ); if (!is_error_pending()){
+#line 150 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 150 "ide/wiki/wiki_methods.bas"
+}}}
+#line 150 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,150,"wiki_methods.bas");}while(r);
+#line 151 "ide/wiki/wiki_methods.bas"
+do{
+#line 151 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 151 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,151,"wiki_methods.bas");}while(r);
+#line 151 "ide/wiki/wiki_methods.bas"
+do{
+#line 151 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 151 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 151 "ide/wiki/wiki_methods.bas"
+tmp_long=*_SUB_HELP_ADDTXT_LONG_LINK& 255 ; if (!is_error_pending()){
+#line 151 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 151 "ide/wiki/wiki_methods.bas"
+}}}
+#line 151 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,151,"wiki_methods.bas");}while(r);
+#line 152 "ide/wiki/wiki_methods.bas"
+do{
+#line 152 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 152 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,152,"wiki_methods.bas");}while(r);
+#line 152 "ide/wiki/wiki_methods.bas"
+do{
+#line 152 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 152 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 152 "ide/wiki/wiki_methods.bas"
+tmp_long=qb_safe_idiv(*_SUB_HELP_ADDTXT_LONG_LINK, 256 ); if (!is_error_pending()){
+#line 152 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 152 "ide/wiki/wiki_methods.bas"
+}}}
+#line 152 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,152,"wiki_methods.bas");}while(r);
+#line 154 "ide/wiki/wiki_methods.bas"
+do{
+#line 154 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_WRAP_POS=*__LONG_HELP_TXT_LEN;
+#line 154 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,154,"wiki_methods.bas");}while(r);
+#line 155 "ide/wiki/wiki_methods.bas"
+do{
+#line 155 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_POS=*__LONG_HELP_POS+ 1 ;
+#line 155 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,155,"wiki_methods.bas");}while(r);
+#line 155 "ide/wiki/wiki_methods.bas"
+do{
+#line 155 "ide/wiki/wiki_methods.bas"
+goto fornext_continue_6959;
+#line 155 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,155,"wiki_methods.bas");}while(r);
+#line 156 "ide/wiki/wiki_methods.bas"
 }
-#line 40 "ide/ide_converters.bas"
-fornext_exit_7250:;
-#line 41 "ide/ide_converters.bas"
-}else{
-#line 42 "ide/ide_converters.bas"
+#line 158 "ide/wiki/wiki_methods.bas"
+S_68074:;
+#line 158 "ide/wiki/wiki_methods.bas"
+if ((-(*__LONG_HELP_POS>*__LONG_HELP_WW))||is_error_pending()){
+#line 158 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,158,"wiki_methods.bas");if(r)goto S_68074;}
+#line 159 "ide/wiki/wiki_methods.bas"
+S_68075:;
+#line 159 "ide/wiki/wiki_methods.bas"
+if ((*__LONG_HELP_WRAP_POS)||is_error_pending()){
+#line 159 "ide/wiki/wiki_methods.bas"
+if(qbevent){evnt(28631,159,"wiki_methods.bas");if(r)goto S_68075;}
+#line 162 "ide/wiki/wiki_methods.bas"
 do{
-#line 42 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_OFILE,qbs_add(__STRING_FILE,qbs_new_txt_len(" (converted).bas",16)));
-#line 42 "ide/ide_converters.bas"
+#line 162 "ide/wiki/wiki_methods.bas"
+qbs_set(_SUB_HELP_ADDTXT_STRING_B,func_mid(__STRING_HELP_TXT,*__LONG_HELP_WRAP_POS+ 1 ,*__LONG_HELP_TXT_LEN-*__LONG_HELP_WRAP_POS,0|1));
+#line 162 "ide/wiki/wiki_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 42 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,42,"ide_converters.bas");}while(r);
-#line 43 "ide/ide_converters.bas"
+#line 162 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,162,"wiki_methods.bas");}while(r);
+#line 164 "ide/wiki/wiki_methods.bas"
+do{
+#line 164 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_WRAP_POS;
+#line 164 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,164,"wiki_methods.bas");}while(r);
+#line 166 "ide/wiki/wiki_methods.bas"
+do{
+#line 166 "ide/wiki/wiki_methods.bas"
+SUB_HELP_NEWLINE();
+#line 166 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,166,"wiki_methods.bas");}while(r);
+#line 168 "ide/wiki/wiki_methods.bas"
+do{
+#line 168 "ide/wiki/wiki_methods.bas"
+sub_mid(__STRING_HELP_TXT,*__LONG_HELP_TXT_LEN+ 1 ,_SUB_HELP_ADDTXT_STRING_B->len,_SUB_HELP_ADDTXT_STRING_B,1);
+#line 168 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,168,"wiki_methods.bas");}while(r);
+#line 168 "ide/wiki/wiki_methods.bas"
+do{
+#line 168 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+_SUB_HELP_ADDTXT_STRING_B->len;
+#line 168 "ide/wiki/wiki_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 168 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,168,"wiki_methods.bas");}while(r);
+#line 170 "ide/wiki/wiki_methods.bas"
+do{
+#line 170 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_POS=*__LONG_HELP_POS+(qb_safe_idiv(_SUB_HELP_ADDTXT_STRING_B->len, 4 ));
+#line 170 "ide/wiki/wiki_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 170 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,170,"wiki_methods.bas");}while(r);
+#line 171 "ide/wiki/wiki_methods.bas"
 }
-#line 45 "ide/ide_converters.bas"
-do{
-#line 45 "ide/ide_converters.bas"
-qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
-#line 45 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,45,"ide_converters.bas");}while(r);
-#line 46 "ide/ide_converters.bas"
-do{
-#line 46 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7253= 1 ));
-#line 46 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,46,"ide_converters.bas");}while(r);
-#line 47 "ide/ide_converters.bas"
-do{
-#line 47 "ide/ide_converters.bas"
-SUB_CLEARSTATUSWINDOW(&(pass7254= 0 ));
-#line 47 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,47,"ide_converters.bas");}while(r);
-#line 48 "ide/ide_converters.bas"
-do{
-#line 48 "ide/ide_converters.bas"
-qbg_sub_color( 15 , 1 ,NULL,NULL,3);
-#line 48 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,48,"ide_converters.bas");}while(r);
-#line 49 "ide/ide_converters.bas"
-do{
-#line 49 "ide/ide_converters.bas"
-sub__printstring( 2 ,*__LONG_IDEWY- 3 ,qbs_new_txt_len("Converting...          ",23),NULL,0);
-#line 49 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 49 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,49,"ide_converters.bas");}while(r);
-#line 50 "ide/ide_converters.bas"
-do{
-#line 50 "ide/ide_converters.bas"
-sub_pcopy( 3 , 0 );
-#line 50 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,50,"ide_converters.bas");}while(r);
-#line 52 "ide/ide_converters.bas"
-do{
-#line 52 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_CONVERTLINE,qbs_add(qbs_add(qbs_add(qbs_add(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY,qbs_new_txt_len(" ",1)),FUNC_QUOTEDFILENAME(__STRING_FILE)),qbs_new_txt_len(" -o ",4)),FUNC_QUOTEDFILENAME(_FUNC_BINARYFORMATCHECK_STRING_OFILE)));
-#line 52 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 52 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,52,"ide_converters.bas");}while(r);
-#line 53 "ide/ide_converters.bas"
-do{
-#line 53 "ide/ide_converters.bas"
-sub_shell2(_FUNC_BINARYFORMATCHECK_STRING_CONVERTLINE,2);
-#line 53 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 53 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,53,"ide_converters.bas");}while(r);
-#line 55 "ide/ide_converters.bas"
-do{
-#line 55 "ide/ide_converters.bas"
-SUB_CLEARSTATUSWINDOW(&(pass7255= 0 ));
-#line 55 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,55,"ide_converters.bas");}while(r);
-#line 56 "ide/ide_converters.bas"
-do{
-#line 56 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7256= 0 ));
-#line 56 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,56,"ide_converters.bas");}while(r);
-#line 57 "ide/ide_converters.bas"
-do{
-#line 57 "ide/ide_converters.bas"
-sub_pcopy( 3 , 0 );
-#line 57 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,57,"ide_converters.bas");}while(r);
-#line 59 "ide/ide_converters.bas"
-S_70190:;
-#line 59 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_OFILE)== 0 )))||is_error_pending()){
-#line 59 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,59,"ide_converters.bas");if(r)goto S_70190;}
-#line 60 "ide/ide_converters.bas"
-do{
-#line 60 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Conversion failed.",18),qbs_new_txt_len("",0));
-#line 60 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 60 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,60,"ide_converters.bas");}while(r);
-#line 61 "ide/ide_converters.bas"
-do{
-#line 61 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 2 ;
-#line 61 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,61,"ide_converters.bas");}while(r);
-#line 62 "ide/ide_converters.bas"
-}else{
-#line 63 "ide/ide_converters.bas"
-do{
-#line 63 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,FUNC_GETFILEPATH(_FUNC_BINARYFORMATCHECK_STRING_OFILE));
-#line 63 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 63 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,63,"ide_converters.bas");}while(r);
-#line 64 "ide/ide_converters.bas"
-S_70195:;
-#line 64 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len))||is_error_pending()){
-#line 64 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,64,"ide_converters.bas");if(r)goto S_70195;}
-#line 65 "ide/ide_converters.bas"
-do{
-#line 65 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK,func_mid(_FUNC_BINARYFORMATCHECK_STRING_OFILE,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len+ 1 ,NULL,0));
-#line 65 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 65 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,65,"ide_converters.bas");}while(r);
-#line 66 "ide/ide_converters.bas"
-do{
-#line 66 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,qbs_left(_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK,_FUNC_BINARYFORMATCHECK_STRING_PATHTOCHECK->len- 1 ));
-#line 66 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 66 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,66,"ide_converters.bas");}while(r);
-#line 67 "ide/ide_converters.bas"
-}else{
-#line 68 "ide/ide_converters.bas"
-do{
-#line 68 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_FILETOCHECK,_FUNC_BINARYFORMATCHECK_STRING_OFILE);
-#line 68 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 68 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,68,"ide_converters.bas");}while(r);
-#line 69 "ide/ide_converters.bas"
+#line 172 "ide/wiki/wiki_methods.bas"
 }
-#line 70 "ide/ide_converters.bas"
+#line 174 "ide/wiki/wiki_methods.bas"
 }
-#line 71 "ide/ide_converters.bas"
-}else{
-#line 72 "ide/ide_converters.bas"
+#line 176 "ide/wiki/wiki_methods.bas"
 do{
-#line 72 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
-#line 72 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,72,"ide_converters.bas");}while(r);
-#line 73 "ide/ide_converters.bas"
+#line 176 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 176 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,176,"wiki_methods.bas");}while(r);
+#line 176 "ide/wiki/wiki_methods.bas"
+do{
+#line 176 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 176 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 176 "ide/wiki/wiki_methods.bas"
+tmp_long=*_SUB_HELP_ADDTXT_LONG_C; if (!is_error_pending()){
+#line 176 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 176 "ide/wiki/wiki_methods.bas"
+}}}
+#line 176 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,176,"wiki_methods.bas");}while(r);
+#line 177 "ide/wiki/wiki_methods.bas"
+do{
+#line 177 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 177 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,177,"wiki_methods.bas");}while(r);
+#line 177 "ide/wiki/wiki_methods.bas"
+do{
+#line 177 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 177 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 177 "ide/wiki/wiki_methods.bas"
+tmp_long=*_SUB_HELP_ADDTXT_LONG_COL+(*__LONG_HELP_BG_COL* 16 ); if (!is_error_pending()){
+#line 177 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 177 "ide/wiki/wiki_methods.bas"
+}}}
+#line 177 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,177,"wiki_methods.bas");}while(r);
+#line 178 "ide/wiki/wiki_methods.bas"
+do{
+#line 178 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 178 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,178,"wiki_methods.bas");}while(r);
+#line 178 "ide/wiki/wiki_methods.bas"
+do{
+#line 178 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 178 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 178 "ide/wiki/wiki_methods.bas"
+tmp_long=*_SUB_HELP_ADDTXT_LONG_LINK& 255 ; if (!is_error_pending()){
+#line 178 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 178 "ide/wiki/wiki_methods.bas"
+}}}
+#line 178 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,178,"wiki_methods.bas");}while(r);
+#line 179 "ide/wiki/wiki_methods.bas"
+do{
+#line 179 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_TXT_LEN=*__LONG_HELP_TXT_LEN+ 1 ;
+#line 179 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,179,"wiki_methods.bas");}while(r);
+#line 179 "ide/wiki/wiki_methods.bas"
+do{
+#line 179 "ide/wiki/wiki_methods.bas"
+tqbs=__STRING_HELP_TXT; if (!is_error_pending()){
+#line 179 "ide/wiki/wiki_methods.bas"
+tmp_fileno=*__LONG_HELP_TXT_LEN; if (!is_error_pending()){
+#line 179 "ide/wiki/wiki_methods.bas"
+tmp_long=qb_safe_idiv(*_SUB_HELP_ADDTXT_LONG_LINK, 256 ); if (!is_error_pending()){
+#line 179 "ide/wiki/wiki_methods.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 179 "ide/wiki/wiki_methods.bas"
+}}}
+#line 179 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,179,"wiki_methods.bas");}while(r);
+#line 181 "ide/wiki/wiki_methods.bas"
+do{
+#line 181 "ide/wiki/wiki_methods.bas"
+*__LONG_HELP_POS=*__LONG_HELP_POS+ 1 ;
+#line 181 "ide/wiki/wiki_methods.bas"
+if(!qbevent)break;evnt(28631,181,"wiki_methods.bas");}while(r);
+#line 182 "ide/wiki/wiki_methods.bas"
+fornext_continue_6959:;
+#line 182 "ide/wiki/wiki_methods.bas"
 }
-#line 74 "ide/ide_converters.bas"
-}else{
-#line 75 "ide/ide_converters.bas"
-S_70206:;
-#line 75 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func__fileexists(qbs_new_txt_len("internal/support/converter/QB45BIN.bas",38))== 0 )))||is_error_pending()){
-#line 75 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,75,"ide_converters.bas");if(r)goto S_70206;}
-#line 76 "ide/ide_converters.bas"
-do{
-#line 76 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Conversion utility not found. Cannot open QuickBASIC 4.5 binary format.",71),qbs_new_txt_len("",0));
-#line 76 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 76 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,76,"ide_converters.bas");}while(r);
-#line 77 "ide/ide_converters.bas"
-do{
-#line 77 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
-#line 77 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,77,"ide_converters.bas");}while(r);
-#line 78 "ide/ide_converters.bas"
-do{
-#line 78 "ide/ide_converters.bas"
-goto exit_subfunc;
-#line 78 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,78,"ide_converters.bas");}while(r);
-#line 79 "ide/ide_converters.bas"
-}
-#line 80 "ide/ide_converters.bas"
-do{
-#line 80 "ide/ide_converters.bas"
-qbs_set(_FUNC_BINARYFORMATCHECK_STRING_WHAT,FUNC_IDEYESNOBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("QuickBASIC 4.5 binary format detected. Convert to plain text?",61)));
-#line 80 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 80 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,80,"ide_converters.bas");}while(r);
-#line 81 "ide/ide_converters.bas"
-S_70212:;
-#line 81 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_BINARYFORMATCHECK_STRING_WHAT,qbs_new_txt_len("Y",1))))||is_error_pending()){
-#line 81 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,81,"ide_converters.bas");if(r)goto S_70212;}
-#line 83 "ide/ide_converters.bas"
-S_70213:;
-#line 83 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(func__direxists(qbs_new_txt_len("./internal/utilities",20))== 0 )))||is_error_pending()){
-#line 83 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,83,"ide_converters.bas");if(r)goto S_70213;}
-#line 83 "ide/ide_converters.bas"
-do{
-#line 83 "ide/ide_converters.bas"
-sub_mkdir(qbs_new_txt_len("./internal/utilities",20));
-#line 83 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 83 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,83,"ide_converters.bas");}while(r);
-#line 83 "ide/ide_converters.bas"
-}
-#line 84 "ide/ide_converters.bas"
-do{
-#line 84 "ide/ide_converters.bas"
-sub_pcopy( 3 , 0 );
-#line 84 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,84,"ide_converters.bas");}while(r);
-#line 85 "ide/ide_converters.bas"
-do{
-#line 85 "ide/ide_converters.bas"
-qbg_screen(NULL,NULL, 3 , 0 ,NULL,12);
-#line 85 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,85,"ide_converters.bas");}while(r);
-#line 86 "ide/ide_converters.bas"
-do{
-#line 86 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7260= 1 ));
-#line 86 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,86,"ide_converters.bas");}while(r);
-#line 87 "ide/ide_converters.bas"
-do{
-#line 87 "ide/ide_converters.bas"
-SUB_CLEARSTATUSWINDOW(&(pass7261= 0 ));
-#line 87 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,87,"ide_converters.bas");}while(r);
-#line 88 "ide/ide_converters.bas"
-do{
-#line 88 "ide/ide_converters.bas"
-qbg_sub_color( 15 , 1 ,NULL,NULL,3);
-#line 88 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,88,"ide_converters.bas");}while(r);
-#line 89 "ide/ide_converters.bas"
-do{
-#line 89 "ide/ide_converters.bas"
-sub__printstring( 2 ,*__LONG_IDEWY- 3 ,qbs_new_txt_len("Preparing to convert...",23),NULL,0);
-#line 89 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 89 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,89,"ide_converters.bas");}while(r);
-#line 90 "ide/ide_converters.bas"
-do{
-#line 90 "ide/ide_converters.bas"
-sub_pcopy( 3 , 0 );
-#line 90 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,90,"ide_converters.bas");}while(r);
-#line 91 "ide/ide_converters.bas"
-S_70223:;
-#line 91 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,func_instr(NULL,func__os(),qbs_new_txt_len("WIN",3),0)))||is_error_pending()){
-#line 91 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,91,"ide_converters.bas");if(r)goto S_70223;}
-#line 92 "ide/ide_converters.bas"
-do{
-#line 92 "ide/ide_converters.bas"
-sub_shell2(qbs_new_txt_len("qb64pe -x internal/support/converter/QB45BIN.bas -o internal/utilities/QB45BIN",78),2);
-#line 92 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 92 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,92,"ide_converters.bas");}while(r);
-#line 93 "ide/ide_converters.bas"
-}else{
-#line 94 "ide/ide_converters.bas"
-do{
-#line 94 "ide/ide_converters.bas"
-sub_shell2(qbs_new_txt_len("./qb64pe -x ./internal/support/converter/QB45BIN.bas -o ./internal/utilities/QB45BIN",84),2);
-#line 94 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 94 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,94,"ide_converters.bas");}while(r);
-#line 95 "ide/ide_converters.bas"
-}
-#line 96 "ide/ide_converters.bas"
-S_70228:;
-#line 96 "ide/ide_converters.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_FUNC_BINARYFORMATCHECK_STRING_CONVERTUTILITY)))||is_error_pending()){
-#line 96 "ide/ide_converters.bas"
-if(qbevent){evnt(28678,96,"ide_converters.bas");if(r)goto S_70228;}
-#line 96 "ide/ide_converters.bas"
-do{
-#line 96 "ide/ide_converters.bas"
-goto LABEL_CONVERTIT;
-#line 96 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,96,"ide_converters.bas");}while(r);
-#line 96 "ide/ide_converters.bas"
-}
-#line 97 "ide/ide_converters.bas"
-do{
-#line 97 "ide/ide_converters.bas"
-SUB_CLEARSTATUSWINDOW(&(pass7262= 0 ));
-#line 97 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,97,"ide_converters.bas");}while(r);
-#line 98 "ide/ide_converters.bas"
-do{
-#line 98 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_DUMMY=FUNC_DARKENFGBG(&(pass7263= 0 ));
-#line 98 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,98,"ide_converters.bas");}while(r);
-#line 99 "ide/ide_converters.bas"
-do{
-#line 99 "ide/ide_converters.bas"
-sub_pcopy( 3 , 0 );
-#line 99 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,99,"ide_converters.bas");}while(r);
-#line 100 "ide/ide_converters.bas"
-do{
-#line 100 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Binary format",13),qbs_new_txt_len("Error launching conversion utility.",35),qbs_new_txt_len("",0));
-#line 100 "ide/ide_converters.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 100 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,100,"ide_converters.bas");}while(r);
-#line 101 "ide/ide_converters.bas"
-}
-#line 102 "ide/ide_converters.bas"
-do{
-#line 102 "ide/ide_converters.bas"
-*_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK= 1 ;
-#line 102 "ide/ide_converters.bas"
-if(!qbevent)break;evnt(28678,102,"ide_converters.bas");}while(r);
-#line 103 "ide/ide_converters.bas"
-}
-#line 104 "ide/ide_converters.bas"
-sc_ec_490_end:;
-#line 104 "ide/ide_converters.bas"
-goto sc_7249_end;
-#line 104 "ide/ide_converters.bas"
-}
-#line 104 "ide/ide_converters.bas"
-sc_7249_end:;
-#line 105 "ide/ide_converters.bas"
+#line 182 "ide/wiki/wiki_methods.bas"
+fornext_exit_6959:;
+#line 183 "ide/wiki/wiki_methods.bas"
 exit_subfunc:;
-#line 105 "ide/ide_converters.bas"
+#line 183 "ide/wiki/wiki_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 105 "ide/ide_converters.bas"
+#line 183 "ide/wiki/wiki_methods.bas"
 #include "free475.txt"
-#line 105 "ide/ide_converters.bas"
+#line 183 "ide/wiki/wiki_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 105 "ide/ide_converters.bas"
+#line 183 "ide/wiki/wiki_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 105 "ide/ide_converters.bas"
-return *_FUNC_BINARYFORMATCHECK_INTEGER_BINARYFORMATCHECK;
-#line 105 "ide/ide_converters.bas"
+#line 183 "ide/wiki/wiki_methods.bas"
 }

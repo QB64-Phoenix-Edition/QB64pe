@@ -1,392 +1,48 @@
-#line 30 "utilities/terminal.bas"
-void SUB_GENERATEMACOSLOGSCRIPT(qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_EXE,qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_CMDSTR,qbs*_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT){
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
+int8 FUNC_TYPE_ISARITHMETIC(int32*_FUNC_TYPE_ISARITHMETIC_LONG_TYPEID){
+#line 2299 "utilities/type.bas"
 qbs *tqbs;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 ptrszint tmp_long;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 int32 tmp_fileno;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 #include "data343.txt"
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 mem_lock *sf_mem_lock;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 new_mem_lock();
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 sf_mem_lock->type=3;
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 libqb_check_stack();
-#line 30 "utilities/terminal.bas"
+#line 2299 "utilities/type.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 31 "utilities/terminal.bas"
+#line 2300 "utilities/type.bas"
 do{
-#line 31 "utilities/terminal.bas"
-qbs_set(error_handler_history, qbs_add(qbs_add(qbs_str((int32)(error_goto_line)), qbs_new_txt_len("|", 1)), error_handler_history));
-#line 31 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base, 0);
-#line 31 "utilities/terminal.bas"
-error_goto_line=12;
-#line 31 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,31,"terminal.bas");}while(r);
-#line 32 "utilities/terminal.bas"
-do{
-#line 32 "utilities/terminal.bas"
-sub_kill(_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT);
-#line 32 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 32 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,32,"terminal.bas");}while(r);
-#line 33 "utilities/terminal.bas"
-do{
-#line 33 "utilities/terminal.bas"
-error_goto_line = qbr(qbs_val<uint64_t>(error_handler_history));
-#line 33 "utilities/terminal.bas"
-qbs_set(error_handler_history, func_mid(error_handler_history, func_instr(NULL, error_handler_history, qbs_new_txt_len("|", 1), 0) + 1 , NULL, 0));
-#line 33 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base, 0);
-#line 33 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,33,"terminal.bas");}while(r);
-#line 35 "utilities/terminal.bas"
-do{
-#line 35 "utilities/terminal.bas"
-sub__delay( 0.05E+0 );
-#line 35 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,35,"terminal.bas");}while(r);
-#line 37 "utilities/terminal.bas"
-do{
-#line 37 "utilities/terminal.bas"
-*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF=func_freefile();
-#line 37 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,37,"terminal.bas");}while(r);
-#line 38 "utilities/terminal.bas"
-do{
-#line 38 "utilities/terminal.bas"
-sub_open(_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT, 4 ,NULL,NULL,*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF,NULL,0);
-#line 38 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 38 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,38,"terminal.bas");}while(r);
-#line 40 "utilities/terminal.bas"
-S_44176:;
-#line 40 "utilities/terminal.bas"
-if ((*__BYTE_LOGGINGENABLED)||is_error_pending()){
-#line 40 "utilities/terminal.bas"
-if(qbevent){evnt(28671,40,"terminal.bas");if(r)goto S_44176;}
-#line 41 "utilities/terminal.bas"
-do{
-#line 41 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 41 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_LEVEL=",24), 0, 0, 0);
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,__STRING_LOGMINLEVEL, 0, 0, 0);
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 41 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4425;
-#line 41 "utilities/terminal.bas"
-skip4425:
-#line 41 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 41 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 41 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,41,"terminal.bas");}while(r);
-#line 42 "utilities/terminal.bas"
-do{
-#line 42 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 42 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_SCOPES=",25), 0, 0, 0);
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,__STRING_LOGSCOPES, 0, 0, 0);
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 42 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4426;
-#line 42 "utilities/terminal.bas"
-skip4426:
-#line 42 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 42 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 42 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,42,"terminal.bas");}while(r);
-#line 43 "utilities/terminal.bas"
-do{
-#line 43 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 43 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_HANDLERS=",27), 0, 0, 0);
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,__STRING_LOGHANDLERS, 0, 0, 0);
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 43 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4427;
-#line 43 "utilities/terminal.bas"
-skip4427:
-#line 43 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 43 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 43 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,43,"terminal.bas");}while(r);
-#line 44 "utilities/terminal.bas"
-do{
-#line 44 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 44 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_FILE_PATH=",28), 0, 0, 0);
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,__STRING_LOGFILENAME, 0, 0, 0);
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 44 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4428;
-#line 44 "utilities/terminal.bas"
-skip4428:
-#line 44 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 44 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 44 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,44,"terminal.bas");}while(r);
-#line 45 "utilities/terminal.bas"
-}else{
-#line 46 "utilities/terminal.bas"
-do{
-#line 46 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 46 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 46 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4429;
-#line 46 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_LEVEL=",24), 0, 0, 0);
-#line 46 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4429;
-#line 46 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 46 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4429;
-#line 46 "utilities/terminal.bas"
-skip4429:
-#line 46 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 46 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 46 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,46,"terminal.bas");}while(r);
-#line 47 "utilities/terminal.bas"
-do{
-#line 47 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 47 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 47 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4430;
-#line 47 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_SCOPES=",25), 0, 0, 0);
-#line 47 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4430;
-#line 47 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 47 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4430;
-#line 47 "utilities/terminal.bas"
-skip4430:
-#line 47 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 47 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 47 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,47,"terminal.bas");}while(r);
-#line 48 "utilities/terminal.bas"
-do{
-#line 48 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 48 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 48 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4431;
-#line 48 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_HANDLERS=",27), 0, 0, 0);
-#line 48 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4431;
-#line 48 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 48 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4431;
-#line 48 "utilities/terminal.bas"
-skip4431:
-#line 48 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 48 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 48 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,48,"terminal.bas");}while(r);
-#line 49 "utilities/terminal.bas"
-do{
-#line 49 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 49 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 49 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4432;
-#line 49 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("export QB64PE_LOG_FILE_PATH=",28), 0, 0, 0);
-#line 49 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4432;
-#line 49 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 49 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4432;
-#line 49 "utilities/terminal.bas"
-skip4432:
-#line 49 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 49 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 49 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,49,"terminal.bas");}while(r);
-#line 50 "utilities/terminal.bas"
-}
-#line 51 "utilities/terminal.bas"
-do{
-#line 51 "utilities/terminal.bas"
-tab_spc_cr_size=2;
-#line 51 "utilities/terminal.bas"
-tab_fileno=tmp_fileno=*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF;
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,_SUB_GENERATEMACOSLOGSCRIPT_STRING_EXE, 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\042",1), 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len(" ",1), 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,_SUB_GENERATEMACOSLOGSCRIPT_STRING_CMDSTR, 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-sub_file_print(tmp_fileno,qbs_new_txt_len("\012",1), 0, 0, 0);
-#line 51 "utilities/terminal.bas"
-if (is_error_pending()) goto skip4433;
-#line 51 "utilities/terminal.bas"
-skip4433:
-#line 51 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 51 "utilities/terminal.bas"
-tab_spc_cr_size=1;
-#line 51 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,51,"terminal.bas");}while(r);
-#line 53 "utilities/terminal.bas"
-do{
-#line 53 "utilities/terminal.bas"
-sub_close(*_SUB_GENERATEMACOSLOGSCRIPT_LONG_FF,1);
-#line 53 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,53,"terminal.bas");}while(r);
-#line 55 "utilities/terminal.bas"
-do{
-#line 55 "utilities/terminal.bas"
-sub_shell2(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("chmod +x ",9),qbs_new_txt_len("\042",1)),_SUB_GENERATEMACOSLOGSCRIPT_STRING_SCRIPT),qbs_new_txt_len("\042",1)),2);
-#line 55 "utilities/terminal.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 55 "utilities/terminal.bas"
-if(!qbevent)break;evnt(28671,55,"terminal.bas");}while(r);
-#line 56 "utilities/terminal.bas"
+#line 2300 "utilities/type.bas"
+*_FUNC_TYPE_ISARITHMETIC_BYTE_TYPE_ISARITHMETIC=-(!((*_FUNC_TYPE_ISARITHMETIC_LONG_TYPEID&*__LONG_ISSTRING)));
+#line 2300 "utilities/type.bas"
+if(!qbevent)break;evnt(28621,2300,"type.bas");}while(r);
+#line 2301 "utilities/type.bas"
 exit_subfunc:;
-#line 56 "utilities/terminal.bas"
+#line 2301 "utilities/type.bas"
 free_mem_lock(sf_mem_lock);
-#line 56 "utilities/terminal.bas"
+#line 2301 "utilities/type.bas"
 #include "free343.txt"
-#line 56 "utilities/terminal.bas"
+#line 2301 "utilities/type.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 56 "utilities/terminal.bas"
+#line 2301 "utilities/type.bas"
 cmem_sp=tmp_cmem_sp;
-#line 56 "utilities/terminal.bas"
+#line 2301 "utilities/type.bas"
+return *_FUNC_TYPE_ISARITHMETIC_BYTE_TYPE_ISARITHMETIC;
+#line 2301 "utilities/type.bas"
 }
