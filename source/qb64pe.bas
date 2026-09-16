@@ -130,6 +130,7 @@ DIM SHARED CMDLineSrcFile$, CMDLineOutFile$
 TYPE usedVarList
     AS LONG id, linenumber, includeLevel, includedLine, scope, localIndex
     AS LONG arrayElementSize
+    AS LONG cnameHashNext 'chains entries sharing a cname hash bucket (see manageVariableList)
     AS _BYTE used, watch, isarray, displayFormat 'displayFormat: 0=DEC;1=HEX;2=BIN;3=OCT
     AS STRING name, cname, varType, includedFile, subfunc
     AS STRING watchRange, indexes, elements, elementTypes 'for Arrays and UDTs
@@ -139,6 +140,8 @@ END TYPE
 REDIM SHARED backupUsedVariableList(1000) AS usedVarList
 DIM SHARED typeDefinitions$, backupTypeDefinitions$
 DIM SHARED totalVariablesCreated AS LONG, totalMainVariablesCreated AS LONG
+' Number of buckets in the usedVariableList().cname hash index (power of two).
+CONST CVAR_HASH_BUCKETS = 65536
 DIM SHARED totalWarnings AS LONG, warningListItems AS LONG, lastWarningHeader AS STRING
 DIM SHARED duplicateConstWarning AS _BYTE, warningsissued AS _BYTE
 DIM SHARED emptySCWarning AS _BYTE, maxLineNumber AS LONG
@@ -1555,6 +1558,14 @@ totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
 REDIM SHARED usedVariableList(1000) AS usedVarList
+' Hash index over usedVariableList().cname so manageVariableList can find an
+' existing entry in O(1) average instead of a linear scan of every variable
+' created so far (which was O(n^2) overall on large programs). Buckets are a
+' power of two (CVAR_HASH_BUCKETS, declared near the top) so the bucket index is
+' a cheap AND. Each bucket holds the index of the first matching entry; entries
+' chain through usedVariableList().cnameHashNext. Re-REDIM'd here (without
+' _PRESERVE) alongside usedVariableList so both reset to empty on every compile.
+REDIM SHARED cnameHashHead(0 TO CVAR_HASH_BUCKETS - 1) AS LONG
 totalWarnings = 0
 duplicateConstWarning = 0
 emptySCWarning = 0
@@ -28369,6 +28380,19 @@ FUNCTION VerifyNumber (text$)
     IF t$ = t1$ THEN VerifyNumber = -1
 END FUNCTION
 
+' djb2 hash of the full string, folded into a CVAR_HASH_BUCKETS-sized bucket.
+' Used to index usedVariableList() by cname (see manageVariableList). Keys on
+' every character so long shared prefixes/suffixes don't collide.
+FUNCTION cnameHashBucket& (s$)
+    DIM h AS _UNSIGNED LONG, k AS LONG
+    h = 5381
+    FOR k = 1 TO LEN(s$)
+        ' h = h * 33 + c, kept within 32 bits by the _UNSIGNED LONG wraparound
+        h = ((h * 33) AND &HFFFFFFFF) + ASC(s$, k)
+    NEXT
+    cnameHashBucket& = h AND (CVAR_HASH_BUCKETS - 1)
+END FUNCTION
+
 SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
     DIM findItem AS LONG, cname$, i AS LONG, j AS LONG, name$, temp$
     name$ = RTRIM$(__name$)
@@ -28381,10 +28405,24 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
         cname$ = LEFT$(cname$, findItem - 1)
     END IF
 
+    ' Look up cname$ via the hash index instead of scanning the whole list.
+    ' Equivalent to: FOR i = 1 TO totalVariablesCreated: found if .cname = cname$
+    ' NB: we deliberately do NOT reuse HashValue&() here - it keys on first/last
+    ' chars + length, and generated cnames share those heavily (__ARRAY_LONG_...,
+    ' _SUB_..._INTEGER_...), so it collides catastrophically. A full-string djb2
+    ' hash keys on the distinguishing middle, spreading names across buckets.
+    DIM cnameBucket AS LONG
+    cnameBucket = cnameHashBucket&(cname$)
     found = 0
-    FOR i = 1 TO totalVariablesCreated
-        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT FOR
-    NEXT
+    i = cnameHashHead(cnameBucket)
+    DO WHILE i > 0
+        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT DO
+        i = usedVariableList(i).cnameHashNext
+    LOOP
+    ' On a miss the linear scan used to leave i = totalVariablesCreated + 1
+    ' (the FOR loop's terminal value), which the 'add' path relies on as the
+    ' slot for the new entry. Reproduce that explicitly.
+    IF found = 0 THEN i = totalVariablesCreated + 1
 
     SELECT CASE action
         CASE 0 'add
@@ -28442,6 +28480,11 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
                 usedVariableList(i).elementTypes = ""
                 usedVariableList(i).elementOffset = ""
                 totalVariablesCreated = totalVariablesCreated + 1
+
+                ' Link this new entry into its cname hash bucket (prepend).
+                ' cnameBucket was computed above from cname$ (same key we stored).
+                usedVariableList(i).cnameHashNext = cnameHashHead(cnameBucket)
+                cnameHashHead(cnameBucket) = i
 
                 temp$ = MKL$(-1) + MKL$(LEN(cname$)) + cname$
                 found = INSTR(backupVariableWatchList$, temp$)
