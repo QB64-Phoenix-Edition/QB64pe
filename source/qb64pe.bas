@@ -130,6 +130,7 @@ DIM SHARED CMDLineSrcFile$, CMDLineOutFile$
 TYPE usedVarList
     AS LONG id, linenumber, includeLevel, includedLine, scope, localIndex
     AS LONG arrayElementSize
+    AS LONG hashNext 'next entry in this one's hash bucket, see varListHashTable()
     AS _BYTE used, watch, isarray, displayFormat 'displayFormat: 0=DEC;1=HEX;2=BIN;3=OCT
     AS STRING name, cname, varType, includedFile, subfunc
     AS STRING watchRange, indexes, elements, elementTypes 'for Arrays and UDTs
@@ -137,6 +138,14 @@ TYPE usedVarList
 END TYPE
 
 REDIM SHARED backupUsedVariableList(1000) AS usedVarList
+
+'Hash index over usedVariableList().cname
+'varListHashTable() holds the first usedVariableList index of each bucket (0 = empty),
+'and each entry's .hashNext chains the rest of that bucket.
+CONST varListHashBits = 20
+CONST varListHashMask = (2 ^ varListHashBits) - 1
+REDIM SHARED varListHashTable(varListHashMask) AS LONG
+
 DIM SHARED typeDefinitions$, backupTypeDefinitions$
 DIM SHARED totalVariablesCreated AS LONG, totalMainVariablesCreated AS LONG
 DIM SHARED totalWarnings AS LONG, warningListItems AS LONG, lastWarningHeader AS STRING
@@ -1555,6 +1564,7 @@ totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
 REDIM SHARED usedVariableList(1000) AS usedVarList
+REDIM SHARED varListHashTable(varListHashMask) AS LONG
 totalWarnings = 0
 duplicateConstWarning = 0
 emptySCWarning = 0
@@ -28410,8 +28420,34 @@ FUNCTION VerifyNumber (text$)
     IF t$ = t1$ THEN VerifyNumber = -1
 END FUNCTION
 
+' This is the hash function for usedVariableList. To keep it cheap we use the
+' first and last 12 characters along with the length, that covers cases of
+' common prefixes and suffixes without having to process the whole variable
+' name.
+FUNCTION varListHashValue& (a$)
+    DIM h AS LONG, i AS LONG, l AS LONG
+
+    l = LEN(a$)
+    h = l
+    IF l > 24 THEN
+        FOR i = 1 TO 12
+            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
+        NEXT
+        FOR i = l - 11 TO l
+            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
+        NEXT
+    ELSE
+        FOR i = 1 TO l
+            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
+        NEXT
+    END IF
+
+    varListHashValue& = h
+END FUNCTION
+
 SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
     DIM findItem AS LONG, cname$, i AS LONG, j AS LONG, name$, temp$
+    DIM hashIndex AS LONG
     name$ = RTRIM$(__name$)
     cname$ = RTRIM$(__cname$)
 
@@ -28422,10 +28458,14 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
         cname$ = LEFT$(cname$, findItem - 1)
     END IF
 
+    hashIndex = varListHashValue&(cname$)
     found = 0
-    FOR i = 1 TO totalVariablesCreated
-        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT FOR
-    NEXT
+    i = varListHashTable(hashIndex)
+    DO WHILE i
+        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT DO
+        i = usedVariableList(i).hashNext
+    LOOP
+    IF found = 0 THEN i = totalVariablesCreated + 1
 
     SELECT CASE action
         CASE 0 'add
@@ -28433,6 +28473,9 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
                 IF i > UBOUND(usedVariableList) THEN
                     REDIM _PRESERVE usedVariableList(UBOUND(usedVariableList) + 999) AS usedVarList
                 END IF
+
+                usedVariableList(i).hashNext = varListHashTable(hashIndex)
+                varListHashTable(hashIndex) = i
 
                 usedVariableList(i).id = currentid
                 usedVariableList(i).used = 0
