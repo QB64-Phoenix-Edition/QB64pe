@@ -249,13 +249,27 @@ SUB AddCppLine (buf As LONG)
         isInternal = _FALSE
     END IF
 
-    incName = ResolveDebugPath$(incName, isInternal)
+    ' We cache the current #line entry because it's fairly expensive to
+    ' produce when accounting for _FULLPATH or MakeRelativePath().
+    '
+    ' Source files are processed linearly so caching a single entry is fine,
+    ' once we're done with one we usually won't need it again.
+    IF LEN(AddCppLine_suffix) = 0 OR incName <> AddCppLine_name OR _
+       isInternal <> AddCppLine_internal OR AbsoluteDebugPaths <> AddCppLine_absolute OR _
+       sourcefile$ <> AddCppLine_source OR path.source$ <> AddCppLine_base THEN
+        AddCppLine_name = incName
+        AddCppLine_internal = isInternal
+        AddCppLine_absolute = AbsoluteDebugPaths
+        AddCppLine_source = sourcefile$
+        AddCppLine_base = path.source$
+        AddCppLine_suffix = " " + CHR$(34) + GetEscapedPath$(ResolveDebugPath$(incName, isInternal)) + CHR$(34)
+    END IF
 
     'line 0 is out of range for the C preprocessor, which we can end up with
     'before the first line of the program has been read
     IF lineNum < 1 THEN lineNum = 1
 
-    WriteBufLine buf, "#line " + _TOSTR$(lineNum) + " " + CHR$(34) + GetEscapedPath$(incName) + CHR$(34)
+    WriteBufLine buf, "#line " + _TOSTR$(lineNum) + AddCppLine_suffix
 END SUB
 
 SUB WriteBufLineCpp (buf As Long, s as String)

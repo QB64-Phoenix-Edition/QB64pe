@@ -16,3 +16,9 @@ CONST SBufNHashMask = 65535
 REDIM SHARED SBufNHashTable(SBufNHashMask) AS LONG
 REDIM SHARED SBufNHashNext(0 TO 99) AS LONG
 
+'--- Cache of the last "#line" file name resolved by AddCppLine
+'-----
+DIM SHARED AddCppLine_suffix AS STRING, AddCppLine_name AS STRING
+DIM SHARED AddCppLine_source AS STRING, AddCppLine_base AS STRING
+DIM SHARED AddCppLine_internal AS LONG, AddCppLine_absolute AS LONG
+
