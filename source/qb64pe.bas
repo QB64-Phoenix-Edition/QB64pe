@@ -1552,6 +1552,7 @@ FOR i = 1 TO 27: defineaz(i) = "SINGLE": defineextaz(i) = "!": NEXT
 controllevel = 0
 findidsecondarg$ = "": findanotherid = 0: findidinternal = 0: currentid = 0
 linenumber = 0
+reallinenumber = 0
 wholeline$ = ""
 linefragment$ = ""
 idn = 0
@@ -2093,6 +2094,11 @@ DO
             a$ = "$MIDISOUNDFONT is a deprecated keyword, use _MIDISOUNDBANK instead"
             GOTO errmes
         END IF
+
+        ' We check for these early because changing the state var triggers a
+        ' recompile, that's very expensive if we wait till after the prepass.
+        IF temp$ = "OPTION _EXPLICIT" THEN SetRCStateVar OptExpl, 1
+        IF temp$ = "OPTION _EXPLICITARRAY" THEN SetRCStateVar OptExplArr, 1
 
         wholeline$ = lineformat(wholeline$)
         IF Error_Happened THEN GOTO errmes
