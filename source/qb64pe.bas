@@ -658,6 +658,9 @@ DIM SHARED file AS STRING 'name of the file (without .bas or path)
 DIM SHARED constequation AS INTEGER
 DIM SHARED DynamicMode AS INTEGER
 DIM SHARED findidsecondarg AS STRING
+'cached padding of subfunc for findid's scope check, see findid&()
+DIM SHARED findid_insf AS STRING, findid_insfKey AS STRING
+findid_insfKey = "": findid_insf = SPACE$(256)
 DIM SHARED findanotherid AS INTEGER
 DIM SHARED findidinternal AS LONG
 DIM SHARED currentid AS LONG 'is the index of the last ID accessed
@@ -23256,12 +23259,15 @@ FUNCTION findid& (n2$)
         '''    END IF 'safeguard
     END IF
 
-    'optimizations for later comparisons
-    insf$ = subfunc + SPACE$(256 - LEN(subfunc))
-    secondarg$ = secondarg$ + SPACE$(256 - LEN(secondarg$))
+    ' We cache the padded name of the current subfunc so that subsequent
+    ' findid&() calls while the same SUB/FUNCTION is being processed avoid
+    ' recreating the string.
+    IF subfunc <> findid_insfKey THEN
+        findid_insfKey = subfunc
+        findid_insf = subfunc + SPACE$(256 - LEN(subfunc))
+    END IF
     IF LEN(sc$) THEN scpassed = 1: sc$ = sc$ + SPACE$(8 - LEN(sc$)) ELSE scpassed = 0
     '''IF LEN(couldhavesc$) THEN couldhavesc$ = couldhavesc$ + SPACE$(8 - LEN(couldhavesc$)): couldhavescpassed = 1 ELSE couldhavescpassed = 0
-    IF LEN(n$) < 256 THEN n$ = n$ + SPACE$(256 - LEN(n$))
 
     'FUNCTION HashFind (a$, searchflags, resultflags, resultreference)
     '(0,1,2)z=hashfind[rev]("RUMI",Hashflag_label,resflag,resref)
@@ -23294,7 +23300,7 @@ FUNCTION findid& (n2$)
 
     'in scope?
     IF ids(i).subfunc = 0 AND ids(i).share = 0 THEN 'scope check required (not a shared variable or the name of a sub/function)
-        IF ids(i).insubfunc <> insf$ THEN GOTO findidnomatch
+        IF ids(i).insubfunc <> findid_insf THEN GOTO findidnomatch
     END IF
 
     'some subs require a second argument (eg. PUT #, DEF SEG, etc.)
