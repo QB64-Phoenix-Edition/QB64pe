@@ -28,7 +28,7 @@ FUNCTION CreateBuf%
     buf& = simplebuffer_freeHint&: CreateBuf% = SBE_NoMoreBuffers
     IF buf& < 0 THEN buf& = 0
     WHILE buf& < aub&
-        IF simplebuffer_array$(buf& + 1) = "" THEN EXIT WHILE
+        IF LEN(simplebuffer_array$(buf& + 1)) = 0 THEN EXIT WHILE
         buf& = buf& + simplebuffer_slots
         IF buf& >= 32765 * simplebuffer_slots THEN EXIT FUNCTION '=> allow max. 32765 buffers
     WEND
@@ -77,7 +77,7 @@ SUB DisposeBuf (handle%)
     buf& = simplebuffer_topUsed&
     IF buf& > aub& - simplebuffer_slots + 1 THEN buf& = aub& - simplebuffer_slots + 1
     WHILE buf& >= 0
-        IF simplebuffer_array$(buf& + 1) <> "" THEN EXIT WHILE
+        IF LEN(simplebuffer_array$(buf& + 1)) THEN EXIT WHILE
         buf& = buf& - simplebuffer_slots
     WEND
     simplebuffer_topUsed& = buf&
@@ -729,7 +729,7 @@ FUNCTION CheckHandle% (handle%)
     '--- check handle ---
     buf& = handle% * simplebuffer_slots: CheckHandle% = 0
     IF buf& < 0 OR buf& > UBOUND(simplebuffer_array$) THEN EXIT FUNCTION
-    IF simplebuffer_array$(buf& + 1) = "" THEN EXIT FUNCTION
+    IF LEN(simplebuffer_array$(buf& + 1)) = 0 THEN EXIT FUNCTION
     CheckHandle% = -1
 END FUNCTION
 

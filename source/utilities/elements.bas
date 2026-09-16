@@ -2,7 +2,7 @@
 FUNCTION getelement$ (a$, elenum)
     DIM p AS LONG, n AS LONG, i AS LONG
 
-    IF a$ = "" THEN EXIT FUNCTION 'no elements!
+    IF LEN(a$) = 0 THEN EXIT FUNCTION 'no elements!
 
     n = 1
     p = 1
@@ -170,7 +170,7 @@ END SUB
 FUNCTION numelements (a$)
     DIM p AS LONG, n AS LONG, i AS LONG
 
-    IF a$ = "" THEN EXIT FUNCTION
+    IF LEN(a$) = 0 THEN EXIT FUNCTION
     n = 1
     p = 1
     numelementsnext:

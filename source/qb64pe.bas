@@ -17460,14 +17460,21 @@ SUB vWatchVariable (this$, action AS _BYTE)
                 EXIT SUB
             END IF
 
+            ' The vwatch_*_vars[] lists below are $DEBUG-only, we only update
+            ' them for vWatchOn. The rest of the variable lists are always
+            ' updated to track unused variables.
             vWatchNewVariable$ = this$
             IF subfunc = "" THEN
                 totalMainModuleVariables = totalMainModuleVariables + 1
-                mainModuleVariablesList$ = mainModuleVariablesList$ + "vwatch_global_vars[" + _TOSTR$(totalMainModuleVariables - 1) + "] = &" + this$ + ";" + CRLF
+                IF GetRCStateVar(vWatchOn) THEN
+                    mainModuleVariablesList$ = mainModuleVariablesList$ + "vwatch_global_vars[" + _TOSTR$(totalMainModuleVariables - 1) + "] = &" + this$ + ";" + CRLF
+                END IF
                 manageVariableList id.cn, this$, totalMainModuleVariables - 1, 0
             ELSE
                 totalLocalVariables = totalLocalVariables + 1
-                localVariablesList$ = localVariablesList$ + "vwatch_local_vars[" + _TOSTR$(totalLocalVariables - 1) + "] = &" + this$ + ";" + CRLF
+                IF GetRCStateVar(vWatchOn) THEN
+                    localVariablesList$ = localVariablesList$ + "vwatch_local_vars[" + _TOSTR$(totalLocalVariables - 1) + "] = &" + this$ + ";" + CRLF
+                END IF
                 manageVariableList id.cn, this$, totalLocalVariables - 1, 0
             END IF
         CASE 1 'dump to data[].txt & reset
