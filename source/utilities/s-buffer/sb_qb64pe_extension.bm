@@ -12,11 +12,17 @@
 '---------------------------------------------------------------------
 FUNCTION OpenBuffer% (sbMode$, sbName$)
     '--- option _explicit requirements ---
-    DIM buf%, nul&
+    DIM buf%, nul&, known&, newUb&
     '--- buffer already existing? ---
-    FOR buf% = 0 TO UBOUND(SBufN)
-        IF SBufN(buf%) = sbName$ THEN EXIT FOR
-    NEXT buf%
+    IF LEN(sbName$) > 0 THEN
+        known& = SBufNFind&(sbName$)
+        IF known& < 0 THEN buf% = UBOUND(SBufN) + 1 ELSE buf% = known&
+    ELSE
+        ' An empty sbName$ means grab the first unnamed buffer
+        FOR buf% = 0 TO UBOUND(SBufN)
+            IF SBufN(buf%) = sbName$ THEN EXIT FOR
+        NEXT buf%
+    END IF
     '--- simulate file modes ---
     SELECT CASE UCASE$(LEFT$(sbMode$, 1))
         CASE "A" 'append
@@ -29,7 +35,7 @@ FUNCTION OpenBuffer% (sbMode$, sbName$)
             IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
             nul& = SeekBuf&(buf%, 0, SBM_BufStart)
         CASE "O" 'output
-            IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufN(buf%) = ""
+            IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
             GOSUB newBuf
         CASE ELSE 'random or unknown mode
             buf% = SBE_NoMoreBuffers 'not supported
@@ -39,22 +45,98 @@ FUNCTION OpenBuffer% (sbMode$, sbName$)
     '----------
     newBuf:
     buf% = CreateBuf%: ConvBufToNativeEol buf%
-    IF buf% > UBOUND(SBufN) THEN
-        REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
-        REDIM _PRESERVE SBufCppLineStatus(0 TO buf% + 99) AS _Byte 'extend by 100 buffers
-    END IF
-    SBufN(buf%) = sbName$
+    GOSUB growLists
+    SBufN(buf%) = sbName$: SBufNIndex buf%
     RETURN
     '----------
     loadBuf:
     buf% = FileToBuf%(sbName$): ConvBufToNativeEol buf%
+    GOSUB growLists
+    SBufN(buf%) = sbName$: SBufNIndex buf%
+    RETURN
+    '----------
+    growLists:
     IF buf% > UBOUND(SBufN) THEN
-        REDIM _PRESERVE SBufN(0 TO buf% + 99) AS STRING 'extend by 100 buffers
-        REDIM _PRESERVE SBufCppLineStatus(0 TO buf% + 99) AS _Byte 'extend by 100 buffers
+        newUb& = UBOUND(SBufN) + (UBOUND(SBufN) + 1) \ 2
+        IF newUb& < buf% + 99 THEN newUb& = buf% + 99 'at least 100 more buffers
+        REDIM _PRESERVE SBufN(0 TO newUb&) AS STRING
+        REDIM _PRESERVE SBufCppLineStatus(0 TO newUb&) AS _Byte
+        REDIM _PRESERVE SBufNHashNext(0 TO newUb&) AS LONG
     END IF
-    SBufN(buf%) = sbName$
     RETURN
 END FUNCTION
+
+'--- Hash of a buffer name. We use the length along with the first and
+'--- last 12 characters.
+'---------------------------------------------------------------------
+FUNCTION SBufNHash& (sbName$)
+    '--- option _explicit requirements ---
+    DIM h&, idx&, l&
+    l& = LEN(sbName$)
+    h& = l&
+    IF l& > 24 THEN
+        FOR idx& = 1 TO 12
+            h& = ((h& * 31) XOR ASC(sbName$, idx&)) AND SBufNHashMask
+        NEXT idx&
+        FOR idx& = l& - 11 TO l&
+            h& = ((h& * 31) XOR ASC(sbName$, idx&)) AND SBufNHashMask
+        NEXT idx&
+    ELSE
+        FOR idx& = 1 TO l&
+            h& = ((h& * 31) XOR ASC(sbName$, idx&)) AND SBufNHashMask
+        NEXT idx&
+    END IF
+    SBufNHash& = h&
+END FUNCTION
+
+'--- Returns the handle of the buffer named sbName$, or -1 if there is none.
+'---------------------------------------------------------------------
+FUNCTION SBufNFind& (sbName$)
+    '--- option _explicit requirements ---
+    DIM i&
+    SBufNFind& = -1
+    IF LEN(sbName$) = 0 THEN EXIT FUNCTION
+    i& = SBufNHashTable(SBufNHash&(sbName$))
+    WHILE i&
+        IF SBufN(i& - 1) = sbName$ THEN SBufNFind& = i& - 1: EXIT FUNCTION
+        i& = SBufNHashNext(i& - 1)
+    WEND
+END FUNCTION
+
+'--- Adds the (already assigned) name of buffer buf% to the hash table.
+'---------------------------------------------------------------------
+SUB SBufNIndex (buf%)
+    '--- option _explicit requirements ---
+    DIM h&
+    IF LEN(SBufN(buf%)) = 0 THEN EXIT SUB
+    h& = SBufNHash&(SBufN(buf%))
+    SBufNHashNext(buf%) = SBufNHashTable(h&)
+    SBufNHashTable(h&) = buf% + 1
+END SUB
+
+'--- Removes buffer buf% from the hash table, to be called while SBufN(buf%) still
+'--- holds the name it was inserted under.
+'---------------------------------------------------------------------
+SUB SBufNUnindex (buf%)
+    '--- option _explicit requirements ---
+    DIM h&, i&, prev&
+    IF LEN(SBufN(buf%)) = 0 THEN EXIT SUB
+    h& = SBufNHash&(SBufN(buf%))
+    i& = SBufNHashTable(h&)
+    WHILE i&
+        IF i& - 1 = buf% THEN
+            IF prev& THEN
+                SBufNHashNext(prev& - 1) = SBufNHashNext(buf%)
+            ELSE
+                SBufNHashTable(h&) = SBufNHashNext(buf%)
+            END IF
+            SBufNHashNext(buf%) = 0
+            EXIT SUB
+        END IF
+        prev& = i&
+        i& = SBufNHashNext(i& - 1)
+    WEND
+END SUB
 
 '--- This subroutine will clear the given buffer or ALL buffers, if the
 '--- name argument is empty.
@@ -72,11 +154,11 @@ SUB ClearBuffers (sbName$)
             IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
         NEXT buf%
         IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-        DisposeBuf buf%: SBufN(buf%) = ""
+        DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
         SBufCppLineStatus(buf%) = 0
     ELSE
         FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufN(buf%) = ""
+            IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
             SBufCppLineStatus(buf%) = 0
         NEXT buf%
     END IF

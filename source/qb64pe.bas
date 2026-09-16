@@ -24555,7 +24555,6 @@ FUNCTION lineformat$ (a$)
     IF i >= n THEN GOTO lineformatdone
 
     c = ASC(a$, i)
-    c$ = CHR$(c) '***remove later***
 
     '----------------quoted string----------------
     IF c = 34 THEN '"
@@ -24576,6 +24575,8 @@ FUNCTION lineformat$ (a$)
     END IF
     IF (c >= 48 AND c <= 57) THEN '0-9
         lfnumber:
+
+        c$ = CHR$(c)
 
         'handle 'IF a=1 THEN a=2 ELSE 100' by assuming numeric after ELSE to be a
         IF RIGHT$(a2$, 5) = sp + "ELSE" THEN
