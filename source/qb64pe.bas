@@ -1206,7 +1206,6 @@ NEXT
 'erase cmemlist
 'erase sfcmemargs
 
-lastunresolved = -1 'first pass
 sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
@@ -12786,7 +12785,50 @@ FOR i = 1 TO idn
     END IF
 NEXT i
 
-unresolved = 0
+' The purpose of the below code is to resolve the dimension count of array
+' arguments to SUB/FUNCTIONs.
+'
+' Ex: SUB(a() As Long)
+'
+' The 'rule' is that a() does not have a defined dimension count, but you're
+' only allowed to pass one dimension count to it across the whole program. Thus
+' the first call to a SUB/FUNCTION will usually 'pin' the number of dimensions
+' of the argument and any subsequent calls have to match or we produce an error
+'
+' Unfortunately it is not just about catching errors, the number of dimensions
+' changes the code emitted for the given SUB/FUNCTION so resolving the number
+' of dimensions is required to produce the correct code.
+'
+' In some cases (Ex. The first call to a SUB/FUNCTION appears after its
+' declaration) we only find out the true dimensions after we have already
+' produced the code for that SUB/FUNCTION, this requires a recompile with the
+' correct dimension count to resolve. If there are chains of SUB/FUNCTION calls
+' each passing arrays to each other, multiple recompiles could be required as
+' each recompile only resolves one level of arrays.
+'
+' This code checks for these conditions and triggers the recompile if we
+' encounter them.
+'
+' Note that it's possible for some SUB/FUNCTIONs to be "unresolvable" due to
+' how the code works, meaning doing more recompiles will not cause them to
+' appear as 'resolved'. Those are:
+'
+' 1. Dead code (no calls to the SUB/FUNCTION)
+' 2. Singular dimensional arrays (the code does not 'pin' these, but that's ok
+'    because that's the default and thus the generated code is already correct).
+'
+' To avoid doing extra recompiles the code below checks for the conditions
+' where a recompile would resolve more dimensions and only triggers it in that
+' situation, those conditions are:
+'
+' 1. There are array arguments with unknown dimensions
+' 2. There is at least one array argument with a newly pinned dimension count
+'
+' Point 2 is the key, if there are no newly pinned dimension counts then that
+' means the dimension counts of the unresolved array arguments will not change
+' on a recompile.
+'
+unresolved = 0: resolvable = 0
 FOR i = 1 TO idn
     getid i
     IF Error_Happened THEN GOTO errmes
@@ -12813,6 +12855,10 @@ FOR i = 1 TO idn
                             IF Debug THEN PRINT #9, "mismatch detected!"
 
                             unresolved = unresolved + 1
+
+                            ' nelereq = 0 means nothing pinned it, so the next
+                            ' pass would declare it exactly the same way again.
+                            IF nelereq <> 0 THEN resolvable = resolvable + 1
                             sflistn = sflistn + 1
                             IF sflistn > 25000 THEN 'manually set a descriptive error message for the user so they know what's happening.
                                 Error_Message = "ERROR: QB64PE currently limits a program to have a maximum of 25,000 subs and functions, and this limit has been exceeded.  Please reduce Sub/Function count, or else report this issue with sample code that produced it over at the QB64PE forums, so we can look further into this issue."
@@ -12835,29 +12881,10 @@ FOR i = 1 TO idn
     END IF
 NEXT
 
-'is recompilation required to resolve this?
-IF unresolved > 0 THEN
-    IF lastunresolved = -1 THEN
-        'first pass
-        recompile = 1
-        IF Debug THEN
-            PRINT #9, "recompiling to resolve array elements (first time)"
-            PRINT #9, "sflistn="; sflistn
-            PRINT #9, "oldsflistn="; oldsflistn
-        END IF
-    ELSE
-        'not first pass
-        IF unresolved < lastunresolved THEN
-            recompile = 1
-            IF Debug THEN
-                PRINT #9, "recompiling to resolve array elements (not first time)"
-                PRINT #9, "sflistn="; sflistn
-                PRINT #9, "oldsflistn="; oldsflistn
-            END IF
-        END IF
-    END IF
-END IF 'unresolved
-lastunresolved = unresolved
+' We recompile only if there are some dimension counts that would change on the
+' recompile.
+IF resolvable > 0 THEN recompile = 1
+
 
 'IDEA!
 'have a flag to record if anything gets resolved in a pass
