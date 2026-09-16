@@ -137,7 +137,7 @@ FUNCTION getelementsafter$ (a$, i1)
 END FUNCTION
 
 SUB insertelements (a$, i, elements$)
-    DIM a2 AS STRING, n AS LONG, i2 AS LONG
+    DIM a2 AS STRING, n AS LONG, i2 AS LONG, p AS LONG, q AS LONG
 
     IF i = 0 THEN
         IF a$ = "" THEN
@@ -151,10 +151,16 @@ SUB insertelements (a$, i, elements$)
     a2$ = ""
     n = numelements(a$)
 
+    p = 1
     FOR i2 = 1 TO n
+        q = INSTR(p, a$, sp)
+        IF q = 0 THEN q = LEN(a$) + 1
+
         IF i2 > 1 THEN a2$ = a2$ + sp
-        a2$ = a2$ + getelement$(a$, i2)
+
+        a2$ = a2$ + MID$(a$, p, q - p)
         IF i = i2 THEN a2$ = a2$ + sp + elements$
+        p = q + 1
     NEXT
 
     a$ = a2$
@@ -176,7 +182,7 @@ FUNCTION numelements (a$)
 END FUNCTION
 
 SUB removeelements (a$, first, last, keepindexing)
-    DIM n AS LONG, i AS LONG, a2 AS STRING
+    DIM n AS LONG, i AS LONG, a2 AS STRING, p AS LONG, q AS LONG
 
     a2$ = ""
     'note: first and last MUST be valid
@@ -184,12 +190,18 @@ SUB removeelements (a$, first, last, keepindexing)
     '       but some elements will be equal to ""
 
     n = numelements(a$)
+    p = 1
     FOR i = 1 TO n
+        q = INSTR(p, a$, sp)
+        IF q = 0 THEN q = LEN(a$) + 1
+
         IF i < first OR i > last THEN
-            a2$ = a2$ + sp + getelement(a$, i)
+            a2$ = a2$ + sp + MID$(a$, p, q - p)
         ELSE
             IF keepindexing THEN a2$ = a2$ + sp
         END IF
+
+        p = q + 1
     NEXT
     IF LEFT$(a2$, 1) = sp THEN a2$ = RIGHT$(a2$, LEN(a2$) - 1)
 

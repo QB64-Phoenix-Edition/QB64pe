@@ -208,6 +208,8 @@ REDIM SHARED PassRule(1 TO OptMax) AS LONG
 REDIM SHARED LevelEntered(OptMax) 'up to 64 levels supported
 REDIM SHARED separgs(OptMax + 1) AS STRING
 REDIM SHARED separgslayout(OptMax + 1) AS STRING
+'Tracks the highest index that's in use for separgs, allows for some optimizations
+DIM SHARED separgsHigh AS LONG
 REDIM SHARED separgs2(OptMax + 1) AS STRING
 REDIM SHARED separgslayout2(OptMax + 1) AS STRING
 
@@ -17653,8 +17655,15 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
     'UDT
     'is it a udt?
+    'udtxname() is a STRING * 256, so pad typ$ out once rather than trimming
+    'every single entry in the loop to compare against it
+    IF LEN(typ$) <= 256 AND RIGHT$(typ$, 1) <> " " THEN
+        typPadded$ = typ$ + SPACE$(256 - LEN(typ$))
+    ELSE
+        typPadded$ = "" ' Cannot be the name of a type, so nothing will match
+    END IF
     FOR i = 1 TO lasttype
-        IF typ$ = RTRIM$(udtxname(i)) THEN
+        IF typPadded$ = udtxname(i) THEN
             dim2typepassback$ = RTRIM$(udtxcname(i))
 
             n$ = "UDT_" + varname$
@@ -24486,6 +24495,9 @@ SUB getid (i AS LONG)
 END SUB
 
 FUNCTION isoperator (a2$)
+    ' 8 is the length of _ANDALSO, the current longest operator, so a very cheap
+    ' length check can avoid doing any unnecessary string comparisons.
+    IF LEN(a2$) = 0 OR LEN(a2$) > 8 THEN EXIT FUNCTION
     a$ = UCASE$(a2$)
     l = 0
     l = l + 1: IF a$ = "_ORELSE" THEN GOTO opfound
@@ -26108,8 +26120,10 @@ END FUNCTION
 FUNCTION seperateargs (a$, ca$, pass&)
     pass& = 0
 
-    FOR i = 1 TO OptMax: separgs(i) = "": NEXT
-    FOR i = 1 TO OptMax + 1: separgslayout(i) = "": NEXT
+    ' Only entries up to separgsHigh are actually non-empty, given OptMax is
+    ' fairly large this lets us avoid a lot of unnecessary string operations.
+    FOR i = 1 TO separgsHigh: separgs(i) = "": separgslayout(i) = "": NEXT
+    separgsHigh = 0
     FOR i = 1 TO OptMax
         Lev(i) = 0
         EntryLev(i) = 0
@@ -26404,6 +26418,8 @@ FUNCTION seperateargs (a$, ca$, pass&)
 
 
     FOR i = 1 TO lastt: separgs(i) = "n-ll": NEXT
+    'from here on nothing indexes separgs()/separgslayout() past lastt + 1
+    separgsHigh = lastt + 1
 
 
 
@@ -28463,7 +28479,6 @@ END FUNCTION
 SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
     DIM findItem AS LONG, cname$, i AS LONG, j AS LONG, name$, temp$
     DIM hashIndex AS LONG
-    name$ = RTRIM$(__name$)
     cname$ = RTRIM$(__cname$)
 
     IF LEN(cname$) = 0 THEN EXIT SUB
@@ -28485,6 +28500,8 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
     SELECT CASE action
         CASE 0 'add
             IF found = 0 THEN
+                name$ = RTRIM$(__name$)
+
                 IF i > UBOUND(usedVariableList) THEN
                     REDIM _PRESERVE usedVariableList(UBOUND(usedVariableList) + 999) AS usedVarList
                 END IF
