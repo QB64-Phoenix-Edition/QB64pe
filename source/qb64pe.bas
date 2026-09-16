@@ -19328,9 +19328,6 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 END FUNCTION
 
 FUNCTION evaluate$ (a2$, typ AS LONG)
-    DIM block(1000) AS STRING
-    DIM evaledblock(1000) AS INTEGER
-    DIM blocktype(1000) AS LONG
     'typ IS A RETURN VALUE
     '''DIM cli(15) AS INTEGER
     a$ = a2$
@@ -19348,6 +19345,17 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
     blockn = 0
     n = numelements(a$)
+
+    ' The loop below pushes at most one block per element of a$, so blockn
+    ' never exceeds n. The +2 covers the operator pass reading block(i + 1),
+    ' plus a spare slot.
+    '
+    ' evaluate$() is called a lot, so sizing these to the expression rather
+    ' than to a fixed 1000 entries is a large saving in string allocations.
+    REDIM block(n + 2) AS STRING
+    REDIM evaledblock(n + 2) AS INTEGER
+    REDIM blocktype(n + 2) AS LONG
+
     b = 0 'bracketting level
     FOR i = 1 TO n
 
