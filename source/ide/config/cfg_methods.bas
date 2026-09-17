@@ -643,6 +643,10 @@ SUB ReadInitialConfig
 
     GenerateLicenseFile = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "GenerateLicenseFile", 0)
 
+    SplitObjectFiles = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "SplitObjectFiles", 0)
+
+    WriteFilesWhileTranslating = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "WriteFilesWhileTranslating", 0)
+
     IF os$ = "WIN" THEN
         UseSystemMinGW = ReadWriteBooleanSettingValue%(compilerSettingsSection$, "UseSystemMinGW", _FALSE)
     ELSE

@@ -1,0 +1,26 @@
+
+FUNCTION BFunc1$ (n AS LONG)
+    DATA 11,12,13
+
+    DIM v AS LONG
+    RESTORE
+    READ v
+    READ v
+
+    BFunc1$ = "B-ONE-" + _TOSTR$(n) + "-" + _TOSTR$(v)
+END FUNCTION
+
+SUB BSub1
+    ' A STATIC in a SUB is emitted as a file-scope definition, so every unit
+    ' that can see it gets a declaration and exactly one gets the definition
+    STATIC calls AS LONG
+    calls = calls + 1
+    gBCalls = calls
+
+    GOSUB bump
+    EXIT SUB
+
+    bump:
+    gCount = gCount + 1
+    RETURN
+END SUB
