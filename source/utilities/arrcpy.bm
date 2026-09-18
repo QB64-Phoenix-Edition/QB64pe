@@ -125,259 +125,6 @@ FUNCTION ArrayCopyRefCaseLayout$ (expr AS STRING, whole_ref AS STRING)
 END FUNCTION
 
 
-
-'Emit the ownership-safe linear qbs snapshot loop shared by whole-array
-'variable-length STRING copies. Allocation, self-copy guarding, destination
-'mapping, write-back, and cleanup deliberately remain in the callers.
-SUB AppendArrayCopyVarStringLinearSnapshot (src_expr AS STRING)
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_total;array_copy_i++){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_tmp[array_copy_i]=qbs_new(0,0);"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_tmp[array_copy_i]) array_copy_tmp_made++;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp[array_copy_i])||is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "qbs_set(array_copy_tmp[array_copy_i]," + src_expr + ");"
-    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-END SUB
-
-
-'Emit a multidimensional whole-array variable-length STRING copy. Supported
-'variable-length STRING arrays use qbs* element slots for top-level, inline/_Static,
-'and descriptor-backed _Dynamic storage.
-
-SUB AppendArrayCopyWholeVarString (dstarr AS STRING, srcarr AS STRING, arrdims AS LONG, dst_slot_mode AS LONG, src_slot_mode AS LONG)
-    DIM srcslot AS STRING
-    DIM dstslot AS STRING
-
-    IF arrdims <= 1 THEN Give_Error "_ArrayCopy multidimensional variable-length STRING copy requires at least two dimensions": EXIT SUB
-    IF src_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine source variable-length STRING storage": EXIT SUB
-    IF dst_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine destination variable-length STRING storage": EXIT SUB
-
-    srcslot = "((qbs**)array_copy_src[0])[array_copy_i]"
-    dstslot = "((qbs**)array_copy_dst[0])[array_copy_i]"
-
-    WriteBufLineCpp MainTxtBuf, "{"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dstarr + ";"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + srcarr + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_total=1;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_dst)||(!array_copy_src)||!(array_copy_dst[2]&1)||!(array_copy_src[2]&1)||(!array_copy_dst[0])||(!array_copy_src[0])||(array_copy_dst[0]==(ptrszint)nothingvalue)||(array_copy_src[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1;array_copy_dim<=" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "ptrszint array_copy_arg=(" + _TOSTR$(arrdims) + "-array_copy_dim)*4+4;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_dst[array_copy_arg]!=array_copy_src[array_copy_arg])||(array_copy_dst[array_copy_arg+1]!=array_copy_src[array_copy_arg+1])){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst[array_copy_arg+1]<0){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst[array_copy_arg+1]&&array_copy_total>(18446744073709551615ull/(uint64)array_copy_dst[array_copy_arg+1])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_total*=(uint64)array_copy_dst[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_dst[0]!=array_copy_src[0])){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_total>((uint64)(~(size_t)0)/sizeof(qbs*))){error(257);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "qbs **array_copy_tmp=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_tmp_made=0;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_total){array_copy_tmp=(qbs**)malloc((size_t)(array_copy_total*sizeof(qbs*)));if (!array_copy_tmp){error(257);array_copy_ok=0;}}"
-    AppendArrayCopyVarStringLinearSnapshot srcslot
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_total;array_copy_i++){"
-    WriteBufLineCpp MainTxtBuf, "qbs_set(" + dstslot + ",array_copy_tmp[array_copy_i]);"
-    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_tmp_made;array_copy_i++) qbs_free(array_copy_tmp[array_copy_i]);"
-    WriteBufLineCpp MainTxtBuf, "free(array_copy_tmp);"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-END SUB
-
-
-
-'Emit the mapped destination-write and cleanup tail shared by multidimensional
-'variable-length STRING whole-to-start and range-mapped copies. The caller
-'supplies the generated-C count expression for the current dimension.
-'All generated loops and cleanup remain entirely inside this helper.
-SUB AppendArrayCopyVarStringMappedTail (arrdims AS LONG, count_expr AS STRING)
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_total;array_copy_i++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_quotient=array_copy_i;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_element=0;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_coord=array_copy_quotient%" + count_expr + ";"
-    WriteBufLineCpp MainTxtBuf, "array_copy_quotient/=" + count_expr + ";"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_element+=(array_copy_dst_offset[array_copy_dim]+array_copy_coord)*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "qbs_set(((qbs**)array_copy_dst[0])[array_copy_dst_element],array_copy_tmp[array_copy_i]);"
-    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_tmp_made;array_copy_i++) qbs_free(array_copy_tmp[array_copy_i]);"
-    WriteBufLineCpp MainTxtBuf, "free(array_copy_tmp);"
-END SUB
-
-
-'Emit a multidimensional variable-length STRING whole-to-start copy. The source
-'shape is mapped to the requested destination coordinates. A complete qbs
-'snapshot is made before the first destination write, so top-level, inline,
-'_Static, and descriptor-backed _Dynamic arrays may be mixed safely. Supported
-'variable-length STRING operands use qbs* element slots.
-SUB AppendArrayCopyWholeAtVarString (dstarr AS STRING, srcarr AS STRING, arrdims AS LONG, dst_start_init AS STRING, dst_slot_mode AS LONG, src_slot_mode AS LONG)
-    IF arrdims <= 1 THEN Give_Error "_ArrayCopy multidimensional variable-length STRING whole-to-start requires at least two dimensions": EXIT SUB
-    IF src_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine source variable-length STRING storage": EXIT SUB
-    IF dst_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine destination variable-length STRING storage": EXIT SUB
-
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(arrdims) + "]={" + dst_start_init + "};"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + srcarr + ";"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dstarr + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_count[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_count[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_stride[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_total=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_total=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "ptrszint array_copy_arg=(" + _TOSTR$(arrdims) + "-1-array_copy_dim)*4+4;"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_elements=(int64)array_copy_src[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_elements=(int64)array_copy_dst[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_elements<=0)||(array_copy_dst_elements<=0)||(array_copy_dst_start[array_copy_dim]<array_copy_dst_lower)){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_count[array_copy_dim]=(uint64)array_copy_src_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_count[array_copy_dim]=(uint64)array_copy_dst_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset[array_copy_dim]=(uint64)array_copy_dst_start[array_copy_dim]-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_dst_offset[array_copy_dim]>=array_copy_dst_count[array_copy_dim])||(array_copy_src_count[array_copy_dim]>(array_copy_dst_count[array_copy_dim]-array_copy_dst_offset[array_copy_dim]))){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_total>(18446744073709551615ull/array_copy_src_count[array_copy_dim])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_total*=array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_total>(18446744073709551615ull/array_copy_dst_count[array_copy_dim])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_total*=array_copy_dst_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_dst_count[array_copy_dim-1])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[array_copy_dim]=array_copy_dst_stride[array_copy_dim-1]*array_copy_dst_count[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_last_coord=array_copy_dst_offset[array_copy_dim]+array_copy_src_count[array_copy_dim]-1;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_last_coord&&(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_last_coord))){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_term=array_copy_last_coord*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_last>(18446744073709551615ull-array_copy_term)){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last+=array_copy_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_dst_last>=array_copy_dst_total){error(9);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_total>((uint64)(~(size_t)0)/sizeof(qbs*)))){error(257);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "qbs **array_copy_tmp=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_tmp_made=0;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_total){array_copy_tmp=(qbs**)malloc((size_t)(array_copy_total*sizeof(qbs*)));if (!array_copy_tmp){error(257);array_copy_ok=0;}}"
-    AppendArrayCopyVarStringLinearSnapshot "((qbs**)array_copy_src[0])[array_copy_i]"
-    AppendArrayCopyVarStringMappedTail arrdims, "array_copy_src_count[array_copy_dim]"
-END SUB
-
-
-'Emit a multidimensional variable-length STRING range-to-start copy. Each
-'selected source coordinate is mapped to the matching destination coordinate.
-'A complete qbs snapshot is made before the first destination write, so all
-'top-level, inline, _Static, and descriptor-backed _Dynamic combinations remain
-'ownership-safe even when source and destination overlap. Supported
-'variable-length STRING operands use qbs* element slots.
-SUB AppendArrayCopyRangeAtVarString (dstarr AS STRING, srcarr AS STRING, arrdims AS LONG, src_low_init AS STRING, src_high_init AS STRING, dst_start_init AS STRING, dst_slot_mode AS LONG, src_slot_mode AS LONG)
-    IF arrdims <= 1 THEN Give_Error "_ArrayCopy multidimensional variable-length STRING range-to-start requires at least two dimensions": EXIT SUB
-    IF src_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine source variable-length STRING storage": EXIT SUB
-    IF dst_slot_mode = 0 THEN Give_Error "_ArrayCopy cannot determine destination variable-length STRING storage": EXIT SUB
-
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(arrdims) + "]={" + src_low_init + "};"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(arrdims) + "]={" + src_high_init + "};"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(arrdims) + "]={" + dst_start_init + "};"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + srcarr + ";"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dstarr + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_total[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_total[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_count[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_offset[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_stride[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_stride[" + _TOSTR$(arrdims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_total=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_storage_total=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_storage_total=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_last=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "ptrszint array_copy_arg=(" + _TOSTR$(arrdims) + "-1-array_copy_dim)*4+4;"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_lower=(int64)array_copy_src[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_elements=(int64)array_copy_src[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_elements=(int64)array_copy_dst[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_elements<=0)||(array_copy_dst_elements<=0)||(array_copy_src_low[array_copy_dim]>array_copy_src_high[array_copy_dim])||(array_copy_src_low[array_copy_dim]<array_copy_src_lower)||(array_copy_dst_start[array_copy_dim]<array_copy_dst_lower)){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_total[array_copy_dim]=(uint64)array_copy_src_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_total[array_copy_dim]=(uint64)array_copy_dst_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_count[array_copy_dim]=(uint64)array_copy_src_high[array_copy_dim]-(uint64)array_copy_src_low[array_copy_dim]+1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_offset[array_copy_dim]=(uint64)array_copy_src_low[array_copy_dim]-(uint64)array_copy_src_lower;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset[array_copy_dim]=(uint64)array_copy_dst_start[array_copy_dim]-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_count[array_copy_dim])||(array_copy_src_offset[array_copy_dim]>=array_copy_src_total[array_copy_dim])||(array_copy_count[array_copy_dim]>(array_copy_src_total[array_copy_dim]-array_copy_src_offset[array_copy_dim]))||(array_copy_dst_offset[array_copy_dim]>=array_copy_dst_total[array_copy_dim])||(array_copy_count[array_copy_dim]>(array_copy_dst_total[array_copy_dim]-array_copy_dst_offset[array_copy_dim]))){error(9);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_total>(18446744073709551615ull/array_copy_count[array_copy_dim])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_total*=array_copy_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_src_storage_total>(18446744073709551615ull/array_copy_src_total[array_copy_dim])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_storage_total*=array_copy_src_total[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_storage_total>(18446744073709551615ull/array_copy_dst_total[array_copy_dim])){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_storage_total*=array_copy_dst_total[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_src_total[array_copy_dim-1]))||(array_copy_dst_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_dst_total[array_copy_dim-1]))){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_stride[array_copy_dim]=array_copy_src_stride[array_copy_dim-1]*array_copy_src_total[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[array_copy_dim]=array_copy_dst_stride[array_copy_dim-1]*array_copy_dst_total[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_last_coord=array_copy_src_offset[array_copy_dim]+array_copy_count[array_copy_dim]-1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last_coord=array_copy_dst_offset[array_copy_dim]+array_copy_count[array_copy_dim]-1;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_last_coord&&(array_copy_src_stride[array_copy_dim]>(18446744073709551615ull/array_copy_src_last_coord)))||(array_copy_dst_last_coord&&(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_dst_last_coord)))){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_term=array_copy_src_last_coord*array_copy_src_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_term=array_copy_dst_last_coord*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_last>(18446744073709551615ull-array_copy_src_term))||(array_copy_dst_last>(18446744073709551615ull-array_copy_dst_term))){error(257);array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_last+=array_copy_src_term;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last+=array_copy_dst_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&((array_copy_src_last>=array_copy_src_storage_total)||(array_copy_dst_last>=array_copy_dst_storage_total))){error(9);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_total>((uint64)(~(size_t)0)/sizeof(qbs*)))){error(257);array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "qbs **array_copy_tmp=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_tmp_made=0;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_total){array_copy_tmp=(qbs**)malloc((size_t)(array_copy_total*sizeof(qbs*)));if (!array_copy_tmp){error(257);array_copy_ok=0;}}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_total;array_copy_i++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_quotient=array_copy_i;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_element=0;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0;array_copy_dim<" + _TOSTR$(arrdims) + ";array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_coord=array_copy_quotient%array_copy_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_quotient/=array_copy_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_element+=(array_copy_src_offset[array_copy_dim]+array_copy_coord)*array_copy_src_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_tmp[array_copy_i]=qbs_new(0,0);"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_tmp[array_copy_i]) array_copy_tmp_made++;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp[array_copy_i])||is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "qbs_set(array_copy_tmp[array_copy_i],((qbs**)array_copy_src[0])[array_copy_src_element]);"
-    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    AppendArrayCopyVarStringMappedTail arrdims, "array_copy_count[array_copy_dim]"
-END SUB
-
-
 'Parse one syntactic array reference used by _ArrayCopy. Semantic resolution is
 'deliberately deferred to the ResolveArrayCopyRefEx resolver layer so unsupported
 '_Dynamic members and multidimensional members reach their specific diagnostics
@@ -883,272 +630,6 @@ SUB CheckArrayCopyWholePair (src_type AS LONG, src_size AS LONG, src_dims AS LON
     CheckArrayCopyElementPair src_type, src_size, dst_type, dst_size, element_bytes
 END SUB
 
-'Emit the fixed-size multidimensional range-copy tail shared by range-at and
-'range-whole. Callers have already emitted descriptor validation, per-dimension
-'bounds/count/offset calculation, and all local C variables used below. This helper
-'only appends the identical stride/overflow/overlap/row-memmove sequence; it does
-'not close the caller's outer generated C scope.
-
-'Emit the fixed-size multidimensional range setup shared by range-to-start and
-'range-to-whole. This block only declares the generated C working state and
-'performs the initial descriptor/storage validity check; it deliberately does
-'not open any generated control-flow block.
-SUB AppendArrayCopyRangeNDFixedSetup (src_desc AS STRING, dst_desc AS STRING, src_dims AS LONG, dst_dims AS LONG)
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_total[" + _TOSTR$(src_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_total[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_count[" + _TOSTR$(src_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_offset[" + _TOSTR$(src_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_stride[" + _TOSTR$(src_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_stride[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_rows=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row_elements=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_first_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_last_row_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last_row_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_first_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_last_end_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last_end_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_backwards=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-END SUB
-
-
-
-'Emit the fixed-size ND range bounds/count/offset loop. The caller supplies the
-'generated C destination-coordinate expression for the current dimension.
-'All generated if/for control flow is opened and closed inside this helper.
-SUB AppendArrayCopyRangeNDFixedBounds (src_dims AS LONG, dst_coord_expr AS STRING)
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "ptrszint array_copy_arg=(" + _TOSTR$(src_dims) + "-1-array_copy_dim)*4+4;"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_lower=(int64)array_copy_src[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_elements=(int64)array_copy_src[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_elements=(int64)array_copy_dst[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_elements<=0)||(array_copy_dst_elements<=0)||(array_copy_src_low[array_copy_dim]>array_copy_src_high[array_copy_dim])||(array_copy_src_low[array_copy_dim]<array_copy_src_lower)||(" + dst_coord_expr + "<array_copy_dst_lower)){error(9); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_total[array_copy_dim]=(uint64)array_copy_src_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_total[array_copy_dim]=(uint64)array_copy_dst_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_count[array_copy_dim]=(uint64)array_copy_src_high[array_copy_dim]-(uint64)array_copy_src_low[array_copy_dim]+1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_offset[array_copy_dim]=(uint64)array_copy_src_low[array_copy_dim]-(uint64)array_copy_src_lower;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset[array_copy_dim]=(uint64)" + dst_coord_expr + "-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src_count[array_copy_dim])||(array_copy_src_offset[array_copy_dim]>=array_copy_src_total[array_copy_dim])||(array_copy_src_count[array_copy_dim]>(array_copy_src_total[array_copy_dim]-array_copy_src_offset[array_copy_dim]))||(array_copy_dst_offset[array_copy_dim]>=array_copy_dst_total[array_copy_dim])||(array_copy_src_count[array_copy_dim]>(array_copy_dst_total[array_copy_dim]-array_copy_dst_offset[array_copy_dim]))){error(9); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-END SUB
-
-
-SUB AppendArrayCopyRangeNDFixedTail (src_dims AS LONG, element_bytes AS LONG)
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_row_elements=array_copy_src_count[0];"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_src_total[array_copy_dim-1]))||(array_copy_dst_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_dst_total[array_copy_dim-1]))||(array_copy_rows>(18446744073709551615ull/array_copy_src_count[array_copy_dim]))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_stride[array_copy_dim]=array_copy_src_stride[array_copy_dim-1]*array_copy_src_total[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[array_copy_dim]=array_copy_dst_stride[array_copy_dim-1]*array_copy_dst_total[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_rows*=array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_offset[array_copy_dim]&&(array_copy_src_stride[array_copy_dim]>(18446744073709551615ull/array_copy_src_offset[array_copy_dim])))||(array_copy_dst_offset[array_copy_dim]&&(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_dst_offset[array_copy_dim])))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_term=array_copy_src_offset[array_copy_dim]*array_copy_src_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_term=array_copy_dst_offset[array_copy_dim]*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_first_element>(18446744073709551615ull-array_copy_src_term))||(array_copy_dst_first_element>(18446744073709551615ull-array_copy_dst_term))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_first_element+=array_copy_src_term;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_first_element+=array_copy_dst_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_last_row_element=array_copy_src_first_element;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last_row_element=array_copy_dst_first_element;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_ok&&array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_extra=array_copy_src_count[array_copy_dim]-1;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_extra&&((array_copy_src_stride[array_copy_dim]>(18446744073709551615ull/array_copy_extra))||(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_extra)))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_term=array_copy_extra*array_copy_src_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_term=array_copy_extra*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_last_row_element>(18446744073709551615ull-array_copy_src_term))||(array_copy_dst_last_row_element>(18446744073709551615ull-array_copy_dst_term))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_last_row_element+=array_copy_src_term;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last_row_element+=array_copy_dst_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_row_elements>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_row_bytes=array_copy_row_elements*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_src_first_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_src_first_byte=array_copy_src_first_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_dst_first_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_dst_first_byte=array_copy_dst_first_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_src_last_row_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){uint64 array_copy_last_start=array_copy_src_last_row_element*(uint64)" + _TOSTR$(element_bytes) + "; if (array_copy_last_start>(18446744073709551615ull-array_copy_row_bytes)){error(257); array_copy_ok=0;} else array_copy_src_last_end_byte=array_copy_last_start+array_copy_row_bytes;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_dst_last_row_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){uint64 array_copy_last_start=array_copy_dst_last_row_element*(uint64)" + _TOSTR$(element_bytes) + "; if (array_copy_last_start>(18446744073709551615ull-array_copy_row_bytes)){error(257); array_copy_ok=0;} else array_copy_dst_last_end_byte=array_copy_last_start+array_copy_row_bytes;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_row_bytes>(uint64)(~(size_t)0))||(array_copy_src_first_byte>(uint64)(~(size_t)0))||(array_copy_dst_first_byte>(uint64)(~(size_t)0))||(array_copy_src_last_end_byte>(uint64)(~(size_t)0))||(array_copy_dst_last_end_byte>(uint64)(~(size_t)0))){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_addr=(uint64)array_copy_src[0];"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_addr=(uint64)array_copy_dst[0];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_addr>(18446744073709551615ull-array_copy_src_last_end_byte))||(array_copy_dst_addr>(18446744073709551615ull-array_copy_dst_last_end_byte))){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_first_addr=array_copy_src_addr+array_copy_src_first_byte;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_end=array_copy_src_addr+array_copy_src_last_end_byte;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_addr=array_copy_dst_addr+array_copy_dst_first_byte;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_end=array_copy_dst_addr+array_copy_dst_last_end_byte;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_first_addr<array_copy_dst_end)&&(array_copy_dst_first_addr<array_copy_src_end)&&(array_copy_dst_first_addr>array_copy_src_first_addr)) array_copy_backwards=1;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_step=0; array_copy_step<array_copy_rows; array_copy_step++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row=array_copy_backwards?(array_copy_rows-1-array_copy_step):array_copy_step;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_quotient=array_copy_row;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_element=array_copy_src_first_element;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_element=array_copy_dst_first_element;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_coord=array_copy_quotient%array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_quotient/=array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_element+=array_copy_coord*array_copy_src_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_element+=array_copy_coord*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_byte=array_copy_src_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_byte=array_copy_dst_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "memmove((void*)(((uint8*)array_copy_dst[0])+(size_t)array_copy_dst_byte),(void*)(((uint8*)array_copy_src[0])+(size_t)array_copy_src_byte),(size_t)array_copy_row_bytes);"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-END SUB
-
-
-
-'Emit the copy tail shared by the two one-dimensional source-range forms after
-'the caller has completed all form-specific bounds and offset preparation.
-'Variable-length STRING uses the ownership-safe qbs snapshot path; fixed
-'payloads retain the established overflow checks and memmove sequence.
-
-'Emit the one-dimensional source-range descriptor/bounds/offset setup shared by
-'range-to-start and range-to-whole forms. The caller supplies only the generated
-'C expression used as the destination coordinate.
-SUB AppendArrayCopyRange1DSetup (src_desc AS STRING, dst_desc AS STRING, dst_coord_expr AS STRING)
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_count=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_offset=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_src_low>array_copy_src_high)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_lower=(int64)array_copy_src[4];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[4];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_total=(int64)array_copy_src[5];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_total=(int64)array_copy_dst[5];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_total<=0)||(array_copy_dst_total<=0)||(array_copy_src_low<array_copy_src_lower)||(" + dst_coord_expr + "<array_copy_dst_lower)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_count=(uint64)array_copy_src_high-(uint64)array_copy_src_low+1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_offset=(uint64)array_copy_src_low-(uint64)array_copy_src_lower;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset=(uint64)" + dst_coord_expr + "-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_count)||(array_copy_src_offset>=(uint64)array_copy_src_total)||(array_copy_dst_offset>=(uint64)array_copy_dst_total)||(array_copy_count>((uint64)array_copy_src_total-array_copy_src_offset))||(array_copy_count>((uint64)array_copy_dst_total-array_copy_dst_offset))){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-END SUB
-
-
-SUB AppendArrayCopyRange1DTail (element_bytes AS LONG, var_string_copy AS LONG)
-    IF var_string_copy THEN
-        'A qbs** snapshot gives memmove-like overlap semantics without ever copying
-        'the owning pointers themselves. Bounds and the temporary pointer-vector
-        'size are validated before the first destination qbs_set.
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_count>((uint64)(~(size_t)0)/sizeof(qbs*)))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "qbs **array_copy_tmp=(qbs**)malloc((size_t)(array_copy_count*sizeof(qbs*)));"
-        WriteBufLineCpp MainTxtBuf, "uint64 array_copy_tmp_made=0;"
-        WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp)&&array_copy_count){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_count;array_copy_i++){"
-        WriteBufLineCpp MainTxtBuf, "array_copy_tmp[array_copy_i]=qbs_new(0,0);"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_tmp[array_copy_i]) array_copy_tmp_made++;"
-        WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp[array_copy_i])||is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "qbs_set(array_copy_tmp[array_copy_i],((qbs**)array_copy_src[0])[array_copy_src_offset+array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_count;array_copy_i++){"
-        WriteBufLineCpp MainTxtBuf, "qbs_set(((qbs**)array_copy_dst[0])[array_copy_dst_offset+array_copy_i],array_copy_tmp[array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_tmp_made;array_copy_i++) qbs_free(array_copy_tmp[array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "free(array_copy_tmp);"
-        WriteBufLineCpp MainTxtBuf, "}"
-    ELSE
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "if ((array_copy_count>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + "))||(array_copy_src_offset>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + "))||(array_copy_dst_offset>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + "))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "array_copy_bytes=array_copy_count*(uint64)" + _TOSTR$(element_bytes) + ";"
-        WriteBufLineCpp MainTxtBuf, "array_copy_src_byte=array_copy_src_offset*(uint64)" + _TOSTR$(element_bytes) + ";"
-        WriteBufLineCpp MainTxtBuf, "array_copy_dst_byte=array_copy_dst_offset*(uint64)" + _TOSTR$(element_bytes) + ";"
-        WriteBufLineCpp MainTxtBuf, "if ((array_copy_bytes>(uint64)(~(size_t)0))||(array_copy_src_byte>(uint64)(~(size_t)0))||(array_copy_dst_byte>(uint64)(~(size_t)0))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_bytes>0)){memmove((void*)(((uint8*)array_copy_dst[0])+(size_t)array_copy_dst_byte),(void*)(((uint8*)array_copy_src[0])+(size_t)array_copy_src_byte),(size_t)array_copy_bytes);}"
-    END IF
-END SUB
-
-
-
-'Emit the copy tail shared by the two one-dimensional whole-source forms after
-'the caller has completed its form-specific bounds and destination-offset setup.
-'The helper owns only the common snapshot/byte-copy tail; form-specific bounds
-'and destination-coordinate policy remain in the callers.
-SUB AppendArrayCopyWhole1DTail (element_bytes AS LONG, var_string_copy AS LONG)
-    IF var_string_copy THEN
-        'Snapshot every source qbs before the first destination qbs_set.
-        'All supported variable-length STRING arrays use native qbs* slots.
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_count>((uint64)(~(size_t)0)/sizeof(qbs*)))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "qbs **array_copy_tmp=(qbs**)malloc((size_t)(array_copy_count*sizeof(qbs*)));"
-        WriteBufLineCpp MainTxtBuf, "uint64 array_copy_tmp_made=0;"
-        WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp)&&array_copy_count){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_count;array_copy_i++){"
-        WriteBufLineCpp MainTxtBuf, "array_copy_tmp[array_copy_i]=qbs_new(0,0);"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_tmp[array_copy_i]) array_copy_tmp_made++;"
-        WriteBufLineCpp MainTxtBuf, "if ((!array_copy_tmp[array_copy_i])||is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "qbs_set(array_copy_tmp[array_copy_i],((qbs**)array_copy_src[0])[array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_count;array_copy_i++){"
-        WriteBufLineCpp MainTxtBuf, "qbs_set(((qbs**)array_copy_dst[0])[array_copy_dst_offset+array_copy_i],array_copy_tmp[array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()){array_copy_ok=0;break;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_i=0;array_copy_i<array_copy_tmp_made;array_copy_i++) qbs_free(array_copy_tmp[array_copy_i]);"
-        WriteBufLineCpp MainTxtBuf, "free(array_copy_tmp);"
-        WriteBufLineCpp MainTxtBuf, "}"
-    ELSE
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "if ((array_copy_count>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + "))||(array_copy_dst_offset>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + "))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-        WriteBufLineCpp MainTxtBuf, "array_copy_bytes=array_copy_count*(uint64)" + _TOSTR$(element_bytes) + ";"
-        WriteBufLineCpp MainTxtBuf, "array_copy_dst_byte=array_copy_dst_offset*(uint64)" + _TOSTR$(element_bytes) + ";"
-        WriteBufLineCpp MainTxtBuf, "if ((array_copy_bytes>(uint64)(~(size_t)0))||(array_copy_dst_byte>(uint64)(~(size_t)0))){error(257); array_copy_ok=0;}"
-        WriteBufLineCpp MainTxtBuf, "}"
-        WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&(array_copy_bytes>0)){memmove((void*)(((uint8*)array_copy_dst[0])+(size_t)array_copy_dst_byte),(void*)array_copy_src[0],(size_t)array_copy_bytes);}"
-    END IF
-END SUB
-
 
 'Emit _ArrayCopy source(lower TO upper) TO destination(start). Numeric and
 'fixed-length STRING arrays retain the byte-copy path. Variable-length STRING
@@ -1179,8 +660,16 @@ SUB EmitArrayCopy1D (src_ref AS STRING, src_low_expr AS STRING, src_high_expr AS
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low=(int64)(" + src_low_code + ");"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high=(int64)(" + src_high_code + ");"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start=(int64)(" + dst_start_code + ");"
-    AppendArrayCopyRange1DSetup src_desc, dst_desc, "array_copy_dst_start"
-    AppendArrayCopyRange1DTail element_bytes, var_string_copy
+    'Both payload classes now use libqb runtime entry points. Keep descriptor
+    'evaluation ordered exactly as in the previous inline path. Variable-length
+    'STRING retains ownership-safe snapshot/deep-copy semantics in C runtime.
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_string(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_dst_start);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_fixed(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1192,7 +681,7 @@ END SUB
 SUB EmitArrayCopyWholeND (src_ref AS STRING, dst_ref AS STRING)
     DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
     DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
-    DIM AS LONG src_var_string, dst_var_string, var_string_copy, member_var_string_copy
+    DIM AS LONG src_var_string, dst_var_string, var_string_copy
     DIM AS LONG src_string_slot_mode, dst_string_slot_mode
 
     ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
@@ -1201,7 +690,6 @@ SUB EmitArrayCopyWholeND (src_ref AS STRING, dst_ref AS STRING)
     src_var_string = ArrayCopyIsVarString%(src_type)
     dst_var_string = ArrayCopyIsVarString%(dst_type)
     var_string_copy = 0
-    member_var_string_copy = 0
 
     IF src_dims = 1 AND dst_dims = 1 THEN
         IF src_var_string OR dst_var_string THEN
@@ -1226,22 +714,27 @@ SUB EmitArrayCopyWholeND (src_ref AS STRING, dst_ref AS STRING)
         IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
             Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
         END IF
-        'Any member-involved pair is copied through a complete ownership-safe snapshot.
+        'All supported ND variable-length STRING pairs use the libqb ownership-safe snapshot path.
         var_string_copy = -1
-        IF INSTR(src_ref, ".") OR INSTR(dst_ref, ".") THEN member_var_string_copy = -1
     ELSE
         CheckArrayCopyWholePair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
     END IF
     IF Error_Happened THEN EXIT SUB
 
     IF src_dims > 1 THEN
+        WriteBufLineCpp MainTxtBuf, "{"
         IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
         IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
-        IF member_var_string_copy THEN
-            AppendArrayCopyWholeVarString dst_desc, src_desc, src_dims, dst_string_slot_mode, src_string_slot_mode
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+        IF var_string_copy THEN
+            'ND whole-to-whole requires exact runtime bounds in every dimension.
+            'libqb performs that validation and the ownership-safe qbs snapshot.
+            WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ");"
         ELSE
-            AppendWholeArrayAssign dst_desc, src_desc, src_type, src_size, src_dims, 0, 0
+            WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",(uint64)" + _TOSTR$(element_bytes) + ");"
         END IF
+        WriteBufLineCpp MainTxtBuf, "}"
         EXIT SUB
     END IF
 
@@ -1250,25 +743,13 @@ SUB EmitArrayCopyWholeND (src_ref AS STRING, dst_ref AS STRING)
     IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_count=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_lower=(int64)array_copy_src[4];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[4];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_total=(int64)array_copy_src[5];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_total=(int64)array_copy_dst[5];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_total<=0)||(array_copy_dst_total<=0)||(array_copy_src_lower<array_copy_dst_lower)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_count=(uint64)array_copy_src_total;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset=(uint64)array_copy_src_lower-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_dst_offset>=(uint64)array_copy_dst_total)||(array_copy_count>((uint64)array_copy_dst_total-array_copy_dst_offset))){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    AppendArrayCopyWhole1DTail element_bytes, var_string_copy
+    IF var_string_copy THEN
+        'Variable-length STRING whole-to-whole now uses the same ownership-safe
+        'libqb snapshot/deep-copy core as the other 1D STRING forms.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_string(array_copy_src,array_copy_dst);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_fixed(array_copy_src,array_copy_dst,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1276,14 +757,14 @@ END SUB
 'Emit _ArrayCopy source() TO destination(start1, start2, ...). The source and
 'destination must have the same number of dimensions and compatible element types.
 'One-dimensional variable-length STRING pairs use EmitArrayCopyWholeAt1D.
-'Multidimensional variable-length STRING pairs use a complete ownership-safe qbs
-'snapshot. Fixed-size payloads keep the established row-wise memmove path. All
-'expressions, descriptor states, bounds and overflow checks complete before writes.
+'Multidimensional variable-length STRING and fixed-size payloads call shared libqb
+'ND runtime paths after all BASIC destination expressions have been evaluated
+'exactly once.
 SUB EmitArrayCopyWholeAtND (src_ref AS STRING, dst_ref AS STRING, dst_start_list AS STRING)
     DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
     DIM AS STRING coord_init, first_coord
     DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
-    DIM AS LONG src_var_string, dst_var_string, defer_var_string_1d, var_string_copy
+    DIM AS LONG src_var_string, dst_var_string, var_string_copy
     DIM AS LONG src_string_slot_mode, dst_string_slot_mode
 
     ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
@@ -1291,15 +772,12 @@ SUB EmitArrayCopyWholeAtND (src_ref AS STRING, dst_ref AS STRING, dst_start_list
 
     src_var_string = ArrayCopyIsVarString%(src_type)
     dst_var_string = ArrayCopyIsVarString%(dst_type)
-    defer_var_string_1d = 0
     var_string_copy = 0
     IF src_var_string OR dst_var_string THEN
         IF src_var_string = 0 OR dst_var_string = 0 THEN
             Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
         END IF
-        IF src_dims = 1 AND dst_dims = 1 THEN
-            defer_var_string_1d = -1
-        ELSE
+        IF src_dims <> 1 OR dst_dims <> 1 THEN
             IF src_dims <= 1 OR dst_dims <= 1 OR src_dims <> dst_dims THEN
                 Give_Error "_ArrayCopy whole-array source and destination must have the same number of dimensions": EXIT SUB
             END IF
@@ -1321,118 +799,20 @@ SUB EmitArrayCopyWholeAtND (src_ref AS STRING, dst_ref AS STRING, dst_start_list
         EXIT SUB
     END IF
 
-    IF var_string_copy THEN
-        WriteBufLineCpp MainTxtBuf, "{"
-        IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
-        IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
-        AppendArrayCopyWholeAtVarString dst_desc, src_desc, src_dims, coord_init, dst_string_slot_mode, src_string_slot_mode
-        IF Error_Happened THEN EXIT SUB
-        WriteBufLineCpp MainTxtBuf, "}"
-        EXIT SUB
-    END IF
-
     WriteBufLineCpp MainTxtBuf, "{"
     IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
     IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_count[" + _TOSTR$(src_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_count[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_stride[" + _TOSTR$(dst_dims) + "]={0};"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_rows=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row_elements=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last_row_element=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_last_end_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_backwards=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "ptrszint array_copy_arg=(" + _TOSTR$(src_dims) + "-1-array_copy_dim)*4+4;"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_elements=(int64)array_copy_src[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_elements=(int64)array_copy_dst[array_copy_arg+1];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[array_copy_arg];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_elements<=0)||(array_copy_dst_elements<=0)||(array_copy_dst_start[array_copy_dim]<array_copy_dst_lower)){error(9); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_count[array_copy_dim]=(uint64)array_copy_src_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_count[array_copy_dim]=(uint64)array_copy_dst_elements;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset[array_copy_dim]=(uint64)array_copy_dst_start[array_copy_dim]-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_dst_offset[array_copy_dim]>=array_copy_dst_count[array_copy_dim])||(array_copy_src_count[array_copy_dim]>(array_copy_dst_count[array_copy_dim]-array_copy_dst_offset[array_copy_dim]))){error(9); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[0]=1;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_row_elements=array_copy_src_count[0];"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_stride[array_copy_dim-1]>(18446744073709551615ull/array_copy_dst_count[array_copy_dim-1])){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_stride[array_copy_dim]=array_copy_dst_stride[array_copy_dim-1]*array_copy_dst_count[array_copy_dim-1];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_src_rows>(18446744073709551615ull/array_copy_src_count[array_copy_dim])){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_src_rows*=array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=0; array_copy_dim<" + _TOSTR$(dst_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_offset[array_copy_dim]&&(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_dst_offset[array_copy_dim]))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_term=array_copy_dst_offset[array_copy_dim]*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_first_element>(18446744073709551615ull-array_copy_term)){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_first_element+=array_copy_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last_row_element=array_copy_dst_first_element;"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_ok&&array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_extra=array_copy_src_count[array_copy_dim]-1;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_extra&&(array_copy_dst_stride[array_copy_dim]>(18446744073709551615ull/array_copy_extra))){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_term=array_copy_extra*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_dst_last_row_element>(18446744073709551615ull-array_copy_term)){error(257); array_copy_ok=0; break;}"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_last_row_element+=array_copy_term;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_row_elements>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_row_bytes=array_copy_row_elements*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_src_rows&&(array_copy_row_bytes>(18446744073709551615ull/array_copy_src_rows))){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_src_bytes=array_copy_src_rows*array_copy_row_bytes;"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_dst_first_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok) array_copy_dst_first_byte=array_copy_dst_first_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok&&array_copy_dst_last_row_element>(18446744073709551615ull/(uint64)" + _TOSTR$(element_bytes) + ")){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_last_start=array_copy_dst_last_row_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_last_start>(18446744073709551615ull-array_copy_row_bytes)){error(257); array_copy_ok=0;} else array_copy_dst_last_end_byte=array_copy_last_start+array_copy_row_bytes;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_row_bytes>(uint64)(~(size_t)0))||(array_copy_src_bytes>(uint64)(~(size_t)0))||(array_copy_dst_first_byte>(uint64)(~(size_t)0))||(array_copy_dst_last_end_byte>(uint64)(~(size_t)0))){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_addr=(uint64)array_copy_src[0];"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_addr=(uint64)array_copy_dst[0];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_addr>(18446744073709551615ull-array_copy_src_bytes))||(array_copy_dst_addr>(18446744073709551615ull-array_copy_dst_last_end_byte))){error(257); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_end=array_copy_src_addr+array_copy_src_bytes;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_first_addr=array_copy_dst_addr+array_copy_dst_first_byte;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_end=array_copy_dst_addr+array_copy_dst_last_end_byte;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_addr<array_copy_dst_end)&&(array_copy_dst_first_addr<array_copy_src_end)&&(array_copy_dst_first_addr>array_copy_src_addr)) array_copy_backwards=1;"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "for(uint64 array_copy_step=0; array_copy_step<array_copy_src_rows; array_copy_step++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_row=array_copy_backwards?(array_copy_src_rows-1-array_copy_step):array_copy_step;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_quotient=array_copy_row;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_element=array_copy_dst_offset[0];"
-    WriteBufLineCpp MainTxtBuf, "for(ptrszint array_copy_dim=1; array_copy_dim<" + _TOSTR$(src_dims) + "; array_copy_dim++){"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_coord=array_copy_quotient%array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_quotient/=array_copy_src_count[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_element+=(array_copy_dst_offset[array_copy_dim]+array_copy_coord)*array_copy_dst_stride[array_copy_dim];"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_src_byte=array_copy_row*array_copy_row_bytes;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_byte=array_copy_dst_element*(uint64)" + _TOSTR$(element_bytes) + ";"
-    WriteBufLineCpp MainTxtBuf, "memmove((void*)(((uint8*)array_copy_dst[0])+(size_t)array_copy_dst_byte),(void*)(((uint8*)array_copy_src[0])+(size_t)array_copy_src_byte),(size_t)array_copy_row_bytes);"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
+    IF var_string_copy THEN
+        'The whole-source STRING bounds remain runtime descriptor state after REDIM.
+        'Keep the compiler call site small and let libqb validate/map the source
+        'shape before taking the ownership-safe qbs snapshot.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_dst_start);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1441,9 +821,8 @@ END SUB
 'Emit _ArrayCopy source(lower1 TO upper1, lower2 TO upper2, ...) TO
 'destination(start1, start2, ...). The source and destination must have the same
 'number of dimensions and compatible element types. Variable-length STRING arrays
-'use a complete ownership-safe qbs snapshot; fixed-size payloads keep the row-wise
-'memmove path. All expressions, descriptor states, bounds and overflow conditions
-'are checked before any destination write.
+'use a complete ownership-safe qbs snapshot; fixed-size payloads call the libqb ND
+'runtime path after source and destination expressions are evaluated exactly once.
 SUB EmitArrayCopyRangeAtND (src_ref AS STRING, src_range_list AS STRING, dst_ref AS STRING, dst_start_list AS STRING)
     DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
     DIM AS STRING low_init, high_init
@@ -1473,8 +852,12 @@ SUB EmitArrayCopyRangeAtND (src_ref AS STRING, src_range_list AS STRING, dst_ref
         WriteBufLineCpp MainTxtBuf, "{"
         IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
         IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
-        AppendArrayCopyRangeAtVarString dst_desc, src_desc, src_dims, low_init, high_init, coord_init, dst_string_slot_mode, src_string_slot_mode
-        IF Error_Happened THEN EXIT SUB
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_dst_start);"
         WriteBufLineCpp MainTxtBuf, "}"
         EXIT SUB
     END IF
@@ -1485,9 +868,9 @@ SUB EmitArrayCopyRangeAtND (src_ref AS STRING, src_range_list AS STRING, dst_ref
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
-    AppendArrayCopyRangeNDFixedSetup src_desc, dst_desc, src_dims, dst_dims
-    AppendArrayCopyRangeNDFixedBounds src_dims, "array_copy_dst_start[array_copy_dim]"
-    AppendArrayCopyRangeNDFixedTail src_dims, element_bytes
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1496,13 +879,11 @@ END SUB
 'selected source coordinates are preserved in the destination, so every source
 'range must fit inside the destination at the same index values. Variable-length
 'STRING arrays use a complete ownership-safe qbs snapshot; fixed-size payloads
-'retain row-wise memmove. Every expression, descriptor state, bound and overflow
-'condition is checked before the first destination write.
+'call the shared libqb ND range runtime path with source_low as destination_start.
 SUB EmitArrayCopyRangeWholeND (src_ref AS STRING, src_range_list AS STRING, dst_ref AS STRING)
     DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
-    DIM AS STRING low_init, high_init, preserve_init
+    DIM AS STRING low_init, high_init
     DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
-    DIM AS LONG preserve_dim
     DIM AS LONG var_string_copy
     DIM AS LONG src_string_slot_mode, dst_string_slot_mode
 
@@ -1520,29 +901,22 @@ SUB EmitArrayCopyRangeWholeND (src_ref AS STRING, src_range_list AS STRING, dst_
     ParseArrayCopySourceRanges src_range_list, src_dims, low_init, high_init
     IF Error_Happened THEN EXIT SUB
 
-    'For preserve-coordinate semantics the destination start in every dimension
-    'is the already-evaluated source lower bound. Referencing array_copy_src_low
-    'inside the following C initializer avoids evaluating any BASIC expression a
-    'second time while reusing the range-to-start snapshot implementation.
-    preserve_init = ""
-    FOR preserve_dim = 0 TO src_dims - 1
-        IF preserve_init <> "" THEN preserve_init = preserve_init + ","
-        preserve_init = preserve_init + "array_copy_src_low[" + _TOSTR$(preserve_dim) + "]"
-    NEXT
-
+    'Preserve-coordinate semantics use the already-evaluated source lower bounds
+    'as destination starts. Both fixed-size and variable STRING paths therefore
+    'share their confirmed ND range-at runtime engines without regenerating the
+    'descriptor/stride/snapshot machinery at each BASIC call site.
     WriteBufLineCpp MainTxtBuf, "{"
     IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
     IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
-    IF var_string_copy THEN
-        AppendArrayCopyRangeAtVarString dst_desc, src_desc, src_dims, low_init, high_init, preserve_init, dst_string_slot_mode, src_string_slot_mode
-        WriteBufLineCpp MainTxtBuf, "}"
-        EXIT SUB
-    END IF
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
-    AppendArrayCopyRangeNDFixedSetup src_desc, dst_desc, src_dims, dst_dims
-    AppendArrayCopyRangeNDFixedBounds src_dims, "array_copy_src_low[array_copy_dim]"
-    AppendArrayCopyRangeNDFixedTail src_dims, element_bytes
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_src_low);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_src_low,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1572,24 +946,13 @@ SUB EmitArrayCopyWholeAt1D (src_ref AS STRING, dst_ref AS STRING, dst_start_expr
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start=(int64)(" + dst_start_code + ");"
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
     WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
-    WriteBufLineCpp MainTxtBuf, "int32 array_copy_ok=1;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_count=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_offset=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_dst_byte=0;"
-    WriteBufLineCpp MainTxtBuf, "uint64 array_copy_bytes=0;"
-    WriteBufLineCpp MainTxtBuf, "if ((!array_copy_src)||(!array_copy_dst)||!(array_copy_src[2]&1)||!(array_copy_dst[2]&1)||(!array_copy_src[0])||(!array_copy_dst[0])||(array_copy_src[0]==(ptrszint)nothingvalue)||(array_copy_dst[0]==(ptrszint)nothingvalue)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_lower=(int64)array_copy_dst[4];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_total=(int64)array_copy_src[5];"
-    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_total=(int64)array_copy_dst[5];"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_src_total<=0)||(array_copy_dst_total<=0)||(array_copy_dst_start<array_copy_dst_lower)){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "if (array_copy_ok){"
-    WriteBufLineCpp MainTxtBuf, "array_copy_count=(uint64)array_copy_src_total;"
-    WriteBufLineCpp MainTxtBuf, "array_copy_dst_offset=(uint64)array_copy_dst_start-(uint64)array_copy_dst_lower;"
-    WriteBufLineCpp MainTxtBuf, "if ((array_copy_dst_offset>=(uint64)array_copy_dst_total)||(array_copy_count>((uint64)array_copy_dst_total-array_copy_dst_offset))){error(9); array_copy_ok=0;}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    WriteBufLineCpp MainTxtBuf, "}"
-    AppendArrayCopyWhole1DTail element_bytes, var_string_copy
+    IF var_string_copy THEN
+        'Variable-length STRING whole-to-start copies use the shared ownership-aware libqb snapshot path.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_at_string(array_copy_src,array_copy_dst,array_copy_dst_start);"
+    ELSE
+        'Fixed-size whole-to-start copies use the shared libqb runtime path.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_at_fixed(array_copy_src,array_copy_dst,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
 
@@ -1617,7 +980,15 @@ SUB EmitArrayCopyRangeWhole1D (src_ref AS STRING, src_low_expr AS STRING, src_hi
     IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low=(int64)(" + src_low_code + ");"
     WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high=(int64)(" + src_high_code + ");"
-    AppendArrayCopyRange1DSetup src_desc, dst_desc, "array_copy_src_low"
-    AppendArrayCopyRange1DTail element_bytes, var_string_copy
+    'The whole-destination form preserves the actual source indexes, so its
+    'destination start coordinate is exactly source_low. Both payload classes
+    'reuse their confirmed range-to-start libqb runtime entry points.
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_string(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_src_low);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_fixed(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_src_low,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
     WriteBufLineCpp MainTxtBuf, "}"
 END SUB
