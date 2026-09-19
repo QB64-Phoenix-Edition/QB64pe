@@ -28491,29 +28491,17 @@ FUNCTION VerifyNumber (text$)
     IF t$ = t1$ THEN VerifyNumber = -1
 END FUNCTION
 
-' This is the hash function for usedVariableList. To keep it cheap we use the
-' first and last 12 characters along with the length, that covers cases of
-' common prefixes and suffixes without having to process the whole variable
-' name.
+' This is the hash function for usedVariableList, a typical djb string hash.
 FUNCTION varListHashValue& (a$)
-    DIM h AS LONG, i AS LONG, l AS LONG
+    DIM h AS _UNSIGNED LONG, i AS LONG, l AS LONG
 
     l = LEN(a$)
-    h = l
-    IF l > 24 THEN
-        FOR i = 1 TO 12
-            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
-        NEXT
-        FOR i = l - 11 TO l
-            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
-        NEXT
-    ELSE
-        FOR i = 1 TO l
-            h = ((h * 31) XOR ASC(a$, i)) AND varListHashMask
-        NEXT
-    END IF
+    h = 5381
+    FOR i = 1 TO l
+        h = (h * 33) + ASC(a$, i)
+    NEXT
 
-    varListHashValue& = h
+    varListHashValue& = h AND varListHashMask
 END FUNCTION
 
 SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
