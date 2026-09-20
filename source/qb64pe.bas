@@ -706,6 +706,7 @@ DIM SHARED subfuncid AS LONG
 
 DIM SHARED defdatahandle AS INTEGER
 DIM SHARED dimsfarray AS INTEGER
+DIM SHARED dimudtreturn AS INTEGER
 DIM SHARED dimshared AS INTEGER
 
 'Allows passing of known elements to recompilation
@@ -1433,6 +1434,7 @@ REDIM SHARED udtxfdynsize(1000) AS LONG 'TYPE size for its canonical descriptor-
 REDIM SHARED udtxcanonmode(1000) AS INTEGER '0 inline-only, 1 canonical descriptor-aware layout
 REDIM SHARED udtxnext(1000) AS LONG
 REDIM SHARED udtxvariable(1000) AS INTEGER 'true if the udt contains variable length elements
+REDIM SHARED UDTFuncRetLifeHelperDone(1000) AS INTEGER 'per-compilation cache for emitted UDT FUNCTION return lifecycle helpers
 
 'TYPE element metadata tables.
 '
@@ -2835,6 +2837,21 @@ DO
                                 END IF
                             END IF
 
+                            ' A FUNCTION return type written after the parameter list is
+                            ' normalized before the existing parameter parser runs.  The
+                            ' parser and code generator therefore continue to use the same
+                            ' canonical type symbol/id path as legacy suffix declarations.
+                            hasfuncret = 0
+                            funcrettyp = 0
+                            funcretsize = 0
+                            funcrettext$ = ""
+                            funcretsymbol$ = ""
+                            IF sf = 1 THEN
+                                ParseFunctionReturnClause a$, ca$, n, hasfuncret, funcrettyp, funcretsize, funcrettext$, funcretsymbol$, declaringlibrary
+                                IF Error_Happened THEN GOTO errmes
+                                IF hasfuncret AND symbol$ <> "" THEN a$ = "FUNCTION return type specified twice": GOTO errmes
+                            END IF
+
                             params = 0
                             params$ = ""
                             paramsize$ = ""
@@ -2979,7 +2996,9 @@ DO
                                 id.nele = nele$
                                 id.nelereq = nelereq$
                                 id.dynudtargmode = dynudtargmode$
-                                IF symbol$ <> "" THEN
+                                IF hasfuncret THEN
+                                    id.ret = funcrettyp
+                                ELSEIF symbol$ <> "" THEN
                                     id.ret = typname2typ(symbol$)
                                     IF Error_Happened THEN GOTO errmes
                                 ELSE
@@ -2999,12 +3018,16 @@ DO
 
                                 END IF
 
-                                s$ = LEFT$(symbol$, 1)
-                                IF s$ <> "~" AND s$ <> "`" AND s$ <> "%" AND s$ <> "&" AND s$ <> "!" AND s$ <> "#" AND s$ <> "$" THEN
-                                    symbol$ = type2symbol$(symbol$)
-                                    IF Error_Happened THEN GOTO errmes
+                                IF hasfuncret THEN
+                                    id.mayhave = funcretsymbol$
+                                ELSE
+                                    s$ = LEFT$(symbol$, 1)
+                                    IF s$ <> "~" AND s$ <> "`" AND s$ <> "%" AND s$ <> "&" AND s$ <> "!" AND s$ <> "#" AND s$ <> "$" THEN
+                                        symbol$ = type2symbol$(symbol$)
+                                        IF Error_Happened THEN GOTO errmes
+                                    END IF
+                                    id.mayhave = symbol$
                                 END IF
-                                id.mayhave = symbol$
                                 IF id.ret AND ISPOINTER THEN
                                     IF (id.ret AND ISSTRING) = 0 THEN id.ret = id.ret - ISPOINTER
                                 END IF
@@ -3020,6 +3043,17 @@ DO
                                     cpo% = _INSTRREV(apo%, pwl$, ")")
                                     pwl$ = n$ + symbol$ + StrReplace$(RTRIM$(LEFT$(pwl$, cpo%)), "_", "")
                                     pwl$ = StrReplace$(pwl$, " ()", "()")
+                                    IF hasfuncret THEN
+                                        IF funcrettyp AND ISUDT THEN
+                                            ' Keep the parser/type-resolution spelling in funcrettext$ untouched.
+                                            ' UDT lookup uses the normalized internal name, while IDE layout must
+                                            ' reproduce the exact capitalization from the TYPE declaration.
+                                            funcretlayout$ = RTRIM$(udtxcname(funcrettyp AND UDTMASK))
+                                        ELSE
+                                            funcretlayout$ = SCase2$(UCASE$(funcrettext$))
+                                        END IF
+                                        pwl$ = pwl$ + " " + SCase$("As") + " " + StrReplace$(funcretlayout$, sp, " ")
+                                    END IF
                                     id.hr_syntax = pwl$
                                 END IF
 
@@ -5391,6 +5425,35 @@ DO
                 END IF
             END IF
 
+            ' STATIC belongs to the FUNCTION/SUB header, but it follows the
+            ' optional return clause.  Remove it before parsing that clause so
+            ' the parameter parser receives the same header shape as before.
+            addstatic2layout = 0
+            staticsf = 0
+            funcrettail$ = getelement$(a$, n)
+            IF funcrettail$ = "STATIC" THEN
+                IF declaringlibrary THEN a$ = "STATIC cannot be used in a library declaration": GOTO errmes
+                addstatic2layout = 1
+                staticsf = 2
+                a$ = LEFT$(a$, LEN(a$) - 7)
+                ca$ = LEFT$(ca$, LEN(ca$) - 7)
+                n = n - 1
+            END IF
+
+            hasfuncret = 0
+            funcrettyp = 0
+            funcretsize = 0
+            funcrettext$ = ""
+            funcretsymbol$ = ""
+            IF sf = 1 THEN
+                ParseFunctionReturnClause a$, ca$, n, hasfuncret, funcrettyp, funcretsize, funcrettext$, funcretsymbol$, declaringlibrary
+                IF Error_Happened THEN GOTO errmes
+                IF hasfuncret AND symbol$ <> "" THEN a$ = "FUNCTION return type specified twice": GOTO errmes
+                IF hasfuncret THEN
+                    IF funcrettyp <> id.ret THEN a$ = "FUNCTION return type does not match its registered type": GOTO errmes
+                END IF
+            END IF
+
             IF declaringlibrary THEN GOTO declibjmp1
 
             'check for open controls (copy #2)
@@ -5460,6 +5523,12 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF t$ = "qbs" THEN t$ = "qbs*"
 
+                ' UDT FUNCTIONs use one hidden caller-owned result pointer and
+                ' therefore return void at the C++ ABI level.  Keeping result
+                ' transport out of the host structure-return ABI also leaves a
+                ' stable path for later ownership-aware UDT stages.
+                IF rettyp AND ISUDT THEN t$ = "void"
+
                 IF declaringlibrary THEN
                     IF rettyp AND ISSTRING THEN
                         t$ = "char*"
@@ -5481,29 +5550,60 @@ DO
                 IF declaringlibrary THEN GOTO declibjmp2
                 WriteBufRawDataCpp MainTxtBuf, t$ + " " + removecast$(RTRIM$(id.callname)) + "("
 
-                'create variable to return result
-                'if type wasn't specified, define it
-                IF symbol$ = "" THEN
+                'Create the BASIC-visible result variable from the explicit
+                'type text or from the established suffix/default type path.
+                'Keeping the explicit text preserves widths such as _BIT * n
+                'and STRING * n without inventing a second type conversion.
+                funcretvartype$ = symbol$
+                IF hasfuncret THEN funcretvartype$ = funcrettext$
+                IF funcretvartype$ = "" THEN
                     a = ASC(UCASE$(e$)): IF a = 95 THEN a = 91
                     a = a - 64 'so A=1, Z=27 and _=28
-                    symbol$ = defineextaz(a)
+                    funcretvartype$ = defineextaz(a)
                 END IF
                 reginternalvariable = 1
-                ignore = dim2(e$, symbol$, 0, "")
+                IF rettyp AND ISUDT THEN
+                    ' Register the BASIC-visible result name as a scalar UDT
+                    ' backed by the hidden pointer, without allocating a second
+                    ' local object or attaching FUNCTION-argument metadata.
+                    dimudtreturn = 1
+                    sf_udt_dynmode = 0
+                    ignore = dim2(e$, funcretvartype$, 0, "")
+                    sf_udt_dynmode = 0
+                    dimudtreturn = 0
+                ELSE
+                    ignore = dim2(e$, funcretvartype$, 0, "")
+                END IF
                 IF Error_Happened THEN GOTO errmes
                 reginternalvariable = 0
-                'the following line stops the return variable from being free'd before being returned
-                FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
-                'create return
-                IF (rettyp AND ISSTRING) THEN
+
+                IF rettyp AND ISUDT THEN
+                    ' Use the normal internal UDT reference name for the hidden
+                    ' parameter so all established member/reference paths write
+                    ' directly into the caller-owned result object.
                     r$ = refer$(_TOSTR$(currentid), id.t, 1)
                     IF Error_Happened THEN GOTO errmes
-                    subfuncret$ = subfuncret$ + "qbs_maketmp(" + r$ + ");"
-                    subfuncret$ = subfuncret$ + "return " + r$ + ";"
+                    WriteBufRawData RegTxtBuf, "void*" + r$
+                    WriteBufRawDataCpp MainTxtBuf, "void*" + r$
+                    IF id2.args > 0 THEN
+                        WriteBufRawData RegTxtBuf, ","
+                        WriteBufRawDataCpp MainTxtBuf, ","
+                    END IF
+                    subfuncret$ = ""
                 ELSE
-                    r$ = refer$(_TOSTR$(currentid), id.t, 0)
-                    IF Error_Happened THEN GOTO errmes
-                    subfuncret$ = "return " + r$ + ";"
+                    ' Keep ordinary result storage alive until the return has
+                    ' been emitted, preserving the established scalar path.
+                    FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
+                    IF (rettyp AND ISSTRING) THEN
+                        r$ = refer$(_TOSTR$(currentid), id.t, 1)
+                        IF Error_Happened THEN GOTO errmes
+                        subfuncret$ = subfuncret$ + "qbs_maketmp(" + r$ + ");"
+                        subfuncret$ = subfuncret$ + "return " + r$ + ";"
+                    ELSE
+                        r$ = refer$(_TOSTR$(currentid), id.t, 0)
+                        IF Error_Happened THEN GOTO errmes
+                        subfuncret$ = "return " + r$ + ";"
+                    END IF
                 END IF
             ELSE
 
@@ -5523,16 +5623,6 @@ DO
                 WriteBufRawDataCpp MainTxtBuf, "void " + removecast$(RTRIM$(id.callname)) + "("
             END IF
             declibjmp2:
-
-            addstatic2layout = 0
-            staticsf = 0
-            e$ = getelement$(a$, n)
-            IF e$ = "STATIC" THEN
-                IF declaringlibrary THEN a$ = "STATIC cannot be used in a library declaration": GOTO errmes
-                addstatic2layout = 1
-                staticsf = 2
-                a$ = LEFT$(a$, LEN(a$) - 7): n = n - 1 'remove STATIC
-            END IF
 
             'check items to pass
             params = 0
@@ -5771,6 +5861,17 @@ DO
             END IF 'n>2
             AllowLocalName = 0
 
+            IF hasfuncret THEN
+                IF funcrettyp AND ISUDT THEN
+                    ' Formatting is intentionally separate from semantic type text.
+                    ' Match DIM/REDIM/parameter formatting by taking the preserved
+                    ' spelling directly from the registered TYPE declaration.
+                    funcretlayout$ = RTRIM$(udtxcname(funcrettyp AND UDTMASK))
+                ELSE
+                    funcretlayout$ = SCase2$(UCASE$(funcrettext$))
+                END IF
+                l$ = l$ + sp + SCase$("As") + sp + funcretlayout$
+            END IF
             IF addstatic2layout THEN l$ = l$ + sp + SCase$("Static")
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
@@ -14728,6 +14829,81 @@ FUNCTION ParseStringSetting& (token$, setting AS STRING)
     ParseStringSetting& = -1
 END FUNCTION
 
+' Extracts an explicit FUNCTION return clause and removes it from the header.
+' Both compiler passes call this routine, so registration, formatting and C
+' code generation all resolve FUNCTION name(...) AS type through one path.
+' UDT result eligibility is intentionally not duplicated here: ordinary TYPE
+' registration plus the canonical layout/codegen validation own those rules.
+SUB ParseFunctionReturnClause (header_upper AS STRING, header_case AS STRING, token_count AS LONG, has_clause AS LONG, result_type AS LONG, result_size AS LONG, result_text AS STRING, result_symbol AS STRING, library_mode)
+    has_clause = 0
+    result_type = 0
+    result_size = 0
+    result_text = ""
+    result_symbol = ""
+
+    IF token_count < 3 THEN EXIT SUB
+
+    clause_pos = 0
+    first_header_token$ = getelement$(header_upper, 3)
+
+    IF first_header_token$ = "(" THEN
+        bracket_depth = 0
+        closing_pos = 0
+        FOR token_pos = 3 TO token_count
+            header_token$ = getelement$(header_upper, token_pos)
+            IF header_token$ = "(" THEN bracket_depth = bracket_depth + 1
+            IF header_token$ = ")" THEN
+                bracket_depth = bracket_depth - 1
+                IF bracket_depth = 0 THEN closing_pos = token_pos: EXIT FOR
+            END IF
+        NEXT token_pos
+
+        IF closing_pos > 0 AND closing_pos < token_count THEN
+            IF getelement$(header_upper, closing_pos + 1) = "AS" THEN clause_pos = closing_pos + 1
+        END IF
+    ELSEIF first_header_token$ = "AS" THEN
+        clause_pos = 3
+    END IF
+
+    IF clause_pos = 0 THEN EXIT SUB
+
+    has_clause = -1
+    IF clause_pos = token_count THEN Give_Error "Expected AS type": EXIT SUB
+
+    result_text = getelements$(header_upper, clause_pos + 1, token_count)
+    result_type = typname2typ(result_text)
+    result_size = typname2typsize
+    IF Error_Happened THEN EXIT SUB
+    IF result_type = 0 THEN Give_Error "Invalid FUNCTION return type": EXIT SUB
+
+    IF result_type AND ISUDT THEN
+        ' External library declarations still have no hidden caller-owned UDT
+        ' result ABI. Ordinary BASIC FUNCTION returns are validated later by the
+        ' same canonical UDT layout/codegen path used by normal UDT values.
+        IF library_mode THEN Give_Error "UDT FUNCTION return types are not supported in DECLARE LIBRARY": EXIT SUB
+    END IF
+
+    ' FUNCTION return ids store numeric _OFFSET types as values rather than as
+    ' variable/reference types.  Match the legacy suffix normalization before
+    ' either compiler pass compares or stores this type.
+    IF result_type AND ISPOINTER THEN
+        IF (result_type AND ISSTRING) = 0 THEN result_type = result_type - ISPOINTER
+    END IF
+
+    ' Named UDTs have no BASIC suffix.  Primitive AS types still publish the
+    ' same suffix metadata used by legacy FUNCTION call resolution.
+    IF result_type AND ISUDT THEN
+        result_symbol = ""
+    ELSE
+        result_symbol = type2symbol$(result_text)
+        IF Error_Happened THEN EXIT SUB
+    END IF
+
+    header_upper = getelements$(header_upper, 1, clause_pos - 1)
+    header_case = getelements$(header_case, 1, clause_pos - 1)
+    token_count = clause_pos - 1
+END SUB
+
 FUNCTION Type2MemTypeValue (t1)
     t = 0
     IF t1 AND ISARRAY THEN t = t + 65536
@@ -14769,6 +14945,50 @@ FUNCTION GetUDTCanonMode& (udt AS LONG)
     IF udt <= 0 OR udt > UBOUND(udtxcanonmode) THEN EXIT FUNCTION
     GetUDTCanonMode& = udtxcanonmode(udt)
 END FUNCTION
+
+
+'Emit one shared init/free helper pair for a UDT FUNCTION return layout.
+'The helper body is generated once per TYPE per compilation; each call site then emits
+'only a short helper call instead of duplicating the complete ownership traversal.
+SUB EnsureUDTFuncRetLifeHelpers (udt_index AS LONG, layout_mode AS LONG, elem_bytes AS LONG, init_name AS STRING, free_name AS STRING)
+    DIM init_code AS STRING
+    DIM free_code AS STRING
+
+    IF udt_index < 1 OR udt_index > lasttype THEN
+        Give_Error "Internal compiler error: invalid UDT FUNCTION return lifecycle type index"
+        EXIT SUB
+    END IF
+
+    init_name = "qb_udt_func_ret_init_" + _TOSTR$(udt_index)
+    free_name = "qb_udt_func_ret_free_" + _TOSTR$(udt_index)
+
+    IF UDTFuncRetLifeHelperDone(udt_index) THEN EXIT SUB
+
+    init_code = ""
+    free_code = ""
+    IF layout_mode > 0 THEN
+        IF udtxvariable(udt_index) THEN
+            AppendDynUDTOwnInitAt "((char*)qb_p)", udt_index, 0, _TOSTR$(elem_bytes), "0", init_code, layout_mode
+            AppendDynUDTOwnFreeAt "((char*)qb_p)", udt_index, 0, _TOSTR$(elem_bytes), "0", free_code, layout_mode
+        ELSE
+            AppendDynUDTDescInitAt "((char*)qb_p)", udt_index, 0, _TOSTR$(elem_bytes), "0", init_code, layout_mode
+            AppendDynUDTDescFreeAt "((char*)qb_p)", udt_index, 0, _TOSTR$(elem_bytes), "0", free_code, layout_mode
+        END IF
+    ELSE
+        AppendLegacyInlineUDTVarOp "((char*)qb_p)", udt_index, "0", init_code, 0, 1, "udt_ret_i", 0
+        AppendLegacyInlineUDTVarOp "((char*)qb_p)", udt_index, "0", free_code, 0, 2, "udt_ret_i", 0
+    END IF
+    IF Error_Happened THEN EXIT SUB
+
+    WriteBufLine GlobTxtBuf, "static void " + init_name + "(void *qb_p){"
+    IF init_code <> "" THEN WriteBufLine GlobTxtBuf, init_code
+    WriteBufLine GlobTxtBuf, "}"
+    WriteBufLine GlobTxtBuf, "static void " + free_name + "(void *qb_p){"
+    IF free_code <> "" THEN WriteBufLine GlobTxtBuf, free_code
+    WriteBufLine GlobTxtBuf, "}"
+
+    UDTFuncRetLifeHelperDone(udt_index) = -1
+END SUB
 
 
 
@@ -17411,6 +17631,26 @@ SUB assign (a$, n)
                                 makeidrefer a2$, typ
                                 GOTO assignlhsready
                             END IF
+
+                            ' A UDT FUNCTION result is a local scalar with the
+                            ' same BASIC name as its callable declaration.  A
+                            ' bare assignment such as MakePair = temp must bind
+                            ' to that result object instead of being parsed as a
+                            ' zero-argument recursive FUNCTION call.
+                            IF subfuncn <> 0 AND subfuncid >= 1 AND subfuncid <= idn THEN
+                                IF ids(subfuncid).subfunc = 1 AND (ids(subfuncid).ret AND ISUDT) THEN
+                                    IF UCASE$(RTRIM$(id.n)) = UCASE$(RTRIM$(ids(subfuncid).n)) THEN
+                                        ' Whole-UDT references include the root
+                                        ' UDT index, member id and byte offset.
+                                        ' Member zero denotes the whole object,
+                                        ' allowing setrefer() to use its normal
+                                        ' ownership-aware whole-UDT copy path.
+                                        a2$ = _TOSTR$(currentid) + sp3 + _TOSTR$(id.t AND UDTMASK) + sp3 + "0" + sp3 + "0"
+                                        typ = id.t + ISREFERENCE
+                                        GOTO assignlhsready
+                                    END IF
+                                END IF
+                            END IF
                         END IF
                     END IF
                     IF try = 2 THEN findanotherid = 1: try = findid(a2$) ELSE try = 0
@@ -17632,6 +17872,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
     '                    Sets arrayelements=-1 'unknown' (if elements$="?") otherwise val(elements$)
     '                    ***Does not refer to arrayelementslist()***
     '
+    '(shared)dimudtreturn: Creates a scalar UDT ID only (no C++ allocation) for a
+    '                     FUNCTION result whose storage is provided by a hidden
+    '                     caller parameter.  It intentionally does not set
+    '                     sfid/sfarg because a result object is not an argument.
+    '
     '(argument)method: 0 being created by a DIM name AS type
     '                  1 being created by a DIM name+symbol
     '                  or automatically without the use of DIM
@@ -17650,7 +17895,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
     l$ = cvarname$
     varname$ = UCASE$(varname$)
 
-    IF dimsfarray = 1 THEN f = 0 ELSE f = 1
+    IF dimsfarray = 1 OR dimudtreturn = 1 THEN f = 0 ELSE f = 1
 
     IF dimstatic <> 0 AND dimshared = 0 THEN
         'name will have include the sub/func name in its scope
@@ -17764,7 +18009,10 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             scalar_dyn_mode = 0
             dynparammode = 0
             scalar_dyn_mode = GetUDTCanonMode&(i)
-            IF dimsfarray THEN
+            IF dimsfarray OR dimudtreturn THEN
+                ' Scalar UDT arguments and hidden FUNCTION result objects are
+                ' both externally backed.  Validate their declaration-derived
+                ' layout mode without giving result objects argument links.
                 dynparammode = sf_udt_dynmode
                 IF dynparammode < 0 OR dynparammode > 1 THEN dynparammode = 0
                 IF dynparammode > 0 AND dynparammode <> scalar_dyn_mode THEN
@@ -19353,6 +19601,7 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 END FUNCTION
 
 FUNCTION evaluate$ (a2$, typ AS LONG)
+    DIM skip_current_udt_result_call AS INTEGER
     'typ IS A RETURN VALUE
     '''DIM cli(15) AS INTEGER
     a$ = a2$
@@ -19541,39 +19790,53 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                     'is l$ a function?
                     IF id.subfunc = 1 THEN
-                        constequation = 0
-                        IF getelement(a$, i + 1) = "(" THEN
-                            i2 = i + 2
-                            b2 = 0
-                            args = 1
-                            evalnextele:
-                            l2$ = getelement(a$, i2)
-                            IF l2$ = "(" THEN b2 = b2 + 1
-                            IF l2$ = ")" THEN
-                                b2 = b2 - 1
-                                IF b2 = -1 THEN
-                                    IF i2 = i + 2 THEN Give_Error "Expected (...)": EXIT FUNCTION
-                                    c$ = evaluatefunc(getelements$(a$, i + 2, i2 - 1), args, typ2)
-                                    IF Error_Happened THEN EXIT FUNCTION
-                                    i = i2
-                                    GOTO evalednextele
-                                END IF
+                        ' While a UDT FUNCTION body is compiled, its callable
+                        ' declaration and local result object share one BASIC
+                        ' name.  For MakeCoord.x, skip only the current callable
+                        ' candidate and continue lookup so the dotted reference
+                        ' resolves to the local result object.
+                        skip_current_udt_result_call = 0
+                        IF nextl$ = "." THEN
+                            IF subfuncn <> 0 AND currentid = subfuncid THEN
+                                IF id.ret AND ISUDT THEN skip_current_udt_result_call = -1
                             END IF
-                            IF l2$ = "," AND b2 = 0 THEN args = args + 1
-                            i2 = i2 + 1
-                            GOTO evalnextele
-                        ELSE
-                            'no brackets
-                            c$ = evaluatefunc("", 0, typ2)
-                            IF Error_Happened THEN EXIT FUNCTION
                         END IF
-                        evalednextele:
-                        blockn = blockn + 1
-                        block(blockn) = c$
-                        evaledblock(blockn) = 2
-                        blocktype(blockn) = typ2
-                        IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
-                        GOTO evaled
+
+                        IF skip_current_udt_result_call = 0 THEN
+                            constequation = 0
+                            IF getelement(a$, i + 1) = "(" THEN
+                                i2 = i + 2
+                                b2 = 0
+                                args = 1
+                                evalnextele:
+                                l2$ = getelement(a$, i2)
+                                IF l2$ = "(" THEN b2 = b2 + 1
+                                IF l2$ = ")" THEN
+                                    b2 = b2 - 1
+                                    IF b2 = -1 THEN
+                                        IF i2 = i + 2 THEN Give_Error "Expected (...)": EXIT FUNCTION
+                                        c$ = evaluatefunc(getelements$(a$, i + 2, i2 - 1), args, typ2)
+                                        IF Error_Happened THEN EXIT FUNCTION
+                                        i = i2
+                                        GOTO evalednextele
+                                    END IF
+                                END IF
+                                IF l2$ = "," AND b2 = 0 THEN args = args + 1
+                                i2 = i2 + 1
+                                GOTO evalnextele
+                            ELSE
+                                'no brackets
+                                c$ = evaluatefunc("", 0, typ2)
+                                IF Error_Happened THEN EXIT FUNCTION
+                            END IF
+                            evalednextele:
+                            blockn = blockn + 1
+                            block(blockn) = c$
+                            evaledblock(blockn) = 2
+                            blocktype(blockn) = typ2
+                            IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
+                            GOTO evaled
+                        END IF
                     END IF
 
                     IF try = 2 THEN findanotherid = 1: try = findid(l$) ELSE try = 0
@@ -20223,6 +20486,14 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     DIM ulboundoffset AS STRING
     DIM ulboundbase AS STRING
     DIM ulbounddesc AS STRING
+    DIM udtretindex AS LONG
+    DIM udtretsize AS LONG
+    DIM udtrettmp AS STRING
+    DIM udtretcall AS INTEGER
+    DIM udtretowned AS INTEGER
+    DIM udtretdynmode AS LONG
+    DIM udtretinit AS STRING
+    DIM udtretfree AS STRING
 
 
     IF Debug THEN PRINT #9, "evaluatingfunction:" + RTRIM$(id.n) + ":" + a$
@@ -20231,7 +20502,23 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     id2 = id
     n$ = RTRIM$(id2.n)
+
+    ' Only a user-written BASIC FUNCTION can use the hidden UDT-result ABI.
+    ' Internal functions may carry placeholder return metadata until their
+    ' special handlers determine the real type, so testing ISUDT alone can
+    ' misclassify intrinsics and index arbitrary TYPE metadata.
+    udtretcall = 0
+    IF id2.subfunc = 1 AND id2.internal_subfunc = 0 AND id2.ccall = 0 THEN
+        IF id2.ret AND ISUDT THEN udtretcall = -1
+    END IF
+
     typ = id2.ret
+    IF udtretcall THEN
+        ' The expression contains an address to caller-owned result storage.
+        ' Keep declaration metadata as the plain BASIC UDT and add ISPOINTER
+        ' only to this temporary expression type.
+        typ = typ OR ISPOINTER
+    END IF
     targetid = currentid
 
     IF RTRIM$(id2.callname) = "func_stub" THEN Give_Error "Command not implemented": EXIT FUNCTION
@@ -20308,6 +20595,50 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     r$ = RTRIM$(id2.callname) + "("
     funcargprep$ = ""
+
+    IF udtretcall THEN
+        ' Reserve one pointer per call site in the caller.  Allocation remains
+        ' lazy, loops reuse their site, and recursive caller frames receive an
+        ' independent pointer.  Step 2A1 clears the fixed-layout object before
+        ' each invocation so partially assigned results cannot expose old data.
+        udtretindex = id2.ret AND UDTMASK
+        IF udtretindex < 1 OR udtretindex > lasttype THEN
+            Give_Error "Internal compiler error: invalid UDT FUNCTION return type index": EXIT FUNCTION
+        END IF
+        udtretdynmode = GetUDTCanonMode&(udtretindex)
+        IF udtretdynmode > 0 THEN
+            IF UDTDynMembersOK%(udtretindex, udtretdynmode) = 0 THEN EXIT FUNCTION
+            udtretsize = UDTDynLayoutSize&(udtretindex) \ 8
+            IF UDTDynLayoutSize&(udtretindex) MOD 8 THEN udtretsize = udtretsize + 1
+        ELSE
+            udtretsize = udtxsize(udtretindex) \ 8
+            IF udtxsize(udtretindex) MOD 8 THEN udtretsize = udtretsize + 1
+        END IF
+        udtrettmp = "udt_func_ret_" + _TOSTR$(uniquenumber)
+        WriteBufLine defdatahandle, "void *" + udtrettmp + "=NULL;"
+
+        ' A reused caller-owned result slot needs lifecycle handling whenever it
+        ' contains qbs owners or descriptor-backed _Dynamic members. Descriptor
+        ' layout uses the canonical size and the same init/free walkers as normal
+        ' scalar UDT storage, so stale descriptors are never memset or overwritten.
+        udtretowned = 0
+        udtretinit = ""
+        udtretfree = ""
+        IF udtretdynmode > 0 OR udtxvariable(udtretindex) THEN
+            udtretowned = -1
+            EnsureUDTFuncRetLifeHelpers udtretindex, udtretdynmode, udtretsize, udtretinit, udtretfree
+            IF Error_Happened THEN EXIT FUNCTION
+        END IF
+
+        IF udtretowned THEN
+            ' The raw mem_static block follows the caller frame lifetime, but its
+            ' qbs objects and descriptor payloads are independent owners.
+            WriteBufLine FreeTxtBuf, "if(" + udtrettmp + "!=NULL){" + udtretfree + "(" + udtrettmp + ");}"
+        END IF
+
+        r$ = r$ + udtrettmp
+        IF id2.args <> 0 THEN r$ = r$ + ","
+    END IF
 
 
     IF id2.args <> 0 THEN
@@ -22053,6 +22384,17 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         END IF
     END IF
     r$ = r$ + ")"
+    IF udtretcall THEN
+        IF udtretowned THEN
+            ' Reuse cannot memset live qbs or descriptor pointers. Release the old
+            ' ownership graph, clear the record, reinitialize its owners/descriptors,
+            ' invoke the FUNCTION and return the same caller-owned address.
+            r$ = "([&](){if(" + udtrettmp + "==NULL){" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ");}else{" + udtretfree + "(" + udtrettmp + ");}memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ");" + udtretinit + "(" + udtrettmp + ");" + r$ + ";return " + udtrettmp + ";})()"
+        ELSE
+            ' Fixed-layout results retain the compact Step 2A path.
+            r$ = "((" + udtrettmp + "==NULL?(" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ")):" + udtrettmp + "),memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ")," + r$ + "," + udtrettmp + ")"
+        END IF
+    END IF
     IF funcargprep$ <> "" THEN r$ = "([&](){" + funcargprep$ + "return " + r$ + ";})()"
 
     evalfuncspecial:
@@ -26862,6 +27204,12 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
                 IF t2 AND ISPOINTER THEN
                     src$ = "((char*)" + e$ + ")"
                     e2 = 0: u2 = t2 AND UDTMASK
+                    ' UDT FUNCTION expressions are transported as raw pointers.
+                    ' Recover the named TYPE's declaration-driven physical layout
+                    ' so descriptor-backed results use deep descriptor assignment
+                    ' instead of being mistaken for legacy inline storage.
+                    rhsdynmode% = GetUDTCanonMode&(u2)
+                    IF rhsdynmode% > 0 THEN rhsdynudt% = -1
                 ELSE
                     src$ = "((char*)&" + e$ + ")"
                     e2 = 0: u2 = t2 AND UDTMASK
@@ -28817,4 +29165,3 @@ DEFLNG A-Z
 '-------- Optional IDE Component (2/2) --------
 '$INCLUDE:'ide\config\cfg_methods.bas'
 '$INCLUDE:'ide\ide_methods.bas'
-
