@@ -1,110 +1,296 @@
-#line 4 "utilities/strings.bas"
-qbs* FUNC_STRREMOVE(qbs*_FUNC_STRREMOVE_STRING_MYSTRING,qbs*_FUNC_STRREMOVE_STRING_WHATTOREMOVE){
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
+int32 FUNC_COMPAREVERSIONS(qbs*_FUNC_COMPAREVERSIONS_STRING_V,qbs*_FUNC_COMPAREVERSIONS_STRING_V1){
+#line 28686 "qb64pe.bas"
 qbs *tqbs;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 ptrszint tmp_long;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 int32 tmp_fileno;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 #include "data118.txt"
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 mem_lock *sf_mem_lock;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 new_mem_lock();
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 sf_mem_lock->type=3;
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 libqb_check_stack();
-#line 4 "utilities/strings.bas"
+#line 28686 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 5 "utilities/strings.bas"
+#line 28687 "qb64pe.bas"
 do{
-#line 5 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,5,"strings.bas");}while(r);
-#line 6 "utilities/strings.bas"
-do{
-#line 6 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,6,"strings.bas");}while(r);
-#line 8 "utilities/strings.bas"
-do{
-#line 8 "utilities/strings.bas"
-qbs_set(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_MYSTRING);
-#line 8 "utilities/strings.bas"
+#line 28687 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T,_FUNC_COMPAREVERSIONS_STRING_V);
+#line 28687 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 8 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,8,"strings.bas");}while(r);
-#line 9 "utilities/strings.bas"
+#line 28687 "qb64pe.bas"
+if(!qbevent)break;evnt(28687);}while(r);
+#line 28687 "qb64pe.bas"
 do{
-#line 9 "utilities/strings.bas"
-qbs_set(_FUNC_STRREMOVE_STRING_B,qbs_lcase(_FUNC_STRREMOVE_STRING_WHATTOREMOVE));
-#line 9 "utilities/strings.bas"
+#line 28687 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T1,_FUNC_COMPAREVERSIONS_STRING_V1);
+#line 28687 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 9 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,9,"strings.bas");}while(r);
-#line 10 "utilities/strings.bas"
+#line 28687 "qb64pe.bas"
+if(!qbevent)break;evnt(28687);}while(r);
+#line 28688 "qb64pe.bas"
+S_37105:;
+#line 28688 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(_FUNC_COMPAREVERSIONS_STRING_T, 8 ),qbs_new_txt_len("-UNKNOWN",8))))||is_error_pending()){
+#line 28688 "qb64pe.bas"
+if(qbevent){evnt(28688);if(r)goto S_37105;}
+#line 28688 "qb64pe.bas"
 do{
-#line 10 "utilities/strings.bas"
-*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
-#line 10 "utilities/strings.bas"
+#line 28688 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T,qbs_left(_FUNC_COMPAREVERSIONS_STRING_T,_FUNC_COMPAREVERSIONS_STRING_T->len- 8 ));
+#line 28688 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 10 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,10,"strings.bas");}while(r);
-#line 11 "utilities/strings.bas"
-S_37111:;
-#line 11 "utilities/strings.bas"
-while((*_FUNC_STRREMOVE_LONG_I)||is_error_pending()){
-#line 11 "utilities/strings.bas"
-if(qbevent){evnt(28611,11,"strings.bas");if(r)goto S_37111;}
-#line 12 "utilities/strings.bas"
-do{
-#line 12 "utilities/strings.bas"
-qbs_set(_FUNC_STRREMOVE_STRING_A,qbs_add(qbs_left(_FUNC_STRREMOVE_STRING_A,*_FUNC_STRREMOVE_LONG_I- 1 ),qbs_right(_FUNC_STRREMOVE_STRING_A,_FUNC_STRREMOVE_STRING_A->len-*_FUNC_STRREMOVE_LONG_I-_FUNC_STRREMOVE_STRING_B->len+ 1 )));
-#line 12 "utilities/strings.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 12 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,12,"strings.bas");}while(r);
-#line 13 "utilities/strings.bas"
-do{
-#line 13 "utilities/strings.bas"
-*_FUNC_STRREMOVE_LONG_I=func_instr(NULL,qbs_lcase(_FUNC_STRREMOVE_STRING_A),_FUNC_STRREMOVE_STRING_B,0);
-#line 13 "utilities/strings.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 13 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,13,"strings.bas");}while(r);
-#line 14 "utilities/strings.bas"
-dl_continue_3531:;
-#line 14 "utilities/strings.bas"
+#line 28688 "qb64pe.bas"
+if(!qbevent)break;evnt(28688);}while(r);
+#line 28688 "qb64pe.bas"
 }
-#line 14 "utilities/strings.bas"
-dl_exit_3531:;
-#line 15 "utilities/strings.bas"
+#line 28689 "qb64pe.bas"
+S_37108:;
+#line 28689 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_right(_FUNC_COMPAREVERSIONS_STRING_T1, 8 ),qbs_new_txt_len("-UNKNOWN",8))))||is_error_pending()){
+#line 28689 "qb64pe.bas"
+if(qbevent){evnt(28689);if(r)goto S_37108;}
+#line 28689 "qb64pe.bas"
 do{
-#line 15 "utilities/strings.bas"
-qbs_set(_FUNC_STRREMOVE_STRING_STRREMOVE,_FUNC_STRREMOVE_STRING_A);
-#line 15 "utilities/strings.bas"
+#line 28689 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T1,qbs_left(_FUNC_COMPAREVERSIONS_STRING_T1,_FUNC_COMPAREVERSIONS_STRING_T1->len- 8 ));
+#line 28689 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 15 "utilities/strings.bas"
-if(!qbevent)break;evnt(28611,15,"strings.bas");}while(r);
-#line 16 "utilities/strings.bas"
+#line 28689 "qb64pe.bas"
+if(!qbevent)break;evnt(28689);}while(r);
+#line 28689 "qb64pe.bas"
+}
+#line 28690 "qb64pe.bas"
+S_37111:;
+#line 28690 "qb64pe.bas"
+do{
+#line 28690 "qb64pe.bas"
+if(qbevent){evnt(28690);if(r)goto S_37111;}
+#line 28691 "qb64pe.bas"
+do{
+#line 28691 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_L=func_instr(NULL,_FUNC_COMPAREVERSIONS_STRING_T,qbs_new_txt_len(".",1),0);
+#line 28691 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28691 "qb64pe.bas"
+if(!qbevent)break;evnt(28691);}while(r);
+#line 28691 "qb64pe.bas"
+do{
+#line 28691 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_L1=func_instr(NULL,_FUNC_COMPAREVERSIONS_STRING_T1,qbs_new_txt_len(".",1),0);
+#line 28691 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28691 "qb64pe.bas"
+if(!qbevent)break;evnt(28691);}while(r);
+#line 28692 "qb64pe.bas"
+S_37114:;
+#line 28692 "qb64pe.bas"
+if ((*_FUNC_COMPAREVERSIONS_LONG_L)||is_error_pending()){
+#line 28692 "qb64pe.bas"
+if(qbevent){evnt(28692);if(r)goto S_37114;}
+#line 28693 "qb64pe.bas"
+do{
+#line 28693 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_V=qbr(qbs_val<long double>(qbs_left(_FUNC_COMPAREVERSIONS_STRING_T,*_FUNC_COMPAREVERSIONS_LONG_L- 1 )));
+#line 28693 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28693 "qb64pe.bas"
+if(!qbevent)break;evnt(28693);}while(r);
+#line 28694 "qb64pe.bas"
+do{
+#line 28694 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T,func_mid(_FUNC_COMPAREVERSIONS_STRING_T,*_FUNC_COMPAREVERSIONS_LONG_L+ 1 ,NULL,0));
+#line 28694 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28694 "qb64pe.bas"
+if(!qbevent)break;evnt(28694);}while(r);
+#line 28695 "qb64pe.bas"
+}else{
+#line 28696 "qb64pe.bas"
+do{
+#line 28696 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_V=qbr(qbs_val<long double>(_FUNC_COMPAREVERSIONS_STRING_T));
+#line 28696 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28696 "qb64pe.bas"
+if(!qbevent)break;evnt(28696);}while(r);
+#line 28697 "qb64pe.bas"
+do{
+#line 28697 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T,qbs_new_txt_len("",0));
+#line 28697 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28697 "qb64pe.bas"
+if(!qbevent)break;evnt(28697);}while(r);
+#line 28698 "qb64pe.bas"
+}
+#line 28699 "qb64pe.bas"
+S_37121:;
+#line 28699 "qb64pe.bas"
+if ((*_FUNC_COMPAREVERSIONS_LONG_L1)||is_error_pending()){
+#line 28699 "qb64pe.bas"
+if(qbevent){evnt(28699);if(r)goto S_37121;}
+#line 28700 "qb64pe.bas"
+do{
+#line 28700 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_V1=qbr(qbs_val<long double>(qbs_left(_FUNC_COMPAREVERSIONS_STRING_T1,*_FUNC_COMPAREVERSIONS_LONG_L1- 1 )));
+#line 28700 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28700 "qb64pe.bas"
+if(!qbevent)break;evnt(28700);}while(r);
+#line 28701 "qb64pe.bas"
+do{
+#line 28701 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T1,func_mid(_FUNC_COMPAREVERSIONS_STRING_T1,*_FUNC_COMPAREVERSIONS_LONG_L1+ 1 ,NULL,0));
+#line 28701 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28701 "qb64pe.bas"
+if(!qbevent)break;evnt(28701);}while(r);
+#line 28702 "qb64pe.bas"
+}else{
+#line 28703 "qb64pe.bas"
+do{
+#line 28703 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_V1=qbr(qbs_val<long double>(_FUNC_COMPAREVERSIONS_STRING_T1));
+#line 28703 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28703 "qb64pe.bas"
+if(!qbevent)break;evnt(28703);}while(r);
+#line 28704 "qb64pe.bas"
+do{
+#line 28704 "qb64pe.bas"
+qbs_set(_FUNC_COMPAREVERSIONS_STRING_T1,qbs_new_txt_len("",0));
+#line 28704 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28704 "qb64pe.bas"
+if(!qbevent)break;evnt(28704);}while(r);
+#line 28705 "qb64pe.bas"
+}
+#line 28706 "qb64pe.bas"
+S_37128:;
+#line 28706 "qb64pe.bas"
+if ((-(*_FUNC_COMPAREVERSIONS_LONG_V<*_FUNC_COMPAREVERSIONS_LONG_V1))||is_error_pending()){
+#line 28706 "qb64pe.bas"
+if(qbevent){evnt(28706);if(r)goto S_37128;}
+#line 28706 "qb64pe.bas"
+do{
+#line 28706 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_COMPAREVERSIONS= -1 ;
+#line 28706 "qb64pe.bas"
+if(!qbevent)break;evnt(28706);}while(r);
+#line 28706 "qb64pe.bas"
+do{
+#line 28706 "qb64pe.bas"
+goto exit_subfunc;
+#line 28706 "qb64pe.bas"
+if(!qbevent)break;evnt(28706);}while(r);
+#line 28706 "qb64pe.bas"
+}
+#line 28707 "qb64pe.bas"
+S_37132:;
+#line 28707 "qb64pe.bas"
+if ((-(*_FUNC_COMPAREVERSIONS_LONG_V>*_FUNC_COMPAREVERSIONS_LONG_V1))||is_error_pending()){
+#line 28707 "qb64pe.bas"
+if(qbevent){evnt(28707);if(r)goto S_37132;}
+#line 28707 "qb64pe.bas"
+do{
+#line 28707 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_COMPAREVERSIONS= 1 ;
+#line 28707 "qb64pe.bas"
+if(!qbevent)break;evnt(28707);}while(r);
+#line 28707 "qb64pe.bas"
+do{
+#line 28707 "qb64pe.bas"
+goto exit_subfunc;
+#line 28707 "qb64pe.bas"
+if(!qbevent)break;evnt(28707);}while(r);
+#line 28707 "qb64pe.bas"
+}
+#line 28708 "qb64pe.bas"
+S_37136:;
+#line 28708 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_COMPAREVERSIONS_STRING_T,qbs_new_txt_len("",0)))&(qbs_equal(_FUNC_COMPAREVERSIONS_STRING_T1,qbs_new_txt_len("",0)))))||is_error_pending()){
+#line 28708 "qb64pe.bas"
+if(qbevent){evnt(28708);if(r)goto S_37136;}
+#line 28708 "qb64pe.bas"
+do{
+#line 28708 "qb64pe.bas"
+goto exit_subfunc;
+#line 28708 "qb64pe.bas"
+if(!qbevent)break;evnt(28708);}while(r);
+#line 28708 "qb64pe.bas"
+}
+#line 28709 "qb64pe.bas"
+S_37139:;
+#line 28709 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_COMPAREVERSIONS_STRING_T,qbs_new_txt_len("",0)))&(qbs_notequal(_FUNC_COMPAREVERSIONS_STRING_T1,qbs_new_txt_len("",0)))))||is_error_pending()){
+#line 28709 "qb64pe.bas"
+if(qbevent){evnt(28709);if(r)goto S_37139;}
+#line 28709 "qb64pe.bas"
+do{
+#line 28709 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_COMPAREVERSIONS= -1 ;
+#line 28709 "qb64pe.bas"
+if(!qbevent)break;evnt(28709);}while(r);
+#line 28709 "qb64pe.bas"
+do{
+#line 28709 "qb64pe.bas"
+goto exit_subfunc;
+#line 28709 "qb64pe.bas"
+if(!qbevent)break;evnt(28709);}while(r);
+#line 28709 "qb64pe.bas"
+}
+#line 28710 "qb64pe.bas"
+S_37143:;
+#line 28710 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_FUNC_COMPAREVERSIONS_STRING_T1,qbs_new_txt_len("",0)))&(qbs_notequal(_FUNC_COMPAREVERSIONS_STRING_T,qbs_new_txt_len("",0)))))||is_error_pending()){
+#line 28710 "qb64pe.bas"
+if(qbevent){evnt(28710);if(r)goto S_37143;}
+#line 28710 "qb64pe.bas"
+do{
+#line 28710 "qb64pe.bas"
+*_FUNC_COMPAREVERSIONS_LONG_COMPAREVERSIONS= 1 ;
+#line 28710 "qb64pe.bas"
+if(!qbevent)break;evnt(28710);}while(r);
+#line 28710 "qb64pe.bas"
+do{
+#line 28710 "qb64pe.bas"
+goto exit_subfunc;
+#line 28710 "qb64pe.bas"
+if(!qbevent)break;evnt(28710);}while(r);
+#line 28710 "qb64pe.bas"
+}
+#line 28711 "qb64pe.bas"
+dl_continue_3526:;
+#line 28711 "qb64pe.bas"
+}while(1);
+#line 28711 "qb64pe.bas"
+dl_exit_3526:;
+#line 28712 "qb64pe.bas"
 exit_subfunc:;
-#line 16 "utilities/strings.bas"
+#line 28712 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
-#line 16 "utilities/strings.bas"
+#line 28712 "qb64pe.bas"
 #include "free118.txt"
-#line 16 "utilities/strings.bas"
+#line 28712 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 16 "utilities/strings.bas"
+#line 28712 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-#line 16 "utilities/strings.bas"
-qbs_maketmp(_FUNC_STRREMOVE_STRING_STRREMOVE);return _FUNC_STRREMOVE_STRING_STRREMOVE;
-#line 16 "utilities/strings.bas"
+#line 28712 "qb64pe.bas"
+return *_FUNC_COMPAREVERSIONS_LONG_COMPAREVERSIONS;
+#line 28712 "qb64pe.bas"
 }
