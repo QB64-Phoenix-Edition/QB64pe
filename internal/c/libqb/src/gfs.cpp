@@ -918,7 +918,7 @@ int32_t gfs_setpos(int32_t i, int64_t position) {
         f->file_handle->seekp(position);
     }
     f->pos = position;
-    if (f->pos <= gfs_lof(i)) {
+    if ((f->eof_passed || f->eof_reached) && f->pos <= gfs_lof(i)) {
         f->eof_passed = 0;
         f->eof_reached = 0;
     }
@@ -934,7 +934,7 @@ int32_t gfs_setpos(int32_t i, int64_t position) {
         }
     }
     f->pos = position;
-    if (f->pos <= gfs_lof(i)) {
+    if ((f->eof_passed || f->eof_reached) && f->pos <= gfs_lof(i)) {
         f->eof_passed = 0;
         f->eof_reached = 0;
     }
