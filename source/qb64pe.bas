@@ -130,6 +130,7 @@ DIM SHARED CMDLineSrcFile$, CMDLineOutFile$
 TYPE usedVarList
     AS LONG id, linenumber, includeLevel, includedLine, scope, localIndex
     AS LONG arrayElementSize
+    AS LONG hashNext 'next entry in this one's hash bucket, see varListHashTable()
     AS _BYTE used, watch, isarray, displayFormat 'displayFormat: 0=DEC;1=HEX;2=BIN;3=OCT
     AS STRING name, cname, varType, includedFile, subfunc
     AS STRING watchRange, indexes, elements, elementTypes 'for Arrays and UDTs
@@ -137,6 +138,14 @@ TYPE usedVarList
 END TYPE
 
 REDIM SHARED backupUsedVariableList(1000) AS usedVarList
+
+'Hash index over usedVariableList().cname
+'varListHashTable() holds the first usedVariableList index of each bucket (0 = empty),
+'and each entry's .hashNext chains the rest of that bucket.
+CONST varListHashBits = 20
+CONST varListHashMask = (2 ^ varListHashBits) - 1
+REDIM SHARED varListHashTable(varListHashMask) AS LONG
+
 DIM SHARED typeDefinitions$, backupTypeDefinitions$
 DIM SHARED totalVariablesCreated AS LONG, totalMainVariablesCreated AS LONG
 DIM SHARED totalWarnings AS LONG, warningListItems AS LONG, lastWarningHeader AS STRING
@@ -199,6 +208,8 @@ REDIM SHARED PassRule(1 TO OptMax) AS LONG
 REDIM SHARED LevelEntered(OptMax) 'up to 64 levels supported
 REDIM SHARED separgs(OptMax + 1) AS STRING
 REDIM SHARED separgslayout(OptMax + 1) AS STRING
+'Tracks the highest index that's in use for separgs, allows for some optimizations
+DIM SHARED separgsHigh AS LONG
 REDIM SHARED separgs2(OptMax + 1) AS STRING
 REDIM SHARED separgslayout2(OptMax + 1) AS STRING
 
@@ -649,6 +660,9 @@ DIM SHARED file AS STRING 'name of the file (without .bas or path)
 DIM SHARED constequation AS INTEGER
 DIM SHARED DynamicMode AS INTEGER
 DIM SHARED findidsecondarg AS STRING
+'cached padding of subfunc for findid's scope check, see findid&()
+DIM SHARED findid_insf AS STRING, findid_insfKey AS STRING
+findid_insfKey = "": findid_insf = SPACE$(256)
 DIM SHARED findanotherid AS INTEGER
 DIM SHARED findidinternal AS LONG
 DIM SHARED currentid AS LONG 'is the index of the last ID accessed
@@ -1192,7 +1206,6 @@ NEXT
 'erase cmemlist
 'erase sfcmemargs
 
-lastunresolved = -1 'first pass
 sflistn = -1 'no entries
 
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
@@ -1538,6 +1551,7 @@ FOR i = 1 TO 27: defineaz(i) = "SINGLE": defineextaz(i) = "!": NEXT
 controllevel = 0
 findidsecondarg$ = "": findanotherid = 0: findidinternal = 0: currentid = 0
 linenumber = 0
+reallinenumber = 0
 wholeline$ = ""
 linefragment$ = ""
 idn = 0
@@ -1555,6 +1569,7 @@ totalVariablesCreated = 0
 typeDefinitions$ = ""
 totalMainVariablesCreated = 0
 REDIM SHARED usedVariableList(1000) AS usedVarList
+REDIM SHARED varListHashTable(varListHashMask) AS LONG
 totalWarnings = 0
 duplicateConstWarning = 0
 emptySCWarning = 0
@@ -2078,6 +2093,11 @@ DO
             a$ = "$MIDISOUNDFONT is a deprecated keyword, use _MIDISOUNDBANK instead"
             GOTO errmes
         END IF
+
+        ' We check for these early because changing the state var triggers a
+        ' recompile, that's very expensive if we wait till after the prepass.
+        IF temp$ = "OPTION _EXPLICIT" THEN SetRCStateVar OptExpl, 1
+        IF temp$ = "OPTION _EXPLICITARRAY" THEN SetRCStateVar OptExplArr, 1
 
         wholeline$ = lineformat(wholeline$)
         IF Error_Happened THEN GOTO errmes
@@ -12735,7 +12755,50 @@ FOR i = 1 TO idn
     END IF
 NEXT i
 
-unresolved = 0
+' The purpose of the below code is to resolve the dimension count of array
+' arguments to SUB/FUNCTIONs.
+'
+' Ex: SUB(a() As Long)
+'
+' The 'rule' is that a() does not have a defined dimension count, but you're
+' only allowed to pass one dimension count to it across the whole program. Thus
+' the first call to a SUB/FUNCTION will usually 'pin' the number of dimensions
+' of the argument and any subsequent calls have to match or we produce an error
+'
+' Unfortunately it is not just about catching errors, the number of dimensions
+' changes the code emitted for the given SUB/FUNCTION so resolving the number
+' of dimensions is required to produce the correct code.
+'
+' In some cases (Ex. The first call to a SUB/FUNCTION appears after its
+' declaration) we only find out the true dimensions after we have already
+' produced the code for that SUB/FUNCTION, this requires a recompile with the
+' correct dimension count to resolve. If there are chains of SUB/FUNCTION calls
+' each passing arrays to each other, multiple recompiles could be required as
+' each recompile only resolves one level of arrays.
+'
+' This code checks for these conditions and triggers the recompile if we
+' encounter them.
+'
+' Note that it's possible for some SUB/FUNCTIONs to be "unresolvable" due to
+' how the code works, meaning doing more recompiles will not cause them to
+' appear as 'resolved'. Those are:
+'
+' 1. Dead code (no calls to the SUB/FUNCTION)
+' 2. Singular dimensional arrays (the code does not 'pin' these, but that's ok
+'    because that's the default and thus the generated code is already correct).
+'
+' To avoid doing extra recompiles the code below checks for the conditions
+' where a recompile would resolve more dimensions and only triggers it in that
+' situation, those conditions are:
+'
+' 1. There are array arguments with unknown dimensions
+' 2. There is at least one array argument with a newly pinned dimension count
+'
+' Point 2 is the key, if there are no newly pinned dimension counts then that
+' means the dimension counts of the unresolved array arguments will not change
+' on a recompile.
+'
+unresolved = 0: resolvable = 0
 FOR i = 1 TO idn
     getid i
     IF Error_Happened THEN GOTO errmes
@@ -12762,6 +12825,10 @@ FOR i = 1 TO idn
                             IF Debug THEN PRINT #9, "mismatch detected!"
 
                             unresolved = unresolved + 1
+
+                            ' nelereq = 0 means nothing pinned it, so the next
+                            ' pass would declare it exactly the same way again.
+                            IF nelereq <> 0 THEN resolvable = resolvable + 1
                             sflistn = sflistn + 1
                             IF sflistn > 25000 THEN 'manually set a descriptive error message for the user so they know what's happening.
                                 Error_Message = "ERROR: QB64PE currently limits a program to have a maximum of 25,000 subs and functions, and this limit has been exceeded.  Please reduce Sub/Function count, or else report this issue with sample code that produced it over at the QB64PE forums, so we can look further into this issue."
@@ -12784,29 +12851,10 @@ FOR i = 1 TO idn
     END IF
 NEXT
 
-'is recompilation required to resolve this?
-IF unresolved > 0 THEN
-    IF lastunresolved = -1 THEN
-        'first pass
-        recompile = 1
-        IF Debug THEN
-            PRINT #9, "recompiling to resolve array elements (first time)"
-            PRINT #9, "sflistn="; sflistn
-            PRINT #9, "oldsflistn="; oldsflistn
-        END IF
-    ELSE
-        'not first pass
-        IF unresolved < lastunresolved THEN
-            recompile = 1
-            IF Debug THEN
-                PRINT #9, "recompiling to resolve array elements (not first time)"
-                PRINT #9, "sflistn="; sflistn
-                PRINT #9, "oldsflistn="; oldsflistn
-            END IF
-        END IF
-    END IF
-END IF 'unresolved
-lastunresolved = unresolved
+' We recompile only if there are some dimension counts that would change on the
+' recompile.
+IF resolvable > 0 THEN recompile = 1
+
 
 'IDEA!
 'have a flag to record if anything gets resolved in a pass
@@ -17334,14 +17382,21 @@ SUB vWatchVariable (this$, action AS _BYTE)
                 EXIT SUB
             END IF
 
+            ' The vwatch_*_vars[] lists below are $DEBUG-only, we only update
+            ' them for vWatchOn. The rest of the variable lists are always
+            ' updated to track unused variables.
             vWatchNewVariable$ = this$
             IF subfunc = "" THEN
                 totalMainModuleVariables = totalMainModuleVariables + 1
-                mainModuleVariablesList$ = mainModuleVariablesList$ + "vwatch_global_vars[" + _TOSTR$(totalMainModuleVariables - 1) + "] = &" + this$ + ";" + CRLF
+                IF GetRCStateVar(vWatchOn) THEN
+                    mainModuleVariablesList$ = mainModuleVariablesList$ + "vwatch_global_vars[" + _TOSTR$(totalMainModuleVariables - 1) + "] = &" + this$ + ";" + CRLF
+                END IF
                 manageVariableList id.cn, this$, totalMainModuleVariables - 1, 0
             ELSE
                 totalLocalVariables = totalLocalVariables + 1
-                localVariablesList$ = localVariablesList$ + "vwatch_local_vars[" + _TOSTR$(totalLocalVariables - 1) + "] = &" + this$ + ";" + CRLF
+                IF GetRCStateVar(vWatchOn) THEN
+                    localVariablesList$ = localVariablesList$ + "vwatch_local_vars[" + _TOSTR$(totalLocalVariables - 1) + "] = &" + this$ + ";" + CRLF
+                END IF
                 manageVariableList id.cn, this$, totalLocalVariables - 1, 0
             END IF
         CASE 1 'dump to data[].txt & reset
@@ -17529,8 +17584,15 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
     'UDT
     'is it a udt?
+    'udtxname() is a STRING * 256, so pad typ$ out once rather than trimming
+    'every single entry in the loop to compare against it
+    IF LEN(typ$) <= 256 AND RIGHT$(typ$, 1) <> " " THEN
+        typPadded$ = typ$ + SPACE$(256 - LEN(typ$))
+    ELSE
+        typPadded$ = "" ' Cannot be the name of a type, so nothing will match
+    END IF
     FOR i = 1 TO lasttype
-        IF typ$ = RTRIM$(udtxname(i)) THEN
+        IF typPadded$ = udtxname(i) THEN
             dim2typepassback$ = RTRIM$(udtxcname(i))
 
             n$ = "UDT_" + varname$
@@ -19207,9 +19269,6 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 END FUNCTION
 
 FUNCTION evaluate$ (a2$, typ AS LONG)
-    DIM block(1000) AS STRING
-    DIM evaledblock(1000) AS INTEGER
-    DIM blocktype(1000) AS LONG
     'typ IS A RETURN VALUE
     '''DIM cli(15) AS INTEGER
     a$ = a2$
@@ -19227,6 +19286,17 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
     blockn = 0
     n = numelements(a$)
+
+    ' The loop below pushes at most one block per element of a$, so blockn
+    ' never exceeds n. The +2 covers the operator pass reading block(i + 1),
+    ' plus a spare slot.
+    '
+    ' evaluate$() is called a lot, so sizing these to the expression rather
+    ' than to a fixed 1000 entries is a large saving in string allocations.
+    REDIM block(n + 2) AS STRING
+    REDIM evaledblock(n + 2) AS INTEGER
+    REDIM blocktype(n + 2) AS LONG
+
     b = 0 'bracketting level
     FOR i = 1 TO n
 
@@ -23127,12 +23197,15 @@ FUNCTION findid& (n2$)
         '''    END IF 'safeguard
     END IF
 
-    'optimizations for later comparisons
-    insf$ = subfunc + SPACE$(256 - LEN(subfunc))
-    secondarg$ = secondarg$ + SPACE$(256 - LEN(secondarg$))
+    ' We cache the padded name of the current subfunc so that subsequent
+    ' findid&() calls while the same SUB/FUNCTION is being processed avoid
+    ' recreating the string.
+    IF subfunc <> findid_insfKey THEN
+        findid_insfKey = subfunc
+        findid_insf = subfunc + SPACE$(256 - LEN(subfunc))
+    END IF
     IF LEN(sc$) THEN scpassed = 1: sc$ = sc$ + SPACE$(8 - LEN(sc$)) ELSE scpassed = 0
     '''IF LEN(couldhavesc$) THEN couldhavesc$ = couldhavesc$ + SPACE$(8 - LEN(couldhavesc$)): couldhavescpassed = 1 ELSE couldhavescpassed = 0
-    IF LEN(n$) < 256 THEN n$ = n$ + SPACE$(256 - LEN(n$))
 
     'FUNCTION HashFind (a$, searchflags, resultflags, resultreference)
     '(0,1,2)z=hashfind[rev]("RUMI",Hashflag_label,resflag,resref)
@@ -23165,7 +23238,7 @@ FUNCTION findid& (n2$)
 
     'in scope?
     IF ids(i).subfunc = 0 AND ids(i).share = 0 THEN 'scope check required (not a shared variable or the name of a sub/function)
-        IF ids(i).insubfunc <> insf$ THEN GOTO findidnomatch
+        IF ids(i).insubfunc <> findid_insf THEN GOTO findidnomatch
     END IF
 
     'some subs require a second argument (eg. PUT #, DEF SEG, etc.)
@@ -24351,6 +24424,9 @@ SUB getid (i AS LONG)
 END SUB
 
 FUNCTION isoperator (a2$)
+    ' 8 is the length of _ANDALSO, the current longest operator, so a very cheap
+    ' length check can avoid doing any unnecessary string comparisons.
+    IF LEN(a2$) = 0 OR LEN(a2$) > 8 THEN EXIT FUNCTION
     a$ = UCASE$(a2$)
     l = 0
     l = l + 1: IF a$ = "_ORELSE" THEN GOTO opfound
@@ -24434,7 +24510,6 @@ FUNCTION lineformat$ (a$)
     IF i >= n THEN GOTO lineformatdone
 
     c = ASC(a$, i)
-    c$ = CHR$(c) '***remove later***
 
     '----------------quoted string----------------
     IF c = 34 THEN '"
@@ -24455,6 +24530,8 @@ FUNCTION lineformat$ (a$)
     END IF
     IF (c >= 48 AND c <= 57) THEN '0-9
         lfnumber:
+
+        c$ = CHR$(c)
 
         'handle 'IF a=1 THEN a=2 ELSE 100' by assuming numeric after ELSE to be a
         IF RIGHT$(a2$, 5) = sp + "ELSE" THEN
@@ -26042,8 +26119,10 @@ END FUNCTION
 FUNCTION seperateargs (a$, ca$, pass&)
     pass& = 0
 
-    FOR i = 1 TO OptMax: separgs(i) = "": NEXT
-    FOR i = 1 TO OptMax + 1: separgslayout(i) = "": NEXT
+    ' Only entries up to separgsHigh are actually non-empty, given OptMax is
+    ' fairly large this lets us avoid a lot of unnecessary string operations.
+    FOR i = 1 TO separgsHigh: separgs(i) = "": separgslayout(i) = "": NEXT
+    separgsHigh = 0
     FOR i = 1 TO OptMax
         Lev(i) = 0
         EntryLev(i) = 0
@@ -26338,6 +26417,8 @@ FUNCTION seperateargs (a$, ca$, pass&)
 
 
     FOR i = 1 TO lastt: separgs(i) = "n-ll": NEXT
+    'from here on nothing indexes separgs()/separgslayout() past lastt + 1
+    separgsHigh = lastt + 1
 
 
 
@@ -28369,9 +28450,22 @@ FUNCTION VerifyNumber (text$)
     IF t$ = t1$ THEN VerifyNumber = -1
 END FUNCTION
 
+' This is the hash function for usedVariableList, a typical djb string hash.
+FUNCTION varListHashValue& (a$)
+    DIM h AS _UNSIGNED LONG, i AS LONG, l AS LONG
+
+    l = LEN(a$)
+    h = 5381
+    FOR i = 1 TO l
+        h = (h * 33) + ASC(a$, i)
+    NEXT
+
+    varListHashValue& = h AND varListHashMask
+END FUNCTION
+
 SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
     DIM findItem AS LONG, cname$, i AS LONG, j AS LONG, name$, temp$
-    name$ = RTRIM$(__name$)
+    DIM hashIndex AS LONG
     cname$ = RTRIM$(__cname$)
 
     IF LEN(cname$) = 0 THEN EXIT SUB
@@ -28381,17 +28475,26 @@ SUB manageVariableList (__name$, __cname$, localIndex AS LONG, action AS _BYTE)
         cname$ = LEFT$(cname$, findItem - 1)
     END IF
 
+    hashIndex = varListHashValue&(cname$)
     found = 0
-    FOR i = 1 TO totalVariablesCreated
-        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT FOR
-    NEXT
+    i = varListHashTable(hashIndex)
+    DO WHILE i
+        IF usedVariableList(i).cname = cname$ THEN found = -1: EXIT DO
+        i = usedVariableList(i).hashNext
+    LOOP
+    IF found = 0 THEN i = totalVariablesCreated + 1
 
     SELECT CASE action
         CASE 0 'add
             IF found = 0 THEN
+                name$ = RTRIM$(__name$)
+
                 IF i > UBOUND(usedVariableList) THEN
                     REDIM _PRESERVE usedVariableList(UBOUND(usedVariableList) + 999) AS usedVarList
                 END IF
+
+                usedVariableList(i).hashNext = varListHashTable(hashIndex)
+                varListHashTable(hashIndex) = i
 
                 usedVariableList(i).id = currentid
                 usedVariableList(i).used = 0
