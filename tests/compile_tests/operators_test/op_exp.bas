@@ -39,6 +39,12 @@ PRINT (2 ^ 2 + 2) = ((2 ^ 2) + 2)
 PRINT (NOT 2 + 3) = (NOT (2 + 3))
 PRINT (-2 ^ 2) = (-(2 ^ 2))
 PRINT (NOT 2 ^ 3) = (NOT (2 ^ 3))
+x = 0
+PRINT 2 ^ -NOT x
+x = 1
+PRINT 2 ^ -NOT x
+x = 0
+PRINT 2 ^ -NOT x + 3
 PRINT (3 * 6 / 2) = ((3 * 6) / 2)
 PRINT (3 * 10 \ 3) = ((3 * 10) \ 3)
 

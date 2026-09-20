@@ -1,0 +1,16 @@
+
+SUB AssertString (label AS STRING, actual AS STRING, expected AS STRING)
+    IF actual = expected THEN
+        PRINT "PASS:"; label
+    ELSE
+        PRINT "FAIL:"; label; " expected=["; expected; "] actual=["; actual; "]"
+    END IF
+END SUB
+
+SUB AssertBool (label AS STRING, condition AS LONG)
+    IF condition THEN
+        PRINT "PASS:"; label
+    ELSE
+        PRINT "FAIL:"; label
+    END IF
+END SUB
