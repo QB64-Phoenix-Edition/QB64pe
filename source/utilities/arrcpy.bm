@@ -1,0 +1,994 @@
+' _ArrayCopy compiler helpers.
+' Keep parsing, semantic resolution, validation, and C/C++ emission separated so
+' each syntax form preserves BASIC evaluation order, diagnostics, and runtime
+' behavior. Variable-length STRING copies snapshot qbs values before destination
+' writes when overlap is possible; fixed-size payloads use bounds- and
+' overflow-checked byte-copy paths.
+
+FUNCTION ArrayCopyRefCaseLayout$ (expr AS STRING, whole_ref AS STRING)
+    DIM AS STRING work_ref, resolver_ref, final_name, root_name, member_ref
+    DIM AS STRING token_text, token_base, token_symbol, canonical_name, padded_name
+    DIM AS LONG syntax_kind, has_member, ref_ok, ref_type
+    DIM AS LONG id_number, member_id, ref_tokens, token_count
+    DIM AS LONG final_open, depth_count, scan_at, prefix_end
+    DIM AS LONG current_type, member_scan, token_at, group_depth
+
+    ArrayCopyRefCaseLayout$ = CompactMemberRefLayout$(expr)
+
+    resolver_ref = whole_ref
+    ref_tokens = numelements(resolver_ref)
+    IF ref_tokens < 3 THEN EXIT FUNCTION
+
+    IF INSTR(resolver_ref, ".") THEN
+        resolver_ref = getelements$(resolver_ref, 1, ref_tokens - 2)
+        has_member = -1
+        root_name = ""
+    ELSE
+        GetAsgRefSyntax resolver_ref, syntax_kind, final_name, has_member, root_name
+        IF syntax_kind <> 2 OR has_member THEN EXIT FUNCTION
+    END IF
+
+    GetWholeAsgRef resolver_ref, root_name, has_member, ref_ok, member_ref, ref_type, id_number, member_id
+    IF Error_Happened OR ref_ok = 0 THEN EXIT FUNCTION
+
+    token_count = numelements(expr)
+    IF token_count < 3 THEN EXIT FUNCTION
+    IF getelement$(expr, token_count) <> ")" THEN EXIT FUNCTION
+
+    depth_count = 1
+    final_open = 0
+    FOR scan_at = token_count - 1 TO 1 STEP -1
+        token_text = getelement$(expr, scan_at)
+        IF token_text = ")" THEN
+            depth_count = depth_count + 1
+        ELSEIF token_text = "(" THEN
+            depth_count = depth_count - 1
+            IF depth_count = 0 THEN final_open = scan_at: EXIT FOR
+        END IF
+    NEXT
+    IF final_open <= 1 OR depth_count <> 0 THEN EXIT FUNCTION
+
+    work_ref = expr
+
+    'The outer _ArrayCopy TO is formatted by the statement layout. Canonicalize
+    'only top-level TO separators inside the operand's final range group here.
+    group_depth = 0
+    FOR scan_at = final_open + 1 TO token_count - 1
+        token_text = getelement$(work_ref, scan_at)
+        IF token_text = "(" THEN
+            group_depth = group_depth + 1
+        ELSEIF token_text = ")" THEN
+            group_depth = group_depth - 1
+        ELSEIF group_depth = 0 AND UCASE$(token_text) = "TO" THEN
+            removeelements work_ref, scan_at, scan_at, 0
+            insertelements work_ref, scan_at - 1, SCase$("To")
+        END IF
+    NEXT
+
+    prefix_end = final_open - 1
+
+    getid id_number
+    IF Error_Happened THEN EXIT FUNCTION
+
+    token_text = getelement$(work_ref, 1)
+    token_base = token_text
+    token_symbol = removesymbol$(token_base)
+    IF Error_Happened THEN EXIT FUNCTION
+    canonical_name = RTRIM$(id.cn) + token_symbol
+    removeelements work_ref, 1, 1, 0
+    insertelements work_ref, 0, canonical_name
+
+    IF id.arraytype THEN current_type = id.arraytype ELSE current_type = id.t
+
+    token_at = 2
+    DO WHILE token_at <= prefix_end
+        token_text = getelement$(work_ref, token_at)
+
+        IF token_text = "(" THEN
+            group_depth = 1
+            DO WHILE group_depth AND token_at < prefix_end
+                token_at = token_at + 1
+                token_text = getelement$(work_ref, token_at)
+                IF token_text = "(" THEN group_depth = group_depth + 1
+                IF token_text = ")" THEN group_depth = group_depth - 1
+            LOOP
+            IF group_depth <> 0 THEN EXIT FUNCTION
+
+        ELSEIF token_text = "." THEN
+            token_at = token_at + 1
+            IF token_at > prefix_end THEN EXIT FUNCTION
+            IF (current_type AND ISUDT) = 0 THEN EXIT FUNCTION
+
+            token_text = getelement$(work_ref, token_at)
+            token_base = token_text
+            token_symbol = removesymbol$(token_base)
+            IF Error_Happened THEN EXIT FUNCTION
+            padded_name = UCASE$(token_base) + SPACE$(256 - LEN(token_base))
+
+            member_scan = udtxnext(current_type AND UDTMASK)
+            DO WHILE member_scan
+                IF udtename(member_scan) = padded_name THEN EXIT DO
+                member_scan = udtenext(member_scan)
+            LOOP
+            IF member_scan = 0 THEN EXIT FUNCTION
+
+            canonical_name = RTRIM$(udtecname(member_scan)) + token_symbol
+            removeelements work_ref, token_at, token_at, 0
+            insertelements work_ref, token_at - 1, canonical_name
+            current_type = udtetype(member_scan)
+        END IF
+
+        token_at = token_at + 1
+    LOOP
+
+    ArrayCopyRefCaseLayout$ = CompactMemberRefLayout$(work_ref)
+END FUNCTION
+
+
+'Parse one syntactic array reference used by _ArrayCopy. Semantic resolution is
+'deliberately deferred to the ResolveArrayCopyRefEx resolver layer so unsupported
+'_Dynamic members and multidimensional members reach their specific diagnostics
+'instead of being collapsed into the generic _ArrayCopy syntax error here.
+'ref_kind = -1 requires array(lower TO upper).
+'ref_kind = 0 requires array(start).
+'ref_kind = 1 requires array().
+'ref_kind = 2 requires array(start1, start2, ...).
+'ref_kind = 3 requires array(lower1 TO upper1, lower2 TO upper2, ...).
+SUB ParseArrayCopyRef (expr AS STRING, ref_kind AS LONG, arr_ref AS STRING, first_expr AS STRING, second_expr AS STRING, ref_ok AS LONG)
+    DIM AS STRING token_text, whole_ref
+    DIM AS LONG token_count, scan_at, depth_count, open_at, split_at, comma_count
+
+    arr_ref = ""
+    first_expr = ""
+    second_expr = ""
+    ref_ok = 0
+
+    token_count = numelements(expr)
+    IF token_count < 3 THEN EXIT SUB
+    IF getelement$(expr, token_count) <> ")" THEN EXIT SUB
+
+    'Find the opening parenthesis of the final array group. Parent array indexes
+    'and nested member chains remain part of the reference prefix.
+    depth_count = 1
+    open_at = 0
+    FOR scan_at = token_count - 1 TO 1 STEP -1
+        token_text = getelement$(expr, scan_at)
+        IF token_text = ")" THEN
+            depth_count = depth_count + 1
+        ELSEIF token_text = "(" THEN
+            depth_count = depth_count - 1
+            IF depth_count = 0 THEN open_at = scan_at: EXIT FOR
+        END IF
+    NEXT
+    IF open_at <= 1 OR depth_count <> 0 THEN EXIT SUB
+
+    whole_ref = getelements$(expr, 1, open_at - 1) + sp + "(" + sp + ")"
+    arr_ref = whole_ref
+
+    IF ref_kind = 1 THEN
+        IF open_at <> token_count - 1 THEN EXIT SUB
+        ref_ok = -1
+        EXIT SUB
+    END IF
+
+    IF open_at >= token_count - 1 THEN EXIT SUB
+
+    depth_count = 0
+    split_at = 0
+    FOR scan_at = open_at + 1 TO token_count - 1
+        token_text = UCASE$(getelement$(expr, scan_at))
+        IF token_text = "(" THEN
+            depth_count = depth_count + 1
+        ELSEIF token_text = ")" THEN
+            depth_count = depth_count - 1
+            IF depth_count < 0 THEN EXIT SUB
+        ELSEIF depth_count = 0 THEN
+            IF token_text = "," THEN
+                IF ref_kind <> 2 AND ref_kind <> 3 THEN EXIT SUB
+                IF ref_kind = 3 THEN comma_count = comma_count + 1
+            ELSEIF token_text = "TO" THEN
+                IF ref_kind = 2 THEN EXIT SUB
+                IF ref_kind = -1 THEN
+                    IF split_at THEN EXIT SUB
+                    split_at = scan_at
+                ELSEIF ref_kind <> 3 THEN
+                    EXIT SUB
+                END IF
+            END IF
+        END IF
+    NEXT
+    IF depth_count <> 0 THEN EXIT SUB
+
+    IF ref_kind = -1 THEN
+        IF split_at = 0 THEN EXIT SUB
+        IF split_at = open_at + 1 OR split_at = token_count - 1 THEN EXIT SUB
+        first_expr = getelements$(expr, open_at + 1, split_at - 1)
+        second_expr = getelements$(expr, split_at + 1, token_count - 1)
+    ELSEIF ref_kind = 0 OR ref_kind = 2 THEN
+        IF split_at THEN EXIT SUB
+        first_expr = getelements$(expr, open_at + 1, token_count - 1)
+    ELSEIF ref_kind = 3 THEN
+        IF comma_count = 0 THEN EXIT SUB
+        first_expr = getelements$(expr, open_at + 1, token_count - 1)
+    ELSE
+        EXIT SUB
+    END IF
+
+    IF first_expr = "" THEN EXIT SUB
+    IF ref_kind = -1 AND second_expr = "" THEN EXIT SUB
+    ref_ok = -1
+END SUB
+
+
+'Resolve a whole-array spelling used by _ArrayCopy. Top-level arrays retain their
+'normal descriptor. Inline TYPE member arrays use BuildUDTMemberArg so scalar,
+'indexed-parent and nested member references all share the established address path.
+SUB ResolveArrayCopyRefEx (whole_ref AS STRING, role_text AS STRING, desc_text AS STRING, prep_text AS STRING, arr_type AS LONG, arr_size AS LONG, dim_count AS LONG, allow_dynamic_var_string AS LONG, string_slot_mode AS LONG)
+    DIM AS STRING final_name, root_name, member_ref, resolver_ref
+    DIM AS LONG syntax_kind, has_member, ref_ok, ref_type
+    DIM AS LONG id_number, member_id, ref_tokens, member_candidate
+
+    desc_text = ""
+    prep_text = ""
+    arr_type = 0
+    arr_size = 0
+    dim_count = 0
+    string_slot_mode = 0
+
+    'ParseArrayCopyRef has already verified the final whole-array (). Detect a
+    'TYPE-member chain before the generic spelling classifier. Member-array
+    'identity is resolved semantically by GetWholeAsgRef/evaluate, using the
+    'established bare-member spelling also used by assignment and ERASE.
+    resolver_ref = whole_ref
+    ref_tokens = numelements(resolver_ref)
+    IF ref_tokens < 3 THEN Give_Error "_ArrayCopy " + role_text + " must be an array": EXIT SUB
+    IF getelement$(resolver_ref, ref_tokens - 1) <> "(" OR getelement$(resolver_ref, ref_tokens) <> ")" THEN
+        Give_Error "_ArrayCopy " + role_text + " must be an array": EXIT SUB
+    END IF
+
+    member_candidate = 0
+    IF INSTR(resolver_ref, ".") THEN member_candidate = -1
+
+    IF member_candidate THEN
+        'ParseArrayCopyRef already proved the explicit final (). Do not pass a TYPE
+        'member through GetAsgRefSyntax again: member-array identity is semantic,
+        'and GetWholeAsgRef/evaluate is the established resolver used by assignment.
+        resolver_ref = getelements$(resolver_ref, 1, ref_tokens - 2)
+        has_member = -1
+        root_name = ""
+    ELSE
+        GetAsgRefSyntax resolver_ref, syntax_kind, final_name, has_member, root_name
+        IF syntax_kind <> 2 THEN Give_Error "_ArrayCopy " + role_text + " must be an array": EXIT SUB
+        IF has_member THEN Give_Error "_ArrayCopy " + role_text + " must be an array": EXIT SUB
+    END IF
+
+    GetWholeAsgRef resolver_ref, root_name, has_member, ref_ok, member_ref, ref_type, id_number, member_id
+    IF Error_Happened THEN EXIT SUB
+    IF ref_ok = 0 THEN Give_Error "_ArrayCopy " + role_text + " must be an array": EXIT SUB
+
+    IF member_id = 0 THEN
+        getid id_number
+        IF Error_Happened THEN EXIT SUB
+        desc_text = RTRIM$(id.callname)
+        arr_type = id.arraytype
+        arr_size = id.tsize
+        dim_count = id.arrayelements
+        IF dim_count <= 0 THEN dim_count = arrayelementslist(id_number)
+        IF (arr_type AND ISSTRING) <> 0 AND (arr_type AND ISFIXEDLENGTH) = 0 THEN string_slot_mode = -1
+        EXIT SUB
+    END IF
+
+    'Variable-length STRING array elements use qbs* slots for top-level arrays,
+    'inline/_Static members, and descriptor-backed _Dynamic members. Keep the allow
+    'flag in the resolver contract so callers can explicitly reject descriptor-backed
+    'variable-length STRING members when required.
+    IF (udtetype(member_id) AND ISSTRING) <> 0 AND (udtetype(member_id) AND ISFIXEDLENGTH) = 0 THEN
+        IF UDTMemberDynDesc%(member_id) AND allow_dynamic_var_string = 0 THEN
+            Give_Error "_ArrayCopy variable-length STRING arrays are not supported yet"
+            EXIT SUB
+        END IF
+        string_slot_mode = -1
+    END IF
+
+    BuildUDTMemberArg member_ref, desc_text, prep_text, dim_count
+    IF Error_Happened THEN EXIT SUB
+    arr_type = udtetype(member_id)
+    arr_size = udtetypesize(member_id)
+END SUB
+
+
+'Compatibility wrapper for callers that intentionally keep descriptor-backed
+'variable-length _Dynamic STRING members disabled.
+SUB ResolveArrayCopyRef (whole_ref AS STRING, role_text AS STRING, desc_text AS STRING, prep_text AS STRING, arr_type AS LONG, arr_size AS LONG, dim_count AS LONG)
+    DIM string_slot_mode AS LONG
+
+    ResolveArrayCopyRefEx whole_ref, role_text, desc_text, prep_text, arr_type, arr_size, dim_count, 0, string_slot_mode
+END SUB
+
+
+'Resolve the source/destination pair used by every active _ArrayCopy emitter.
+'Keep source resolution first and stop immediately on a source error so the
+'existing role-specific diagnostics and error ordering remain unchanged. Both
+'operands opt into descriptor-backed variable-length STRING support exactly as
+'the emitters did before this helper; this routine changes only compiler-side
+'deduplication and does not alter emitted C/C++ or ownership behavior.
+SUB ResolveArrayCopyPairEx (src_ref AS STRING, dst_ref AS STRING, src_desc AS STRING, src_prep AS STRING, src_type AS LONG, src_size AS LONG, src_dims AS LONG, src_string_slot_mode AS LONG, dst_desc AS STRING, dst_prep AS STRING, dst_type AS LONG, dst_size AS LONG, dst_dims AS LONG, dst_string_slot_mode AS LONG)
+    ResolveArrayCopyRefEx src_ref, "source", src_desc, src_prep, src_type, src_size, src_dims, -1, src_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    ResolveArrayCopyRefEx dst_ref, "destination", dst_desc, dst_prep, dst_type, dst_size, dst_dims, -1, dst_string_slot_mode
+END SUB
+
+
+'Return true when an _ArrayCopy element type is a variable-length STRING.
+'Keep this classification in one place so every emitter uses the same type test
+'without moving any form-specific rank, storage or diagnostic policy.
+FUNCTION ArrayCopyIsVarString% (arr_type AS LONG)
+    ArrayCopyIsVarString% = 0
+    IF (arr_type AND ISSTRING) = 0 THEN EXIT FUNCTION
+    IF (arr_type AND ISFIXEDLENGTH) <> 0 THEN EXIT FUNCTION
+    ArrayCopyIsVarString% = -1
+END FUNCTION
+
+
+'Validate the element type/size contract shared by all _ArrayCopy forms after
+'their dimension policy has been checked by the caller. Keeping rank checks in
+'the pair validators preserves exact diagnostics and error order.
+SUB CheckArrayCopyElementPair (src_type AS LONG, src_size AS LONG, dst_type AS LONG, dst_size AS LONG, element_bytes AS LONG)
+    DIM AS LONG src_compare, dst_compare, element_bits
+
+    element_bytes = 0
+    src_compare = src_type AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    dst_compare = dst_type AND (ISFLOAT + ISUDT + UDTMASK + ISUNSIGNED + ISSTRING + ISFIXEDLENGTH + ISOFFSET + ISOFFSETINBITS)
+    IF src_compare <> dst_compare THEN
+        Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+    END IF
+
+    IF src_compare AND ISSTRING THEN
+        IF (src_compare AND ISFIXEDLENGTH) = 0 THEN
+            Give_Error "_ArrayCopy variable-length STRING arrays are not supported yet": EXIT SUB
+        END IF
+        IF src_size <= 0 OR dst_size <= 0 THEN
+            Give_Error "_ArrayCopy cannot determine the fixed-length STRING element size": EXIT SUB
+        END IF
+        IF src_size <> dst_size THEN
+            Give_Error "_ArrayCopy requires fixed-length STRING arrays with the same element size": EXIT SUB
+        END IF
+        element_bytes = src_size
+        EXIT SUB
+    END IF
+
+    IF src_compare AND (ISUDT + ISOFFSETINBITS) THEN
+        Give_Error "_ArrayCopy supports only byte-aligned numeric or fixed-length STRING arrays": EXIT SUB
+    END IF
+
+    element_bits = src_compare AND UDTMASK
+    IF element_bits <= 0 OR element_bits MOD 8 THEN
+        Give_Error "_ArrayCopy cannot determine a byte-aligned element size": EXIT SUB
+    END IF
+    element_bytes = element_bits \ 8
+END SUB
+
+
+'Validate the common one-dimensional element contract after both
+'top-level/member references have been resolved.
+SUB CheckArrayCopyPair (src_type AS LONG, src_size AS LONG, src_dims AS LONG, dst_type AS LONG, dst_size AS LONG, dst_dims AS LONG, element_bytes AS LONG)
+    element_bytes = 0
+    IF src_dims <> 1 OR dst_dims <> 1 THEN
+        Give_Error "_ArrayCopy TYPE-member step supports only one-dimensional arrays": EXIT SUB
+    END IF
+
+    CheckArrayCopyElementPair src_type, src_size, dst_type, dst_size, element_bytes
+END SUB
+
+
+'Validate the common one-dimensional pair policy used by the three 1D emitters.
+'Variable-length STRING arrays require native qbs* slot storage; all other
+'element types reuse CheckArrayCopyPair.
+SUB CheckArrayCopy1DPair (src_type AS LONG, src_size AS LONG, src_dims AS LONG, src_string_slot_mode AS LONG, dst_type AS LONG, dst_size AS LONG, dst_dims AS LONG, dst_string_slot_mode AS LONG, element_bytes AS LONG, var_string_copy AS LONG)
+    DIM AS LONG src_var_string, dst_var_string
+
+    src_var_string = ArrayCopyIsVarString%(src_type)
+    dst_var_string = ArrayCopyIsVarString%(dst_type)
+    var_string_copy = 0
+
+    IF src_var_string OR dst_var_string THEN
+        IF src_var_string = 0 OR dst_var_string = 0 THEN
+            Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+        END IF
+        IF src_dims <> 1 OR dst_dims <> 1 THEN
+            Give_Error "_ArrayCopy variable-length STRING step supports only one-dimensional arrays": EXIT SUB
+        END IF
+        IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
+            Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
+        END IF
+        var_string_copy = -1
+    ELSE
+        CheckArrayCopyPair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
+    END IF
+END SUB
+
+
+'Validate the common pair policy used by multidimensional source-range forms.
+'Variable-length STRING pairs must both be multidimensional, have matching rank,
+'and expose a known qbs* slot representation. Fixed-size payloads retain the
+'existing whole-pair validation. Form-specific range parsing remains in callers.
+SUB CheckArrayCopyRangeNDPair (src_type AS LONG, src_size AS LONG, src_dims AS LONG, src_string_slot_mode AS LONG, dst_type AS LONG, dst_size AS LONG, dst_dims AS LONG, dst_string_slot_mode AS LONG, element_bytes AS LONG, var_string_copy AS LONG)
+    DIM AS LONG src_var_string, dst_var_string
+
+    src_var_string = ArrayCopyIsVarString%(src_type)
+    dst_var_string = ArrayCopyIsVarString%(dst_type)
+    var_string_copy = 0
+
+    IF src_var_string OR dst_var_string THEN
+        IF src_var_string = 0 OR dst_var_string = 0 THEN
+            Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+        END IF
+        IF src_dims <= 1 OR dst_dims <= 1 OR src_dims <> dst_dims THEN
+            Give_Error "_ArrayCopy source and destination must have the same multidimensional shape rank": EXIT SUB
+        END IF
+        IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
+            Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
+        END IF
+        var_string_copy = -1
+    ELSE
+        CheckArrayCopyWholePair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
+    END IF
+END SUB
+
+
+'Compile a one-dimensional source range in the same low-then-high order used
+'by the original emitters. Each BASIC expression is normalized and evaluated once.
+SUB ParseArrayCopySourceRange1D (src_low_expr AS STRING, src_high_expr AS STRING, src_low_code AS STRING, src_high_code AS STRING)
+    DIM AS STRING src_low_work, src_high_work
+
+    src_low_work = fixoperationorder$(src_low_expr)
+    IF Error_Happened THEN EXIT SUB
+    src_low_code = evaluatetotyp(src_low_work, 64&)
+    IF Error_Happened THEN EXIT SUB
+
+    src_high_work = fixoperationorder$(src_high_expr)
+    IF Error_Happened THEN EXIT SUB
+    src_high_code = evaluatetotyp(src_high_work, 64&)
+    IF Error_Happened THEN EXIT SUB
+END SUB
+
+
+'Compile the one-dimensional destination start expression shared by range-at
+'and whole-at emitters. The BASIC expression is normalized and evaluated once;
+'callers retain their original source-before-destination evaluation order.
+SUB ParseArrayCopyDestinationStart1D (dst_start_expr AS STRING, dst_start_code AS STRING)
+    DIM dst_start_work AS STRING
+
+    dst_start_work = fixoperationorder$(dst_start_expr)
+    IF Error_Happened THEN EXIT SUB
+    dst_start_code = evaluatetotyp(dst_start_work, 64&)
+    IF Error_Happened THEN EXIT SUB
+END SUB
+
+
+'Parse and compile the multidimensional source-range list shared by both ND
+'range emitters. The helper deliberately preserves the original left-to-right
+'evaluation order, exact diagnostics, and one-time evaluation of every lower
+'and upper BASIC expression. Callers keep their form-specific rank policy and
+'destination behavior; this routine only produces the C initializer fragments.
+SUB ParseArrayCopySourceRanges (src_range_list AS STRING, src_dims AS LONG, low_init AS STRING, high_init AS STRING)
+    DIM AS STRING range_token, range_part, low_expr, high_expr
+    DIM AS STRING low_work, high_work, low_code, high_code
+    DIM AS LONG range_tokens, range_at, range_depth, range_begin, range_count, range_cut
+    DIM AS LONG part_tokens, part_at, part_depth, to_at
+
+    range_tokens = numelements(src_range_list)
+    IF range_tokens <= 0 THEN Give_Error "_ArrayCopy source requires one lower TO upper range per dimension": EXIT SUB
+
+    range_depth = 0
+    range_begin = 1
+    range_count = 0
+    low_init = ""
+    high_init = ""
+
+    FOR range_at = 1 TO range_tokens + 1
+        range_cut = 0
+        IF range_at > range_tokens THEN
+            range_cut = -1
+        ELSE
+            range_token = getelement$(src_range_list, range_at)
+            IF range_token = "(" THEN
+                range_depth = range_depth + 1
+            ELSEIF range_token = ")" THEN
+                range_depth = range_depth - 1
+                IF range_depth < 0 THEN Give_Error "_ArrayCopy source range expression has unmatched parentheses": EXIT SUB
+            ELSEIF range_depth = 0 AND range_token = "," THEN
+                range_cut = -1
+            END IF
+        END IF
+
+        IF range_cut THEN
+            IF range_at <= range_begin THEN Give_Error "_ArrayCopy source range expression cannot be empty": EXIT SUB
+            range_part = getelements$(src_range_list, range_begin, range_at - 1)
+            IF range_part = "" THEN Give_Error "_ArrayCopy source range expression cannot be empty": EXIT SUB
+
+            part_tokens = numelements(range_part)
+            part_depth = 0
+            to_at = 0
+            FOR part_at = 1 TO part_tokens
+                range_token = UCASE$(getelement$(range_part, part_at))
+                IF range_token = "(" THEN
+                    part_depth = part_depth + 1
+                ELSEIF range_token = ")" THEN
+                    part_depth = part_depth - 1
+                    IF part_depth < 0 THEN Give_Error "_ArrayCopy source range expression has unmatched parentheses": EXIT SUB
+                ELSEIF part_depth = 0 AND range_token = "TO" THEN
+                    IF to_at THEN Give_Error "_ArrayCopy source dimension requires exactly one TO": EXIT SUB
+                    to_at = part_at
+                END IF
+            NEXT
+            IF part_depth <> 0 THEN Give_Error "_ArrayCopy source range expression has unmatched parentheses": EXIT SUB
+            IF to_at <= 1 OR to_at >= part_tokens THEN Give_Error "_ArrayCopy source dimension requires lower TO upper": EXIT SUB
+
+            low_expr = getelements$(range_part, 1, to_at - 1)
+            high_expr = getelements$(range_part, to_at + 1, part_tokens)
+            IF low_expr = "" OR high_expr = "" THEN Give_Error "_ArrayCopy source dimension requires lower TO upper": EXIT SUB
+
+            low_work = fixoperationorder$(low_expr)
+            IF Error_Happened THEN EXIT SUB
+            low_code = evaluatetotyp(low_work, 64&)
+            IF Error_Happened THEN EXIT SUB
+
+            high_work = fixoperationorder$(high_expr)
+            IF Error_Happened THEN EXIT SUB
+            high_code = evaluatetotyp(high_work, 64&)
+            IF Error_Happened THEN EXIT SUB
+
+            range_count = range_count + 1
+            IF low_init <> "" THEN low_init = low_init + ","
+            IF high_init <> "" THEN high_init = high_init + ","
+            low_init = low_init + "(int64)(" + low_code + ")"
+            high_init = high_init + "(int64)(" + high_code + ")"
+            range_begin = range_at + 1
+        END IF
+    NEXT
+
+    IF range_depth <> 0 THEN Give_Error "_ArrayCopy source range expression has unmatched parentheses": EXIT SUB
+    IF range_count <> src_dims THEN Give_Error "_ArrayCopy source range count must match source dimensions": EXIT SUB
+END SUB
+
+
+'Parse the destination start-coordinate list shared by whole-at and range-at ND
+'emitters. compile_coords controls whether BASIC expressions are compiled here.
+'WholeAtND deliberately passes zero for its 1D defer path so the raw first
+'coordinate remains unevaluated until EmitArrayCopyWholeAt1D handles it, exactly
+'as before. ND callers pass -1 and receive the C initializer fragment.
+SUB ParseArrayCopyDestinationStarts (dst_start_list AS STRING, dst_dims AS LONG, compile_coords AS LONG, coord_init AS STRING, first_coord AS STRING)
+    DIM AS STRING coord_token, coord_expr, coord_work, coord_code
+    DIM AS LONG coord_tokens, coord_at, coord_depth, coord_begin, coord_count, coord_cut
+
+    coord_tokens = numelements(dst_start_list)
+    IF coord_tokens <= 0 THEN Give_Error "_ArrayCopy destination requires one start coordinate per dimension": EXIT SUB
+
+    coord_depth = 0
+    coord_begin = 1
+    coord_count = 0
+    coord_init = ""
+    first_coord = ""
+
+    FOR coord_at = 1 TO coord_tokens + 1
+        coord_cut = 0
+        IF coord_at > coord_tokens THEN
+            coord_cut = -1
+        ELSE
+            coord_token = getelement$(dst_start_list, coord_at)
+            IF coord_token = "(" THEN
+                coord_depth = coord_depth + 1
+            ELSEIF coord_token = ")" THEN
+                coord_depth = coord_depth - 1
+                IF coord_depth < 0 THEN Give_Error "_ArrayCopy destination coordinate expression has unmatched parentheses": EXIT SUB
+            ELSEIF coord_depth = 0 AND coord_token = "," THEN
+                coord_cut = -1
+            END IF
+        END IF
+
+        IF coord_cut THEN
+            IF coord_at <= coord_begin THEN Give_Error "_ArrayCopy destination coordinate expression cannot be empty": EXIT SUB
+            coord_expr = getelements$(dst_start_list, coord_begin, coord_at - 1)
+            IF coord_expr = "" THEN Give_Error "_ArrayCopy destination coordinate expression cannot be empty": EXIT SUB
+
+            coord_count = coord_count + 1
+            IF coord_count = 1 THEN first_coord = coord_expr
+
+            IF compile_coords THEN
+                coord_work = fixoperationorder$(coord_expr)
+                IF Error_Happened THEN EXIT SUB
+                coord_code = evaluatetotyp(coord_work, 64&)
+                IF Error_Happened THEN EXIT SUB
+                IF coord_init <> "" THEN coord_init = coord_init + ","
+                coord_init = coord_init + "(int64)(" + coord_code + ")"
+            END IF
+
+            coord_begin = coord_at + 1
+        END IF
+    NEXT
+
+    IF coord_depth <> 0 THEN Give_Error "_ArrayCopy destination coordinate expression has unmatched parentheses": EXIT SUB
+    IF coord_count <> dst_dims THEN Give_Error "_ArrayCopy destination start coordinate count must match destination dimensions": EXIT SUB
+END SUB
+
+
+'Validate source() TO destination() for whole-array copies. One-dimensional
+'arrays retain the existing index-preserving behavior. Multidimensional arrays
+'must have the same declared dimension count; their runtime bounds are checked
+'for exact equality before one contiguous block copy is allowed.
+SUB CheckArrayCopyWholePair (src_type AS LONG, src_size AS LONG, src_dims AS LONG, dst_type AS LONG, dst_size AS LONG, dst_dims AS LONG, element_bytes AS LONG)
+    element_bytes = 0
+    IF src_dims <= 0 OR dst_dims <= 0 THEN
+        Give_Error "_ArrayCopy cannot determine the array dimensions": EXIT SUB
+    END IF
+    IF src_dims <> dst_dims THEN
+        Give_Error "_ArrayCopy whole-array source and destination must have the same number of dimensions": EXIT SUB
+    END IF
+
+    CheckArrayCopyElementPair src_type, src_size, dst_type, dst_size, element_bytes
+END SUB
+
+
+'Emit _ArrayCopy source(lower TO upper) TO destination(start). Numeric and
+'fixed-length STRING arrays retain the byte-copy path. Variable-length STRING
+'arrays use an ownership-safe qbs snapshot so overlap and self-copy are safe for
+'top-level, inline/_Static, and descriptor-backed _Dynamic operands. All
+'expressions and bounds are evaluated before copying.
+SUB EmitArrayCopy1D (src_ref AS STRING, src_low_expr AS STRING, src_high_expr AS STRING, dst_ref AS STRING, dst_start_expr AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS STRING src_low_code, src_high_code, dst_start_code
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    CheckArrayCopy1DPair src_type, src_size, src_dims, src_string_slot_mode, dst_type, dst_size, dst_dims, dst_string_slot_mode, element_bytes, var_string_copy
+    IF Error_Happened THEN EXIT SUB
+
+    ParseArrayCopySourceRange1D src_low_expr, src_high_expr, src_low_code, src_high_code
+    IF Error_Happened THEN EXIT SUB
+
+    ParseArrayCopyDestinationStart1D dst_start_expr, dst_start_code
+    IF Error_Happened THEN EXIT SUB
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low=(int64)(" + src_low_code + ");"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high=(int64)(" + src_high_code + ");"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start=(int64)(" + dst_start_code + ");"
+    'Both payload classes now use libqb runtime entry points. Keep descriptor
+    'evaluation ordered exactly as in the previous inline path. Variable-length
+    'STRING retains ownership-safe snapshot/deep-copy semantics in C runtime.
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_string(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_dst_start);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_fixed(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+'Emit _ArrayCopy source() TO destination(). One-dimensional arrays preserve
+'their existing source indexes and may copy into a containing destination range.
+'Multidimensional variable-length STRING arrays require matching dimension counts
+'and exact runtime bounds. Member-involved copies use an ownership-safe qbs snapshot.
+SUB EmitArrayCopyWholeND (src_ref AS STRING, dst_ref AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG src_var_string, dst_var_string, var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    src_var_string = ArrayCopyIsVarString%(src_type)
+    dst_var_string = ArrayCopyIsVarString%(dst_type)
+    var_string_copy = 0
+
+    IF src_dims = 1 AND dst_dims = 1 THEN
+        IF src_var_string OR dst_var_string THEN
+            IF src_var_string = 0 OR dst_var_string = 0 THEN
+                Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+            END IF
+            IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
+                Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
+            END IF
+            'All supported variable-length STRING operands use native qbs* slots.
+            var_string_copy = -1
+        ELSE
+            CheckArrayCopyPair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
+        END IF
+    ELSEIF src_var_string OR dst_var_string THEN
+        IF src_var_string = 0 OR dst_var_string = 0 THEN
+            Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+        END IF
+        IF src_dims <= 1 OR dst_dims <= 1 OR src_dims <> dst_dims THEN
+            Give_Error "_ArrayCopy whole-array source and destination must have the same number of dimensions": EXIT SUB
+        END IF
+        IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
+            Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
+        END IF
+        'All supported ND variable-length STRING pairs use the libqb ownership-safe snapshot path.
+        var_string_copy = -1
+    ELSE
+        CheckArrayCopyWholePair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
+    END IF
+    IF Error_Happened THEN EXIT SUB
+
+    IF src_dims > 1 THEN
+        WriteBufLineCpp MainTxtBuf, "{"
+        IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+        IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+        IF var_string_copy THEN
+            'ND whole-to-whole requires exact runtime bounds in every dimension.
+            'libqb performs that validation and the ownership-safe qbs snapshot.
+            WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ");"
+        ELSE
+            WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",(uint64)" + _TOSTR$(element_bytes) + ");"
+        END IF
+        WriteBufLineCpp MainTxtBuf, "}"
+        EXIT SUB
+    END IF
+
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        'Variable-length STRING whole-to-whole now uses the same ownership-safe
+        'libqb snapshot/deep-copy core as the other 1D STRING forms.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_string(array_copy_src,array_copy_dst);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_fixed(array_copy_src,array_copy_dst,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+'Emit _ArrayCopy source() TO destination(start1, start2, ...). The source and
+'destination must have the same number of dimensions and compatible element types.
+'One-dimensional variable-length STRING pairs use EmitArrayCopyWholeAt1D.
+'Multidimensional variable-length STRING and fixed-size payloads call shared libqb
+'ND runtime paths after all BASIC destination expressions have been evaluated
+'exactly once.
+SUB EmitArrayCopyWholeAtND (src_ref AS STRING, dst_ref AS STRING, dst_start_list AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS STRING coord_init, first_coord
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG src_var_string, dst_var_string, var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    src_var_string = ArrayCopyIsVarString%(src_type)
+    dst_var_string = ArrayCopyIsVarString%(dst_type)
+    var_string_copy = 0
+    IF src_var_string OR dst_var_string THEN
+        IF src_var_string = 0 OR dst_var_string = 0 THEN
+            Give_Error "_ArrayCopy requires arrays with the same element type": EXIT SUB
+        END IF
+        IF src_dims <> 1 OR dst_dims <> 1 THEN
+            IF src_dims <= 1 OR dst_dims <= 1 OR src_dims <> dst_dims THEN
+                Give_Error "_ArrayCopy whole-array source and destination must have the same number of dimensions": EXIT SUB
+            END IF
+            IF src_string_slot_mode = 0 OR dst_string_slot_mode = 0 THEN
+                Give_Error "_ArrayCopy cannot determine variable-length STRING storage": EXIT SUB
+            END IF
+            var_string_copy = -1
+        END IF
+    ELSE
+        CheckArrayCopyWholePair src_type, src_size, src_dims, dst_type, dst_size, dst_dims, element_bytes
+        IF Error_Happened THEN EXIT SUB
+    END IF
+
+    ParseArrayCopyDestinationStarts dst_start_list, dst_dims, (src_dims > 1), coord_init, first_coord
+    IF Error_Happened THEN EXIT SUB
+
+    IF src_dims = 1 THEN
+        EmitArrayCopyWholeAt1D src_ref, dst_ref, first_coord
+        EXIT SUB
+    END IF
+
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        'The whole-source STRING bounds remain runtime descriptor state after REDIM.
+        'Keep the compiler call site small and let libqb validate/map the source
+        'shape before taking the ownership-safe qbs snapshot.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_dst_start);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_whole_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+
+'Emit _ArrayCopy source(lower1 TO upper1, lower2 TO upper2, ...) TO
+'destination(start1, start2, ...). The source and destination must have the same
+'number of dimensions and compatible element types. Variable-length STRING arrays
+'use a complete ownership-safe qbs snapshot; fixed-size payloads call the libqb ND
+'runtime path after source and destination expressions are evaluated exactly once.
+SUB EmitArrayCopyRangeAtND (src_ref AS STRING, src_range_list AS STRING, dst_ref AS STRING, dst_start_list AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS STRING low_init, high_init
+    DIM AS STRING coord_init, first_coord
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    CheckArrayCopyRangeNDPair src_type, src_size, src_dims, src_string_slot_mode, dst_type, dst_size, dst_dims, dst_string_slot_mode, element_bytes, var_string_copy
+    IF Error_Happened THEN EXIT SUB
+
+    IF src_dims <= 1 THEN
+        Give_Error "_ArrayCopy multidimensional source ranges require at least two dimensions"
+        EXIT SUB
+    END IF
+
+    ParseArrayCopySourceRanges src_range_list, src_dims, low_init, high_init
+    IF Error_Happened THEN EXIT SUB
+
+    ParseArrayCopyDestinationStarts dst_start_list, dst_dims, -1, coord_init, first_coord
+    IF Error_Happened THEN EXIT SUB
+
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "{"
+        IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+        IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
+        WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_dst_start);"
+        WriteBufLineCpp MainTxtBuf, "}"
+        EXIT SUB
+    END IF
+
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start[" + _TOSTR$(dst_dims) + "]={" + coord_init + "};"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+'Emit _ArrayCopy source(lower1 TO upper1, ...) TO destination(). The
+'selected source coordinates are preserved in the destination, so every source
+'range must fit inside the destination at the same index values. Variable-length
+'STRING arrays use a complete ownership-safe qbs snapshot; fixed-size payloads
+'call the shared libqb ND range runtime path with source_low as destination_start.
+SUB EmitArrayCopyRangeWholeND (src_ref AS STRING, src_range_list AS STRING, dst_ref AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS STRING low_init, high_init
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    CheckArrayCopyRangeNDPair src_type, src_size, src_dims, src_string_slot_mode, dst_type, dst_size, dst_dims, dst_string_slot_mode, element_bytes, var_string_copy
+    IF Error_Happened THEN EXIT SUB
+
+    IF src_dims <= 1 THEN
+        Give_Error "_ArrayCopy multidimensional source ranges require at least two dimensions"
+        EXIT SUB
+    END IF
+
+    ParseArrayCopySourceRanges src_range_list, src_dims, low_init, high_init
+    IF Error_Happened THEN EXIT SUB
+
+    'Preserve-coordinate semantics use the already-evaluated source lower bounds
+    'as destination starts. Both fixed-size and variable STRING paths therefore
+    'share their confirmed ND range-at runtime engines without regenerating the
+    'descriptor/stride/snapshot machinery at each BASIC call site.
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low[" + _TOSTR$(src_dims) + "]={" + low_init + "};"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high[" + _TOSTR$(src_dims) + "]={" + high_init + "};"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_string(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_src_low);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_nd_range_at_fixed(array_copy_src,array_copy_dst," + _TOSTR$(src_dims) + ",array_copy_src_low,array_copy_src_high,array_copy_src_low,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+'Emit _ArrayCopy source() TO destination(start), copying the complete source
+'in physical element order beginning at the requested destination index. Numeric
+'and fixed-length STRING arrays retain memmove. Variable-length STRING operands use
+'an ownership-safe qbs snapshot. All checks finish before any destination changes.
+SUB EmitArrayCopyWholeAt1D (src_ref AS STRING, dst_ref AS STRING, dst_start_expr AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM dst_start_code AS STRING
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+
+    CheckArrayCopy1DPair src_type, src_size, src_dims, src_string_slot_mode, dst_type, dst_size, dst_dims, dst_string_slot_mode, element_bytes, var_string_copy
+    IF Error_Happened THEN EXIT SUB
+
+    ParseArrayCopyDestinationStart1D dst_start_expr, dst_start_code
+    IF Error_Happened THEN EXIT SUB
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_dst_start=(int64)(" + dst_start_code + ");"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        'Variable-length STRING whole-to-start copies use the shared ownership-aware libqb snapshot path.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_at_string(array_copy_src,array_copy_dst,array_copy_dst_start);"
+    ELSE
+        'Fixed-size whole-to-start copies use the shared libqb runtime path.
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_whole_at_fixed(array_copy_src,array_copy_dst,array_copy_dst_start,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
+
+'Emit _ArrayCopy source(lower TO upper) TO destination(), preserving the
+'actual source index values in the destination. The destination must contain
+'the complete requested source interval. Variable-length STRING operands use an
+'ownership-safe qbs snapshot.
+SUB EmitArrayCopyRangeWhole1D (src_ref AS STRING, src_low_expr AS STRING, src_high_expr AS STRING, dst_ref AS STRING)
+    DIM AS STRING src_desc, dst_desc, src_prep, dst_prep
+    DIM AS STRING src_low_code, src_high_code
+    DIM AS LONG src_type, dst_type, src_size, dst_size, src_dims, dst_dims, element_bytes
+    DIM AS LONG var_string_copy
+    DIM AS LONG src_string_slot_mode, dst_string_slot_mode
+
+    ResolveArrayCopyPairEx src_ref, dst_ref, src_desc, src_prep, src_type, src_size, src_dims, src_string_slot_mode, dst_desc, dst_prep, dst_type, dst_size, dst_dims, dst_string_slot_mode
+    IF Error_Happened THEN EXIT SUB
+    CheckArrayCopy1DPair src_type, src_size, src_dims, src_string_slot_mode, dst_type, dst_size, dst_dims, dst_string_slot_mode, element_bytes, var_string_copy
+    IF Error_Happened THEN EXIT SUB
+
+    ParseArrayCopySourceRange1D src_low_expr, src_high_expr, src_low_code, src_high_code
+    IF Error_Happened THEN EXIT SUB
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF src_prep <> "" THEN WriteBufRawData MainTxtBuf, src_prep
+    IF dst_prep <> "" THEN WriteBufRawData MainTxtBuf, dst_prep
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_low=(int64)(" + src_low_code + ");"
+    WriteBufLineCpp MainTxtBuf, "int64 array_copy_src_high=(int64)(" + src_high_code + ");"
+    'The whole-destination form preserves the actual source indexes, so its
+    'destination start coordinate is exactly source_low. Both payload classes
+    'reuse their confirmed range-to-start libqb runtime entry points.
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_src=" + src_desc + ";"
+    WriteBufLineCpp MainTxtBuf, "ptrszint *array_copy_dst=" + dst_desc + ";"
+    IF var_string_copy THEN
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_string(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_src_low);"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "qb64_array_copy_1d_range_at_fixed(array_copy_src,array_copy_dst,array_copy_src_low,array_copy_src_high,array_copy_src_low,(uint64)" + _TOSTR$(element_bytes) + ");"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB

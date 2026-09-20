@@ -10516,6 +10516,90 @@ DO
 
 
 
+
+    IF n >= 1 THEN
+        IF firstelement$ = "_ARRAYCOPY" THEN
+            acpDepth = 0
+            acpSplit = 0
+            FOR acpScan = 2 TO n
+                acpToken$ = UCASE$(getelement$(ca$, acpScan))
+                IF acpToken$ = "(" THEN
+                    acpDepth = acpDepth + 1
+                ELSEIF acpToken$ = ")" THEN
+                    acpDepth = acpDepth - 1
+                    IF acpDepth < 0 THEN a$ = "Expected _ArrayCopy source(lower TO upper) TO destination(start), source() TO destination(), source() TO destination(start), source(lower TO upper) TO destination(), source(lower1 TO upper1, ...) TO destination(start1, ...), or source(lower1 TO upper1, ...) TO destination()": GOTO errmes
+                ELSEIF acpDepth = 0 AND acpToken$ = "TO" THEN
+                    IF acpSplit THEN a$ = "Expected one TO between _ArrayCopy source and destination": GOTO errmes
+                    acpSplit = acpScan
+                END IF
+            NEXT
+            IF acpDepth <> 0 THEN a$ = "Expected )": GOTO errmes
+            IF acpSplit <= 2 OR acpSplit >= n THEN a$ = "Expected _ArrayCopy source(lower TO upper) TO destination(start), source() TO destination(), source() TO destination(start), source(lower TO upper) TO destination(), source(lower1 TO upper1, ...) TO destination(start1, ...), or source(lower1 TO upper1, ...) TO destination()": GOTO errmes
+
+            acpSource$ = getelements$(ca$, 2, acpSplit - 1)
+            acpTarget$ = getelements$(ca$, acpSplit + 1, n)
+
+            acpMode = 0
+            ParseArrayCopyRef acpSource$, -1, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+            ParseArrayCopyRef acpTarget$, 0, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+            IF acpSourceOK AND acpTargetOK THEN
+                acpMode = 1
+            ELSE
+                ParseArrayCopyRef acpSource$, 1, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+                ParseArrayCopyRef acpTarget$, 1, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+                IF acpSourceOK AND acpTargetOK THEN
+                    acpMode = 2
+                ELSE
+                    ParseArrayCopyRef acpSource$, 1, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+                    ParseArrayCopyRef acpTarget$, 2, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+                    IF acpSourceOK AND acpTargetOK THEN
+                        acpMode = 3
+                    ELSE
+                        ParseArrayCopyRef acpSource$, -1, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+                        ParseArrayCopyRef acpTarget$, 1, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+                        IF acpSourceOK AND acpTargetOK THEN
+                            acpMode = 4
+                        ELSE
+                            ParseArrayCopyRef acpSource$, 3, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+                            ParseArrayCopyRef acpTarget$, 2, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+                            IF acpSourceOK AND acpTargetOK THEN
+                                acpMode = 5
+                            ELSE
+                                ParseArrayCopyRef acpSource$, 3, acpSourceName$, acpSourceLow$, acpSourceHigh$, acpSourceOK
+                                ParseArrayCopyRef acpTarget$, 1, acpTargetName$, acpTargetStart$, acpUnused$, acpTargetOK
+                                IF acpSourceOK AND acpTargetOK THEN acpMode = 6
+                            END IF
+                        END IF
+                    END IF
+                END IF
+            END IF
+            IF acpMode = 0 THEN
+                a$ = "Expected _ArrayCopy source(lower TO upper) TO destination(start), source() TO destination(), source() TO destination(start), source(lower TO upper) TO destination(), source(lower1 TO upper1, ...) TO destination(start1, ...), or source(lower1 TO upper1, ...) TO destination()": GOTO errmes
+            END IF
+
+            IF acpMode = 1 THEN
+                EmitArrayCopy1D acpSourceName$, acpSourceLow$, acpSourceHigh$, acpTargetName$, acpTargetStart$
+            ELSEIF acpMode = 2 THEN
+                EmitArrayCopyWholeND acpSourceName$, acpTargetName$
+            ELSEIF acpMode = 3 THEN
+                EmitArrayCopyWholeAtND acpSourceName$, acpTargetName$, acpTargetStart$
+            ELSEIF acpMode = 4 THEN
+                EmitArrayCopyRangeWhole1D acpSourceName$, acpSourceLow$, acpSourceHigh$, acpTargetName$
+            ELSEIF acpMode = 5 THEN
+                EmitArrayCopyRangeAtND acpSourceName$, acpSourceLow$, acpTargetName$, acpTargetStart$
+            ELSE
+                EmitArrayCopyRangeWholeND acpSourceName$, acpSourceLow$, acpTargetName$
+            END IF
+            IF Error_Happened THEN GOTO errmes
+
+            l$ = SCase$("_ArrayCopy") + sp + ArrayCopyRefCaseLayout$(acpSource$, acpSourceName$) + sp + SCase$("To") + sp + ArrayCopyRefCaseLayout$(acpTarget$, acpTargetName$)
+            IF Error_Happened THEN GOTO errmes
+            layoutdone = 1
+            IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
+            GOTO finishedline
+        END IF
+    END IF
+
     'note: ABSOLUTE cannot be used without CALL
     cispecial = 0
     IF n > 1 THEN
@@ -28711,6 +28795,7 @@ FUNCTION CompareVersions (v$, v1$)
     LOOP
 END FUNCTION
 
+'$INCLUDE:'utilities\arrcpy.bm'
 '$INCLUDE:'utilities\strings.bas'
 '$INCLUDE:'utilities\file.bas'
 '$INCLUDE:'utilities\build.bas'

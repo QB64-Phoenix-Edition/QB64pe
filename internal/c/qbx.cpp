@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include "array-copy.h"
 #include "audio.h"
 #include "bitops.h"
 #include "clipboard.h"
