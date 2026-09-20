@@ -1,128 +1,96 @@
-#line 35 "utilities/file.bas"
-int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
+void SUB_CHECKARRAYCOPYWHOLEPAIR(int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_TYPE,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_SIZE,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_DIMS,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_TYPE,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_SIZE,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_DIMS,int32*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_ELEMENT_BYTES){
+#line 621 "utilities/arrcpy.bm"
 qbs *tqbs;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 ptrszint tmp_long;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 int32 tmp_fileno;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 #include "data133.txt"
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 mem_lock *sf_mem_lock;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 new_mem_lock();
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 sf_mem_lock=mem_lock_tmp;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 sf_mem_lock->type=3;
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 libqb_check_stack();
-#line 35 "utilities/file.bas"
+#line 621 "utilities/arrcpy.bm"
 if (is_error_pending()) goto exit_subfunc;
-#line 36 "utilities/file.bas"
-S_37248:;
-#line 36 "utilities/file.bas"
-fornext_value3573=_FUNC_FILEHASEXTENSION_STRING_F->len;
-#line 36 "utilities/file.bas"
-fornext_finalvalue3573= 1 ;
-#line 36 "utilities/file.bas"
-fornext_step3573= -1 ;
-#line 36 "utilities/file.bas"
-if (fornext_step3573<0) fornext_step_negative3573=1; else fornext_step_negative3573=0;
-#line 36 "utilities/file.bas"
-if (is_error_pending()) goto fornext_error3573;
-#line 36 "utilities/file.bas"
-goto fornext_entrylabel3573;
-#line 36 "utilities/file.bas"
-while(1){
-#line 36 "utilities/file.bas"
-fornext_value3573=fornext_step3573+(*_FUNC_FILEHASEXTENSION_LONG_I);
-#line 36 "utilities/file.bas"
-fornext_entrylabel3573:
-#line 36 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value3573;
-#line 36 "utilities/file.bas"
+#line 622 "utilities/arrcpy.bm"
+do{
+#line 622 "utilities/arrcpy.bm"
+*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_ELEMENT_BYTES= 0 ;
+#line 622 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,622,"arrcpy.bm");}while(r);
+#line 623 "utilities/arrcpy.bm"
+S_37872:;
+#line 623 "utilities/arrcpy.bm"
+if (((-(*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_DIMS<= 0 ))|(-(*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_DIMS<= 0 )))||is_error_pending()){
+#line 623 "utilities/arrcpy.bm"
+if(qbevent){evnt(28798,623,"arrcpy.bm");if(r)goto S_37872;}
+#line 624 "utilities/arrcpy.bm"
+do{
+#line 624 "utilities/arrcpy.bm"
+SUB_GIVE_ERROR(qbs_new_txt_len("_ArrayCopy cannot determine the array dimensions",48));
+#line 624 "utilities/arrcpy.bm"
 qbs_cleanup(qbs_tmp_base,0);
-#line 36 "utilities/file.bas"
-if (fornext_step_negative3573){
-#line 36 "utilities/file.bas"
-if (fornext_value3573<fornext_finalvalue3573) break;
-#line 36 "utilities/file.bas"
-}else{
-#line 36 "utilities/file.bas"
-if (fornext_value3573>fornext_finalvalue3573) break;
-#line 36 "utilities/file.bas"
-}
-#line 36 "utilities/file.bas"
-fornext_error3573:;
-#line 36 "utilities/file.bas"
-if(qbevent){evnt(28715,36,"file.bas");if(r)goto S_37248;}
-#line 37 "utilities/file.bas"
+#line 624 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,624,"arrcpy.bm");}while(r);
+#line 624 "utilities/arrcpy.bm"
 do{
-#line 37 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
-#line 37 "utilities/file.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 37 "utilities/file.bas"
-if(!qbevent)break;evnt(28715,37,"file.bas");}while(r);
-#line 38 "utilities/file.bas"
-S_37250:;
-#line 38 "utilities/file.bas"
-if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
-#line 38 "utilities/file.bas"
-if(qbevent){evnt(28715,38,"file.bas");if(r)goto S_37250;}
-#line 38 "utilities/file.bas"
-do{
-#line 38 "utilities/file.bas"
-goto fornext_exit_3572;
-#line 38 "utilities/file.bas"
-if(!qbevent)break;evnt(28715,38,"file.bas");}while(r);
-#line 38 "utilities/file.bas"
-}
-#line 39 "utilities/file.bas"
-S_37253:;
-#line 39 "utilities/file.bas"
-if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
-#line 39 "utilities/file.bas"
-if(qbevent){evnt(28715,39,"file.bas");if(r)goto S_37253;}
-#line 39 "utilities/file.bas"
-do{
-#line 39 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
-#line 39 "utilities/file.bas"
-if(!qbevent)break;evnt(28715,39,"file.bas");}while(r);
-#line 39 "utilities/file.bas"
-do{
-#line 39 "utilities/file.bas"
+#line 624 "utilities/arrcpy.bm"
 goto exit_subfunc;
-#line 39 "utilities/file.bas"
-if(!qbevent)break;evnt(28715,39,"file.bas");}while(r);
-#line 39 "utilities/file.bas"
+#line 624 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,624,"arrcpy.bm");}while(r);
+#line 625 "utilities/arrcpy.bm"
 }
-#line 40 "utilities/file.bas"
-fornext_continue_3572:;
-#line 40 "utilities/file.bas"
+#line 626 "utilities/arrcpy.bm"
+S_37876:;
+#line 626 "utilities/arrcpy.bm"
+if ((-(*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_DIMS!=*_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_DIMS))||is_error_pending()){
+#line 626 "utilities/arrcpy.bm"
+if(qbevent){evnt(28798,626,"arrcpy.bm");if(r)goto S_37876;}
+#line 627 "utilities/arrcpy.bm"
+do{
+#line 627 "utilities/arrcpy.bm"
+SUB_GIVE_ERROR(qbs_new_txt_len("_ArrayCopy whole-array source and destination must have the same number of dimensions",85));
+#line 627 "utilities/arrcpy.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 627 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,627,"arrcpy.bm");}while(r);
+#line 627 "utilities/arrcpy.bm"
+do{
+#line 627 "utilities/arrcpy.bm"
+goto exit_subfunc;
+#line 627 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,627,"arrcpy.bm");}while(r);
+#line 628 "utilities/arrcpy.bm"
 }
-#line 40 "utilities/file.bas"
-fornext_exit_3572:;
-#line 41 "utilities/file.bas"
+#line 630 "utilities/arrcpy.bm"
+do{
+#line 630 "utilities/arrcpy.bm"
+SUB_CHECKARRAYCOPYELEMENTPAIR(_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_TYPE,_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_SRC_SIZE,_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_TYPE,_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_DST_SIZE,_SUB_CHECKARRAYCOPYWHOLEPAIR_LONG_ELEMENT_BYTES);
+#line 630 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,630,"arrcpy.bm");}while(r);
+#line 631 "utilities/arrcpy.bm"
 exit_subfunc:;
-#line 41 "utilities/file.bas"
+#line 631 "utilities/arrcpy.bm"
 free_mem_lock(sf_mem_lock);
-#line 41 "utilities/file.bas"
+#line 631 "utilities/arrcpy.bm"
 #include "free133.txt"
-#line 41 "utilities/file.bas"
+#line 631 "utilities/arrcpy.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 41 "utilities/file.bas"
+#line 631 "utilities/arrcpy.bm"
 cmem_sp=tmp_cmem_sp;
-#line 41 "utilities/file.bas"
-return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
-#line 41 "utilities/file.bas"
+#line 631 "utilities/arrcpy.bm"
 }

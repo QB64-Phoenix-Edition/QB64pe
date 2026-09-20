@@ -1,48 +1,74 @@
-#line 84 "utilities/strings.bas"
-void SUB_WRITECONFIGSETTING(qbs*_SUB_WRITECONFIGSETTING_STRING_SECTION,qbs*_SUB_WRITECONFIGSETTING_STRING_ITEM,qbs*_SUB_WRITECONFIGSETTING_STRING_VALUE){
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
+void SUB_CHECKARRAYCOPYPAIR(int32*_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_TYPE,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_SIZE,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_DIMS,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_DST_TYPE,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_DST_SIZE,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_DST_DIMS,int32*_SUB_CHECKARRAYCOPYPAIR_LONG_ELEMENT_BYTES){
+#line 375 "utilities/arrcpy.bm"
 qbs *tqbs;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 ptrszint tmp_long;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 int32 tmp_fileno;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 #include "data126.txt"
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 mem_lock *sf_mem_lock;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 new_mem_lock();
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 sf_mem_lock=mem_lock_tmp;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 sf_mem_lock->type=3;
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 libqb_check_stack();
-#line 84 "utilities/strings.bas"
+#line 375 "utilities/arrcpy.bm"
 if (is_error_pending()) goto exit_subfunc;
-#line 85 "utilities/strings.bas"
+#line 376 "utilities/arrcpy.bm"
 do{
-#line 85 "utilities/strings.bas"
-SUB_WRITESETTING(__STRING_CONFIGFILE,_SUB_WRITECONFIGSETTING_STRING_SECTION,_SUB_WRITECONFIGSETTING_STRING_ITEM,_SUB_WRITECONFIGSETTING_STRING_VALUE);
-#line 85 "utilities/strings.bas"
+#line 376 "utilities/arrcpy.bm"
+*_SUB_CHECKARRAYCOPYPAIR_LONG_ELEMENT_BYTES= 0 ;
+#line 376 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,376,"arrcpy.bm");}while(r);
+#line 377 "utilities/arrcpy.bm"
+S_37616:;
+#line 377 "utilities/arrcpy.bm"
+if (((-(*_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_DIMS!= 1 ))|(-(*_SUB_CHECKARRAYCOPYPAIR_LONG_DST_DIMS!= 1 )))||is_error_pending()){
+#line 377 "utilities/arrcpy.bm"
+if(qbevent){evnt(28798,377,"arrcpy.bm");if(r)goto S_37616;}
+#line 378 "utilities/arrcpy.bm"
+do{
+#line 378 "utilities/arrcpy.bm"
+SUB_GIVE_ERROR(qbs_new_txt_len("_ArrayCopy TYPE-member step supports only one-dimensional arrays",64));
+#line 378 "utilities/arrcpy.bm"
 qbs_cleanup(qbs_tmp_base,0);
-#line 85 "utilities/strings.bas"
-if(!qbevent)break;evnt(28714,85,"strings.bas");}while(r);
-#line 86 "utilities/strings.bas"
+#line 378 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,378,"arrcpy.bm");}while(r);
+#line 378 "utilities/arrcpy.bm"
+do{
+#line 378 "utilities/arrcpy.bm"
+goto exit_subfunc;
+#line 378 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,378,"arrcpy.bm");}while(r);
+#line 379 "utilities/arrcpy.bm"
+}
+#line 381 "utilities/arrcpy.bm"
+do{
+#line 381 "utilities/arrcpy.bm"
+SUB_CHECKARRAYCOPYELEMENTPAIR(_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_TYPE,_SUB_CHECKARRAYCOPYPAIR_LONG_SRC_SIZE,_SUB_CHECKARRAYCOPYPAIR_LONG_DST_TYPE,_SUB_CHECKARRAYCOPYPAIR_LONG_DST_SIZE,_SUB_CHECKARRAYCOPYPAIR_LONG_ELEMENT_BYTES);
+#line 381 "utilities/arrcpy.bm"
+if(!qbevent)break;evnt(28798,381,"arrcpy.bm");}while(r);
+#line 382 "utilities/arrcpy.bm"
 exit_subfunc:;
-#line 86 "utilities/strings.bas"
+#line 382 "utilities/arrcpy.bm"
 free_mem_lock(sf_mem_lock);
-#line 86 "utilities/strings.bas"
+#line 382 "utilities/arrcpy.bm"
 #include "free126.txt"
-#line 86 "utilities/strings.bas"
+#line 382 "utilities/arrcpy.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 86 "utilities/strings.bas"
+#line 382 "utilities/arrcpy.bm"
 cmem_sp=tmp_cmem_sp;
-#line 86 "utilities/strings.bas"
+#line 382 "utilities/arrcpy.bm"
 }

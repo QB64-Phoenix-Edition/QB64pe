@@ -1,274 +1,202 @@
-#line 722 "utilities/type.bas"
-qbs* FUNC_REMOVESYMBOL(qbs*_FUNC_REMOVESYMBOL_STRING_VARNAME){
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
+int32 FUNC_HASHFIND(qbs*_FUNC_HASHFIND_STRING_A,int32*_FUNC_HASHFIND_LONG_SEARCHFLAGS,int32*_FUNC_HASHFIND_LONG_RESULTFLAGS,int32*_FUNC_HASHFIND_LONG_RESULTREFERENCE){
+#line 82 "utilities/hash.bas"
 qbs *tqbs;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 ptrszint tmp_long;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 int32 tmp_fileno;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 #include "data274.txt"
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 mem_lock *sf_mem_lock;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 new_mem_lock();
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 sf_mem_lock->type=3;
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 libqb_check_stack();
-#line 722 "utilities/type.bas"
+#line 82 "utilities/hash.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 723 "utilities/type.bas"
+#line 87 "utilities/hash.bas"
 do{
-#line 723 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("~",1),0);
-#line 723 "utilities/type.bas"
+#line 87 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_I=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((FUNC_HASHVALUE(_FUNC_HASHFIND_STRING_A))-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
+#line 87 "utilities/hash.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 723 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,723,"type.bas");}while(r);
-#line 723 "utilities/type.bas"
-S_42056:;
-#line 723 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 723 "utilities/type.bas"
-if(qbevent){evnt(28724,723,"type.bas");if(r)goto S_42056;}
-#line 723 "utilities/type.bas"
+#line 87 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,87,"hash.bas");}while(r);
+#line 88 "utilities/hash.bas"
+S_41818:;
+#line 88 "utilities/hash.bas"
+if ((*_FUNC_HASHFIND_LONG_I)||is_error_pending()){
+#line 88 "utilities/hash.bas"
+if(qbevent){evnt(28807,88,"hash.bas");if(r)goto S_41818;}
+#line 89 "utilities/hash.bas"
 do{
-#line 723 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 723 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,723,"type.bas");}while(r);
-#line 723 "utilities/type.bas"
-}
-#line 724 "utilities/type.bas"
-do{
-#line 724 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("`",1),0);
-#line 724 "utilities/type.bas"
+#line 89 "utilities/hash.bas"
+qbs_set(_FUNC_HASHFIND_STRING_UA,qbs_add(qbs_ucase(_FUNC_HASHFIND_STRING_A),func_space( 256 -_FUNC_HASHFIND_STRING_A->len)));
+#line 89 "utilities/hash.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 724 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,724,"type.bas");}while(r);
-#line 724 "utilities/type.bas"
-S_42060:;
-#line 724 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 724 "utilities/type.bas"
-if(qbevent){evnt(28724,724,"type.bas");if(r)goto S_42060;}
-#line 724 "utilities/type.bas"
+#line 89 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,89,"hash.bas");}while(r);
+#line 90 "utilities/hash.bas"
+LABEL_HASHFIND_NEXT:;
+#line 90 "utilities/hash.bas"
+if(qbevent){evnt(28807,90,"hash.bas");r=0;}
+#line 91 "utilities/hash.bas"
 do{
-#line 724 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 724 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,724,"type.bas");}while(r);
-#line 724 "utilities/type.bas"
-}
-#line 725 "utilities/type.bas"
+#line 91 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_F=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_FUNC_HASHFIND_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+0)));
+#line 91 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,91,"hash.bas");}while(r);
+#line 92 "utilities/hash.bas"
+S_41821:;
+#line 92 "utilities/hash.bas"
+if ((*_FUNC_HASHFIND_LONG_SEARCHFLAGS&*_FUNC_HASHFIND_LONG_F)||is_error_pending()){
+#line 92 "utilities/hash.bas"
+if(qbevent){evnt(28807,92,"hash.bas");if(r)goto S_41821;}
+#line 93 "utilities/hash.bas"
+S_41822:;
+#line 93 "utilities/hash.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_FUNC_HASHFIND_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1),_FUNC_HASHFIND_STRING_UA)))||is_error_pending()){
+#line 93 "utilities/hash.bas"
+if(qbevent){evnt(28807,93,"hash.bas");if(r)goto S_41822;}
+#line 94 "utilities/hash.bas"
 do{
-#line 725 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("%",1),0);
-#line 725 "utilities/type.bas"
+#line 94 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_RESULTFLAGS=*_FUNC_HASHFIND_LONG_F;
+#line 94 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,94,"hash.bas");}while(r);
+#line 95 "utilities/hash.bas"
+do{
+#line 95 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_RESULTREFERENCE=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_FUNC_HASHFIND_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+4)));
+#line 95 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,95,"hash.bas");}while(r);
+#line 96 "utilities/hash.bas"
+do{
+#line 96 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_FUNC_HASHFIND_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
+#line 96 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,96,"hash.bas");}while(r);
+#line 97 "utilities/hash.bas"
+S_41826:;
+#line 97 "utilities/hash.bas"
+if ((*_FUNC_HASHFIND_LONG_I2)||is_error_pending()){
+#line 97 "utilities/hash.bas"
+if(qbevent){evnt(28807,97,"hash.bas");if(r)goto S_41826;}
+#line 98 "utilities/hash.bas"
+do{
+#line 98 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_HASHFIND= 2 ;
+#line 98 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,98,"hash.bas");}while(r);
+#line 99 "utilities/hash.bas"
+do{
+#line 99 "utilities/hash.bas"
+*__LONG_HASHFIND_NEXTLISTITEM=*_FUNC_HASHFIND_LONG_I2;
+#line 99 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,99,"hash.bas");}while(r);
+#line 100 "utilities/hash.bas"
+do{
+#line 100 "utilities/hash.bas"
+*__LONG_HASHFIND_REVERSE= 0 ;
+#line 100 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,100,"hash.bas");}while(r);
+#line 101 "utilities/hash.bas"
+do{
+#line 101 "utilities/hash.bas"
+*__LONG_HASHFIND_SEARCHFLAGS=*_FUNC_HASHFIND_LONG_SEARCHFLAGS;
+#line 101 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,101,"hash.bas");}while(r);
+#line 102 "utilities/hash.bas"
+do{
+#line 102 "utilities/hash.bas"
+qbs_set(__STRING_HASHFIND_NAME,_FUNC_HASHFIND_STRING_UA);
+#line 102 "utilities/hash.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 725 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,725,"type.bas");}while(r);
-#line 725 "utilities/type.bas"
-S_42064:;
-#line 725 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 725 "utilities/type.bas"
-if(qbevent){evnt(28724,725,"type.bas");if(r)goto S_42064;}
-#line 725 "utilities/type.bas"
+#line 102 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,102,"hash.bas");}while(r);
+#line 103 "utilities/hash.bas"
 do{
-#line 725 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 725 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,725,"type.bas");}while(r);
-#line 725 "utilities/type.bas"
-}
-#line 726 "utilities/type.bas"
+#line 103 "utilities/hash.bas"
+*__LONG_HASHREMOVE_LASTFOUND=*_FUNC_HASHFIND_LONG_I;
+#line 103 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,103,"hash.bas");}while(r);
+#line 104 "utilities/hash.bas"
 do{
-#line 726 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("&",1),0);
-#line 726 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 726 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,726,"type.bas");}while(r);
-#line 726 "utilities/type.bas"
-S_42068:;
-#line 726 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 726 "utilities/type.bas"
-if(qbevent){evnt(28724,726,"type.bas");if(r)goto S_42068;}
-#line 726 "utilities/type.bas"
-do{
-#line 726 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 726 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,726,"type.bas");}while(r);
-#line 726 "utilities/type.bas"
-}
-#line 727 "utilities/type.bas"
-do{
-#line 727 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("!",1),0);
-#line 727 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 727 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,727,"type.bas");}while(r);
-#line 727 "utilities/type.bas"
-S_42072:;
-#line 727 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 727 "utilities/type.bas"
-if(qbevent){evnt(28724,727,"type.bas");if(r)goto S_42072;}
-#line 727 "utilities/type.bas"
-do{
-#line 727 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 727 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,727,"type.bas");}while(r);
-#line 727 "utilities/type.bas"
-}
-#line 728 "utilities/type.bas"
-do{
-#line 728 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("#",1),0);
-#line 728 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 728 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,728,"type.bas");}while(r);
-#line 728 "utilities/type.bas"
-S_42076:;
-#line 728 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 728 "utilities/type.bas"
-if(qbevent){evnt(28724,728,"type.bas");if(r)goto S_42076;}
-#line 728 "utilities/type.bas"
-do{
-#line 728 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 728 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,728,"type.bas");}while(r);
-#line 728 "utilities/type.bas"
-}
-#line 729 "utilities/type.bas"
-do{
-#line 729 "utilities/type.bas"
-*_FUNC_REMOVESYMBOL_LONG_I=func_instr(NULL,_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_new_txt_len("$",1),0);
-#line 729 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 729 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,729,"type.bas");}while(r);
-#line 729 "utilities/type.bas"
-S_42080:;
-#line 729 "utilities/type.bas"
-if ((*_FUNC_REMOVESYMBOL_LONG_I)||is_error_pending()){
-#line 729 "utilities/type.bas"
-if(qbevent){evnt(28724,729,"type.bas");if(r)goto S_42080;}
-#line 729 "utilities/type.bas"
-do{
-#line 729 "utilities/type.bas"
-goto LABEL_FOUNDSYMBOL;
-#line 729 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,729,"type.bas");}while(r);
-#line 729 "utilities/type.bas"
-}
-#line 730 "utilities/type.bas"
-do{
-#line 730 "utilities/type.bas"
+#line 104 "utilities/hash.bas"
 goto exit_subfunc;
-#line 730 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,730,"type.bas");}while(r);
-#line 731 "utilities/type.bas"
-LABEL_FOUNDSYMBOL:;
-#line 731 "utilities/type.bas"
-if(qbevent){evnt(28724,731,"type.bas");r=0;}
-#line 732 "utilities/type.bas"
-S_42084:;
-#line 732 "utilities/type.bas"
-if ((-(*_FUNC_REMOVESYMBOL_LONG_I== 1 ))||is_error_pending()){
-#line 732 "utilities/type.bas"
-if(qbevent){evnt(28724,732,"type.bas");if(r)goto S_42084;}
-#line 732 "utilities/type.bas"
+#line 104 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,104,"hash.bas");}while(r);
+#line 105 "utilities/hash.bas"
+}else{
+#line 106 "utilities/hash.bas"
 do{
-#line 732 "utilities/type.bas"
-SUB_GIVE_ERROR(qbs_new_txt_len("Expected variable name before symbol",36));
-#line 732 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 732 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,732,"type.bas");}while(r);
-#line 732 "utilities/type.bas"
+#line 106 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_HASHFIND= 1 ;
+#line 106 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,106,"hash.bas");}while(r);
+#line 107 "utilities/hash.bas"
 do{
-#line 732 "utilities/type.bas"
+#line 107 "utilities/hash.bas"
+*__LONG_HASHREMOVE_LASTFOUND=*_FUNC_HASHFIND_LONG_I;
+#line 107 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,107,"hash.bas");}while(r);
+#line 108 "utilities/hash.bas"
+do{
+#line 108 "utilities/hash.bas"
 goto exit_subfunc;
-#line 732 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,732,"type.bas");}while(r);
-#line 732 "utilities/type.bas"
+#line 108 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,108,"hash.bas");}while(r);
+#line 109 "utilities/hash.bas"
 }
-#line 733 "utilities/type.bas"
-do{
-#line 733 "utilities/type.bas"
-qbs_set(_FUNC_REMOVESYMBOL_STRING_SYMBOL,qbs_right(_FUNC_REMOVESYMBOL_STRING_VARNAME,_FUNC_REMOVESYMBOL_STRING_VARNAME->len-*_FUNC_REMOVESYMBOL_LONG_I+ 1 ));
-#line 733 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 733 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,733,"type.bas");}while(r);
-#line 734 "utilities/type.bas"
-S_42089:;
-#line 734 "utilities/type.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(FUNC_SYMBOLTYPE(_FUNC_REMOVESYMBOL_STRING_SYMBOL)== 0 )))||is_error_pending()){
-#line 734 "utilities/type.bas"
-if(qbevent){evnt(28724,734,"type.bas");if(r)goto S_42089;}
-#line 734 "utilities/type.bas"
-do{
-#line 734 "utilities/type.bas"
-SUB_GIVE_ERROR(qbs_new_txt_len("Invalid symbol",14));
-#line 734 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 734 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,734,"type.bas");}while(r);
-#line 734 "utilities/type.bas"
-do{
-#line 734 "utilities/type.bas"
-goto exit_subfunc;
-#line 734 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,734,"type.bas");}while(r);
-#line 734 "utilities/type.bas"
+#line 110 "utilities/hash.bas"
 }
-#line 735 "utilities/type.bas"
+#line 111 "utilities/hash.bas"
+}
+#line 112 "utilities/hash.bas"
 do{
-#line 735 "utilities/type.bas"
-qbs_set(_FUNC_REMOVESYMBOL_STRING_REMOVESYMBOL,_FUNC_REMOVESYMBOL_STRING_SYMBOL);
-#line 735 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 735 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,735,"type.bas");}while(r);
-#line 736 "utilities/type.bas"
+#line 112 "utilities/hash.bas"
+*_FUNC_HASHFIND_LONG_I=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_FUNC_HASHFIND_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
+#line 112 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,112,"hash.bas");}while(r);
+#line 113 "utilities/hash.bas"
+S_41842:;
+#line 113 "utilities/hash.bas"
+if ((*_FUNC_HASHFIND_LONG_I)||is_error_pending()){
+#line 113 "utilities/hash.bas"
+if(qbevent){evnt(28807,113,"hash.bas");if(r)goto S_41842;}
+#line 113 "utilities/hash.bas"
 do{
-#line 736 "utilities/type.bas"
-qbs_set(_FUNC_REMOVESYMBOL_STRING_VARNAME,qbs_left(_FUNC_REMOVESYMBOL_STRING_VARNAME,*_FUNC_REMOVESYMBOL_LONG_I- 1 ));
-#line 736 "utilities/type.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 736 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,736,"type.bas");}while(r);
-#line 737 "utilities/type.bas"
+#line 113 "utilities/hash.bas"
+goto LABEL_HASHFIND_NEXT;
+#line 113 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,113,"hash.bas");}while(r);
+#line 113 "utilities/hash.bas"
+}
+#line 114 "utilities/hash.bas"
+}
+#line 115 "utilities/hash.bas"
 exit_subfunc:;
-#line 737 "utilities/type.bas"
+#line 115 "utilities/hash.bas"
 free_mem_lock(sf_mem_lock);
-#line 737 "utilities/type.bas"
+#line 115 "utilities/hash.bas"
 #include "free274.txt"
-#line 737 "utilities/type.bas"
+#line 115 "utilities/hash.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 737 "utilities/type.bas"
+#line 115 "utilities/hash.bas"
 cmem_sp=tmp_cmem_sp;
-#line 737 "utilities/type.bas"
-qbs_maketmp(_FUNC_REMOVESYMBOL_STRING_REMOVESYMBOL);return _FUNC_REMOVESYMBOL_STRING_REMOVESYMBOL;
-#line 737 "utilities/type.bas"
+#line 115 "utilities/hash.bas"
+return *_FUNC_HASHFIND_LONG_HASHFIND;
+#line 115 "utilities/hash.bas"
 }

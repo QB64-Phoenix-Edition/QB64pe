@@ -1,160 +1,50 @@
-#line 39 "utilities/ini-manager/ini.bm"
-void SUB_INICOMMIT(){
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
+qbs* FUNC_GETELEMENTSBEFORE(qbs*_FUNC_GETELEMENTSBEFORE_STRING_A,int32*_FUNC_GETELEMENTSBEFORE_LONG_I1){
+#line 116 "utilities/elements.bas"
 qbs *tqbs;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 ptrszint tmp_long;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 int32 tmp_fileno;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 #include "data173.txt"
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 mem_lock *sf_mem_lock;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 new_mem_lock();
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 sf_mem_lock->type=3;
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 libqb_check_stack();
-#line 39 "utilities/ini-manager/ini.bm"
+#line 116 "utilities/elements.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 40 "utilities/ini-manager/ini.bm"
+#line 117 "utilities/elements.bas"
 do{
-#line 40 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,40,"ini.bm");}while(r);
-#line 41 "utilities/ini-manager/ini.bm"
-do{
-#line 41 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,41,"ini.bm");}while(r);
-#line 43 "utilities/ini-manager/ini.bm"
-S_38327:;
-#line 43 "utilities/ini-manager/ini.bm"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_CURRENTINIFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 43 "utilities/ini-manager/ini.bm"
-if(qbevent){evnt(28719,43,"ini.bm");if(r)goto S_38327;}
-#line 43 "utilities/ini-manager/ini.bm"
-do{
-#line 43 "utilities/ini-manager/ini.bm"
-*__LONG_INICODE= 18 ;
-#line 43 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,43,"ini.bm");}while(r);
-#line 43 "utilities/ini-manager/ini.bm"
-do{
-#line 43 "utilities/ini-manager/ini.bm"
-goto exit_subfunc;
-#line 43 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,43,"ini.bm");}while(r);
-#line 43 "utilities/ini-manager/ini.bm"
-}
-#line 45 "utilities/ini-manager/ini.bm"
-do{
-#line 45 "utilities/ini-manager/ini.bm"
-qbs_set(__STRING_INIWHOLEFILE,__STRING_ININEWFILE);
-#line 45 "utilities/ini-manager/ini.bm"
+#line 117 "utilities/elements.bas"
+qbs_set(_FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE,FUNC_GETELEMENTS(_FUNC_GETELEMENTSBEFORE_STRING_A,&(pass3778= 1 ),_FUNC_GETELEMENTSBEFORE_LONG_I1));
+#line 117 "utilities/elements.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 45 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,45,"ini.bm");}while(r);
-#line 46 "utilities/ini-manager/ini.bm"
-do{
-#line 46 "utilities/ini-manager/ini.bm"
-*__ULONG_CURRENTINIFILELOF=__STRING_ININEWFILE->len;
-#line 46 "utilities/ini-manager/ini.bm"
-qbs_cleanup(qbs_tmp_base,0);
-#line 46 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,46,"ini.bm");}while(r);
-#line 48 "utilities/ini-manager/ini.bm"
-S_38333:;
-#line 48 "utilities/ini-manager/ini.bm"
-if ((~(*__LONG_INIDISABLEAUTOCOMMIT))||is_error_pending()){
-#line 48 "utilities/ini-manager/ini.bm"
-if(qbevent){evnt(28719,48,"ini.bm");if(r)goto S_38333;}
-#line 49 "utilities/ini-manager/ini.bm"
-do{
-#line 49 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,49,"ini.bm");}while(r);
-#line 51 "utilities/ini-manager/ini.bm"
-do{
-#line 51 "utilities/ini-manager/ini.bm"
-*_SUB_INICOMMIT_INTEGER_FILENUM=func_freefile();
-#line 51 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,51,"ini.bm");}while(r);
-#line 52 "utilities/ini-manager/ini.bm"
-do{
-#line 52 "utilities/ini-manager/ini.bm"
-sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
-#line 52 "utilities/ini-manager/ini.bm"
-qbs_cleanup(qbs_tmp_base,0);
-#line 52 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,52,"ini.bm");}while(r);
-#line 54 "utilities/ini-manager/ini.bm"
-S_38337:;
-#line 54 "utilities/ini-manager/ini.bm"
-if ((qbs_cleanup(qbs_tmp_base,-(__STRING_INIWHOLEFILE->len<func_lof(*_SUB_INICOMMIT_INTEGER_FILENUM))))||is_error_pending()){
-#line 54 "utilities/ini-manager/ini.bm"
-if(qbevent){evnt(28719,54,"ini.bm");if(r)goto S_38337;}
-#line 55 "utilities/ini-manager/ini.bm"
-do{
-#line 55 "utilities/ini-manager/ini.bm"
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-#line 55 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,55,"ini.bm");}while(r);
-#line 56 "utilities/ini-manager/ini.bm"
-do{
-#line 56 "utilities/ini-manager/ini.bm"
-sub_open(__STRING_CURRENTINIFILENAME, 4 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
-#line 56 "utilities/ini-manager/ini.bm"
-qbs_cleanup(qbs_tmp_base,0);
-#line 56 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,56,"ini.bm");}while(r);
-#line 56 "utilities/ini-manager/ini.bm"
-do{
-#line 56 "utilities/ini-manager/ini.bm"
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-#line 56 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,56,"ini.bm");}while(r);
-#line 57 "utilities/ini-manager/ini.bm"
-do{
-#line 57 "utilities/ini-manager/ini.bm"
-sub_open(__STRING_CURRENTINIFILENAME, 2 ,NULL,NULL,*_SUB_INICOMMIT_INTEGER_FILENUM,NULL,0);
-#line 57 "utilities/ini-manager/ini.bm"
-qbs_cleanup(qbs_tmp_base,0);
-#line 57 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,57,"ini.bm");}while(r);
-#line 58 "utilities/ini-manager/ini.bm"
-}
-#line 60 "utilities/ini-manager/ini.bm"
-do{
-#line 60 "utilities/ini-manager/ini.bm"
-sub_put2(*_SUB_INICOMMIT_INTEGER_FILENUM, 1 ,byte_element((uint64)__STRING_ININEWFILE->chr,__STRING_ININEWFILE->len,byte_element_3748),1);
-#line 60 "utilities/ini-manager/ini.bm"
-qbs_cleanup(qbs_tmp_base,0);
-#line 60 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,60,"ini.bm");}while(r);
-#line 61 "utilities/ini-manager/ini.bm"
-do{
-#line 61 "utilities/ini-manager/ini.bm"
-sub_close(*_SUB_INICOMMIT_INTEGER_FILENUM,1);
-#line 61 "utilities/ini-manager/ini.bm"
-if(!qbevent)break;evnt(28719,61,"ini.bm");}while(r);
-#line 62 "utilities/ini-manager/ini.bm"
-}
-#line 63 "utilities/ini-manager/ini.bm"
+#line 117 "utilities/elements.bas"
+if(!qbevent)break;evnt(28802,117,"elements.bas");}while(r);
+#line 118 "utilities/elements.bas"
 exit_subfunc:;
-#line 63 "utilities/ini-manager/ini.bm"
+#line 118 "utilities/elements.bas"
 free_mem_lock(sf_mem_lock);
-#line 63 "utilities/ini-manager/ini.bm"
+#line 118 "utilities/elements.bas"
 #include "free173.txt"
-#line 63 "utilities/ini-manager/ini.bm"
+#line 118 "utilities/elements.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 63 "utilities/ini-manager/ini.bm"
+#line 118 "utilities/elements.bas"
 cmem_sp=tmp_cmem_sp;
-#line 63 "utilities/ini-manager/ini.bm"
+#line 118 "utilities/elements.bas"
+qbs_maketmp(_FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE);return _FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE;
+#line 118 "utilities/elements.bas"
 }

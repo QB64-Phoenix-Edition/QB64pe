@@ -1,128 +1,444 @@
-#line 885 "utilities/type.bas"
-int16 FUNC_UDTDYNHASMEMBERARRAYS(int32*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_UDT_INDEX,int32*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_LAYOUT_MODE){
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
+void SUB_HASHCLEAR(){
+#line 315 "utilities/hash.bas"
 qbs *tqbs;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 ptrszint tmp_long;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 int32 tmp_fileno;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 #include "data279.txt"
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 mem_lock *sf_mem_lock;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 new_mem_lock();
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 sf_mem_lock->type=3;
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 libqb_check_stack();
-#line 885 "utilities/type.bas"
+#line 315 "utilities/hash.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 886 "utilities/type.bas"
+#line 317 "utilities/hash.bas"
 do{
-#line 886 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,886,"type.bas");}while(r);
-#line 887 "utilities/type.bas"
+#line 317 "utilities/hash.bas"
+*__LONG_HASHLISTSIZE= 65536 ;
+#line 317 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,317,"hash.bas");}while(r);
+#line 318 "utilities/hash.bas"
 do{
-#line 887 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,887,"type.bas");}while(r);
-#line 889 "utilities/type.bas"
+#line 318 "utilities/hash.bas"
+*__LONG_HASHLISTNEXT= 1 ;
+#line 318 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,318,"hash.bas");}while(r);
+#line 319 "utilities/hash.bas"
 do{
-#line 889 "utilities/type.bas"
-*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID=((int32*)(__ARRAY_LONG_UDTXNEXT[0]))[array_check((*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_UDT_INDEX)-__ARRAY_LONG_UDTXNEXT[4],__ARRAY_LONG_UDTXNEXT[5])];
-#line 889 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,889,"type.bas");}while(r);
-#line 890 "utilities/type.bas"
-S_42220:;
-#line 890 "utilities/type.bas"
-while((*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID)||is_error_pending()){
-#line 890 "utilities/type.bas"
-if(qbevent){evnt(28724,890,"type.bas");if(r)goto S_42220;}
-#line 891 "utilities/type.bas"
-S_42221:;
-#line 891 "utilities/type.bas"
-if ((FUNC_UDTMEMBERDYNDESC(_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID))||is_error_pending()){
-#line 891 "utilities/type.bas"
-if(qbevent){evnt(28724,891,"type.bas");if(r)goto S_42221;}
-#line 892 "utilities/type.bas"
+#line 319 "utilities/hash.bas"
+*__LONG_HASHLISTFREESIZE= 1024 ;
+#line 319 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,319,"hash.bas");}while(r);
+#line 320 "utilities/hash.bas"
 do{
-#line 892 "utilities/type.bas"
-*_FUNC_UDTDYNHASMEMBERARRAYS_INTEGER_UDTDYNHASMEMBERARRAYS= -1 ;
-#line 892 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,892,"type.bas");}while(r);
-#line 893 "utilities/type.bas"
+#line 320 "utilities/hash.bas"
+*__LONG_HASHLISTFREELAST= 0 ;
+#line 320 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,320,"hash.bas");}while(r);
+#line 321 "utilities/hash.bas"
 do{
-#line 893 "utilities/type.bas"
-goto exit_subfunc;
-#line 893 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,893,"type.bas");}while(r);
-#line 894 "utilities/type.bas"
+if (__ARRAY_UDT_HASHLIST[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_UDT_HASHLIST)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_UDT_HASHLIST[2]&1){
+preserve_old_ptr=__ARRAY_UDT_HASHLIST[0];
+preserve_old_flags=__ARRAY_UDT_HASHLIST[2];
+preserve_old_total=__ARRAY_UDT_HASHLIST[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-#line 895 "utilities/type.bas"
-S_42225:;
-#line 895 "utilities/type.bas"
-if ((-((((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]&*__LONG_ISUDT)!= 0 ))||is_error_pending()){
-#line 895 "utilities/type.bas"
-if(qbevent){evnt(28724,895,"type.bas");if(r)goto S_42225;}
-#line 896 "utilities/type.bas"
-do{
-#line 896 "utilities/type.bas"
-*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_NESTED_UDT=((int32*)(__ARRAY_LONG_UDTETYPE[0]))[array_check((*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID)-__ARRAY_LONG_UDTETYPE[4],__ARRAY_LONG_UDTETYPE[5])]& 4095ll ;
-#line 896 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,896,"type.bas");}while(r);
-#line 897 "utilities/type.bas"
-S_42227:;
-#line 897 "utilities/type.bas"
-if ((FUNC_UDTDYNHASMEMBERARRAYS(_FUNC_UDTDYNHASMEMBERARRAYS_LONG_NESTED_UDT,_FUNC_UDTDYNHASMEMBERARRAYS_LONG_LAYOUT_MODE))||is_error_pending()){
-#line 897 "utilities/type.bas"
-if(qbevent){evnt(28724,897,"type.bas");if(r)goto S_42227;}
-#line 898 "utilities/type.bas"
-do{
-#line 898 "utilities/type.bas"
-*_FUNC_UDTDYNHASMEMBERARRAYS_INTEGER_UDTDYNHASMEMBERARRAYS= -1 ;
-#line 898 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,898,"type.bas");}while(r);
-#line 899 "utilities/type.bas"
-do{
-#line 899 "utilities/type.bas"
-goto exit_subfunc;
-#line 899 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,899,"type.bas");}while(r);
-#line 900 "utilities/type.bas"
+alloc_new_desc[4]= 1 ;
+alloc_new_desc[5]=(*__LONG_HASHLISTSIZE)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(20);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
 }
-#line 901 "utilities/type.bas"
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_UDT_HASHLIST[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
 }
-#line 902 "utilities/type.bas"
+__ARRAY_UDT_HASHLIST[0]=preserve_new_ptr;
+}else{
+__ARRAY_UDT_HASHLIST[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_UDT_HASHLIST[0]) error(257);
+memset((void*)(__ARRAY_UDT_HASHLIST[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_UDT_HASHLIST[0]=preserve_new_ptr;
+}else{
+__ARRAY_UDT_HASHLIST[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_UDT_HASHLIST[0]) error(257);
+}
+}
+__ARRAY_UDT_HASHLIST[2]|=1;
+__ARRAY_UDT_HASHLIST[4]=alloc_new_desc[4];
+__ARRAY_UDT_HASHLIST[5]=alloc_new_desc[5];
+__ARRAY_UDT_HASHLIST[6]=alloc_new_desc[6];
+__ARRAY_UDT_HASHLIST[7]=alloc_new_desc[7];
+}
+#line 321 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,321,"hash.bas");}while(r);
+#line 322 "utilities/hash.bas"
 do{
-#line 902 "utilities/type.bas"
-*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID=((int32*)(__ARRAY_LONG_UDTENEXT[0]))[array_check((*_FUNC_UDTDYNHASMEMBERARRAYS_LONG_MEMBER_ID)-__ARRAY_LONG_UDTENEXT[4],__ARRAY_LONG_UDTENEXT[5])];
-#line 902 "utilities/type.bas"
-if(!qbevent)break;evnt(28724,902,"type.bas");}while(r);
-#line 903 "utilities/type.bas"
-dl_continue_4140:;
-#line 903 "utilities/type.bas"
+if (__ARRAY_STRING256_HASHLISTNAME[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_STRING256_HASHLISTNAME)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_STRING256_HASHLISTNAME[2]&1){
+preserve_old_ptr=__ARRAY_STRING256_HASHLISTNAME[0];
+preserve_old_flags=__ARRAY_STRING256_HASHLISTNAME[2];
+preserve_old_total=__ARRAY_STRING256_HASHLISTNAME[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-#line 903 "utilities/type.bas"
-dl_exit_4140:;
-#line 904 "utilities/type.bas"
+alloc_new_desc[4]= 1 ;
+alloc_new_desc[5]=(*__LONG_HASHLISTSIZE)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(256);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_STRING256_HASHLISTNAME[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_HASHLISTNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_HASHLISTNAME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_STRING256_HASHLISTNAME[0]) error(257);
+memset((void*)(__ARRAY_STRING256_HASHLISTNAME[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_STRING256_HASHLISTNAME[0]=preserve_new_ptr;
+}else{
+__ARRAY_STRING256_HASHLISTNAME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_STRING256_HASHLISTNAME[0]) error(257);
+}
+}
+__ARRAY_STRING256_HASHLISTNAME[2]|=1;
+__ARRAY_STRING256_HASHLISTNAME[4]=alloc_new_desc[4];
+__ARRAY_STRING256_HASHLISTNAME[5]=alloc_new_desc[5];
+__ARRAY_STRING256_HASHLISTNAME[6]=alloc_new_desc[6];
+__ARRAY_STRING256_HASHLISTNAME[7]=alloc_new_desc[7];
+}
+#line 322 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,322,"hash.bas");}while(r);
+#line 323 "utilities/hash.bas"
+do{
+if (__ARRAY_LONG_HASHLISTFREE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_HASHLISTFREE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_HASHLISTFREE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_HASHLISTFREE[0];
+preserve_old_flags=__ARRAY_LONG_HASHLISTFREE[2];
+preserve_old_total=__ARRAY_LONG_HASHLISTFREE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 1 ;
+alloc_new_desc[5]=(*__LONG_HASHLISTFREESIZE)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_HASHLISTFREE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_HASHLISTFREE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
+memset((void*)(__ARRAY_LONG_HASHLISTFREE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_HASHLISTFREE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
+}
+}
+__ARRAY_LONG_HASHLISTFREE[2]|=1;
+__ARRAY_LONG_HASHLISTFREE[4]=alloc_new_desc[4];
+__ARRAY_LONG_HASHLISTFREE[5]=alloc_new_desc[5];
+__ARRAY_LONG_HASHLISTFREE[6]=alloc_new_desc[6];
+__ARRAY_LONG_HASHLISTFREE[7]=alloc_new_desc[7];
+}
+#line 323 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,323,"hash.bas");}while(r);
+#line 324 "utilities/hash.bas"
+do{
+if (__ARRAY_LONG_HASHTABLE[2]&2){
+error(10);
+}else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_LONG_HASHTABLE)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_LONG_HASHTABLE[2]&1){
+preserve_old_ptr=__ARRAY_LONG_HASHTABLE[0];
+preserve_old_flags=__ARRAY_LONG_HASHTABLE[2];
+preserve_old_total=__ARRAY_LONG_HASHTABLE[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=( 16777215 )-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(4);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
+if (__ARRAY_LONG_HASHTABLE[2]&4){
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!preserve_new_ptr) error(257);
+memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_HASHTABLE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_HASHTABLE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_LONG_HASHTABLE[0]) error(257);
+memset((void*)(__ARRAY_LONG_HASHTABLE[0]),0,(size_t)alloc_req_bytes);
+}
+}else{
+if (preserve_old_total){
+preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!preserve_new_ptr) error(257);
+if (preserve_old_flags&4){
+cmem_dynamic_free((uint8*)(preserve_old_ptr));
+}else{
+free((void*)(preserve_old_ptr));
+}
+__ARRAY_LONG_HASHTABLE[0]=preserve_new_ptr;
+}else{
+__ARRAY_LONG_HASHTABLE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+if (!__ARRAY_LONG_HASHTABLE[0]) error(257);
+}
+}
+__ARRAY_LONG_HASHTABLE[2]|=1;
+__ARRAY_LONG_HASHTABLE[4]=alloc_new_desc[4];
+__ARRAY_LONG_HASHTABLE[5]=alloc_new_desc[5];
+__ARRAY_LONG_HASHTABLE[6]=alloc_new_desc[6];
+__ARRAY_LONG_HASHTABLE[7]=alloc_new_desc[7];
+}
+#line 324 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,324,"hash.bas");}while(r);
+#line 326 "utilities/hash.bas"
+do{
+#line 326 "utilities/hash.bas"
+*__LONG_HASHFIND_NEXTLISTITEM= 0 ;
+#line 326 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,326,"hash.bas");}while(r);
+#line 327 "utilities/hash.bas"
+do{
+#line 327 "utilities/hash.bas"
+*__LONG_HASHFIND_REVERSE= 0 ;
+#line 327 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,327,"hash.bas");}while(r);
+#line 328 "utilities/hash.bas"
+do{
+#line 328 "utilities/hash.bas"
+*__LONG_HASHFIND_SEARCHFLAGS= 0 ;
+#line 328 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,328,"hash.bas");}while(r);
+#line 329 "utilities/hash.bas"
+do{
+#line 329 "utilities/hash.bas"
+qbs_set(__STRING_HASHFIND_NAME,qbs_new_txt_len("",0));
+#line 329 "utilities/hash.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 329 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,329,"hash.bas");}while(r);
+#line 330 "utilities/hash.bas"
+do{
+#line 330 "utilities/hash.bas"
+*__LONG_HASHREMOVE_LASTFOUND= 0 ;
+#line 330 "utilities/hash.bas"
+if(!qbevent)break;evnt(28807,330,"hash.bas");}while(r);
+#line 332 "utilities/hash.bas"
 exit_subfunc:;
-#line 904 "utilities/type.bas"
+#line 332 "utilities/hash.bas"
 free_mem_lock(sf_mem_lock);
-#line 904 "utilities/type.bas"
+#line 332 "utilities/hash.bas"
 #include "free279.txt"
-#line 904 "utilities/type.bas"
+#line 332 "utilities/hash.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 904 "utilities/type.bas"
+#line 332 "utilities/hash.bas"
 cmem_sp=tmp_cmem_sp;
-#line 904 "utilities/type.bas"
-return *_FUNC_UDTDYNHASMEMBERARRAYS_INTEGER_UDTDYNHASMEMBERARRAYS;
-#line 904 "utilities/type.bas"
+#line 332 "utilities/hash.bas"
 }
