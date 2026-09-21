@@ -1,0 +1,1429 @@
+#line 263 "ide/wiki/wiki_methods.bas"
+qbs*oldstr7084=NULL;
+#line 263 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_STRING_A->tmp||_SUB_WIKIPARSE_STRING_A->fixed||_SUB_WIKIPARSE_STRING_A->readonly){
+#line 263 "ide/wiki/wiki_methods.bas"
+oldstr7084=_SUB_WIKIPARSE_STRING_A;
+#line 263 "ide/wiki/wiki_methods.bas"
+if (oldstr7084->cmem_descriptor){
+#line 263 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_STRING_A=qbs_new_cmem(oldstr7084->len,0);
+#line 263 "ide/wiki/wiki_methods.bas"
+}else{
+#line 263 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_STRING_A=qbs_new(oldstr7084->len,0);
+#line 263 "ide/wiki/wiki_methods.bas"
+}
+#line 263 "ide/wiki/wiki_methods.bas"
+memcpy(_SUB_WIKIPARSE_STRING_A->chr,oldstr7084->chr,oldstr7084->len);
+#line 263 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LINK=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LINK==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LINK=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LINK=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_ELINK=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_ELINK==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_ELINK=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_ELINK=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_UE=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_UE==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_UE=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_UE=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_UU=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_UU==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_UU=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_UU=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_CB=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_CB==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_CB=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_CB=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_NL=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_NL==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_NL=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_NL=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_HL=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_HL==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_HL=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_HL=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_AH=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_AH==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_AH=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_AH=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_DL=NULL;
+#line 289 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_DL==NULL){
+#line 289 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_DL=(int32*)mem_static_malloc(4);
+#line 289 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_DL=0;
+#line 289 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_COL=NULL;
+#line 291 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_COL==NULL){
+#line 291 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_COL=(int32*)mem_static_malloc(4);
+#line 291 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_COL=0;
+#line 291 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_D=NULL;
+#line 316 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_D)_SUB_WIKIPARSE_STRING_D=qbs_new(0,0);
+int32 *_SUB_WIKIPARSE_LONG_I=NULL;
+#line 316 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_I==NULL){
+#line 316 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_I=(int32*)mem_static_malloc(4);
+#line 316 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_I=0;
+#line 316 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_T=NULL;
+#line 324 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_T)_SUB_WIKIPARSE_STRING_T=qbs_new(0,0);
+#line 330 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7085=NULL;
+#line 330 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7085){
+#line 330 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7085=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7085=(byte_element_struct*)mem_static_malloc(12);
+#line 330 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_II=NULL;
+#line 330 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_II==NULL){
+#line 330 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_II=(int32*)mem_static_malloc(4);
+#line 330 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_II=0;
+#line 330 "ide/wiki/wiki_methods.bas"
+}
+#line 330 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7086=NULL;
+#line 330 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7086){
+#line 330 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7086=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7086=(byte_element_struct*)mem_static_malloc(12);
+#line 330 "ide/wiki/wiki_methods.bas"
+}
+#line 331 "ide/wiki/wiki_methods.bas"
+int32 pass7087;
+#line 331 "ide/wiki/wiki_methods.bas"
+int32 pass7088;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7089;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7090;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7091;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7092;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7093;
+#line 332 "ide/wiki/wiki_methods.bas"
+int32 pass7094;
+#line 334 "ide/wiki/wiki_methods.bas"
+int32 pass7095;
+#line 334 "ide/wiki/wiki_methods.bas"
+int32 pass7096;
+#line 336 "ide/wiki/wiki_methods.bas"
+int32 pass7097;
+#line 337 "ide/wiki/wiki_methods.bas"
+int32 pass7098;
+#line 337 "ide/wiki/wiki_methods.bas"
+int32 pass7099;
+#line 338 "ide/wiki/wiki_methods.bas"
+int32 pass7100;
+#line 338 "ide/wiki/wiki_methods.bas"
+int32 pass7101;
+int32 *_SUB_WIKIPARSE_LONG_PREFETCH=NULL;
+#line 341 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_PREFETCH==NULL){
+#line 341 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_PREFETCH=(int32*)mem_static_malloc(4);
+#line 341 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_PREFETCH=0;
+#line 341 "ide/wiki/wiki_methods.bas"
+}
+ptrszint *_SUB_WIKIPARSE_ARRAY_STRING_C=NULL;
+#line 342 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_ARRAY_STRING_C){
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C=(ptrszint*)mem_static_malloc(9*ptrsz);
+#line 342 "ide/wiki/wiki_methods.bas"
+new_mem_lock();
+#line 342 "ide/wiki/wiki_methods.bas"
+mem_lock_tmp->type=4;
+#line 342 "ide/wiki/wiki_methods.bas"
+((ptrszint*)_SUB_WIKIPARSE_ARRAY_STRING_C)[8]=(ptrszint)mem_lock_tmp;
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C[2]=0;
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C[4]=2147483647;
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C[5]=0;
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C[6]=0;
+#line 342 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_ARRAY_STRING_C[0]=(ptrszint)&nothingstring;
+#line 342 "ide/wiki/wiki_methods.bas"
+}
+#line 343 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7103;
+#line 343 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7103;
+#line 343 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7103;
+#line 343 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7103;
+int32 *_SUB_WIKIPARSE_LONG_N=NULL;
+#line 348 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_N==NULL){
+#line 348 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_N=(int32*)mem_static_malloc(4);
+#line 348 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_N=0;
+#line 348 "ide/wiki/wiki_methods.bas"
+}
+#line 348 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7104=NULL;
+#line 348 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7104){
+#line 348 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7104=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7104=(byte_element_struct*)mem_static_malloc(12);
+#line 348 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_C=NULL;
+#line 353 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_C==NULL){
+#line 353 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_C=(int32*)mem_static_malloc(4);
+#line 353 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_C=0;
+#line 353 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_C=NULL;
+#line 353 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_C)_SUB_WIKIPARSE_STRING_C=qbs_new(0,0);
+int32 *_SUB_WIKIPARSE_LONG_I1=NULL;
+#line 354 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_I1==NULL){
+#line 354 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_I1=(int32*)mem_static_malloc(4);
+#line 354 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_I1=0;
+#line 354 "ide/wiki/wiki_methods.bas"
+}
+#line 354 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7107;
+#line 354 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7107;
+#line 354 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7107;
+#line 354 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7107;
+int32 *_SUB_WIKIPARSE_LONG_I2=NULL;
+#line 356 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_I2==NULL){
+#line 356 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_I2=(int32*)mem_static_malloc(4);
+#line 356 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_I2=0;
+#line 356 "ide/wiki/wiki_methods.bas"
+}
+#line 356 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7109;
+#line 356 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7109;
+#line 356 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7109;
+#line 356 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7109;
+qbs *_SUB_WIKIPARSE_STRING_S=NULL;
+#line 367 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_S)_SUB_WIKIPARSE_STRING_S=qbs_new(0,0);
+#line 367 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7110=NULL;
+#line 367 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7110){
+#line 367 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7110=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7110=(byte_element_struct*)mem_static_malloc(12);
+#line 367 "ide/wiki/wiki_methods.bas"
+}
+#line 367 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7111=NULL;
+#line 367 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7111){
+#line 367 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7111=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7111=(byte_element_struct*)mem_static_malloc(12);
+#line 367 "ide/wiki/wiki_methods.bas"
+}
+#line 368 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7112=NULL;
+#line 368 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7112){
+#line 368 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7112=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7112=(byte_element_struct*)mem_static_malloc(12);
+#line 368 "ide/wiki/wiki_methods.bas"
+}
+#line 368 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7113=NULL;
+#line 368 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7113){
+#line 368 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7113=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7113=(byte_element_struct*)mem_static_malloc(12);
+#line 368 "ide/wiki/wiki_methods.bas"
+}
+#line 369 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7114=NULL;
+#line 369 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7114){
+#line 369 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7114=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7114=(byte_element_struct*)mem_static_malloc(12);
+#line 369 "ide/wiki/wiki_methods.bas"
+}
+#line 369 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7115=NULL;
+#line 369 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7115){
+#line 369 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7115=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7115=(byte_element_struct*)mem_static_malloc(12);
+#line 369 "ide/wiki/wiki_methods.bas"
+}
+#line 370 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7116=NULL;
+#line 370 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7116){
+#line 370 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7116=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7116=(byte_element_struct*)mem_static_malloc(12);
+#line 370 "ide/wiki/wiki_methods.bas"
+}
+#line 370 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7117=NULL;
+#line 370 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7117){
+#line 370 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7117=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7117=(byte_element_struct*)mem_static_malloc(12);
+#line 370 "ide/wiki/wiki_methods.bas"
+}
+#line 371 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7118=NULL;
+#line 371 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7118){
+#line 371 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7118=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7118=(byte_element_struct*)mem_static_malloc(12);
+#line 371 "ide/wiki/wiki_methods.bas"
+}
+#line 371 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7119=NULL;
+#line 371 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7119){
+#line 371 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7119=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7119=(byte_element_struct*)mem_static_malloc(12);
+#line 371 "ide/wiki/wiki_methods.bas"
+}
+#line 372 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7120=NULL;
+#line 372 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7120){
+#line 372 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7120=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7120=(byte_element_struct*)mem_static_malloc(12);
+#line 372 "ide/wiki/wiki_methods.bas"
+}
+#line 372 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7121=NULL;
+#line 372 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7121){
+#line 372 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7121=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7121=(byte_element_struct*)mem_static_malloc(12);
+#line 372 "ide/wiki/wiki_methods.bas"
+}
+#line 373 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7122=NULL;
+#line 373 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7122){
+#line 373 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7122=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7122=(byte_element_struct*)mem_static_malloc(12);
+#line 373 "ide/wiki/wiki_methods.bas"
+}
+#line 373 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7123=NULL;
+#line 373 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7123){
+#line 373 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7123=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7123=(byte_element_struct*)mem_static_malloc(12);
+#line 373 "ide/wiki/wiki_methods.bas"
+}
+#line 374 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7124=NULL;
+#line 374 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7124){
+#line 374 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7124=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7124=(byte_element_struct*)mem_static_malloc(12);
+#line 374 "ide/wiki/wiki_methods.bas"
+}
+#line 374 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7125=NULL;
+#line 374 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7125){
+#line 374 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7125=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7125=(byte_element_struct*)mem_static_malloc(12);
+#line 374 "ide/wiki/wiki_methods.bas"
+}
+#line 376 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7126=NULL;
+#line 376 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7126){
+#line 376 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7126=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7126=(byte_element_struct*)mem_static_malloc(12);
+#line 376 "ide/wiki/wiki_methods.bas"
+}
+#line 377 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7127=NULL;
+#line 377 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7127){
+#line 377 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7127=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7127=(byte_element_struct*)mem_static_malloc(12);
+#line 377 "ide/wiki/wiki_methods.bas"
+}
+#line 378 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7129;
+#line 378 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7129;
+#line 378 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7129;
+#line 378 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7129;
+#line 378 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7130=NULL;
+#line 378 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7130){
+#line 378 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7130=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7130=(byte_element_struct*)mem_static_malloc(12);
+#line 378 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_WLA=NULL;
+#line 380 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_WLA)_SUB_WIKIPARSE_STRING_WLA=qbs_new(0,0);
+#line 380 "ide/wiki/wiki_methods.bas"
+int32 pass7131;
+qbs *_SUB_WIKIPARSE_STRING_V=NULL;
+#line 380 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_V)_SUB_WIKIPARSE_STRING_V=qbs_new(0,0);
+#line 382 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7132=NULL;
+#line 382 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7132){
+#line 382 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7132=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7132=(byte_element_struct*)mem_static_malloc(12);
+#line 382 "ide/wiki/wiki_methods.bas"
+}
+#line 393 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7133=NULL;
+#line 393 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7133){
+#line 393 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7133=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7133=(byte_element_struct*)mem_static_malloc(12);
+#line 393 "ide/wiki/wiki_methods.bas"
+}
+#line 399 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7134=NULL;
+#line 399 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7134){
+#line 399 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7134=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7134=(byte_element_struct*)mem_static_malloc(12);
+#line 399 "ide/wiki/wiki_methods.bas"
+}
+#line 400 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7135=NULL;
+#line 400 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7135){
+#line 400 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7135=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7135=(byte_element_struct*)mem_static_malloc(12);
+#line 400 "ide/wiki/wiki_methods.bas"
+}
+#line 401 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7136=NULL;
+#line 401 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7136){
+#line 401 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7136=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7136=(byte_element_struct*)mem_static_malloc(12);
+#line 401 "ide/wiki/wiki_methods.bas"
+}
+#line 408 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7137=NULL;
+#line 408 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7137){
+#line 408 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7137=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7137=(byte_element_struct*)mem_static_malloc(12);
+#line 408 "ide/wiki/wiki_methods.bas"
+}
+#line 408 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7138=NULL;
+#line 408 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7138){
+#line 408 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7138=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7138=(byte_element_struct*)mem_static_malloc(12);
+#line 408 "ide/wiki/wiki_methods.bas"
+}
+#line 409 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7139=NULL;
+#line 409 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7139){
+#line 409 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7139=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7139=(byte_element_struct*)mem_static_malloc(12);
+#line 409 "ide/wiki/wiki_methods.bas"
+}
+#line 409 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7140=NULL;
+#line 409 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7140){
+#line 409 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7140=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7140=(byte_element_struct*)mem_static_malloc(12);
+#line 409 "ide/wiki/wiki_methods.bas"
+}
+#line 415 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7141=NULL;
+#line 415 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7141){
+#line 415 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7141=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7141=(byte_element_struct*)mem_static_malloc(12);
+#line 415 "ide/wiki/wiki_methods.bas"
+}
+#line 416 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7142=NULL;
+#line 416 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7142){
+#line 416 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7142=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7142=(byte_element_struct*)mem_static_malloc(12);
+#line 416 "ide/wiki/wiki_methods.bas"
+}
+#line 417 "ide/wiki/wiki_methods.bas"
+int32 pass7143;
+#line 419 "ide/wiki/wiki_methods.bas"
+int32 pass7144;
+#line 424 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7145=NULL;
+#line 424 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7145){
+#line 424 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7145=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7145=(byte_element_struct*)mem_static_malloc(12);
+#line 424 "ide/wiki/wiki_methods.bas"
+}
+#line 425 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7146=NULL;
+#line 425 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7146){
+#line 425 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7146=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7146=(byte_element_struct*)mem_static_malloc(12);
+#line 425 "ide/wiki/wiki_methods.bas"
+}
+#line 431 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7147=NULL;
+#line 431 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7147){
+#line 431 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7147=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7147=(byte_element_struct*)mem_static_malloc(12);
+#line 431 "ide/wiki/wiki_methods.bas"
+}
+#line 432 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7148=NULL;
+#line 432 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7148){
+#line 432 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7148=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7148=(byte_element_struct*)mem_static_malloc(12);
+#line 432 "ide/wiki/wiki_methods.bas"
+}
+#line 433 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7150;
+#line 433 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7150;
+#line 433 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7150;
+#line 433 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7150;
+#line 433 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7151=NULL;
+#line 433 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7151){
+#line 433 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7151=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7151=(byte_element_struct*)mem_static_malloc(12);
+#line 433 "ide/wiki/wiki_methods.bas"
+}
+#line 435 "ide/wiki/wiki_methods.bas"
+int32 pass7152;
+#line 438 "ide/wiki/wiki_methods.bas"
+int32 pass7153;
+#line 448 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7154=NULL;
+#line 448 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7154){
+#line 448 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7154=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7154=(byte_element_struct*)mem_static_malloc(12);
+#line 448 "ide/wiki/wiki_methods.bas"
+}
+#line 449 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7155=NULL;
+#line 449 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7155){
+#line 449 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7155=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7155=(byte_element_struct*)mem_static_malloc(12);
+#line 449 "ide/wiki/wiki_methods.bas"
+}
+#line 456 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7156=NULL;
+#line 456 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7156){
+#line 456 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7156=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7156=(byte_element_struct*)mem_static_malloc(12);
+#line 456 "ide/wiki/wiki_methods.bas"
+}
+#line 457 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7157=NULL;
+#line 457 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7157){
+#line 457 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7157=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7157=(byte_element_struct*)mem_static_malloc(12);
+#line 457 "ide/wiki/wiki_methods.bas"
+}
+#line 458 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7159;
+#line 458 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7159;
+#line 458 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7159;
+#line 458 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7159;
+#line 458 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7160=NULL;
+#line 458 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7160){
+#line 458 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7160=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7160=(byte_element_struct*)mem_static_malloc(12);
+#line 458 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_ELINK=NULL;
+#line 490 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_ELINK)_SUB_WIKIPARSE_STRING_ELINK=qbs_new(0,0);
+qbs *_SUB_WIKIPARSE_STRING_ELCOL=NULL;
+#line 490 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_ELCOL)_SUB_WIKIPARSE_STRING_ELCOL=qbs_new(0,0);
+qbs *_SUB_WIKIPARSE_STRING_ETEXT=NULL;
+#line 497 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_ETEXT)_SUB_WIKIPARSE_STRING_ETEXT=qbs_new(0,0);
+int32 *_SUB_WIKIPARSE_LONG_J=NULL;
+#line 508 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_J==NULL){
+#line 508 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_J=(int32*)mem_static_malloc(4);
+#line 508 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_J=0;
+#line 508 "ide/wiki/wiki_methods.bas"
+}
+#line 508 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7162;
+#line 508 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7162;
+#line 508 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7162;
+#line 508 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7162;
+#line 508 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7163=NULL;
+#line 508 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7163){
+#line 508 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7163=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7163=(byte_element_struct*)mem_static_malloc(12);
+#line 508 "ide/wiki/wiki_methods.bas"
+}
+#line 509 "ide/wiki/wiki_methods.bas"
+int32 pass7164;
+qbs *_SUB_WIKIPARSE_STRING_LINK=NULL;
+#line 518 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_LINK)_SUB_WIKIPARSE_STRING_LINK=qbs_new(0,0);
+qbs *_SUB_WIKIPARSE_STRING_LCOL=NULL;
+#line 518 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_LCOL)_SUB_WIKIPARSE_STRING_LCOL=qbs_new(0,0);
+qbs *_SUB_WIKIPARSE_STRING_TEXT=NULL;
+#line 529 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_TEXT)_SUB_WIKIPARSE_STRING_TEXT=qbs_new(0,0);
+#line 558 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7166;
+#line 558 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7166;
+#line 558 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7166;
+#line 558 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7166;
+#line 558 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7167=NULL;
+#line 558 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7167){
+#line 558 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7167=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7167=(byte_element_struct*)mem_static_malloc(12);
+#line 558 "ide/wiki/wiki_methods.bas"
+}
+#line 559 "ide/wiki/wiki_methods.bas"
+int32 pass7168;
+#line 571 "ide/wiki/wiki_methods.bas"
+int32 pass7169;
+int32 *_SUB_WIKIPARSE_LONG_III=NULL;
+#line 571 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_III==NULL){
+#line 571 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_III=(int32*)mem_static_malloc(4);
+#line 571 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_III=0;
+#line 571 "ide/wiki/wiki_methods.bas"
+}
+#line 572 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7171;
+#line 572 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7171;
+#line 572 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7171;
+#line 572 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7171;
+#line 572 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7172=NULL;
+#line 572 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7172){
+#line 572 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7172=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7172=(byte_element_struct*)mem_static_malloc(12);
+#line 572 "ide/wiki/wiki_methods.bas"
+}
+#line 575 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7173=NULL;
+#line 575 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7173){
+#line 575 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7173=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7173=(byte_element_struct*)mem_static_malloc(12);
+#line 575 "ide/wiki/wiki_methods.bas"
+}
+#line 580 "ide/wiki/wiki_methods.bas"
+int32 pass7174;
+#line 580 "ide/wiki/wiki_methods.bas"
+int32 pass7175;
+#line 581 "ide/wiki/wiki_methods.bas"
+int32 pass7176;
+#line 581 "ide/wiki/wiki_methods.bas"
+int32 pass7177;
+#line 581 "ide/wiki/wiki_methods.bas"
+int32 pass7178;
+#line 581 "ide/wiki/wiki_methods.bas"
+int32 pass7179;
+#line 581 "ide/wiki/wiki_methods.bas"
+int32 pass7180;
+#line 582 "ide/wiki/wiki_methods.bas"
+int32 pass7181;
+#line 582 "ide/wiki/wiki_methods.bas"
+int32 pass7182;
+#line 582 "ide/wiki/wiki_methods.bas"
+int32 pass7183;
+#line 582 "ide/wiki/wiki_methods.bas"
+int32 pass7184;
+#line 582 "ide/wiki/wiki_methods.bas"
+int32 pass7185;
+#line 583 "ide/wiki/wiki_methods.bas"
+int32 pass7186;
+#line 583 "ide/wiki/wiki_methods.bas"
+int32 pass7187;
+#line 583 "ide/wiki/wiki_methods.bas"
+int32 pass7188;
+#line 583 "ide/wiki/wiki_methods.bas"
+int32 pass7189;
+#line 583 "ide/wiki/wiki_methods.bas"
+int32 pass7190;
+#line 584 "ide/wiki/wiki_methods.bas"
+int32 pass7191;
+#line 584 "ide/wiki/wiki_methods.bas"
+int32 pass7192;
+qbs *_SUB_WIKIPARSE_STRING_CB=NULL;
+#line 602 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_CB)_SUB_WIKIPARSE_STRING_CB=qbs_new(0,0);
+#line 608 "ide/wiki/wiki_methods.bas"
+int32 pass7193;
+#line 609 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7194=NULL;
+#line 609 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7194){
+#line 609 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7194=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7194=(byte_element_struct*)mem_static_malloc(12);
+#line 609 "ide/wiki/wiki_methods.bas"
+}
+#line 615 "ide/wiki/wiki_methods.bas"
+int32 pass7195;
+#line 615 "ide/wiki/wiki_methods.bas"
+int32 pass7196;
+qbs *_SUB_WIKIPARSE_STRING_CBO=NULL;
+#line 627 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_CBO)_SUB_WIKIPARSE_STRING_CBO=qbs_new(0,0);
+#line 640 "ide/wiki/wiki_methods.bas"
+int32 pass7197;
+#line 657 "ide/wiki/wiki_methods.bas"
+int32 pass7198;
+#line 657 "ide/wiki/wiki_methods.bas"
+int32 pass7199;
+#line 662 "ide/wiki/wiki_methods.bas"
+int32 pass7200;
+#line 662 "ide/wiki/wiki_methods.bas"
+int32 pass7201;
+#line 671 "ide/wiki/wiki_methods.bas"
+int32 pass7202;
+#line 671 "ide/wiki/wiki_methods.bas"
+int32 pass7203;
+#line 676 "ide/wiki/wiki_methods.bas"
+int32 pass7204;
+#line 676 "ide/wiki/wiki_methods.bas"
+int32 pass7205;
+#line 677 "ide/wiki/wiki_methods.bas"
+int32 pass7206;
+#line 677 "ide/wiki/wiki_methods.bas"
+int32 pass7207;
+#line 678 "ide/wiki/wiki_methods.bas"
+int32 pass7208;
+#line 678 "ide/wiki/wiki_methods.bas"
+int32 pass7209;
+#line 687 "ide/wiki/wiki_methods.bas"
+int32 pass7210;
+#line 687 "ide/wiki/wiki_methods.bas"
+int32 pass7211;
+#line 692 "ide/wiki/wiki_methods.bas"
+int32 pass7212;
+#line 692 "ide/wiki/wiki_methods.bas"
+int32 pass7213;
+#line 715 "ide/wiki/wiki_methods.bas"
+int32 pass7214;
+#line 715 "ide/wiki/wiki_methods.bas"
+int32 pass7215;
+#line 720 "ide/wiki/wiki_methods.bas"
+int32 pass7216;
+#line 720 "ide/wiki/wiki_methods.bas"
+int32 pass7217;
+qbs *_SUB_WIKIPARSE_STRING_PIT=NULL;
+#line 727 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_PIT)_SUB_WIKIPARSE_STRING_PIT=qbs_new(0,0);
+#line 729 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7218=NULL;
+#line 729 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7218){
+#line 729 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7218=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7218=(byte_element_struct*)mem_static_malloc(12);
+#line 729 "ide/wiki/wiki_methods.bas"
+}
+#line 730 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7219=NULL;
+#line 730 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7219){
+#line 730 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7219=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7219=(byte_element_struct*)mem_static_malloc(12);
+#line 730 "ide/wiki/wiki_methods.bas"
+}
+#line 741 "ide/wiki/wiki_methods.bas"
+int32 pass7220;
+#line 749 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7222;
+#line 749 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7222;
+#line 749 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7222;
+#line 749 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7222;
+#line 753 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7223=NULL;
+#line 753 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7223){
+#line 753 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7223=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7223=(byte_element_struct*)mem_static_malloc(12);
+#line 753 "ide/wiki/wiki_methods.bas"
+}
+#line 761 "ide/wiki/wiki_methods.bas"
+int32 pass7224;
+#line 761 "ide/wiki/wiki_methods.bas"
+int32 pass7225;
+#line 765 "ide/wiki/wiki_methods.bas"
+int32 pass7226;
+#line 809 "ide/wiki/wiki_methods.bas"
+int32 pass7227;
+#line 809 "ide/wiki/wiki_methods.bas"
+int32 pass7228;
+#line 817 "ide/wiki/wiki_methods.bas"
+int32 pass7229;
+#line 817 "ide/wiki/wiki_methods.bas"
+int32 pass7230;
+#line 834 "ide/wiki/wiki_methods.bas"
+int32 pass7231;
+#line 834 "ide/wiki/wiki_methods.bas"
+int32 pass7232;
+#line 842 "ide/wiki/wiki_methods.bas"
+int32 pass7233;
+#line 842 "ide/wiki/wiki_methods.bas"
+int32 pass7234;
+#line 845 "ide/wiki/wiki_methods.bas"
+int32 pass7235;
+#line 845 "ide/wiki/wiki_methods.bas"
+int32 pass7236;
+#line 855 "ide/wiki/wiki_methods.bas"
+int32 pass7237;
+#line 855 "ide/wiki/wiki_methods.bas"
+int32 pass7238;
+#line 859 "ide/wiki/wiki_methods.bas"
+int32 pass7239;
+#line 859 "ide/wiki/wiki_methods.bas"
+int32 pass7240;
+#line 873 "ide/wiki/wiki_methods.bas"
+int32 pass7241;
+#line 873 "ide/wiki/wiki_methods.bas"
+int32 pass7242;
+#line 879 "ide/wiki/wiki_methods.bas"
+int32 pass7243;
+#line 879 "ide/wiki/wiki_methods.bas"
+int32 pass7244;
+int32 *_SUB_WIKIPARSE_LONG_OCOL=NULL;
+#line 889 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_OCOL==NULL){
+#line 889 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_OCOL=(int32*)mem_static_malloc(4);
+#line 889 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_OCOL=0;
+#line 889 "ide/wiki/wiki_methods.bas"
+}
+#line 892 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7246;
+#line 892 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7246;
+#line 892 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7246;
+#line 892 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7246;
+qbs *_SUB_WIKIPARSE_STRING_ENT=NULL;
+#line 893 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_ENT)_SUB_WIKIPARSE_STRING_ENT=qbs_new(0,0);
+#line 894 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7247=NULL;
+#line 894 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7247){
+#line 894 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7247=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7247=(byte_element_struct*)mem_static_malloc(12);
+#line 894 "ide/wiki/wiki_methods.bas"
+}
+#line 896 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7248=NULL;
+#line 896 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7248){
+#line 896 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7248=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7248=(byte_element_struct*)mem_static_malloc(12);
+#line 896 "ide/wiki/wiki_methods.bas"
+}
+#line 912 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7250;
+#line 912 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7250;
+#line 912 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7250;
+#line 912 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7250;
+#line 921 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7252;
+#line 921 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7252;
+#line 921 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7252;
+#line 921 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7252;
+#line 930 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7254;
+#line 930 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7254;
+#line 930 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7254;
+#line 930 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7254;
+#line 979 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7256;
+#line 979 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7256;
+#line 979 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7256;
+#line 979 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7256;
+#line 979 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7257=NULL;
+#line 979 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7257){
+#line 979 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7257=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7257=(byte_element_struct*)mem_static_malloc(12);
+#line 979 "ide/wiki/wiki_methods.bas"
+}
+#line 982 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7259;
+#line 982 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7259;
+#line 982 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7259;
+#line 982 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7259;
+#line 982 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7260=NULL;
+#line 982 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7260){
+#line 982 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7260=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7260=(byte_element_struct*)mem_static_malloc(12);
+#line 982 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_STP=NULL;
+#line 998 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_STP==NULL){
+#line 998 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_STP=(int32*)mem_static_malloc(4);
+#line 998 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_STP=0;
+#line 998 "ide/wiki/wiki_methods.bas"
+}
+#line 999 "ide/wiki/wiki_methods.bas"
+int32 pass7261;
+#line 999 "ide/wiki/wiki_methods.bas"
+int32 pass7262;
+int32 *_SUB_WIKIPARSE_LONG_ITP=NULL;
+#line 1000 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_ITP==NULL){
+#line 1000 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_ITP=(int32*)mem_static_malloc(4);
+#line 1000 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_ITP=0;
+#line 1000 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_DTL=NULL;
+#line 1000 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_DTL==NULL){
+#line 1000 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_DTL=(int32*)mem_static_malloc(4);
+#line 1000 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_DTL=0;
+#line 1000 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_TXT=NULL;
+#line 1001 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_TXT)_SUB_WIKIPARSE_STRING_TXT=qbs_new(0,0);
+#line 1001 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7263=NULL;
+#line 1001 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7263){
+#line 1001 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7263=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7263=(byte_element_struct*)mem_static_malloc(12);
+#line 1001 "ide/wiki/wiki_methods.bas"
+}
+#line 1002 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7264=NULL;
+#line 1002 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7264){
+#line 1002 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7264=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7264=(byte_element_struct*)mem_static_malloc(12);
+#line 1002 "ide/wiki/wiki_methods.bas"
+}
+#line 1003 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7266;
+#line 1003 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7266;
+#line 1003 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7266;
+#line 1003 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7266;
+#line 1003 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7267=NULL;
+#line 1003 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7267){
+#line 1003 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7267=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7267=(byte_element_struct*)mem_static_malloc(12);
+#line 1003 "ide/wiki/wiki_methods.bas"
+}
+#line 1006 "ide/wiki/wiki_methods.bas"
+int32 pass7268;
+#line 1006 "ide/wiki/wiki_methods.bas"
+int32 pass7269;
+#line 1007 "ide/wiki/wiki_methods.bas"
+int32 pass7270;
+#line 1008 "ide/wiki/wiki_methods.bas"
+int32 pass7271;
+#line 1008 "ide/wiki/wiki_methods.bas"
+int32 pass7272;
+#line 1009 "ide/wiki/wiki_methods.bas"
+int32 pass7273;
+#line 1012 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7274=NULL;
+#line 1012 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7274){
+#line 1012 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7274=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7274=(byte_element_struct*)mem_static_malloc(12);
+#line 1012 "ide/wiki/wiki_methods.bas"
+}
+#line 1013 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7275=NULL;
+#line 1013 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7275){
+#line 1013 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7275=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7275=(byte_element_struct*)mem_static_malloc(12);
+#line 1013 "ide/wiki/wiki_methods.bas"
+}
+#line 1014 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7277;
+#line 1014 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7277;
+#line 1014 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7277;
+#line 1014 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7277;
+#line 1014 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7278=NULL;
+#line 1014 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7278){
+#line 1014 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7278=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7278=(byte_element_struct*)mem_static_malloc(12);
+#line 1014 "ide/wiki/wiki_methods.bas"
+}
+#line 1018 "ide/wiki/wiki_methods.bas"
+int32 pass7279;
+#line 1018 "ide/wiki/wiki_methods.bas"
+int32 pass7280;
+#line 1019 "ide/wiki/wiki_methods.bas"
+int32 pass7281;
+#line 1020 "ide/wiki/wiki_methods.bas"
+int32 pass7282;
+#line 1020 "ide/wiki/wiki_methods.bas"
+int32 pass7283;
+#line 1021 "ide/wiki/wiki_methods.bas"
+int32 pass7284;
+#line 1024 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7285=NULL;
+#line 1024 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7285){
+#line 1024 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7285=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7285=(byte_element_struct*)mem_static_malloc(12);
+#line 1024 "ide/wiki/wiki_methods.bas"
+}
+#line 1025 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7286=NULL;
+#line 1025 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7286){
+#line 1025 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7286=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7286=(byte_element_struct*)mem_static_malloc(12);
+#line 1025 "ide/wiki/wiki_methods.bas"
+}
+#line 1026 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7288;
+#line 1026 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7288;
+#line 1026 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7288;
+#line 1026 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7288;
+#line 1026 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7289=NULL;
+#line 1026 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7289){
+#line 1026 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7289=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7289=(byte_element_struct*)mem_static_malloc(12);
+#line 1026 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_FH=NULL;
+#line 1034 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_FH==NULL){
+#line 1034 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_FH=(int32*)mem_static_malloc(4);
+#line 1034 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_FH=0;
+#line 1034 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_CY=NULL;
+#line 1037 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_CY==NULL){
+#line 1037 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_CY=(int32*)mem_static_malloc(4);
+#line 1037 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_CY=0;
+#line 1037 "ide/wiki/wiki_methods.bas"
+}
+#line 1037 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7291;
+#line 1037 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7291;
+#line 1037 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7291;
+#line 1037 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7291;
+int32 *_SUB_WIKIPARSE_LONG_L=NULL;
+#line 1039 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_L==NULL){
+#line 1039 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_L=(int32*)mem_static_malloc(4);
+#line 1039 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_L=0;
+#line 1039 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_X=NULL;
+#line 1040 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_X==NULL){
+#line 1040 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_X=(int32*)mem_static_malloc(4);
+#line 1040 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_X=0;
+#line 1040 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_X2=NULL;
+#line 1041 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_X2==NULL){
+#line 1041 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_X2=(int32*)mem_static_malloc(4);
+#line 1041 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_X2=0;
+#line 1041 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_OLDLNK=NULL;
+#line 1043 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_OLDLNK==NULL){
+#line 1043 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_OLDLNK=(int32*)mem_static_malloc(4);
+#line 1043 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_OLDLNK=0;
+#line 1043 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LNKX1=NULL;
+#line 1044 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LNKX1==NULL){
+#line 1044 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LNKX1=(int32*)mem_static_malloc(4);
+#line 1044 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LNKX1=0;
+#line 1044 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LNKX2=NULL;
+#line 1044 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LNKX2==NULL){
+#line 1044 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LNKX2=(int32*)mem_static_malloc(4);
+#line 1044 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LNKX2=0;
+#line 1044 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LNK=NULL;
+#line 1047 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LNK==NULL){
+#line 1047 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LNK=(int32*)mem_static_malloc(4);
+#line 1047 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LNK=0;
+#line 1047 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LNK2=NULL;
+#line 1056 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LNK2==NULL){
+#line 1056 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LNK2=(int32*)mem_static_malloc(4);
+#line 1056 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LNK2=0;
+#line 1056 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_L1=NULL;
+#line 1057 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_L1==NULL){
+#line 1057 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_L1=(int32*)mem_static_malloc(4);
+#line 1057 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_L1=0;
+#line 1057 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_LX=NULL;
+#line 1058 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_LX==NULL){
+#line 1058 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_LX=(int32*)mem_static_malloc(4);
+#line 1058 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_LX=0;
+#line 1058 "ide/wiki/wiki_methods.bas"
+}
+#line 1058 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7294;
+#line 1058 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7294;
+#line 1058 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7294;
+#line 1058 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7294;
+int32 *_SUB_WIKIPARSE_LONG_L2=NULL;
+#line 1061 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_L2==NULL){
+#line 1061 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_L2=(int32*)mem_static_malloc(4);
+#line 1061 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_L2=0;
+#line 1061 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_L=NULL;
+#line 1062 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_L)_SUB_WIKIPARSE_STRING_L=qbs_new(0,0);
+#line 1064 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7295=NULL;
+#line 1064 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7295){
+#line 1064 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7295=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7295=(byte_element_struct*)mem_static_malloc(12);
+#line 1064 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_A2=NULL;
+#line 1066 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_A2)_SUB_WIKIPARSE_STRING_A2=qbs_new(0,0);
+qbs *_SUB_WIKIPARSE_STRING_A3=NULL;
+#line 1071 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_A3)_SUB_WIKIPARSE_STRING_A3=qbs_new(0,0);
+#line 1071 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7296=NULL;
+#line 1071 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7296){
+#line 1071 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7296=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7296=(byte_element_struct*)mem_static_malloc(12);
+#line 1071 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_SKIP=NULL;
+#line 1073 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_SKIP==NULL){
+#line 1073 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_SKIP=(int32*)mem_static_malloc(4);
+#line 1073 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_SKIP=0;
+#line 1073 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_CI=NULL;
+#line 1076 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_CI==NULL){
+#line 1076 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_CI=(int32*)mem_static_malloc(4);
+#line 1076 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_CI=0;
+#line 1076 "ide/wiki/wiki_methods.bas"
+}
+#line 1076 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7298;
+#line 1076 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7298;
+#line 1076 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7298;
+#line 1076 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7298;
+#line 1076 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7299=NULL;
+#line 1076 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7299){
+#line 1076 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7299=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7299=(byte_element_struct*)mem_static_malloc(12);
+#line 1076 "ide/wiki/wiki_methods.bas"
+}
+int32 *_SUB_WIKIPARSE_LONG_CA=NULL;
+#line 1077 "ide/wiki/wiki_methods.bas"
+if(_SUB_WIKIPARSE_LONG_CA==NULL){
+#line 1077 "ide/wiki/wiki_methods.bas"
+_SUB_WIKIPARSE_LONG_CA=(int32*)mem_static_malloc(4);
+#line 1077 "ide/wiki/wiki_methods.bas"
+*_SUB_WIKIPARSE_LONG_CA=0;
+#line 1077 "ide/wiki/wiki_methods.bas"
+}
+#line 1090 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7302;
+#line 1090 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7302;
+#line 1090 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7302;
+#line 1090 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7302;
+#line 1090 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7303=NULL;
+#line 1090 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7303){
+#line 1090 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7303=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7303=(byte_element_struct*)mem_static_malloc(12);
+#line 1090 "ide/wiki/wiki_methods.bas"
+}
+qbs *_SUB_WIKIPARSE_STRING_OA2=NULL;
+#line 1097 "ide/wiki/wiki_methods.bas"
+if (!_SUB_WIKIPARSE_STRING_OA2)_SUB_WIKIPARSE_STRING_OA2=qbs_new(0,0);
+#line 1103 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7305=NULL;
+#line 1103 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7305){
+#line 1103 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7305=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7305=(byte_element_struct*)mem_static_malloc(12);
+#line 1103 "ide/wiki/wiki_methods.bas"
+}
+#line 1107 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7307;
+#line 1107 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7307;
+#line 1107 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7307;
+#line 1107 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7307;
+#line 1107 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7308=NULL;
+#line 1107 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7308){
+#line 1107 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7308=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7308=(byte_element_struct*)mem_static_malloc(12);
+#line 1107 "ide/wiki/wiki_methods.bas"
+}
+#line 1120 "ide/wiki/wiki_methods.bas"
+int64 fornext_value7311;
+#line 1120 "ide/wiki/wiki_methods.bas"
+int64 fornext_finalvalue7311;
+#line 1120 "ide/wiki/wiki_methods.bas"
+int64 fornext_step7311;
+#line 1120 "ide/wiki/wiki_methods.bas"
+uint8 fornext_step_negative7311;
+#line 1120 "ide/wiki/wiki_methods.bas"
+byte_element_struct *byte_element_7312=NULL;
+#line 1120 "ide/wiki/wiki_methods.bas"
+if (!byte_element_7312){
+#line 1120 "ide/wiki/wiki_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_7312=(byte_element_struct*)(mem_static_pointer-12); else byte_element_7312=(byte_element_struct*)mem_static_malloc(12);
+#line 1120 "ide/wiki/wiki_methods.bas"
+}

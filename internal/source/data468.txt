@@ -1,147 +1,123 @@
-qbs *_FUNC_WIKI_STRING_WIKI=NULL;
-#line 27 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_WIKI)_FUNC_WIKI_STRING_WIKI=qbs_new(0,0);
-#line 27 "ide/wiki/wiki_methods.bas"
-qbs*oldstr6902=NULL;
-#line 27 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_STRING_PAGENAME->tmp||_FUNC_WIKI_STRING_PAGENAME->fixed||_FUNC_WIKI_STRING_PAGENAME->readonly){
-#line 27 "ide/wiki/wiki_methods.bas"
-oldstr6902=_FUNC_WIKI_STRING_PAGENAME;
-#line 27 "ide/wiki/wiki_methods.bas"
-if (oldstr6902->cmem_descriptor){
-#line 27 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_STRING_PAGENAME=qbs_new_cmem(oldstr6902->len,0);
-#line 27 "ide/wiki/wiki_methods.bas"
-}else{
-#line 27 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_STRING_PAGENAME=qbs_new(oldstr6902->len,0);
-#line 27 "ide/wiki/wiki_methods.bas"
+qbs *_FUNC_FINDCURRENTSF_STRING_FINDCURRENTSF=NULL;
+#line 20687 "ide/ide_methods.bas"
+if (!_FUNC_FINDCURRENTSF_STRING_FINDCURRENTSF)_FUNC_FINDCURRENTSF_STRING_FINDCURRENTSF=qbs_new(0,0);
+qbs *_FUNC_FINDCURRENTSF_STRING_SFNAME=NULL;
+#line 20692 "ide/ide_methods.bas"
+if (!_FUNC_FINDCURRENTSF_STRING_SFNAME)_FUNC_FINDCURRENTSF_STRING_SFNAME=qbs_new(0,0);
+int32 *_FUNC_FINDCURRENTSF_LONG_CURRSF_CHECK=NULL;
+#line 20694 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_CURRSF_CHECK==NULL){
+#line 20694 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_CURRSF_CHECK=(int32*)mem_static_malloc(4);
+#line 20694 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_CURRSF_CHECK=0;
+#line 20694 "ide/ide_methods.bas"
 }
-#line 27 "ide/wiki/wiki_methods.bas"
-memcpy(_FUNC_WIKI_STRING_PAGENAME->chr,oldstr6902->chr,oldstr6902->len);
-#line 27 "ide/wiki/wiki_methods.bas"
+#line 20694 "ide/ide_methods.bas"
+int64 fornext_value6977;
+#line 20694 "ide/ide_methods.bas"
+int64 fornext_finalvalue6977;
+#line 20694 "ide/ide_methods.bas"
+int64 fornext_step6977;
+#line 20694 "ide/ide_methods.bas"
+uint8 fornext_step_negative6977;
+qbs *_FUNC_FINDCURRENTSF_STRING_THISLINE=NULL;
+#line 20695 "ide/ide_methods.bas"
+if (!_FUNC_FINDCURRENTSF_STRING_THISLINE)_FUNC_FINDCURRENTSF_STRING_THISLINE=qbs_new(0,0);
+int32 *_FUNC_FINDCURRENTSF_LONG_ISSF=NULL;
+#line 20697 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_ISSF==NULL){
+#line 20697 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_ISSF=(int32*)mem_static_malloc(4);
+#line 20697 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_ISSF=0;
+#line 20697 "ide/ide_methods.bas"
 }
-qbs *_FUNC_WIKI_STRING_PAGENAME2=NULL;
-#line 31 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_PAGENAME2)_FUNC_WIKI_STRING_PAGENAME2=qbs_new(0,0);
-int32 *_FUNC_WIKI_LONG_I=NULL;
-#line 32 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_LONG_I==NULL){
-#line 32 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_LONG_I=(int32*)mem_static_malloc(4);
-#line 32 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_I=0;
-#line 32 "ide/wiki/wiki_methods.bas"
+qbs *_FUNC_FINDCURRENTSF_STRING_NCTHISLINE=NULL;
+#line 20698 "ide/ide_methods.bas"
+if (!_FUNC_FINDCURRENTSF_STRING_NCTHISLINE)_FUNC_FINDCURRENTSF_STRING_NCTHISLINE=qbs_new(0,0);
+#line 20705 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6978=NULL;
+#line 20705 "ide/ide_methods.bas"
+if (!byte_element_6978){
+#line 20705 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6978=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6978=(byte_element_struct*)mem_static_malloc(12);
+#line 20705 "ide/ide_methods.bas"
 }
-#line 32 "ide/wiki/wiki_methods.bas"
-int64 fornext_value6904;
-#line 32 "ide/wiki/wiki_methods.bas"
-int64 fornext_finalvalue6904;
-#line 32 "ide/wiki/wiki_methods.bas"
-int64 fornext_step6904;
-#line 32 "ide/wiki/wiki_methods.bas"
-uint8 fornext_step_negative6904;
-#line 32 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6905=NULL;
-#line 32 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6905){
-#line 32 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6905=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6905=(byte_element_struct*)mem_static_malloc(12);
-#line 32 "ide/wiki/wiki_methods.bas"
+#line 20709 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6979=NULL;
+#line 20709 "ide/ide_methods.bas"
+if (!byte_element_6979){
+#line 20709 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6979=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6979=(byte_element_struct*)mem_static_malloc(12);
+#line 20709 "ide/ide_methods.bas"
 }
-int32 *_FUNC_WIKI_LONG_C=NULL;
-#line 33 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_LONG_C==NULL){
-#line 33 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_LONG_C=(int32*)mem_static_malloc(4);
-#line 33 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_C=0;
-#line 33 "ide/wiki/wiki_methods.bas"
+#line 20711 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6980=NULL;
+#line 20711 "ide/ide_methods.bas"
+if (!byte_element_6980){
+#line 20711 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6980=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6980=(byte_element_struct*)mem_static_malloc(12);
+#line 20711 "ide/ide_methods.bas"
 }
-qbs *_FUNC_WIKI_STRING_PAGENAME3=NULL;
-#line 43 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_PAGENAME3)_FUNC_WIKI_STRING_PAGENAME3=qbs_new(0,0);
-qbs *_FUNC_WIKI_STRING_A=NULL;
-#line 48 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_A)_FUNC_WIKI_STRING_A=qbs_new(0,0);
-#line 57 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6907=NULL;
-#line 57 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6907){
-#line 57 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6907=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6907=(byte_element_struct*)mem_static_malloc(12);
-#line 57 "ide/wiki/wiki_methods.bas"
+int32 *_FUNC_FINDCURRENTSF_LONG_CHECKARGS=NULL;
+#line 20714 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_CHECKARGS==NULL){
+#line 20714 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_CHECKARGS=(int32*)mem_static_malloc(4);
+#line 20714 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_CHECKARGS=0;
+#line 20714 "ide/ide_methods.bas"
 }
-#line 58 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6908=NULL;
-#line 58 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6908){
-#line 58 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6908=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6908=(byte_element_struct*)mem_static_malloc(12);
-#line 58 "ide/wiki/wiki_methods.bas"
+int32 *_FUNC_FINDCURRENTSF_LONG_INSIDEDECLARE=NULL;
+#line 20723 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_INSIDEDECLARE==NULL){
+#line 20723 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_INSIDEDECLARE=(int32*)mem_static_malloc(4);
+#line 20723 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_INSIDEDECLARE=0;
+#line 20723 "ide/ide_methods.bas"
 }
-#line 58 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6909=NULL;
-#line 58 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6909){
-#line 58 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6909=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6909=(byte_element_struct*)mem_static_malloc(12);
-#line 58 "ide/wiki/wiki_methods.bas"
+int32 *_FUNC_FINDCURRENTSF_LONG_DECLIB_CHECK=NULL;
+#line 20724 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_DECLIB_CHECK==NULL){
+#line 20724 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_DECLIB_CHECK=(int32*)mem_static_malloc(4);
+#line 20724 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_DECLIB_CHECK=0;
+#line 20724 "ide/ide_methods.bas"
 }
-qbs *_FUNC_WIKI_STRING_URL=NULL;
-#line 73 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_URL)_FUNC_WIKI_STRING_URL=qbs_new(0,0);
-qbs *_FUNC_WIKI_STRING_OUTPUTFILE=NULL;
-#line 74 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_OUTPUTFILE)_FUNC_WIKI_STRING_OUTPUTFILE=qbs_new(0,0);
-qbs *_FUNC_WIKI_STRING_S1=NULL;
-#line 76 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_S1)_FUNC_WIKI_STRING_S1=qbs_new(0,0);
-qbs *_FUNC_WIKI_STRING_S2=NULL;
-#line 77 "ide/wiki/wiki_methods.bas"
-if (!_FUNC_WIKI_STRING_S2)_FUNC_WIKI_STRING_S2=qbs_new(0,0);
-#line 83 "ide/wiki/wiki_methods.bas"
-double pass6912;
-int32 *_FUNC_WIKI_LONG_S1=NULL;
-#line 88 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_LONG_S1==NULL){
-#line 88 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_LONG_S1=(int32*)mem_static_malloc(4);
-#line 88 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_S1=0;
-#line 88 "ide/wiki/wiki_methods.bas"
+#line 20724 "ide/ide_methods.bas"
+int64 fornext_value6982;
+#line 20724 "ide/ide_methods.bas"
+int64 fornext_finalvalue6982;
+#line 20724 "ide/ide_methods.bas"
+int64 fornext_step6982;
+#line 20724 "ide/ide_methods.bas"
+uint8 fornext_step_negative6982;
+int32 *_FUNC_FINDCURRENTSF_LONG_ENDEDSF=NULL;
+#line 20739 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_ENDEDSF==NULL){
+#line 20739 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_ENDEDSF=(int32*)mem_static_malloc(4);
+#line 20739 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_ENDEDSF=0;
+#line 20739 "ide/ide_methods.bas"
 }
-#line 89 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6913=NULL;
-#line 89 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6913){
-#line 89 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6913=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6913=(byte_element_struct*)mem_static_malloc(12);
-#line 89 "ide/wiki/wiki_methods.bas"
+int32 *_FUNC_FINDCURRENTSF_LONG_ENDSF_CHECK=NULL;
+#line 20740 "ide/ide_methods.bas"
+if(_FUNC_FINDCURRENTSF_LONG_ENDSF_CHECK==NULL){
+#line 20740 "ide/ide_methods.bas"
+_FUNC_FINDCURRENTSF_LONG_ENDSF_CHECK=(int32*)mem_static_malloc(4);
+#line 20740 "ide/ide_methods.bas"
+*_FUNC_FINDCURRENTSF_LONG_ENDSF_CHECK=0;
+#line 20740 "ide/ide_methods.bas"
 }
-int32 *_FUNC_WIKI_LONG_S2=NULL;
-#line 89 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_LONG_S2==NULL){
-#line 89 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_LONG_S2=(int32*)mem_static_malloc(4);
-#line 89 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_S2=0;
-#line 89 "ide/wiki/wiki_methods.bas"
-}
-#line 105 "ide/wiki/wiki_methods.bas"
-byte_element_struct *byte_element_6916=NULL;
-#line 105 "ide/wiki/wiki_methods.bas"
-if (!byte_element_6916){
-#line 105 "ide/wiki/wiki_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6916=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6916=(byte_element_struct*)mem_static_malloc(12);
-#line 105 "ide/wiki/wiki_methods.bas"
-}
-int32 *_FUNC_WIKI_LONG_FH=NULL;
-#line 109 "ide/wiki/wiki_methods.bas"
-if(_FUNC_WIKI_LONG_FH==NULL){
-#line 109 "ide/wiki/wiki_methods.bas"
-_FUNC_WIKI_LONG_FH=(int32*)mem_static_malloc(4);
-#line 109 "ide/wiki/wiki_methods.bas"
-*_FUNC_WIKI_LONG_FH=0;
-#line 109 "ide/wiki/wiki_methods.bas"
-}
+#line 20740 "ide/ide_methods.bas"
+int64 fornext_value6984;
+#line 20740 "ide/ide_methods.bas"
+int64 fornext_finalvalue6984;
+#line 20740 "ide/ide_methods.bas"
+int64 fornext_step6984;
+#line 20740 "ide/ide_methods.bas"
+uint8 fornext_step_negative6984;

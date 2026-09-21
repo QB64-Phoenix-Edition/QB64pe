@@ -1,540 +1,449 @@
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_IDEUPDATEHELPBOX=NULL;
-#line 19959 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_IDEUPDATEHELPBOX==NULL){
-#line 19959 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_IDEUPDATEHELPBOX=(int32*)mem_static_malloc(4);
-#line 19959 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_IDEUPDATEHELPBOX=0;
-#line 19959 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_IDEMESSAGEBOX=NULL;
+#line 16969 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_IDEMESSAGEBOX==NULL){
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_IDEMESSAGEBOX=(int32*)mem_static_malloc(4);
+#line 16969 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_IDEMESSAGEBOX=0;
+#line 16969 "ide/ide_methods.bas"
 }
-ptrszint *_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE=NULL;
-#line 19962 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE){
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE=(ptrszint*)mem_static_malloc(9*ptrsz);
-#line 19962 "ide/ide_methods.bas"
+#line 16969 "ide/ide_methods.bas"
+qbs*oldstr6587=NULL;
+#line 16969 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_STRING_TITLESTR->tmp||_FUNC_IDEMESSAGEBOX_STRING_TITLESTR->fixed||_FUNC_IDEMESSAGEBOX_STRING_TITLESTR->readonly){
+#line 16969 "ide/ide_methods.bas"
+oldstr6587=_FUNC_IDEMESSAGEBOX_STRING_TITLESTR;
+#line 16969 "ide/ide_methods.bas"
+if (oldstr6587->cmem_descriptor){
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_TITLESTR=qbs_new_cmem(oldstr6587->len,0);
+#line 16969 "ide/ide_methods.bas"
+}else{
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_TITLESTR=qbs_new(oldstr6587->len,0);
+#line 16969 "ide/ide_methods.bas"
+}
+#line 16969 "ide/ide_methods.bas"
+memcpy(_FUNC_IDEMESSAGEBOX_STRING_TITLESTR->chr,oldstr6587->chr,oldstr6587->len);
+#line 16969 "ide/ide_methods.bas"
+}
+#line 16969 "ide/ide_methods.bas"
+qbs*oldstr6588=NULL;
+#line 16969 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR->tmp||_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR->fixed||_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR->readonly){
+#line 16969 "ide/ide_methods.bas"
+oldstr6588=_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR;
+#line 16969 "ide/ide_methods.bas"
+if (oldstr6588->cmem_descriptor){
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR=qbs_new_cmem(oldstr6588->len,0);
+#line 16969 "ide/ide_methods.bas"
+}else{
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR=qbs_new(oldstr6588->len,0);
+#line 16969 "ide/ide_methods.bas"
+}
+#line 16969 "ide/ide_methods.bas"
+memcpy(_FUNC_IDEMESSAGEBOX_STRING_MESSAGESTR->chr,oldstr6588->chr,oldstr6588->len);
+#line 16969 "ide/ide_methods.bas"
+}
+#line 16969 "ide/ide_methods.bas"
+qbs*oldstr6589=NULL;
+#line 16969 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->tmp||_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->fixed||_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->readonly){
+#line 16969 "ide/ide_methods.bas"
+oldstr6589=_FUNC_IDEMESSAGEBOX_STRING_BUTTONS;
+#line 16969 "ide/ide_methods.bas"
+if (oldstr6589->cmem_descriptor){
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_BUTTONS=qbs_new_cmem(oldstr6589->len,0);
+#line 16969 "ide/ide_methods.bas"
+}else{
+#line 16969 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING_BUTTONS=qbs_new(oldstr6589->len,0);
+#line 16969 "ide/ide_methods.bas"
+}
+#line 16969 "ide/ide_methods.bas"
+memcpy(_FUNC_IDEMESSAGEBOX_STRING_BUTTONS->chr,oldstr6589->chr,oldstr6589->len);
+#line 16969 "ide/ide_methods.bas"
+}
+int32 *_FUNC_IDEMESSAGEBOX_LONG_FOCUS=NULL;
+#line 16975 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_FOCUS==NULL){
+#line 16975 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_FOCUS=(int32*)mem_static_malloc(4);
+#line 16975 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_FOCUS=0;
+#line 16975 "ide/ide_methods.bas"
+}
+void *_FUNC_IDEMESSAGEBOX_UDT_P=NULL;
+#line 16976 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_UDT_P==NULL){
+#line 16976 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_UDT_P=(void*)mem_static_malloc(20);
+#line 16976 "ide/ide_methods.bas"
+memset(_FUNC_IDEMESSAGEBOX_UDT_P,0,20);
+#line 16976 "ide/ide_methods.bas"
+}
+ptrszint *_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O=NULL;
+#line 16977 "ide/ide_methods.bas"
+if (!_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O){
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O=(ptrszint*)mem_static_malloc(9*ptrsz);
+#line 16977 "ide/ide_methods.bas"
 new_mem_lock();
-#line 19962 "ide/ide_methods.bas"
+#line 16977 "ide/ide_methods.bas"
 mem_lock_tmp->type=4;
-#line 19962 "ide/ide_methods.bas"
-((ptrszint*)_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE)[8]=(ptrszint)mem_lock_tmp;
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE[2]=0;
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE[4]=2147483647;
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE[5]=0;
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE[6]=0;
-#line 19962 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_STRING_FULLMESSAGE[0]=(ptrszint)&nothingstring;
-#line 19962 "ide/ide_methods.bas"
+#line 16977 "ide/ide_methods.bas"
+((ptrszint*)_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O)[8]=(ptrszint)mem_lock_tmp;
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[2]=0;
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[4]=2147483647;
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[5]=0;
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[6]=0;
+#line 16977 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_UDT_O[0]=(ptrszint)nothingvalue;
+#line 16977 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_UPDATESTEP=NULL;
-#line 19963 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_UPDATESTEP==NULL){
-#line 19963 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_UPDATESTEP=(int32*)mem_static_malloc(4);
-#line 19963 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_UPDATESTEP=0;
-#line 19963 "ide/ide_methods.bas"
+qbs *_FUNC_IDEMESSAGEBOX_STRING1_SEP=NULL;
+#line 16978 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_STRING1_SEP==NULL){
+#line 16978 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_STRING1_SEP=qbs_new_fixed((uint8*)mem_static_malloc(1),1,0);
+#line 16978 "ide/ide_methods.bas"
+memset(_FUNC_IDEMESSAGEBOX_STRING1_SEP->chr,0,1);
+#line 16978 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_FOCUS=NULL;
-#line 19972 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_FOCUS==NULL){
-#line 19972 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_FOCUS=(int32*)mem_static_malloc(4);
-#line 19972 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_FOCUS=0;
-#line 19972 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES=NULL;
+#line 16984 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES==NULL){
+#line 16984 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES=(int32*)mem_static_malloc(4);
+#line 16984 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_MESSAGELINES=0;
+#line 16984 "ide/ide_methods.bas"
 }
-void *_FUNC_IDEUPDATEHELPBOX_UDT_P=NULL;
-#line 19973 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_UDT_P==NULL){
-#line 19973 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_UDT_P=(void*)mem_static_malloc(20);
-#line 19973 "ide/ide_methods.bas"
-memset(_FUNC_IDEUPDATEHELPBOX_UDT_P,0,20);
-#line 19973 "ide/ide_methods.bas"
-}
-ptrszint *_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O=NULL;
-#line 19974 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O){
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O=(ptrszint*)mem_static_malloc(9*ptrsz);
-#line 19974 "ide/ide_methods.bas"
+ptrszint *_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE=NULL;
+#line 16985 "ide/ide_methods.bas"
+if (!_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE){
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE=(ptrszint*)mem_static_malloc(9*ptrsz);
+#line 16985 "ide/ide_methods.bas"
 new_mem_lock();
-#line 19974 "ide/ide_methods.bas"
+#line 16985 "ide/ide_methods.bas"
 mem_lock_tmp->type=4;
-#line 19974 "ide/ide_methods.bas"
-((ptrszint*)_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O)[8]=(ptrszint)mem_lock_tmp;
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O[2]=0;
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O[4]=2147483647;
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O[5]=0;
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O[6]=0;
-#line 19974 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_ARRAY_UDT_O[0]=(ptrszint)nothingvalue;
-#line 19974 "ide/ide_methods.bas"
+#line 16985 "ide/ide_methods.bas"
+((ptrszint*)_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE)[8]=(ptrszint)mem_lock_tmp;
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[2]=0;
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[4]=2147483647;
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[5]=0;
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[6]=0;
+#line 16985 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_ARRAY_STRING_FULLMESSAGE[0]=(ptrszint)&nothingstring;
+#line 16985 "ide/ide_methods.bas"
 }
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING1_SEP=NULL;
-#line 19975 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_STRING1_SEP==NULL){
-#line 19975 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_STRING1_SEP=qbs_new_fixed((uint8*)mem_static_malloc(1),1,0);
-#line 19975 "ide/ide_methods.bas"
-memset(_FUNC_IDEUPDATEHELPBOX_STRING1_SEP->chr,0,1);
-#line 19975 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN=NULL;
+#line 16986 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN==NULL){
+#line 16986 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN=(int32*)mem_static_malloc(4);
+#line 16986 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_PREVSCAN=0;
+#line 16986 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDESUBWINDOW=NULL;
-#line 19981 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDESUBWINDOW==NULL){
-#line 19981 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDESUBWINDOW=(int32*)mem_static_malloc(4);
-#line 19981 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDESUBWINDOW=0;
-#line 19981 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN=NULL;
+#line 16988 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN==NULL){
+#line 16988 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN=(int32*)mem_static_malloc(4);
+#line 16988 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_NEXTSCAN=0;
+#line 16988 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDEWY=NULL;
-#line 19981 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDEWY==NULL){
-#line 19981 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDEWY=(int32*)mem_static_malloc(4);
-#line 19981 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_OLD_IDEWY=0;
-#line 19981 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_TW=NULL;
+#line 16991 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_TW==NULL){
+#line 16991 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_TW=(int32*)mem_static_malloc(4);
+#line 16991 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_TW=0;
+#line 16991 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_MESSAGELINES=NULL;
-#line 19987 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_MESSAGELINES==NULL){
-#line 19987 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_MESSAGELINES=(int32*)mem_static_malloc(4);
-#line 19987 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_MESSAGELINES=0;
-#line 19987 "ide/ide_methods.bas"
+#line 16991 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6591=NULL;
+#line 16991 "ide/ide_methods.bas"
+if (!byte_element_6591){
+#line 16991 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6591=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6591=(byte_element_struct*)mem_static_malloc(12);
+#line 16991 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_I=NULL;
-#line 19991 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_I==NULL){
-#line 19991 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_I=(int32*)mem_static_malloc(4);
-#line 19991 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_I=0;
-#line 19991 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_W=NULL;
+#line 16992 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_W==NULL){
+#line 16992 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_W=(int32*)mem_static_malloc(4);
+#line 16992 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_W=0;
+#line 16992 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_W2=NULL;
-#line 19992 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_W2==NULL){
-#line 19992 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_W2=(int32*)mem_static_malloc(4);
-#line 19992 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_W2=0;
-#line 19992 "ide/ide_methods.bas"
+#line 16998 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6592=NULL;
+#line 16998 "ide/ide_methods.bas"
+if (!byte_element_6592){
+#line 16998 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6592=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6592=(byte_element_struct*)mem_static_malloc(12);
+#line 16998 "ide/ide_methods.bas"
 }
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_TITLESTR=NULL;
-#line 19992 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_TITLESTR)_FUNC_IDEUPDATEHELPBOX_STRING_TITLESTR=qbs_new(0,0);
-#line 19992 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6746=NULL;
-#line 19992 "ide/ide_methods.bas"
-if (!byte_element_6746){
-#line 19992 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6746=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6746=(byte_element_struct*)mem_static_malloc(12);
-#line 19992 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS=NULL;
+#line 17005 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS==NULL){
+#line 17005 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS=(int32*)mem_static_malloc(4);
+#line 17005 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_TOTALBUTTONS=0;
+#line 17005 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_W=NULL;
-#line 19993 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_W==NULL){
-#line 19993 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_W=(int32*)mem_static_malloc(4);
-#line 19993 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_W=0;
-#line 19993 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_I=NULL;
+#line 17006 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_I==NULL){
+#line 17006 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_I=(int32*)mem_static_malloc(4);
+#line 17006 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_I=0;
+#line 17006 "ide/ide_methods.bas"
 }
-#line 19995 "ide/ide_methods.bas"
-int32 pass6747;
-#line 19995 "ide/ide_methods.bas"
-int32 pass6748;
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_BUTTONID=NULL;
-#line 19998 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_BUTTONID==NULL){
-#line 19998 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_BUTTONID=(int32*)mem_static_malloc(4);
-#line 19998 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_BUTTONID=0;
-#line 19998 "ide/ide_methods.bas"
+#line 17006 "ide/ide_methods.bas"
+int64 fornext_value6594;
+#line 17006 "ide/ide_methods.bas"
+int64 fornext_finalvalue6594;
+#line 17006 "ide/ide_methods.bas"
+int64 fornext_step6594;
+#line 17006 "ide/ide_methods.bas"
+uint8 fornext_step_negative6594;
+#line 17006 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6595=NULL;
+#line 17006 "ide/ide_methods.bas"
+if (!byte_element_6595){
+#line 17006 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6595=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6595=(byte_element_struct*)mem_static_malloc(12);
+#line 17006 "ide/ide_methods.bas"
 }
-#line 20006 "ide/ide_methods.bas"
-int64 fornext_value6750;
-#line 20006 "ide/ide_methods.bas"
-int64 fornext_finalvalue6750;
-#line 20006 "ide/ide_methods.bas"
-int64 fornext_step6750;
-#line 20006 "ide/ide_methods.bas"
-uint8 fornext_step_negative6750;
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_F=NULL;
-#line 20015 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_F==NULL){
-#line 20015 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_F=(int32*)mem_static_malloc(4);
-#line 20015 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_F=0;
-#line 20015 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN=NULL;
+#line 17009 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN==NULL){
+#line 17009 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN=(int32*)mem_static_malloc(4);
+#line 17009 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_BUTTONSLEN=0;
+#line 17009 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_CX=NULL;
-#line 20015 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_CX==NULL){
-#line 20015 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_CX=(int32*)mem_static_malloc(4);
-#line 20015 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_CX=0;
-#line 20015 "ide/ide_methods.bas"
+#line 17009 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6596=NULL;
+#line 17009 "ide/ide_methods.bas"
+if (!byte_element_6596){
+#line 17009 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6596=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6596=(byte_element_struct*)mem_static_malloc(12);
+#line 17009 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_CY=NULL;
-#line 20015 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_CY==NULL){
-#line 20015 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_CY=(int32*)mem_static_malloc(4);
-#line 20015 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_CY=0;
-#line 20015 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_W2=NULL;
+#line 17012 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_W2==NULL){
+#line 17012 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_W2=(int32*)mem_static_malloc(4);
+#line 17012 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_W2=0;
+#line 17012 "ide/ide_methods.bas"
 }
-#line 20016 "ide/ide_methods.bas"
-int64 fornext_value6753;
-#line 20016 "ide/ide_methods.bas"
-int64 fornext_finalvalue6753;
-#line 20016 "ide/ide_methods.bas"
-int64 fornext_step6753;
-#line 20016 "ide/ide_methods.bas"
-uint8 fornext_step_negative6753;
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_LASTFOCUS=NULL;
-#line 20026 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_LASTFOCUS==NULL){
-#line 20026 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_LASTFOCUS=(int32*)mem_static_malloc(4);
-#line 20026 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_LASTFOCUS=0;
-#line 20026 "ide/ide_methods.bas"
+#line 17012 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6597=NULL;
+#line 17012 "ide/ide_methods.bas"
+if (!byte_element_6597){
+#line 17012 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6597=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6597=(byte_element_struct*)mem_static_malloc(12);
+#line 17012 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_N=NULL;
-#line 20042 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_N==NULL){
-#line 20042 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_N=(int32*)mem_static_malloc(4);
-#line 20042 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_N=0;
-#line 20042 "ide/ide_methods.bas"
+#line 17016 "ide/ide_methods.bas"
+int32 pass6598;
+#line 17026 "ide/ide_methods.bas"
+int64 fornext_value6600;
+#line 17026 "ide/ide_methods.bas"
+int64 fornext_finalvalue6600;
+#line 17026 "ide/ide_methods.bas"
+int64 fornext_step6600;
+#line 17026 "ide/ide_methods.bas"
+uint8 fornext_step_negative6600;
+int32 *_FUNC_IDEMESSAGEBOX_LONG_F=NULL;
+#line 17034 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_F==NULL){
+#line 17034 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_F=(int32*)mem_static_malloc(4);
+#line 17034 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_F=0;
+#line 17034 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_C=NULL;
-#line 20042 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_C==NULL){
-#line 20042 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_C=(int32*)mem_static_malloc(4);
-#line 20042 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_C=0;
-#line 20042 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_CX=NULL;
+#line 17034 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_CX==NULL){
+#line 17034 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_CX=(int32*)mem_static_malloc(4);
+#line 17034 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_CX=0;
+#line 17034 "ide/ide_methods.bas"
 }
-#line 20045 "ide/ide_methods.bas"
-int64 fornext_value6756;
-#line 20045 "ide/ide_methods.bas"
-int64 fornext_finalvalue6756;
-#line 20045 "ide/ide_methods.bas"
-int64 fornext_step6756;
-#line 20045 "ide/ide_methods.bas"
-uint8 fornext_step_negative6756;
-#line 20047 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6757=NULL;
-#line 20047 "ide/ide_methods.bas"
-if (!byte_element_6757){
-#line 20047 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6757=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6757=(byte_element_struct*)mem_static_malloc(12);
-#line 20047 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_CY=NULL;
+#line 17034 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_CY==NULL){
+#line 17034 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_CY=(int32*)mem_static_malloc(4);
+#line 17034 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_CY=0;
+#line 17034 "ide/ide_methods.bas"
 }
-#line 20050 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6758=NULL;
-#line 20050 "ide/ide_methods.bas"
-if (!byte_element_6758){
-#line 20050 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6758=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6758=(byte_element_struct*)mem_static_malloc(12);
-#line 20050 "ide/ide_methods.bas"
+#line 17035 "ide/ide_methods.bas"
+int64 fornext_value6603;
+#line 17035 "ide/ide_methods.bas"
+int64 fornext_finalvalue6603;
+#line 17035 "ide/ide_methods.bas"
+int64 fornext_step6603;
+#line 17035 "ide/ide_methods.bas"
+uint8 fornext_step_negative6603;
+int32 *_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS=NULL;
+#line 17045 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS==NULL){
+#line 17045 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS=(int32*)mem_static_malloc(4);
+#line 17045 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_LASTFOCUS=0;
+#line 17045 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_MAXPROGRESSWIDTH=NULL;
-#line 20055 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_MAXPROGRESSWIDTH==NULL){
-#line 20055 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_MAXPROGRESSWIDTH=(int32*)mem_static_malloc(4);
-#line 20055 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_MAXPROGRESSWIDTH=0;
-#line 20055 "ide/ide_methods.bas"
+#line 17050 "ide/ide_methods.bas"
+int64 fornext_value6605;
+#line 17050 "ide/ide_methods.bas"
+int64 fornext_finalvalue6605;
+#line 17050 "ide/ide_methods.bas"
+int64 fornext_step6605;
+#line 17050 "ide/ide_methods.bas"
+uint8 fornext_step_negative6605;
+#line 17051 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6606=NULL;
+#line 17051 "ide/ide_methods.bas"
+if (!byte_element_6606){
+#line 17051 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6606=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6606=(byte_element_struct*)mem_static_malloc(12);
+#line 17051 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGE=NULL;
-#line 20056 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGE==NULL){
-#line 20056 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGE=(int32*)mem_static_malloc(4);
-#line 20056 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGE=0;
-#line 20056 "ide/ide_methods.bas"
+#line 17054 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6607=NULL;
+#line 17054 "ide/ide_methods.bas"
+if (!byte_element_6607){
+#line 17054 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6607=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6607=(byte_element_struct*)mem_static_malloc(12);
+#line 17054 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGECHARS=NULL;
-#line 20057 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGECHARS==NULL){
-#line 20057 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGECHARS=(int32*)mem_static_malloc(4);
-#line 20057 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_PERCENTAGECHARS=0;
-#line 20057 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_CHANGE=NULL;
+#line 17063 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_CHANGE==NULL){
+#line 17063 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_CHANGE=(int32*)mem_static_malloc(4);
+#line 17063 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_CHANGE=0;
+#line 17063 "ide/ide_methods.bas"
 }
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_PERCENTAGEMSG=NULL;
-#line 20058 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_PERCENTAGEMSG)_FUNC_IDEUPDATEHELPBOX_STRING_PERCENTAGEMSG=qbs_new(0,0);
-#line 20059 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6759=NULL;
-#line 20059 "ide/ide_methods.bas"
-if (!byte_element_6759){
-#line 20059 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6759=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6759=(byte_element_struct*)mem_static_malloc(12);
-#line 20059 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN=NULL;
+#line 17068 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN==NULL){
+#line 17068 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN=(int32*)mem_static_malloc(4);
+#line 17068 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_MOUSEDOWN=0;
+#line 17068 "ide/ide_methods.bas"
 }
-#line 20062 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6760=NULL;
-#line 20062 "ide/ide_methods.bas"
-if (!byte_element_6760){
-#line 20062 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6760=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6760=(byte_element_struct*)mem_static_malloc(12);
-#line 20062 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP=NULL;
+#line 17069 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP==NULL){
+#line 17069 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP=(int32*)mem_static_malloc(4);
+#line 17069 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_MOUSEUP=0;
+#line 17069 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEDOWN=NULL;
-#line 20072 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEDOWN==NULL){
-#line 20072 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEDOWN=(int32*)mem_static_malloc(4);
-#line 20072 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEDOWN=0;
-#line 20072 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_ALT=NULL;
+#line 17071 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_ALT==NULL){
+#line 17071 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_ALT=(int32*)mem_static_malloc(4);
+#line 17071 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_ALT=0;
+#line 17071 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEUP=NULL;
-#line 20073 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEUP==NULL){
-#line 20073 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEUP=(int32*)mem_static_malloc(4);
-#line 20073 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_MOUSEUP=0;
-#line 20073 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_OLDALT=NULL;
+#line 17071 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_OLDALT==NULL){
+#line 17071 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_OLDALT=(int32*)mem_static_malloc(4);
+#line 17071 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_OLDALT=0;
+#line 17071 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_ALT=NULL;
-#line 20074 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_ALT==NULL){
-#line 20074 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_ALT=(int32*)mem_static_malloc(4);
-#line 20074 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_ALT=0;
-#line 20074 "ide/ide_methods.bas"
+qbs *_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER=NULL;
+#line 17077 "ide/ide_methods.bas"
+if (!_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER)_FUNC_IDEMESSAGEBOX_STRING_ALTLETTER=qbs_new(0,0);
+#line 17079 "ide/ide_methods.bas"
+byte_element_struct *byte_element_6609=NULL;
+#line 17079 "ide/ide_methods.bas"
+if (!byte_element_6609){
+#line 17079 "ide/ide_methods.bas"
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6609=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6609=(byte_element_struct*)mem_static_malloc(12);
+#line 17079 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_OLDALT=NULL;
-#line 20075 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_OLDALT==NULL){
-#line 20075 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_OLDALT=(int32*)mem_static_malloc(4);
-#line 20075 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_OLDALT=0;
-#line 20075 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_K=NULL;
+#line 17080 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_K==NULL){
+#line 17080 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_K=(int32*)mem_static_malloc(4);
+#line 17080 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_K=0;
+#line 17080 "ide/ide_methods.bas"
 }
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_ALTLETTER=NULL;
-#line 20079 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_ALTLETTER)_FUNC_IDEUPDATEHELPBOX_STRING_ALTLETTER=qbs_new(0,0);
-#line 20081 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6761=NULL;
-#line 20081 "ide/ide_methods.bas"
-if (!byte_element_6761){
-#line 20081 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6761=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6761=(byte_element_struct*)mem_static_malloc(12);
-#line 20081 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_INFO=NULL;
+#line 17088 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_INFO==NULL){
+#line 17088 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_INFO=(int32*)mem_static_malloc(4);
+#line 17088 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_INFO=0;
+#line 17088 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_K=NULL;
-#line 20082 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_K==NULL){
-#line 20082 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_K=(int32*)mem_static_malloc(4);
-#line 20082 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_K=0;
-#line 20082 "ide/ide_methods.bas"
+#line 17098 "ide/ide_methods.bas"
+int64 fornext_value6611;
+#line 17098 "ide/ide_methods.bas"
+int64 fornext_finalvalue6611;
+#line 17098 "ide/ide_methods.bas"
+int64 fornext_step6611;
+#line 17098 "ide/ide_methods.bas"
+uint8 fornext_step_negative6611;
+int32 *_FUNC_IDEMESSAGEBOX_LONG_T=NULL;
+#line 17099 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_T==NULL){
+#line 17099 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_T=(int32*)mem_static_malloc(4);
+#line 17099 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_T=0;
+#line 17099 "ide/ide_methods.bas"
 }
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_INFO=NULL;
-#line 20090 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_INFO==NULL){
-#line 20090 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_INFO=(int32*)mem_static_malloc(4);
-#line 20090 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_INFO=0;
-#line 20090 "ide/ide_methods.bas"
+int32 *_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET=NULL;
+#line 17101 "ide/ide_methods.bas"
+if(_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET==NULL){
+#line 17101 "ide/ide_methods.bas"
+_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET=(int32*)mem_static_malloc(4);
+#line 17101 "ide/ide_methods.bas"
+*_FUNC_IDEMESSAGEBOX_LONG_FOCUSOFFSET=0;
+#line 17101 "ide/ide_methods.bas"
 }
-#line 20100 "ide/ide_methods.bas"
-int64 fornext_value6763;
-#line 20100 "ide/ide_methods.bas"
-int64 fornext_finalvalue6763;
-#line 20100 "ide/ide_methods.bas"
-int64 fornext_step6763;
-#line 20100 "ide/ide_methods.bas"
-uint8 fornext_step_negative6763;
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_T=NULL;
-#line 20101 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_T==NULL){
-#line 20101 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_T=(int32*)mem_static_malloc(4);
-#line 20101 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_T=0;
-#line 20101 "ide/ide_methods.bas"
-}
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_FOCUSOFFSET=NULL;
-#line 20103 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_FOCUSOFFSET==NULL){
-#line 20103 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_FOCUSOFFSET=(int32*)mem_static_malloc(4);
-#line 20103 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_FOCUSOFFSET=0;
-#line 20103 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_Q=NULL;
-#line 20111 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_Q)_FUNC_IDEUPDATEHELPBOX_STRING_Q=qbs_new(0,0);
-double *_FUNC_IDEUPDATEHELPBOX_DOUBLE_ST=NULL;
-#line 20121 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_DOUBLE_ST==NULL){
-#line 20121 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_DOUBLE_ST=(double*)mem_static_malloc(8);
-#line 20121 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_DOUBLE_ST=0;
-#line 20121 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_F=NULL;
-#line 20123 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_F)_FUNC_IDEUPDATEHELPBOX_STRING_F=qbs_new(0,0);
-#line 20123 "ide/ide_methods.bas"
-int32 pass6765;
-#line 20124 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6766=NULL;
-#line 20124 "ide/ide_methods.bas"
-if (!byte_element_6766){
-#line 20124 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6766=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6766=(byte_element_struct*)mem_static_malloc(12);
-#line 20124 "ide/ide_methods.bas"
-}
-double *_FUNC_IDEUPDATEHELPBOX_DOUBLE_ET=NULL;
-#line 20128 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_DOUBLE_ET==NULL){
-#line 20128 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_DOUBLE_ET=(double*)mem_static_malloc(8);
-#line 20128 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_DOUBLE_ET=0;
-#line 20128 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_PAGENAME2=NULL;
-#line 20134 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_PAGENAME2)_FUNC_IDEUPDATEHELPBOX_STRING_PAGENAME2=qbs_new(0,0);
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_A=NULL;
-#line 20158 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_A)_FUNC_IDEUPDATEHELPBOX_STRING_A=qbs_new(0,0);
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_FH=NULL;
-#line 20167 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_FH==NULL){
-#line 20167 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_FH=(int32*)mem_static_malloc(4);
-#line 20167 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_FH=0;
-#line 20167 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_L=NULL;
-#line 20170 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_L)_FUNC_IDEUPDATEHELPBOX_STRING_L=qbs_new(0,0);
-#line 20171 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6769=NULL;
-#line 20171 "ide/ide_methods.bas"
-if (!byte_element_6769){
-#line 20171 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6769=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6769=(byte_element_struct*)mem_static_malloc(12);
-#line 20171 "ide/ide_methods.bas"
-}
-#line 20177 "ide/ide_methods.bas"
-int64 fornext_value6771;
-#line 20177 "ide/ide_methods.bas"
-int64 fornext_finalvalue6771;
-#line 20177 "ide/ide_methods.bas"
-int64 fornext_step6771;
-#line 20177 "ide/ide_methods.bas"
-uint8 fornext_step_negative6771;
-#line 20177 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6772=NULL;
-#line 20177 "ide/ide_methods.bas"
-if (!byte_element_6772){
-#line 20177 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6772=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6772=(byte_element_struct*)mem_static_malloc(12);
-#line 20177 "ide/ide_methods.bas"
-}
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_X=NULL;
-#line 20196 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_X==NULL){
-#line 20196 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_X=(int32*)mem_static_malloc(4);
-#line 20196 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_X=0;
-#line 20196 "ide/ide_methods.bas"
-}
-#line 20196 "ide/ide_methods.bas"
-int64 fornext_value6775;
-#line 20196 "ide/ide_methods.bas"
-int64 fornext_finalvalue6775;
-#line 20196 "ide/ide_methods.bas"
-int64 fornext_step6775;
-#line 20196 "ide/ide_methods.bas"
-uint8 fornext_step_negative6775;
-#line 20196 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6776=NULL;
-#line 20196 "ide/ide_methods.bas"
-if (!byte_element_6776){
-#line 20196 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6776=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6776=(byte_element_struct*)mem_static_malloc(12);
-#line 20196 "ide/ide_methods.bas"
-}
-#line 20200 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6777=NULL;
-#line 20200 "ide/ide_methods.bas"
-if (!byte_element_6777){
-#line 20200 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6777=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6777=(byte_element_struct*)mem_static_malloc(12);
-#line 20200 "ide/ide_methods.bas"
-}
-#line 20208 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6778=NULL;
-#line 20208 "ide/ide_methods.bas"
-if (!byte_element_6778){
-#line 20208 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6778=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6778=(byte_element_struct*)mem_static_malloc(12);
-#line 20208 "ide/ide_methods.bas"
-}
-int32 *_FUNC_IDEUPDATEHELPBOX_LONG_X2=NULL;
-#line 20209 "ide/ide_methods.bas"
-if(_FUNC_IDEUPDATEHELPBOX_LONG_X2==NULL){
-#line 20209 "ide/ide_methods.bas"
-_FUNC_IDEUPDATEHELPBOX_LONG_X2=(int32*)mem_static_malloc(4);
-#line 20209 "ide/ide_methods.bas"
-*_FUNC_IDEUPDATEHELPBOX_LONG_X2=0;
-#line 20209 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_F2=NULL;
-#line 20210 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_F2)_FUNC_IDEUPDATEHELPBOX_STRING_F2=qbs_new(0,0);
-#line 20212 "ide/ide_methods.bas"
-byte_element_struct *byte_element_6779=NULL;
-#line 20212 "ide/ide_methods.bas"
-if (!byte_element_6779){
-#line 20212 "ide/ide_methods.bas"
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_6779=(byte_element_struct*)(mem_static_pointer-12); else byte_element_6779=(byte_element_struct*)mem_static_malloc(12);
-#line 20212 "ide/ide_methods.bas"
-}
-qbs *_FUNC_IDEUPDATEHELPBOX_STRING_IGNORE=NULL;
-#line 20215 "ide/ide_methods.bas"
-if (!_FUNC_IDEUPDATEHELPBOX_STRING_IGNORE)_FUNC_IDEUPDATEHELPBOX_STRING_IGNORE=qbs_new(0,0);

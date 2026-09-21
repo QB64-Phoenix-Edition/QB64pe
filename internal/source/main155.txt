@@ -1,196 +1,128 @@
-#line 184 "utilities/elements.bas"
-void SUB_REMOVEELEMENTS(qbs*_SUB_REMOVEELEMENTS_STRING_A,int32*_SUB_REMOVEELEMENTS_LONG_FIRST,int32*_SUB_REMOVEELEMENTS_LONG_LAST,int32*_SUB_REMOVEELEMENTS_LONG_KEEPINDEXING){
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
+int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
+#line 35 "utilities/file.bas"
 qbs *tqbs;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 ptrszint tmp_long;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 int32 tmp_fileno;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 #include "data155.txt"
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 mem_lock *sf_mem_lock;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 new_mem_lock();
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 sf_mem_lock->type=3;
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 libqb_check_stack();
-#line 184 "utilities/elements.bas"
+#line 35 "utilities/file.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 185 "utilities/elements.bas"
-do{
-#line 185 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,185,"elements.bas");}while(r);
-#line 187 "utilities/elements.bas"
-do{
-#line 187 "utilities/elements.bas"
-qbs_set(_SUB_REMOVEELEMENTS_STRING_A2,qbs_new_txt_len("",0));
-#line 187 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 187 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,187,"elements.bas");}while(r);
-#line 192 "utilities/elements.bas"
-do{
-#line 192 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_N=FUNC_NUMELEMENTS(_SUB_REMOVEELEMENTS_STRING_A);
-#line 192 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 192 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,192,"elements.bas");}while(r);
-#line 193 "utilities/elements.bas"
-do{
-#line 193 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_P= 1 ;
-#line 193 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,193,"elements.bas");}while(r);
-#line 194 "utilities/elements.bas"
-S_37543:;
-#line 194 "utilities/elements.bas"
-fornext_value3640= 1 ;
-#line 194 "utilities/elements.bas"
-fornext_finalvalue3640=*_SUB_REMOVEELEMENTS_LONG_N;
-#line 194 "utilities/elements.bas"
-fornext_step3640= 1 ;
-#line 194 "utilities/elements.bas"
-if (fornext_step3640<0) fornext_step_negative3640=1; else fornext_step_negative3640=0;
-#line 194 "utilities/elements.bas"
-if (is_error_pending()) goto fornext_error3640;
-#line 194 "utilities/elements.bas"
-goto fornext_entrylabel3640;
-#line 194 "utilities/elements.bas"
+#line 36 "utilities/file.bas"
+S_38318:;
+#line 36 "utilities/file.bas"
+fornext_value3723=_FUNC_FILEHASEXTENSION_STRING_F->len;
+#line 36 "utilities/file.bas"
+fornext_finalvalue3723= 1 ;
+#line 36 "utilities/file.bas"
+fornext_step3723= -1 ;
+#line 36 "utilities/file.bas"
+if (fornext_step3723<0) fornext_step_negative3723=1; else fornext_step_negative3723=0;
+#line 36 "utilities/file.bas"
+if (is_error_pending()) goto fornext_error3723;
+#line 36 "utilities/file.bas"
+goto fornext_entrylabel3723;
+#line 36 "utilities/file.bas"
 while(1){
-#line 194 "utilities/elements.bas"
-fornext_value3640=fornext_step3640+(*_SUB_REMOVEELEMENTS_LONG_I);
-#line 194 "utilities/elements.bas"
-fornext_entrylabel3640:
-#line 194 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_I=fornext_value3640;
-#line 194 "utilities/elements.bas"
-if (fornext_step_negative3640){
-#line 194 "utilities/elements.bas"
-if (fornext_value3640<fornext_finalvalue3640) break;
-#line 194 "utilities/elements.bas"
+#line 36 "utilities/file.bas"
+fornext_value3723=fornext_step3723+(*_FUNC_FILEHASEXTENSION_LONG_I);
+#line 36 "utilities/file.bas"
+fornext_entrylabel3723:
+#line 36 "utilities/file.bas"
+*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value3723;
+#line 36 "utilities/file.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 36 "utilities/file.bas"
+if (fornext_step_negative3723){
+#line 36 "utilities/file.bas"
+if (fornext_value3723<fornext_finalvalue3723) break;
+#line 36 "utilities/file.bas"
 }else{
-#line 194 "utilities/elements.bas"
-if (fornext_value3640>fornext_finalvalue3640) break;
-#line 194 "utilities/elements.bas"
+#line 36 "utilities/file.bas"
+if (fornext_value3723>fornext_finalvalue3723) break;
+#line 36 "utilities/file.bas"
 }
-#line 194 "utilities/elements.bas"
-fornext_error3640:;
-#line 194 "utilities/elements.bas"
-if(qbevent){evnt(28717,194,"elements.bas");if(r)goto S_37543;}
-#line 195 "utilities/elements.bas"
+#line 36 "utilities/file.bas"
+fornext_error3723:;
+#line 36 "utilities/file.bas"
+if(qbevent){evnt(28800,36,"file.bas");if(r)goto S_38318;}
+#line 37 "utilities/file.bas"
 do{
-#line 195 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_Q=func_instr(*_SUB_REMOVEELEMENTS_LONG_P,_SUB_REMOVEELEMENTS_STRING_A,__STRING1_SP,0|1);
-#line 195 "utilities/elements.bas"
+#line 37 "utilities/file.bas"
+*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
+#line 37 "utilities/file.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 195 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,195,"elements.bas");}while(r);
-#line 196 "utilities/elements.bas"
-S_37545:;
-#line 196 "utilities/elements.bas"
-if ((-(*_SUB_REMOVEELEMENTS_LONG_Q== 0 ))||is_error_pending()){
-#line 196 "utilities/elements.bas"
-if(qbevent){evnt(28717,196,"elements.bas");if(r)goto S_37545;}
-#line 196 "utilities/elements.bas"
+#line 37 "utilities/file.bas"
+if(!qbevent)break;evnt(28800,37,"file.bas");}while(r);
+#line 38 "utilities/file.bas"
+S_38320:;
+#line 38 "utilities/file.bas"
+if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
+#line 38 "utilities/file.bas"
+if(qbevent){evnt(28800,38,"file.bas");if(r)goto S_38320;}
+#line 38 "utilities/file.bas"
 do{
-#line 196 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_Q=_SUB_REMOVEELEMENTS_STRING_A->len+ 1 ;
-#line 196 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 196 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,196,"elements.bas");}while(r);
-#line 196 "utilities/elements.bas"
+#line 38 "utilities/file.bas"
+goto fornext_exit_3722;
+#line 38 "utilities/file.bas"
+if(!qbevent)break;evnt(28800,38,"file.bas");}while(r);
+#line 38 "utilities/file.bas"
 }
-#line 198 "utilities/elements.bas"
-S_37548:;
-#line 198 "utilities/elements.bas"
-if (((-(*_SUB_REMOVEELEMENTS_LONG_I<*_SUB_REMOVEELEMENTS_LONG_FIRST))|(-(*_SUB_REMOVEELEMENTS_LONG_I>*_SUB_REMOVEELEMENTS_LONG_LAST)))||is_error_pending()){
-#line 198 "utilities/elements.bas"
-if(qbevent){evnt(28717,198,"elements.bas");if(r)goto S_37548;}
-#line 199 "utilities/elements.bas"
+#line 39 "utilities/file.bas"
+S_38323:;
+#line 39 "utilities/file.bas"
+if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
+#line 39 "utilities/file.bas"
+if(qbevent){evnt(28800,39,"file.bas");if(r)goto S_38323;}
+#line 39 "utilities/file.bas"
 do{
-#line 199 "utilities/elements.bas"
-qbs_set(_SUB_REMOVEELEMENTS_STRING_A2,qbs_add(qbs_add(_SUB_REMOVEELEMENTS_STRING_A2,__STRING1_SP),func_mid(_SUB_REMOVEELEMENTS_STRING_A,*_SUB_REMOVEELEMENTS_LONG_P,*_SUB_REMOVEELEMENTS_LONG_Q-*_SUB_REMOVEELEMENTS_LONG_P,0|1)));
-#line 199 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 199 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,199,"elements.bas");}while(r);
-#line 200 "utilities/elements.bas"
-}else{
-#line 201 "utilities/elements.bas"
-S_37551:;
-#line 201 "utilities/elements.bas"
-if ((*_SUB_REMOVEELEMENTS_LONG_KEEPINDEXING)||is_error_pending()){
-#line 201 "utilities/elements.bas"
-if(qbevent){evnt(28717,201,"elements.bas");if(r)goto S_37551;}
-#line 201 "utilities/elements.bas"
+#line 39 "utilities/file.bas"
+*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
+#line 39 "utilities/file.bas"
+if(!qbevent)break;evnt(28800,39,"file.bas");}while(r);
+#line 39 "utilities/file.bas"
 do{
-#line 201 "utilities/elements.bas"
-qbs_set(_SUB_REMOVEELEMENTS_STRING_A2,qbs_add(_SUB_REMOVEELEMENTS_STRING_A2,__STRING1_SP));
-#line 201 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 201 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,201,"elements.bas");}while(r);
-#line 201 "utilities/elements.bas"
+#line 39 "utilities/file.bas"
+goto exit_subfunc;
+#line 39 "utilities/file.bas"
+if(!qbevent)break;evnt(28800,39,"file.bas");}while(r);
+#line 39 "utilities/file.bas"
 }
-#line 202 "utilities/elements.bas"
+#line 40 "utilities/file.bas"
+fornext_continue_3722:;
+#line 40 "utilities/file.bas"
 }
-#line 204 "utilities/elements.bas"
-do{
-#line 204 "utilities/elements.bas"
-*_SUB_REMOVEELEMENTS_LONG_P=*_SUB_REMOVEELEMENTS_LONG_Q+ 1 ;
-#line 204 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,204,"elements.bas");}while(r);
-#line 205 "utilities/elements.bas"
-fornext_continue_3639:;
-#line 205 "utilities/elements.bas"
-}
-#line 205 "utilities/elements.bas"
-fornext_exit_3639:;
-#line 206 "utilities/elements.bas"
-S_37557:;
-#line 206 "utilities/elements.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left(_SUB_REMOVEELEMENTS_STRING_A2, 1 ),__STRING1_SP)))||is_error_pending()){
-#line 206 "utilities/elements.bas"
-if(qbevent){evnt(28717,206,"elements.bas");if(r)goto S_37557;}
-#line 206 "utilities/elements.bas"
-do{
-#line 206 "utilities/elements.bas"
-qbs_set(_SUB_REMOVEELEMENTS_STRING_A2,qbs_right(_SUB_REMOVEELEMENTS_STRING_A2,_SUB_REMOVEELEMENTS_STRING_A2->len- 1 ));
-#line 206 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 206 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,206,"elements.bas");}while(r);
-#line 206 "utilities/elements.bas"
-}
-#line 208 "utilities/elements.bas"
-do{
-#line 208 "utilities/elements.bas"
-qbs_set(_SUB_REMOVEELEMENTS_STRING_A,_SUB_REMOVEELEMENTS_STRING_A2);
-#line 208 "utilities/elements.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 208 "utilities/elements.bas"
-if(!qbevent)break;evnt(28717,208,"elements.bas");}while(r);
-#line 210 "utilities/elements.bas"
+#line 40 "utilities/file.bas"
+fornext_exit_3722:;
+#line 41 "utilities/file.bas"
 exit_subfunc:;
-#line 210 "utilities/elements.bas"
+#line 41 "utilities/file.bas"
 free_mem_lock(sf_mem_lock);
-#line 210 "utilities/elements.bas"
+#line 41 "utilities/file.bas"
 #include "free155.txt"
-#line 210 "utilities/elements.bas"
+#line 41 "utilities/file.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 210 "utilities/elements.bas"
+#line 41 "utilities/file.bas"
 cmem_sp=tmp_cmem_sp;
-#line 210 "utilities/elements.bas"
+#line 41 "utilities/file.bas"
+return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
+#line 41 "utilities/file.bas"
 }
