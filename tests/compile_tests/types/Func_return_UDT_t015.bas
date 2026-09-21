@@ -24,6 +24,8 @@ Print "PASS Func_return_UDT_t015"
 System 0
 
 Function MakeStaticArray (seed As Long) As StaticArrayData
+    Dim functionResult As StaticArrayData
+
     Dim temp As StaticArrayData
 
     temp.values(0) = seed
@@ -31,5 +33,6 @@ Function MakeStaticArray (seed As Long) As StaticArrayData
     temp.values(2) = seed + 2
     temp.names(1) = "ONE"
     temp.names(2) = "TWO"
-    MakeStaticArray = temp
+    functionResult = temp
+    MakeStaticArray = functionResult
 End Function

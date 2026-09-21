@@ -23,8 +23,11 @@ Print "PASS Func_return_UDT_t045"
 System 0
 
 Function MakeDynamicFixedString As DynamicFixedStringResultData
-    ReDim MakeDynamicFixedString.labels(-1 To 1)
-    MakeDynamicFixedString.labels(-1) = "red"
-    MakeDynamicFixedString.labels(0) = "green"
-    MakeDynamicFixedString.labels(1) = "blue"
+    Dim functionResult As DynamicFixedStringResultData
+
+    ReDim functionResult.labels(-1 To 1)
+    functionResult.labels(-1) = "red"
+    functionResult.labels(0) = "green"
+    functionResult.labels(1) = "blue"
+    MakeDynamicFixedString = functionResult
 End Function

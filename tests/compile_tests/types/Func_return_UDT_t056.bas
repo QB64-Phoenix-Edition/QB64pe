@@ -31,9 +31,12 @@ Print "PASS Func_return_UDT_t056"
 System 0
 
 Function MakeDynVarMulti As DynVarMultiData
-    ReDim MakeDynVarMulti.grid(-1 To 0, 2 To 3)
-    MakeDynVarMulti.grid(-1, 2) = "a"
-    MakeDynVarMulti.grid(0, 2) = "b"
-    MakeDynVarMulti.grid(-1, 3) = "c"
-    MakeDynVarMulti.grid(0, 3) = "d"
+    Dim functionResult As DynVarMultiData
+
+    ReDim functionResult.grid(-1 To 0, 2 To 3)
+    functionResult.grid(-1, 2) = "a"
+    functionResult.grid(0, 2) = "b"
+    functionResult.grid(-1, 3) = "c"
+    functionResult.grid(0, 3) = "d"
+    MakeDynVarMulti = functionResult
 End Function

@@ -40,11 +40,14 @@ Print "PASS Func_return_UDT_t065"
 System 0
 
 Function MakeDynOwnerInline As DynOwnerInlineResultData
-    ReDim MakeDynOwnerInline.items(2 To 3)
-    MakeDynOwnerInline.items(2).children(0).textValue = "2a"
-    MakeDynOwnerInline.items(2).children(1).textValue = "2b"
-    MakeDynOwnerInline.items(2).tailText = "tail2"
-    MakeDynOwnerInline.items(3).children(0).textValue = "3a"
-    MakeDynOwnerInline.items(3).children(1).textValue = "3b"
-    MakeDynOwnerInline.items(3).tailText = "tail3"
+    Dim functionResult As DynOwnerInlineResultData
+
+    ReDim functionResult.items(2 To 3)
+    functionResult.items(2).children(0).textValue = "2a"
+    functionResult.items(2).children(1).textValue = "2b"
+    functionResult.items(2).tailText = "tail2"
+    functionResult.items(3).children(0).textValue = "3a"
+    functionResult.items(3).children(1).textValue = "3b"
+    functionResult.items(3).tailText = "tail3"
+    MakeDynOwnerInline = functionResult
 End Function

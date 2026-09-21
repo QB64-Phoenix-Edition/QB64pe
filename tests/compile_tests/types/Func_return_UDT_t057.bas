@@ -24,15 +24,18 @@ Print "PASS Func_return_UDT_t057"
 System 0
 
 Function MakeDynVarRecursive (level As Long) As DynVarRecursiveData
+    Dim functionResult As DynVarRecursiveData
+
     Dim child As DynVarRecursiveData
 
     If level = 0 Then
-        MakeDynVarRecursive.values(0) = "base"
-        MakeDynVarRecursive.depth = 0
+        functionResult.values(0) = "base"
+        functionResult.depth = 0
     Else
         child = MakeDynVarRecursive(level - 1)
-        MakeDynVarRecursive = child
-        MakeDynVarRecursive.values(0) = MakeDynVarRecursive.values(0) + "x"
-        MakeDynVarRecursive.depth = level
+        functionResult = child
+        functionResult.values(0) = functionResult.values(0) + "x"
+        functionResult.depth = level
     End If
+    MakeDynVarRecursive = functionResult
 End Function

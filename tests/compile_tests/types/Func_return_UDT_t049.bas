@@ -40,12 +40,15 @@ Print "PASS Func_return_UDT_t049"
 System 0
 
 Function MakeDynamicOwnerArray As DynamicOwnerArrayResultData
-    MakeDynamicOwnerArray.items(0).text = "zero"
-    MakeDynamicOwnerArray.items(1).text = "one"
-    ReDim MakeDynamicOwnerArray.items(0).values(2 To 3)
-    ReDim MakeDynamicOwnerArray.items(1).values(4 To 5)
-    MakeDynamicOwnerArray.items(0).values(2) = 20
-    MakeDynamicOwnerArray.items(0).values(3) = 30
-    MakeDynamicOwnerArray.items(1).values(4) = 40
-    MakeDynamicOwnerArray.items(1).values(5) = 50
+    Dim functionResult As DynamicOwnerArrayResultData
+
+    functionResult.items(0).text = "zero"
+    functionResult.items(1).text = "one"
+    ReDim functionResult.items(0).values(2 To 3)
+    ReDim functionResult.items(1).values(4 To 5)
+    functionResult.items(0).values(2) = 20
+    functionResult.items(0).values(3) = 30
+    functionResult.items(1).values(4) = 40
+    functionResult.items(1).values(5) = 50
+    MakeDynamicOwnerArray = functionResult
 End Function

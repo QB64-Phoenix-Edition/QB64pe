@@ -27,7 +27,10 @@ Print "PASS Func_return_UDT_t020"
 System 0
 
 Function MakePairText (a As String, b As String, n As Long) As PairText
-    MakePairText.firstText = a
-    MakePairText.secondText = b
-    MakePairText.value = n
+    Dim functionResult As PairText
+
+    functionResult.firstText = a
+    functionResult.secondText = b
+    functionResult.value = n
+    MakePairText = functionResult
 End Function

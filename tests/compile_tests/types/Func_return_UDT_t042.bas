@@ -28,9 +28,12 @@ Print "PASS Func_return_UDT_t042"
 System 0
 
 Function MakeDynamicLong (baseValue As Long) As DynamicLongResultData
-    ReDim MakeDynamicLong.values(2 To 4)
-    MakeDynamicLong.values(2) = baseValue + 2
-    MakeDynamicLong.values(3) = baseValue + 3
-    MakeDynamicLong.values(4) = baseValue + 4
-    MakeDynamicLong.marker = 777
+    Dim functionResult As DynamicLongResultData
+
+    ReDim functionResult.values(2 To 4)
+    functionResult.values(2) = baseValue + 2
+    functionResult.values(3) = baseValue + 3
+    functionResult.values(4) = baseValue + 4
+    functionResult.marker = 777
+    MakeDynamicLong = functionResult
 End Function

@@ -31,9 +31,12 @@ Print "PASS Func_return_UDT_t024"
 System 0
 
 Function MakeNestedFromLocal (innerText As String, outerText As String, numberValue As Long) As LocalRootData
+    Dim functionResult As LocalRootData
+
     Dim temp As LocalRootData
     temp.part.text = innerText
     temp.part.value = numberValue
     temp.labelText = outerText
-    MakeNestedFromLocal = temp
+    functionResult = temp
+    MakeNestedFromLocal = functionResult
 End Function

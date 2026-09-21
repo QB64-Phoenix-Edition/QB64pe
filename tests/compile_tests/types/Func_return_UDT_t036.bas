@@ -32,6 +32,8 @@ Print "PASS Func_return_UDT_t036"
 System 0
 
 Function MakeStaticOwnerArray As StaticOwnerArrayData
+    Dim functionResult As StaticOwnerArrayData
+
     Dim temp As StaticOwnerArrayData
 
     temp.items(1).text = "red"
@@ -40,5 +42,6 @@ Function MakeStaticOwnerArray As StaticOwnerArrayData
     temp.items(2).value = 2
     temp.items(3).text = "blue"
     temp.items(3).value = 3
-    MakeStaticOwnerArray = temp
+    functionResult = temp
+    MakeStaticOwnerArray = functionResult
 End Function

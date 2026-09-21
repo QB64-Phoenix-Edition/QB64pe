@@ -30,10 +30,13 @@ Print "PASS Func_return_UDT_t019"
 System 0
 
 Function MaybeText (writeText As Integer) As TextData
+    Dim functionResult As TextData
+
     If writeText Then
-        MaybeText.text = "first value"
-        MaybeText.code = 1
+        functionResult.text = "first value"
+        functionResult.code = 1
     Else
-        MaybeText.code = 2
+        functionResult.code = 2
     End If
+    MaybeText = functionResult
 End Function

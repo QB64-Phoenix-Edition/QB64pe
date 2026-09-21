@@ -32,9 +32,12 @@ Print "PASS Func_return_UDT_t047"
 System 0
 
 Function MakeNestedDynamic As NestedDynamicResultData
-    ReDim MakeNestedDynamic.leaf.values(10 To 12)
-    MakeNestedDynamic.leaf.values(10) = 110
-    MakeNestedDynamic.leaf.values(11) = 111
-    MakeNestedDynamic.leaf.values(12) = 112
-    MakeNestedDynamic.marker = 150
+    Dim functionResult As NestedDynamicResultData
+
+    ReDim functionResult.leaf.values(10 To 12)
+    functionResult.leaf.values(10) = 110
+    functionResult.leaf.values(11) = 111
+    functionResult.leaf.values(12) = 112
+    functionResult.marker = 150
+    MakeNestedDynamic = functionResult
 End Function

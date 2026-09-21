@@ -32,8 +32,11 @@ Print "PASS Func_return_UDT_t053"
 System 0
 
 Function MakeDynVarNested As DynVarNestedData
-    ReDim MakeDynVarNested.leaf.values(3 To 4)
-    MakeDynVarNested.leaf.values(3) = "three"
-    MakeDynVarNested.leaf.values(4) = "four"
-    MakeDynVarNested.marker = 158
+    Dim functionResult As DynVarNestedData
+
+    ReDim functionResult.leaf.values(3 To 4)
+    functionResult.leaf.values(3) = "three"
+    functionResult.leaf.values(4) = "four"
+    functionResult.marker = 158
+    MakeDynVarNested = functionResult
 End Function

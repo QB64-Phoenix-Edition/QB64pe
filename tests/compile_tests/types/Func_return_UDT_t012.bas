@@ -42,11 +42,17 @@ Print "PASS Func_return_UDT_t012"
 System 0
 
 Function MakeOuter (value As Long, setConditional As Integer) As OuterData
-    MakeOuter.item.alwaysSet = value
-    If setConditional Then MakeOuter.item.conditionalSet = 999
-    MakeOuter.serial = value * 10
+    Dim functionResult As OuterData
+
+    functionResult.item.alwaysSet = value
+    If setConditional Then functionResult.item.conditionalSet = 999
+    functionResult.serial = value * 10
+    MakeOuter = functionResult
 End Function
 
 Function MakeWrapped (value As Long) As OuterData
-    MakeWrapped = MakeOuter(value, -1)
+    Dim functionResult As OuterData
+
+    functionResult = MakeOuter(value, -1)
+    MakeWrapped = functionResult
 End Function

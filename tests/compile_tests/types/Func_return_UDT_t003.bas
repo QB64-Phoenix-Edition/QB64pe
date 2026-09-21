@@ -22,6 +22,9 @@ Print "PASS Func_return_UDT_t003"
 System 0
 
 Function MakeFixed (text As String, number As Long) As FixedData
-    MakeFixed.code = text
-    MakeFixed.number = number
+    Dim functionResult As FixedData
+
+    functionResult.code = text
+    functionResult.number = number
+    MakeFixed = functionResult
 End Function

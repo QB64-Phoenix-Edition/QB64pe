@@ -27,7 +27,10 @@ Print "PASS Func_return_UDT_t022"
 System 0
 
 Function MakeNestedText (valueText As String, numberValue As Long) As NestedResultData
-    MakeNestedText.payload.text = valueText
-    MakeNestedText.payload.value = numberValue
-    MakeNestedText.code = numberValue * 2
+    Dim functionResult As NestedResultData
+
+    functionResult.payload.text = valueText
+    functionResult.payload.value = numberValue
+    functionResult.code = numberValue * 2
+    MakeNestedText = functionResult
 End Function

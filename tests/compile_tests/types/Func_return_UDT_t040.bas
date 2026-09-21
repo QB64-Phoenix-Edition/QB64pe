@@ -32,11 +32,14 @@ Print "PASS Func_return_UDT_t040"
 System 0
 
 Function MakeNestedOwnerArrays As NestedOwnerArraysData
-    MakeNestedOwnerArrays.groups(0).labels(0) = "A0"
-    MakeNestedOwnerArrays.groups(0).labels(1) = "A1"
-    MakeNestedOwnerArrays.groups(0).value = 50
-    MakeNestedOwnerArrays.groups(1).labels(0) = "B0"
-    MakeNestedOwnerArrays.groups(1).labels(1) = "B1"
-    MakeNestedOwnerArrays.groups(1).value = 51
-    MakeNestedOwnerArrays.title = "nested arrays"
+    Dim functionResult As NestedOwnerArraysData
+
+    functionResult.groups(0).labels(0) = "A0"
+    functionResult.groups(0).labels(1) = "A1"
+    functionResult.groups(0).value = 50
+    functionResult.groups(1).labels(0) = "B0"
+    functionResult.groups(1).labels(1) = "B1"
+    functionResult.groups(1).value = 51
+    functionResult.title = "nested arrays"
+    MakeNestedOwnerArrays = functionResult
 End Function

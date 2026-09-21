@@ -28,8 +28,11 @@ Print "PASS Func_return_UDT_t048"
 System 0
 
 Function MakeDynamicMixedOwner (textValue As String) As DynamicMixedOwnerResultData
-    MakeDynamicMixedOwner.title = textValue
-    ReDim MakeDynamicMixedOwner.values(4 To 5)
-    MakeDynamicMixedOwner.values(4) = 404
-    MakeDynamicMixedOwner.values(5) = 405
+    Dim functionResult As DynamicMixedOwnerResultData
+
+    functionResult.title = textValue
+    ReDim functionResult.values(4 To 5)
+    functionResult.values(4) = 404
+    functionResult.values(5) = 405
+    MakeDynamicMixedOwner = functionResult
 End Function

@@ -21,7 +21,10 @@ End If
 Print "PASS Func_return_UDT_t007"
 System 0
 
-Function MakeNoArgs () As ResultData
-    MakeNoArgs.a = 456
-    MakeNoArgs.b = 78.25
+Function MakeNoArgs As ResultData
+    Dim functionResult As ResultData
+
+    functionResult.a = 456
+    functionResult.b = 78.25
+    MakeNoArgs = functionResult
 End Function

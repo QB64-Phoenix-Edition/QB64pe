@@ -23,6 +23,8 @@ Print "PASS Func_return_UDT_t051"
 System 0
 
 Function MakeDynVarLocal As DynVarLocalData
+    Dim functionResult As DynVarLocalData
+
     Dim temp As DynVarLocalData
 
     ReDim temp.values(-2 To 0)
@@ -30,11 +32,12 @@ Function MakeDynVarLocal As DynVarLocalData
     temp.values(-1) = "green"
     temp.values(0) = "blue"
 
-    MakeDynVarLocal = temp
+    functionResult = temp
 
     ' The hidden result must own independent qbs payloads and a descriptor clone.
     temp.values(-2) = "mutated"
     temp.values(-1) = String$(256, "x")
     ReDim temp.values(7 To 8)
     temp.values(7) = "replacement"
+    MakeDynVarLocal = functionResult
 End Function

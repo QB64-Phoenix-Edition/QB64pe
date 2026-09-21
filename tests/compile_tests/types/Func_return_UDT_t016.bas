@@ -31,6 +31,8 @@ Print "PASS Func_return_UDT_t016"
 System 0
 
 Function MakeLeafArray (seed As Long) As LeafArrayData
+    Dim functionResult As LeafArrayData
+
     Dim temp As LeafArrayData
 
     temp.items(0).value = seed
@@ -40,5 +42,6 @@ Function MakeLeafArray (seed As Long) As LeafArrayData
     temp.items(2).value = seed + 2
     temp.items(2).code = "A2"
     temp.marker = -123
-    MakeLeafArray = temp
+    functionResult = temp
+    MakeLeafArray = functionResult
 End Function

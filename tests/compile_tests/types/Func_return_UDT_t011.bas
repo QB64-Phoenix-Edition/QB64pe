@@ -40,11 +40,14 @@ Print "PASS Func_return_UDT_t011"
 System 0
 
 Function MakeRoot (x As Long, y As Integer, tag As Long, tail As Double) As RootData
+    Dim functionResult As RootData
+
     Dim temp As RootData
 
     temp.middle.leaf.x = x
     temp.middle.leaf.y = y
     temp.middle.tag = tag
     temp.tail = tail
-    MakeRoot = temp
+    functionResult = temp
+    MakeRoot = functionResult
 End Function

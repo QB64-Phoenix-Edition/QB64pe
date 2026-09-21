@@ -31,6 +31,8 @@ Print "PASS Func_return_UDT_t037"
 System 0
 
 Function MakeLocalOwnerArray (prefix As String) As LocalOwnerArrayData
+    Dim functionResult As LocalOwnerArrayData
+
     Dim temp As LocalOwnerArrayData
 
     temp.items(0).text = prefix + "-0"
@@ -39,10 +41,11 @@ Function MakeLocalOwnerArray (prefix As String) As LocalOwnerArrayData
     temp.items(1).value = 41
     temp.items(2).text = prefix + "-2"
     temp.items(2).value = 42
-    MakeLocalOwnerArray = temp
+    functionResult = temp
 
     ' The returned element graph must already own independent qbs copies.
     temp.items(0).text = "changed"
     temp.items(1).text = "changed"
     temp.items(2).text = "changed"
+    MakeLocalOwnerArray = functionResult
 End Function

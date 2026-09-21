@@ -32,9 +32,12 @@ Print "PASS Func_return_UDT_t046"
 System 0
 
 Function MakeDynamicPairs As DynamicPairResultData
-    ReDim MakeDynamicPairs.items(3 To 4)
-    MakeDynamicPairs.items(3).x = 30
-    MakeDynamicPairs.items(3).y = 31
-    MakeDynamicPairs.items(4).x = 40
-    MakeDynamicPairs.items(4).y = 41
+    Dim functionResult As DynamicPairResultData
+
+    ReDim functionResult.items(3 To 4)
+    functionResult.items(3).x = 30
+    functionResult.items(3).y = 31
+    functionResult.items(4).x = 40
+    functionResult.items(4).y = 41
+    MakeDynamicPairs = functionResult
 End Function

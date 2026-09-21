@@ -35,10 +35,13 @@ Print "PASS Func_return_UDT_t035"
 System 0
 
 Function MakeDeepOwnedArray As DeepOwnedArrayResultData
-    MakeDeepOwnedArray.items(0).part.text = "zero"
-    MakeDeepOwnedArray.items(0).value = 100
-    MakeDeepOwnedArray.items(1).part.text = "one"
-    MakeDeepOwnedArray.items(1).value = 101
-    MakeDeepOwnedArray.items(2).part.text = "two"
-    MakeDeepOwnedArray.items(2).value = 102
+    Dim functionResult As DeepOwnedArrayResultData
+
+    functionResult.items(0).part.text = "zero"
+    functionResult.items(0).value = 100
+    functionResult.items(1).part.text = "one"
+    functionResult.items(1).value = 101
+    functionResult.items(2).part.text = "two"
+    functionResult.items(2).value = 102
+    MakeDeepOwnedArray = functionResult
 End Function

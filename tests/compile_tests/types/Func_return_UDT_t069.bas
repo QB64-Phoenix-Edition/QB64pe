@@ -139,9 +139,12 @@ Print "PASS Func_return_UDT_t069"
 System 0
 
 Function MakeRef2Result As Ref2ResultData
-    ReDim MakeRef2Result.branches(2 To 2)
-    MakeRef2Result.branches(2).branchText = "branch"
-    ReDim MakeRef2Result.branches(2).leaves(-1 To 0)
-    MakeRef2Result.branches(2).leaves(-1).textValue = "left"
-    MakeRef2Result.branches(2).leaves(0).textValue = "right"
+    Dim functionResult As Ref2ResultData
+
+    ReDim functionResult.branches(2 To 2)
+    functionResult.branches(2).branchText = "branch"
+    ReDim functionResult.branches(2).leaves(-1 To 0)
+    functionResult.branches(2).leaves(-1).textValue = "left"
+    functionResult.branches(2).leaves(0).textValue = "right"
+    MakeRef2Result = functionResult
 End Function

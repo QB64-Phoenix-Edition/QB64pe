@@ -26,12 +26,15 @@ Print "PASS Func_return_UDT_t026"
 System 0
 
 Function BuildNestedText (n As Long) As RecursiveRootData
+    Dim functionResult As RecursiveRootData
+
     If n <= 0 Then
-        BuildNestedText.part.text = ""
-        BuildNestedText.depth = 0
+        functionResult.part.text = ""
+        functionResult.depth = 0
     Else
-        BuildNestedText = BuildNestedText(n - 1)
-        BuildNestedText.part.text = BuildNestedText.part.text + Chr$(64 + n)
-        BuildNestedText.depth = BuildNestedText.depth + 1
+        functionResult = BuildNestedText(n - 1)
+        functionResult.part.text = functionResult.part.text + Chr$(64 + n)
+        functionResult.depth = functionResult.depth + 1
     End If
+    BuildNestedText = functionResult
 End Function

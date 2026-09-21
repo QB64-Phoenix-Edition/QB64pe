@@ -23,6 +23,8 @@ Print "PASS Func_return_UDT_t043"
 System 0
 
 Function MakeDynamicLocal As DynamicLocalResultData
+    Dim functionResult As DynamicLocalResultData
+
     Dim temp As DynamicLocalResultData
 
     ReDim temp.values(-2 To 1)
@@ -31,9 +33,10 @@ Function MakeDynamicLocal As DynamicLocalResultData
     temp.values(0) = 22
     temp.values(1) = 23
 
-    MakeDynamicLocal = temp
+    functionResult = temp
 
     ' The return object must own an independent descriptor/payload clone.
     temp.values(-2) = 999
     ReDim temp.values(7 To 8)
+    MakeDynamicLocal = functionResult
 End Function

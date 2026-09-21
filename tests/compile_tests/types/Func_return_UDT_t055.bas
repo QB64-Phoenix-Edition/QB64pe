@@ -35,10 +35,13 @@ Print "PASS Func_return_UDT_t055"
 System 0
 
 Function MakeDynVarInlineArray As DynVarInlineArrayData
-    ReDim MakeDynVarInlineArray.items(0).values(2 To 3)
-    ReDim MakeDynVarInlineArray.items(1).values(4 To 5)
-    MakeDynVarInlineArray.items(0).values(2) = "two"
-    MakeDynVarInlineArray.items(0).values(3) = "three"
-    MakeDynVarInlineArray.items(1).values(4) = "four"
-    MakeDynVarInlineArray.items(1).values(5) = "five"
+    Dim functionResult As DynVarInlineArrayData
+
+    ReDim functionResult.items(0).values(2 To 3)
+    ReDim functionResult.items(1).values(4 To 5)
+    functionResult.items(0).values(2) = "two"
+    functionResult.items(0).values(3) = "three"
+    functionResult.items(1).values(4) = "four"
+    functionResult.items(1).values(5) = "five"
+    MakeDynVarInlineArray = functionResult
 End Function

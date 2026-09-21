@@ -31,6 +31,9 @@ Print "PASS Func_return_UDT_t005"
 System 0
 
 Function MakeResult (value As Long, setConditional As Integer) As ResultData
-    MakeResult.alwaysSet = value
-    If setConditional Then MakeResult.conditionalSet = 999
+    Dim functionResult As ResultData
+
+    functionResult.alwaysSet = value
+    If setConditional Then functionResult.conditionalSet = 999
+    MakeResult = functionResult
 End Function

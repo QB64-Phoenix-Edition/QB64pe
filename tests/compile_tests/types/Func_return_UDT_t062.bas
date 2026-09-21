@@ -53,13 +53,16 @@ Print "PASS Func_return_UDT_t062"
 System 0
 
 Function MakeDynOwnerNestedScalar As DynOwnerNestedResultData
-    ReDim MakeDynOwnerNestedScalar.items(1 To 2)
-    MakeDynOwnerNestedScalar.items(1).middle.leaf.textValue = "leaf-one"
-    MakeDynOwnerNestedScalar.items(1).middle.notes(0) = "n10"
-    MakeDynOwnerNestedScalar.items(1).middle.notes(1) = "n11"
-    MakeDynOwnerNestedScalar.items(1).marker = 1691
-    MakeDynOwnerNestedScalar.items(2).middle.leaf.textValue = "leaf-two"
-    MakeDynOwnerNestedScalar.items(2).middle.notes(0) = "n20"
-    MakeDynOwnerNestedScalar.items(2).middle.notes(1) = "n21"
-    MakeDynOwnerNestedScalar.items(2).marker = 1692
+    Dim functionResult As DynOwnerNestedResultData
+
+    ReDim functionResult.items(1 To 2)
+    functionResult.items(1).middle.leaf.textValue = "leaf-one"
+    functionResult.items(1).middle.notes(0) = "n10"
+    functionResult.items(1).middle.notes(1) = "n11"
+    functionResult.items(1).marker = 1691
+    functionResult.items(2).middle.leaf.textValue = "leaf-two"
+    functionResult.items(2).middle.notes(0) = "n20"
+    functionResult.items(2).middle.notes(1) = "n21"
+    functionResult.items(2).marker = 1692
+    MakeDynOwnerNestedScalar = functionResult
 End Function

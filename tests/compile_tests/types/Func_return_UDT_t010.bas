@@ -36,8 +36,11 @@ Print "PASS Func_return_UDT_t010"
 System 0
 
 Function MakeOuter (id As Long, value As Long, code As String, amount As Double) As OuterData
-    MakeOuter.id = id
-    MakeOuter.item.value = value
-    MakeOuter.item.code = code
-    MakeOuter.amount = amount
+    Dim functionResult As OuterData
+
+    functionResult.id = id
+    functionResult.item.value = value
+    functionResult.item.code = code
+    functionResult.amount = amount
+    MakeOuter = functionResult
 End Function

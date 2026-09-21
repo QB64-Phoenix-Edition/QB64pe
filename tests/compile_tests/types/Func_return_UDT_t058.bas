@@ -37,12 +37,15 @@ Print "PASS Func_return_UDT_t058"
 System 0
 
 Function MakeDynVarTwoMembers As DynVarTwoMembersData
-    ReDim MakeDynVarTwoMembers.namesA(1 To 2)
-    ReDim MakeDynVarTwoMembers.namesB(-2 To 0)
-    MakeDynVarTwoMembers.namesA(1) = "A1"
-    MakeDynVarTwoMembers.namesA(2) = "A2"
-    MakeDynVarTwoMembers.namesB(-2) = "B-2"
-    MakeDynVarTwoMembers.namesB(-1) = "B-1"
-    MakeDynVarTwoMembers.namesB(0) = "B0"
-    MakeDynVarTwoMembers.marker = 163
+    Dim functionResult As DynVarTwoMembersData
+
+    ReDim functionResult.namesA(1 To 2)
+    ReDim functionResult.namesB(-2 To 0)
+    functionResult.namesA(1) = "A1"
+    functionResult.namesA(2) = "A2"
+    functionResult.namesB(-2) = "B-2"
+    functionResult.namesB(-1) = "B-1"
+    functionResult.namesB(0) = "B0"
+    functionResult.marker = 163
+    MakeDynVarTwoMembers = functionResult
 End Function

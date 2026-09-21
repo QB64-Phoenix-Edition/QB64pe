@@ -18,8 +18,11 @@ Print "PASS Func_return_UDT_t033"
 System 0
 
 Function MakeMultiStrings As MultiStringArrayData
-    MakeMultiStrings.names(0, 2) = "02"
-    MakeMultiStrings.names(0, 3) = "03"
-    MakeMultiStrings.names(1, 2) = "12"
-    MakeMultiStrings.names(1, 3) = "13"
+    Dim functionResult As MultiStringArrayData
+
+    functionResult.names(0, 2) = "02"
+    functionResult.names(0, 3) = "03"
+    functionResult.names(1, 2) = "12"
+    functionResult.names(1, 3) = "13"
+    MakeMultiStrings = functionResult
 End Function

@@ -43,13 +43,16 @@ Print "PASS Func_return_UDT_t038"
 System 0
 
 Function MaybeOwnerArray (writeText As Integer) As ReuseOwnerArrayData
+    Dim functionResult As ReuseOwnerArrayData
+
     If writeText Then
-        MaybeOwnerArray.items(0).text = "first-0"
-        MaybeOwnerArray.items(0).value = 10
-        MaybeOwnerArray.items(1).text = "first-1"
-        MaybeOwnerArray.items(1).value = 11
-        MaybeOwnerArray.callNumber = 1
+        functionResult.items(0).text = "first-0"
+        functionResult.items(0).value = 10
+        functionResult.items(1).text = "first-1"
+        functionResult.items(1).value = 11
+        functionResult.callNumber = 1
     Else
-        MaybeOwnerArray.callNumber = 2
+        functionResult.callNumber = 2
     End If
+    MaybeOwnerArray = functionResult
 End Function

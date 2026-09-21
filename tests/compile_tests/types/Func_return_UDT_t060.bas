@@ -32,6 +32,8 @@ Print "PASS Func_return_UDT_t060"
 System 0
 
 Function MakeDynOwnerLocal (seedText As String) As DynOwnerLocalResultData
+    Dim functionResult As DynOwnerLocalResultData
+
     Dim temp As DynOwnerLocalResultData
 
     ReDim temp.items(3 To 4)
@@ -40,10 +42,11 @@ Function MakeDynOwnerLocal (seedText As String) As DynOwnerLocalResultData
     temp.items(4).textValue = seedText + "-B"
     temp.items(4).numberValue = 40
 
-    MakeDynOwnerLocal = temp
+    functionResult = temp
 
     ' The FUNCTION result must own an independent recursive descriptor clone.
     temp.items(3).textValue = "mutated"
     ReDim temp.items(20 To 20)
     temp.items(20).textValue = "replacement"
+    MakeDynOwnerLocal = functionResult
 End Function

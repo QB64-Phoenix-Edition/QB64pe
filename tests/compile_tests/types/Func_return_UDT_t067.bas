@@ -51,16 +51,19 @@ Print "PASS Func_return_UDT_t067"
 System 0
 
 Function MakeDynOwnerMixed As DynOwnerMixedResultData
-    MakeDynOwnerMixed.titleText = "title"
-    ReDim MakeDynOwnerMixed.labels(8 To 9)
-    MakeDynOwnerMixed.labels(8) = "eight"
-    MakeDynOwnerMixed.labels(9) = "nine"
-    ReDim MakeDynOwnerMixed.items(-1 To 1)
-    MakeDynOwnerMixed.items(-1).textValue = "minus"
-    MakeDynOwnerMixed.items(-1).numberValue = -1
-    MakeDynOwnerMixed.items(0).textValue = "zero"
-    MakeDynOwnerMixed.items(0).numberValue = 0
-    MakeDynOwnerMixed.items(1).textValue = "plus"
-    MakeDynOwnerMixed.items(1).numberValue = 1
-    MakeDynOwnerMixed.tailText = "tail"
+    Dim functionResult As DynOwnerMixedResultData
+
+    functionResult.titleText = "title"
+    ReDim functionResult.labels(8 To 9)
+    functionResult.labels(8) = "eight"
+    functionResult.labels(9) = "nine"
+    ReDim functionResult.items(-1 To 1)
+    functionResult.items(-1).textValue = "minus"
+    functionResult.items(-1).numberValue = -1
+    functionResult.items(0).textValue = "zero"
+    functionResult.items(0).numberValue = 0
+    functionResult.items(1).textValue = "plus"
+    functionResult.items(1).numberValue = 1
+    functionResult.tailText = "tail"
+    MakeDynOwnerMixed = functionResult
 End Function

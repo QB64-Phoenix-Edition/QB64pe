@@ -26,9 +26,12 @@ Print "PASS Func_return_UDT_t013"
 System 0
 
 Function MakeArrayData (seed As Long) As ArrayData
+    Dim functionResult As ArrayData
+
     Dim i As Long
     For i = 1 To 4
-        MakeArrayData.values(i) = seed + i
+        functionResult.values(i) = seed + i
     Next
-    MakeArrayData.code = "ARRAY"
+    functionResult.code = "ARRAY"
+    MakeArrayData = functionResult
 End Function

@@ -32,9 +32,12 @@ Print "PASS Func_return_UDT_t034"
 System 0
 
 Function MakeOwnedLeafArray As OwnedLeafArrayData
-    MakeOwnedLeafArray.items(0).text = "alpha"
-    MakeOwnedLeafArray.items(0).value = 10
-    MakeOwnedLeafArray.items(1).text = "beta"
-    MakeOwnedLeafArray.items(1).value = 20
-    MakeOwnedLeafArray.marker = 99
+    Dim functionResult As OwnedLeafArrayData
+
+    functionResult.items(0).text = "alpha"
+    functionResult.items(0).value = 10
+    functionResult.items(1).text = "beta"
+    functionResult.items(1).value = 20
+    functionResult.marker = 99
+    MakeOwnedLeafArray = functionResult
 End Function

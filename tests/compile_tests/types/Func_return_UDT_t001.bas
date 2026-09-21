@@ -22,9 +22,12 @@ Print "PASS Func_return_UDT_t001"
 System 0
 
 Function MakePair (number As Long, value As Double) As PairData
+    Dim functionResult As PairData
+
     Dim temp As PairData
 
     temp.number = number
     temp.value = value
-    MakePair = temp
+    functionResult = temp
+    MakePair = functionResult
 End Function

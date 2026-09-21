@@ -30,12 +30,15 @@ Print "PASS Func_return_UDT_t032"
 System 0
 
 Function MaybeStringArray (writeText As Integer) As ReuseStringArrayData
+    Dim functionResult As ReuseStringArrayData
+
     If writeText Then
-        MaybeStringArray.names(0) = "first-0"
-        MaybeStringArray.names(1) = "first-1"
-        MaybeStringArray.names(2) = "first-2"
-        MaybeStringArray.callNumber = 1
+        functionResult.names(0) = "first-0"
+        functionResult.names(1) = "first-1"
+        functionResult.names(2) = "first-2"
+        functionResult.callNumber = 1
     Else
-        MaybeStringArray.callNumber = 2
+        functionResult.callNumber = 2
     End If
+    MaybeStringArray = functionResult
 End Function

@@ -18,12 +18,18 @@ Print "PASS Func_return_UDT_t004"
 System 0
 
 Function MakeBase (a As Long, b As Long) As PairData
-    MakeBase.a = a
-    MakeBase.b = b
+    Dim functionResult As PairData
+
+    functionResult.a = a
+    functionResult.b = b
+    MakeBase = functionResult
 End Function
 
 Function MakeShifted (a As Long, b As Long, amount As Long) As PairData
-    MakeShifted = MakeBase(a, b)
-    MakeShifted.a = MakeShifted.a + amount
-    MakeShifted.b = MakeShifted.b + amount
+    Dim functionResult As PairData
+
+    functionResult = MakeBase(a, b)
+    functionResult.a = functionResult.a + amount
+    functionResult.b = functionResult.b + amount
+    MakeShifted = functionResult
 End Function

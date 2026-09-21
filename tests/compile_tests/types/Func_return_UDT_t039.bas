@@ -35,12 +35,15 @@ Print "PASS Func_return_UDT_t039"
 System 0
 
 Function MakeMultiOwnerArray As MultiOwnerArrayData
-    MakeMultiOwnerArray.items(0, 2).text = "02"
-    MakeMultiOwnerArray.items(0, 2).value = 2
-    MakeMultiOwnerArray.items(0, 3).text = "03"
-    MakeMultiOwnerArray.items(0, 3).value = 3
-    MakeMultiOwnerArray.items(1, 2).text = "12"
-    MakeMultiOwnerArray.items(1, 2).value = 12
-    MakeMultiOwnerArray.items(1, 3).text = "13"
-    MakeMultiOwnerArray.items(1, 3).value = 13
+    Dim functionResult As MultiOwnerArrayData
+
+    functionResult.items(0, 2).text = "02"
+    functionResult.items(0, 2).value = 2
+    functionResult.items(0, 3).text = "03"
+    functionResult.items(0, 3).value = 3
+    functionResult.items(1, 2).text = "12"
+    functionResult.items(1, 2).value = 12
+    functionResult.items(1, 3).text = "13"
+    functionResult.items(1, 3).value = 13
+    MakeMultiOwnerArray = functionResult
 End Function

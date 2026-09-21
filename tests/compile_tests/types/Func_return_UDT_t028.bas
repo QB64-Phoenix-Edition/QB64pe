@@ -23,8 +23,11 @@ Print "PASS Func_return_UDT_t028"
 System 0
 
 Function MakeStringArray As StringArrayData
-    MakeStringArray.texts(0) = "zero"
-    MakeStringArray.texts(1) = "one"
-    MakeStringArray.texts(2) = "two"
-    MakeStringArray.code = 123
+    Dim functionResult As StringArrayData
+
+    functionResult.texts(0) = "zero"
+    functionResult.texts(1) = "one"
+    functionResult.texts(2) = "two"
+    functionResult.code = 123
+    MakeStringArray = functionResult
 End Function

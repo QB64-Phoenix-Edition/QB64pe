@@ -35,11 +35,14 @@ Print "PASS Func_return_UDT_t025"
 System 0
 
 Function MaybeNestedText (writeText As Integer) As ReuseRootData
+    Dim functionResult As ReuseRootData
+
     If writeText Then
-        MaybeNestedText.part.text = "nested first"
-        MaybeNestedText.outerText = "outer first"
-        MaybeNestedText.part.value = 1
+        functionResult.part.text = "nested first"
+        functionResult.outerText = "outer first"
+        functionResult.part.value = 1
     Else
-        MaybeNestedText.part.value = 2
+        functionResult.part.value = 2
     End If
+    MaybeNestedText = functionResult
 End Function

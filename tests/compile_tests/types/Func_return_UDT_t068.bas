@@ -48,14 +48,17 @@ Print "PASS Func_return_UDT_t068"
 System 0
 
 Function MakeDynOwnerDeep As DynOwnerDeepResultData
-    ReDim MakeDynOwnerDeep.branches(2 To 3)
-    MakeDynOwnerDeep.branches(2).branchText = "branch2"
-    ReDim MakeDynOwnerDeep.branches(2).leaves(-1 To 0)
-    MakeDynOwnerDeep.branches(2).leaves(-1).textValue = "2-left"
-    MakeDynOwnerDeep.branches(2).leaves(0).textValue = "2-right"
-    MakeDynOwnerDeep.branches(3).branchText = "branch3"
-    ReDim MakeDynOwnerDeep.branches(3).leaves(5 To 7)
-    MakeDynOwnerDeep.branches(3).leaves(5).textValue = "3-five"
-    MakeDynOwnerDeep.branches(3).leaves(6).textValue = "3-six"
-    MakeDynOwnerDeep.branches(3).leaves(7).textValue = "3-seven"
+    Dim functionResult As DynOwnerDeepResultData
+
+    ReDim functionResult.branches(2 To 3)
+    functionResult.branches(2).branchText = "branch2"
+    ReDim functionResult.branches(2).leaves(-1 To 0)
+    functionResult.branches(2).leaves(-1).textValue = "2-left"
+    functionResult.branches(2).leaves(0).textValue = "2-right"
+    functionResult.branches(3).branchText = "branch3"
+    ReDim functionResult.branches(3).leaves(5 To 7)
+    functionResult.branches(3).leaves(5).textValue = "3-five"
+    functionResult.branches(3).leaves(6).textValue = "3-six"
+    functionResult.branches(3).leaves(7).textValue = "3-seven"
+    MakeDynOwnerDeep = functionResult
 End Function

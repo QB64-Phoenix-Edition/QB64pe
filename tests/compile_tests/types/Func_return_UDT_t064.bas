@@ -44,13 +44,16 @@ Print "PASS Func_return_UDT_t064"
 System 0
 
 Function MakeDynOwnerMulti As DynOwnerMultiResultData
-    ReDim MakeDynOwnerMulti.grid(-1 To 0, 2 To 3)
-    MakeDynOwnerMulti.grid(-1, 2).textValue = "a"
-    MakeDynOwnerMulti.grid(-1, 2).numberValue = 12
-    MakeDynOwnerMulti.grid(0, 2).textValue = "b"
-    MakeDynOwnerMulti.grid(0, 2).numberValue = 22
-    MakeDynOwnerMulti.grid(-1, 3).textValue = "c"
-    MakeDynOwnerMulti.grid(-1, 3).numberValue = 13
-    MakeDynOwnerMulti.grid(0, 3).textValue = "d"
-    MakeDynOwnerMulti.grid(0, 3).numberValue = 23
+    Dim functionResult As DynOwnerMultiResultData
+
+    ReDim functionResult.grid(-1 To 0, 2 To 3)
+    functionResult.grid(-1, 2).textValue = "a"
+    functionResult.grid(-1, 2).numberValue = 12
+    functionResult.grid(0, 2).textValue = "b"
+    functionResult.grid(0, 2).numberValue = 22
+    functionResult.grid(-1, 3).textValue = "c"
+    functionResult.grid(-1, 3).numberValue = 13
+    functionResult.grid(0, 3).textValue = "d"
+    functionResult.grid(0, 3).numberValue = 23
+    MakeDynOwnerMulti = functionResult
 End Function

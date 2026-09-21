@@ -16,7 +16,10 @@ End If
 Print "PASS Func_return_UDT_t009"
 System 0
 
-Function MakeStatic (value As Long) As PairData Static
-    MakeStatic.a = value
-    MakeStatic.b = value * value
+Function MakeStatic (value As Long) Static As PairData
+    Dim functionResult As PairData
+
+    functionResult.a = value
+    functionResult.b = value * value
+    MakeStatic = functionResult
 End Function

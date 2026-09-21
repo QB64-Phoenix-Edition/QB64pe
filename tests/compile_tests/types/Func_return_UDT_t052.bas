@@ -37,12 +37,15 @@ Print "PASS Func_return_UDT_t052"
 System 0
 
 Function MakeDynVarReuse (writePayload As Integer) As DynVarReuseData
+    Dim functionResult As DynVarReuseData
+
     If writePayload Then
-        ReDim MakeDynVarReuse.values(5 To 6)
-        MakeDynVarReuse.values(5) = "first"
-        MakeDynVarReuse.values(6) = "payload"
-        MakeDynVarReuse.callNumber = 1
+        ReDim functionResult.values(5 To 6)
+        functionResult.values(5) = "first"
+        functionResult.values(6) = "payload"
+        functionResult.callNumber = 1
     Else
-        MakeDynVarReuse.callNumber = 2
+        functionResult.callNumber = 2
     End If
+    MakeDynVarReuse = functionResult
 End Function

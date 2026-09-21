@@ -22,8 +22,11 @@ Print "PASS Func_return_UDT_t018"
 System 0
 
 Function MakeFromLocal (value As String, codeValue As Long) As TextData
+    Dim functionResult As TextData
+
     Dim temp As TextData
     temp.text = value
     temp.code = codeValue
-    MakeFromLocal = temp
+    functionResult = temp
+    MakeFromLocal = functionResult
 End Function

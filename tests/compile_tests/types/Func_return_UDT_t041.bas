@@ -35,10 +35,13 @@ Print "PASS Func_return_UDT_t041"
 System 0
 
 Function MakeLargeOwnerArray As LargeOwnerArrayData
-    MakeLargeOwnerArray.items(0).text = "first"
-    MakeLargeOwnerArray.items(0).value = 1
-    MakeLargeOwnerArray.items(4096).text = "middle"
-    MakeLargeOwnerArray.items(4096).value = 4096
-    MakeLargeOwnerArray.items(8191).text = "last"
-    MakeLargeOwnerArray.items(8191).value = 8191
+    Dim functionResult As LargeOwnerArrayData
+
+    functionResult.items(0).text = "first"
+    functionResult.items(0).value = 1
+    functionResult.items(4096).text = "middle"
+    functionResult.items(4096).value = 4096
+    functionResult.items(8191).text = "last"
+    functionResult.items(8191).value = 8191
+    MakeLargeOwnerArray = functionResult
 End Function

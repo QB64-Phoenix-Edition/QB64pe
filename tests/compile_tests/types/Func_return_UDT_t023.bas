@@ -41,9 +41,12 @@ Print "PASS Func_return_UDT_t023"
 System 0
 
 Function MakeDeepOwner (leafValueText As String, branchValueText As String, rootValueText As String, numberValue As Long) As DeepRootData
-    MakeDeepOwner.branchPart.leafPart.leafText = leafValueText
-    MakeDeepOwner.branchPart.leafPart.leafValue = numberValue
-    MakeDeepOwner.branchPart.branchText = branchValueText
-    MakeDeepOwner.rootText = rootValueText
-    MakeDeepOwner.code = numberValue * 3
+    Dim functionResult As DeepRootData
+
+    functionResult.branchPart.leafPart.leafText = leafValueText
+    functionResult.branchPart.leafPart.leafValue = numberValue
+    functionResult.branchPart.branchText = branchValueText
+    functionResult.rootText = rootValueText
+    functionResult.code = numberValue * 3
+    MakeDeepOwner = functionResult
 End Function

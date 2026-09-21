@@ -39,12 +39,15 @@ Print "PASS Func_return_UDT_t044"
 System 0
 
 Function MakeDynamicReuse (writePayload As Integer) As DynamicReuseResultData
+    Dim functionResult As DynamicReuseResultData
+
     If writePayload Then
-        ReDim MakeDynamicReuse.values(5 To 6)
-        MakeDynamicReuse.values(5) = 50
-        MakeDynamicReuse.values(6) = 60
-        MakeDynamicReuse.callNumber = 1
+        ReDim functionResult.values(5 To 6)
+        functionResult.values(5) = 50
+        functionResult.values(6) = 60
+        functionResult.callNumber = 1
     Else
-        MakeDynamicReuse.callNumber = 2
+        functionResult.callNumber = 2
     End If
+    MakeDynamicReuse = functionResult
 End Function

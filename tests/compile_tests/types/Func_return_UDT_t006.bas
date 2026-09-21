@@ -19,6 +19,9 @@ Print "PASS Func_return_UDT_t006"
 System 0
 
 Function MakeDeclared (a As Long, b As Long) As PairData
-    MakeDeclared.a = a
-    MakeDeclared.b = b
+    Dim functionResult As PairData
+
+    functionResult.a = a
+    functionResult.b = b
+    MakeDeclared = functionResult
 End Function

@@ -44,6 +44,8 @@ Print "PASS Func_return_UDT_t014"
 System 0
 
 Function MakeOuterArray (seed As Long) As OuterArrayData
+    Dim functionResult As OuterArrayData
+
     Dim temp As OuterArrayData
     Dim i As Long
 
@@ -54,5 +56,6 @@ Function MakeOuterArray (seed As Long) As OuterArrayData
     temp.item.tag = "NEST"
     temp.totals(0) = seed + .25
     temp.totals(1) = seed + .5
-    MakeOuterArray = temp
+    functionResult = temp
+    MakeOuterArray = functionResult
 End Function

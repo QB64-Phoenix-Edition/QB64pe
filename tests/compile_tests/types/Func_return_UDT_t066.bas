@@ -28,15 +28,18 @@ Print "PASS Func_return_UDT_t066"
 System 0
 
 Function MakeDynOwnerRecursive (level As Long) As DynOwnerRecursiveResultData
+    Dim functionResult As DynOwnerRecursiveResultData
+
     Dim child As DynOwnerRecursiveResultData
 
     If level = 0 Then
-        MakeDynOwnerRecursive.items(0).textValue = "base"
-        MakeDynOwnerRecursive.depthValue = 0
+        functionResult.items(0).textValue = "base"
+        functionResult.depthValue = 0
     Else
         child = MakeDynOwnerRecursive(level - 1)
-        MakeDynOwnerRecursive = child
-        MakeDynOwnerRecursive.items(0).textValue = MakeDynOwnerRecursive.items(0).textValue + "x"
-        MakeDynOwnerRecursive.depthValue = level
+        functionResult = child
+        functionResult.items(0).textValue = functionResult.items(0).textValue + "x"
+        functionResult.depthValue = level
     End If
+    MakeDynOwnerRecursive = functionResult
 End Function

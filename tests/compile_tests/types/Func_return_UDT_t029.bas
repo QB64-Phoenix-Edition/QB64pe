@@ -24,11 +24,14 @@ Print "PASS Func_return_UDT_t029"
 System 0
 
 Function MakeStaticStrings As StaticStringArrayData
+    Dim functionResult As StaticStringArrayData
+
     Dim temp As StaticStringArrayData
 
     temp.texts(1) = "alpha"
     temp.texts(2) = "beta"
     temp.texts(3) = "gamma"
     temp.value = 44
-    MakeStaticStrings = temp
+    functionResult = temp
+    MakeStaticStrings = functionResult
 End Function

@@ -29,9 +29,12 @@ Print "PASS Func_return_UDT_t054"
 System 0
 
 Function MakeDynVarMixed (headText As String, endText As String) As DynVarMixedData
-    MakeDynVarMixed.title = headText
-    ReDim MakeDynVarMixed.values(8 To 9)
-    MakeDynVarMixed.values(8) = "eight"
-    MakeDynVarMixed.values(9) = "nine"
-    MakeDynVarMixed.tailText = endText
+    Dim functionResult As DynVarMixedData
+
+    functionResult.title = headText
+    ReDim functionResult.values(8 To 9)
+    functionResult.values(8) = "eight"
+    functionResult.values(9) = "nine"
+    functionResult.tailText = endText
+    MakeDynVarMixed = functionResult
 End Function

@@ -18,6 +18,9 @@ Print "PASS Func_return_UDT_t002"
 System 0
 
 Function MakeCoord (x As Long, y As Long) As CoordData
-    MakeCoord.x = x
-    MakeCoord.y = y
+    Dim functionResult As CoordData
+
+    functionResult.x = x
+    functionResult.y = y
+    MakeCoord = functionResult
 End Function

@@ -2792,9 +2792,6 @@ DO
                             IF Error_Happened THEN GOTO errmes
                             IF sf = 2 AND symbol$ <> "" THEN a$ = "Type symbols after a SUB name are invalid": GOTO errmes
 
-                            'remove STATIC (which is ignored)
-                            e$ = getelement$(a$, n): IF e$ = "STATIC" THEN a$ = LEFT$(a$, LEN(a$) - 7): ca$ = LEFT$(ca$, LEN(ca$) - 7): n = n - 1
-
                             'check for ALIAS
                             aliasname$ = n$ 'use given name by default
                             IF n > 2 THEN
@@ -2851,6 +2848,12 @@ DO
                                 IF Error_Happened THEN GOTO errmes
                                 IF hasfuncret AND symbol$ <> "" THEN a$ = "FUNCTION return type specified twice": GOTO errmes
                             END IF
+
+                            ' STATIC precedes an explicit AS return clause.  The
+                            ' shared return-clause parser removes AS type first,
+                            ' leaving the legacy terminal STATIC token for the
+                            ' existing header parser to discard here.
+                            e$ = getelement$(a$, n): IF e$ = "STATIC" THEN a$ = LEFT$(a$, LEN(a$) - 7): ca$ = LEFT$(ca$, LEN(ca$) - 7): n = n - 1
 
                             params = 0
                             params$ = ""
@@ -4249,7 +4252,7 @@ DO
                 try = findid(UCASE$(a3$))
                 IF Error_Happened THEN GOTO errmes
                 DO WHILE try
-                    IF ((id.t AND ISUDT) <> 0) OR ((id.arraytype AND ISUDT) <> 0) THEN
+                    IF ((id.t AND ISUDT) <> 0) OR ((id.arraytype AND ISUDT) <> 0) OR (id.subfunc = 1 AND (id.ret AND ISUDT) <> 0) THEN
                         except = 1
                         GOTO udtperiod
                     END IF
@@ -5425,21 +5428,6 @@ DO
                 END IF
             END IF
 
-            ' STATIC belongs to the FUNCTION/SUB header, but it follows the
-            ' optional return clause.  Remove it before parsing that clause so
-            ' the parameter parser receives the same header shape as before.
-            addstatic2layout = 0
-            staticsf = 0
-            funcrettail$ = getelement$(a$, n)
-            IF funcrettail$ = "STATIC" THEN
-                IF declaringlibrary THEN a$ = "STATIC cannot be used in a library declaration": GOTO errmes
-                addstatic2layout = 1
-                staticsf = 2
-                a$ = LEFT$(a$, LEN(a$) - 7)
-                ca$ = LEFT$(ca$, LEN(ca$) - 7)
-                n = n - 1
-            END IF
-
             hasfuncret = 0
             funcrettyp = 0
             funcretsize = 0
@@ -5452,6 +5440,22 @@ DO
                 IF hasfuncret THEN
                     IF funcrettyp <> id.ret THEN a$ = "FUNCTION return type does not match its registered type": GOTO errmes
                 END IF
+            END IF
+
+            ' STATIC belongs to the FUNCTION/SUB header and precedes an
+            ' explicit AS return clause.  ParseFunctionReturnClause removes
+            ' AS type while retaining STATIC, so both legacy FUNCTION ...
+            ' STATIC and FUNCTION ... STATIC AS type reach this one path.
+            addstatic2layout = 0
+            staticsf = 0
+            funcrettail$ = getelement$(a$, n)
+            IF funcrettail$ = "STATIC" THEN
+                IF declaringlibrary THEN a$ = "STATIC cannot be used in a library declaration": GOTO errmes
+                addstatic2layout = 1
+                staticsf = 2
+                a$ = LEFT$(a$, LEN(a$) - 7)
+                ca$ = LEFT$(ca$, LEN(ca$) - 7)
+                n = n - 1
             END IF
 
             IF declaringlibrary THEN GOTO declibjmp1
@@ -5523,11 +5527,12 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF t$ = "qbs" THEN t$ = "qbs*"
 
-                ' UDT FUNCTIONs use one hidden caller-owned result pointer and
-                ' therefore return void at the C++ ABI level.  Keeping result
-                ' transport out of the host structure-return ABI also leaves a
-                ' stable path for later ownership-aware UDT stages.
-                IF rettyp AND ISUDT THEN t$ = "void"
+                ' UDT FUNCTIONs receive one hidden caller-owned result pointer
+                ' and return that same address at the C++ ABI level.  This keeps
+                ' ownership out of the host structure-return ABI while making
+                ' the call expression itself a pointer to the completed UDT,
+                ' which leaves room for future direct member access.
+                IF rettyp AND ISUDT THEN t$ = "void*"
 
                 IF declaringlibrary THEN
                     IF rettyp AND ISSTRING THEN
@@ -5589,7 +5594,7 @@ DO
                         WriteBufRawData RegTxtBuf, ","
                         WriteBufRawDataCpp MainTxtBuf, ","
                     END IF
-                    subfuncret$ = ""
+                    subfuncret$ = "return " + r$ + ";"
                 ELSE
                     ' Keep ordinary result storage alive until the return has
                     ' been emitted, preserving the established scalar path.
@@ -5861,6 +5866,7 @@ DO
             END IF 'n>2
             AllowLocalName = 0
 
+            IF addstatic2layout THEN l$ = l$ + sp + SCase$("Static")
             IF hasfuncret THEN
                 IF funcrettyp AND ISUDT THEN
                     ' Formatting is intentionally separate from semantic type text.
@@ -5872,7 +5878,6 @@ DO
                 END IF
                 l$ = l$ + sp + SCase$("As") + sp + funcretlayout$
             END IF
-            IF addstatic2layout THEN l$ = l$ + sp + SCase$("Static")
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
             WriteBufLine RegTxtBuf, ");"
@@ -14844,6 +14849,7 @@ SUB ParseFunctionReturnClause (header_upper AS STRING, header_case AS STRING, to
     IF token_count < 3 THEN EXIT SUB
 
     clause_pos = 0
+    clause_scan_pos = 0
     first_header_token$ = getelement$(header_upper, 3)
 
     IF first_header_token$ = "(" THEN
@@ -14858,11 +14864,20 @@ SUB ParseFunctionReturnClause (header_upper AS STRING, header_case AS STRING, to
             END IF
         NEXT token_pos
 
-        IF closing_pos > 0 AND closing_pos < token_count THEN
-            IF getelement$(header_upper, closing_pos + 1) = "AS" THEN clause_pos = closing_pos + 1
+        IF closing_pos > 0 AND closing_pos < token_count THEN clause_scan_pos = closing_pos + 1
+    ELSE
+        clause_scan_pos = 3
+    END IF
+
+    ' STATIC is part of the FUNCTION header rather than the return type, and
+    ' its canonical position is immediately before AS.  Leave it in the
+    ' normalized header so the established STATIC path can process it after
+    ' this routine removes the return clause.
+    IF clause_scan_pos > 0 AND clause_scan_pos <= token_count THEN
+        IF getelement$(header_upper, clause_scan_pos) = "STATIC" THEN clause_scan_pos = clause_scan_pos + 1
+        IF clause_scan_pos <= token_count THEN
+            IF getelement$(header_upper, clause_scan_pos) = "AS" THEN clause_pos = clause_scan_pos
         END IF
-    ELSEIF first_header_token$ = "AS" THEN
-        clause_pos = 3
     END IF
 
     IF clause_pos = 0 THEN EXIT SUB
@@ -19600,8 +19615,187 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
 
 END FUNCTION
 
+'Resolve a member path whose root is the pointer returned directly by a UDT
+'FUNCTION call. Unlike udtreference$(), this path has no variable ID: call_ptr
+'already addresses one live result object in its declaration-driven physical
+'layout. The caller snapshots the call expression once before using the C++
+'expression returned here, so descriptor guards and member reads cannot invoke
+'the BASIC FUNCTION more than once.
+FUNCTION ResolveUDTCallMember$ (call_ptr AS STRING, member_path AS STRING, root_udt AS LONG, result_typ AS LONG)
+    DIM layout_mode AS LONG
+    DIM current_udt AS LONG
+    DIM path_count AS LONG
+    DIM path_index AS LONG
+    DIM search_member AS LONG
+    DIM found_member AS LONG
+    DIM relative_bits AS LONG
+    DIM member_bits AS LONG
+    DIM member_byte_off AS LONG
+    DIM close_index AS LONG
+    DIM paren_depth AS LONG
+    DIM scan_index AS LONG
+    DIM actual_dims AS LONG
+    DIM element_bytes AS LONG
+    DIM final_typ AS LONG
+    DIM numeric_typ AS LONG
+    DIM symbol_typ AS LONG
+    DIM symbol_size AS LONG
+    DIM current_ptr AS STRING
+    DIM member_ptr AS STRING
+    DIM member_token AS STRING
+    DIM member_symbol AS STRING
+    DIM index_text AS STRING
+    DIM desc_text AS STRING
+    DIM array_index_text AS STRING
+    DIM type_text AS STRING
+    DIM scan_token AS STRING
+
+    result_typ = 0
+    IF root_udt < 1 OR root_udt > lasttype THEN Give_Error "Invalid UDT FUNCTION result type": EXIT FUNCTION
+
+    layout_mode = GetUDTCanonMode&(root_udt)
+    current_udt = root_udt
+    current_ptr = call_ptr
+    path_count = numelements(member_path)
+    path_index = 1
+
+    DO
+        IF path_index > path_count THEN Give_Error "Expected .elementname": EXIT FUNCTION
+        IF getelement$(member_path, path_index) <> "." THEN Give_Error "Expected .": EXIT FUNCTION
+        path_index = path_index + 1
+        IF path_index > path_count THEN Give_Error "Expected .elementname": EXIT FUNCTION
+
+        member_token = UCASE$(getelement$(member_path, path_index))
+        member_symbol = removesymbol$(member_token)
+        IF Error_Happened THEN EXIT FUNCTION
+        IF member_token = "" THEN Give_Error "Expected .elementname": EXIT FUNCTION
+
+        search_member = udtxnext(current_udt)
+        found_member = 0
+        relative_bits = 0
+        DO WHILE search_member
+            IF member_token = RTRIM$(udtename(search_member)) THEN
+                found_member = search_member
+                EXIT DO
+            END IF
+            IF layout_mode = 0 THEN relative_bits = relative_bits + udtesize(search_member)
+            search_member = udtenext(search_member)
+        LOOP
+        IF found_member = 0 THEN Give_Error "Element not defined": EXIT FUNCTION
+
+        IF member_symbol <> "" THEN
+            IF udtetype(found_member) AND ISUDT THEN Give_Error "Invalid symbol after user defined type": EXIT FUNCTION
+            symbol_typ = typname2typ(member_symbol)
+            symbol_size = typname2typsize
+            IF Error_Happened THEN EXIT FUNCTION
+            IF symbol_typ <> udtetype(found_member) OR symbol_size <> udtetypesize(found_member) THEN
+                IF member_symbol <> "$" OR (udtetype(found_member) AND ISFIXEDLENGTH) = 0 THEN
+                    Give_Error "Incorrect symbol after element name": EXIT FUNCTION
+                END IF
+            END IF
+        END IF
+
+        IF layout_mode THEN
+            member_bits = UDTDynMemberOffset&(found_member)
+        ELSE
+            member_bits = relative_bits
+        END IF
+        IF member_bits MOD 8 THEN Give_Error "Non-byte aligned user defined type": EXIT FUNCTION
+        member_byte_off = member_bits \ 8
+        member_ptr = "((char*)(" + current_ptr + ")+" + _TOSTR$(member_byte_off) + ")"
+        path_index = path_index + 1
+
+        IF path_index <= path_count THEN
+            IF getelement$(member_path, path_index) = "(" THEN
+                close_index = 0
+                paren_depth = 1
+                FOR scan_index = path_index + 1 TO path_count
+                    scan_token$ = getelement$(member_path, scan_index)
+                    IF scan_token$ = "(" THEN paren_depth = paren_depth + 1
+                    IF scan_token$ = ")" THEN
+                        paren_depth = paren_depth - 1
+                        IF paren_depth = 0 THEN close_index = scan_index: EXIT FOR
+                    END IF
+                NEXT
+                IF close_index = 0 THEN Give_Error "Expected )": EXIT FUNCTION
+                IF udtearrayelements(found_member) = 0 THEN Give_Error "Element is not an array": EXIT FUNCTION
+                IF close_index = path_index + 1 THEN Give_Error "Array index missing": EXIT FUNCTION
+
+                index_text = getelements$(member_path, path_index + 1, close_index - 1)
+                IF layout_mode AND UDTMemberDynDesc%(found_member) THEN
+                    desc_text = "(*((ptrszint**)(" + member_ptr + ")))"
+                    actual_dims = DynMemberIndexDims%(index_text)
+                    IF actual_dims <= 0 THEN Give_Error "Array index missing": EXIT FUNCTION
+                    desc_text = UDTDynArrayDescGuard$(desc_text, actual_dims)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    array_index_text = UDTDynArrayIndexExpr$(index_text, actual_dims, desc_text)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    element_bytes = udt_dyn_array_elem_bytes(found_member)
+                    dynmemlockexpr = "(mem_lock*)(" + desc_text + "[" + desc_text + "[3]*4+4])"
+                    member_ptr = "((char*)" + desc_text + "[0]+(" + array_index_text + ")*" + _TOSTR$(element_bytes) + ")"
+                ELSE
+                    array_index_text = UDTArrayIndexExpr$(index_text, udtearraydims(found_member), udtearraydesc(found_member))
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF layout_mode THEN
+                        element_bytes = UDTDynInlineElemBytes&(found_member, layout_mode)
+                    ELSE
+                        element_bytes = (udtesize(found_member) \ 8) \ udtearrayelements(found_member)
+                    END IF
+                    member_ptr = "(" + member_ptr + "+(" + array_index_text + ")*" + _TOSTR$(element_bytes) + ")"
+                END IF
+                path_index = close_index + 1
+            ELSEIF udtearrayelements(found_member) THEN
+                Give_Error "Expected array index": EXIT FUNCTION
+            END IF
+        ELSEIF udtearrayelements(found_member) THEN
+            Give_Error "Expected array index": EXIT FUNCTION
+        END IF
+
+        IF path_index <= path_count THEN
+            IF (udtetype(found_member) AND ISUDT) = 0 THEN Give_Error "Expected user defined type": EXIT FUNCTION
+            current_udt = udtetype(found_member) AND UDTMASK
+            current_ptr = member_ptr
+        ELSE
+            EXIT DO
+        END IF
+    LOOP
+
+    final_typ = udtetype(found_member)
+    IF final_typ AND ISUDT THEN
+        result_typ = (final_typ AND UDTMASK) + ISUDT + ISPOINTER
+        ResolveUDTCallMember$ = "((void*)(" + member_ptr + "))"
+        EXIT FUNCTION
+    END IF
+
+    IF final_typ AND ISSTRING THEN
+        IF final_typ AND ISFIXEDLENGTH THEN
+            result_typ = STRINGTYPE + ISFIXEDLENGTH
+            ResolveUDTCallMember$ = "qbs_new_fixed((uint8*)(" + member_ptr + ")," + _TOSTR$(udtetypesize(found_member)) + ",1)"
+        ELSE
+            result_typ = STRINGTYPE
+            ResolveUDTCallMember$ = "*((qbs**)(" + member_ptr + "))"
+        END IF
+        EXIT FUNCTION
+    END IF
+
+    numeric_typ = final_typ
+    IF numeric_typ AND ISREFERENCE THEN numeric_typ = numeric_typ - ISREFERENCE
+    IF numeric_typ AND ISPOINTER THEN numeric_typ = numeric_typ - ISPOINTER
+    IF numeric_typ AND ISARRAY THEN numeric_typ = numeric_typ - ISARRAY
+    type_text = typ2ctyp$(numeric_typ, "")
+    IF Error_Happened THEN EXIT FUNCTION
+    result_typ = numeric_typ
+    ResolveUDTCallMember$ = "*(" + type_text + "*)(" + member_ptr + ")"
+END FUNCTION
+
 FUNCTION evaluate$ (a2$, typ AS LONG)
-    DIM skip_current_udt_result_call AS INTEGER
+    DIM call_member_tmp AS STRING
+    DIM call_member_path AS STRING
+    DIM call_member_expr AS STRING
+    DIM call_member_end AS LONG
+    DIM call_member_depth AS LONG
+    DIM call_member_scan AS LONG
+    DIM call_member_token AS STRING
     'typ IS A RETURN VALUE
     '''DIM cli(15) AS INTEGER
     a$ = a2$
@@ -19790,53 +19984,70 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                     'is l$ a function?
                     IF id.subfunc = 1 THEN
-                        ' While a UDT FUNCTION body is compiled, its callable
-                        ' declaration and local result object share one BASIC
-                        ' name.  For MakeCoord.x, skip only the current callable
-                        ' candidate and continue lookup so the dotted reference
-                        ' resolves to the local result object.
-                        skip_current_udt_result_call = 0
-                        IF nextl$ = "." THEN
-                            IF subfuncn <> 0 AND currentid = subfuncid THEN
-                                IF id.ret AND ISUDT THEN skip_current_udt_result_call = -1
-                            END IF
-                        END IF
-
-                        IF skip_current_udt_result_call = 0 THEN
-                            constequation = 0
-                            IF getelement(a$, i + 1) = "(" THEN
-                                i2 = i + 2
-                                b2 = 0
-                                args = 1
-                                evalnextele:
-                                l2$ = getelement(a$, i2)
-                                IF l2$ = "(" THEN b2 = b2 + 1
-                                IF l2$ = ")" THEN
-                                    b2 = b2 - 1
-                                    IF b2 = -1 THEN
-                                        IF i2 = i + 2 THEN Give_Error "Expected (...)": EXIT FUNCTION
-                                        c$ = evaluatefunc(getelements$(a$, i + 2, i2 - 1), args, typ2)
-                                        IF Error_Happened THEN EXIT FUNCTION
-                                        i = i2
-                                        GOTO evalednextele
-                                    END IF
+                        ' A FUNCTION name on the right-hand side always denotes
+                        ' a call, including inside that FUNCTION's own body.
+                        ' Do not reinterpret FunctionName.member as access to
+                        ' hidden result storage; that spelling must remain free
+                        ' for future member access on a real UDT call result.
+                        constequation = 0
+                        IF getelement(a$, i + 1) = "(" THEN
+                            i2 = i + 2
+                            b2 = 0
+                            args = 1
+                            evalnextele:
+                            l2$ = getelement(a$, i2)
+                            IF l2$ = "(" THEN b2 = b2 + 1
+                            IF l2$ = ")" THEN
+                                b2 = b2 - 1
+                                IF b2 = -1 THEN
+                                    IF i2 = i + 2 THEN Give_Error "Expected (...)": EXIT FUNCTION
+                                    c$ = evaluatefunc(getelements$(a$, i + 2, i2 - 1), args, typ2)
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    i = i2
+                                    GOTO evalednextele
                                 END IF
-                                IF l2$ = "," AND b2 = 0 THEN args = args + 1
-                                i2 = i2 + 1
-                                GOTO evalnextele
-                            ELSE
-                                'no brackets
-                                c$ = evaluatefunc("", 0, typ2)
-                                IF Error_Happened THEN EXIT FUNCTION
                             END IF
-                            evalednextele:
-                            blockn = blockn + 1
-                            block(blockn) = c$
-                            evaledblock(blockn) = 2
-                            blocktype(blockn) = typ2
-                            IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
-                            GOTO evaled
+                            IF l2$ = "," AND b2 = 0 THEN args = args + 1
+                            i2 = i2 + 1
+                            GOTO evalnextele
+                        ELSE
+                            'no brackets
+                            c$ = evaluatefunc("", 0, typ2)
+                            IF Error_Happened THEN EXIT FUNCTION
                         END IF
+                        evalednextele:
+                        IF (typ2 AND ISUDT) <> 0 AND (typ2 AND ISPOINTER) <> 0 THEN
+                            IF i < n THEN
+                                IF getelement$(a$, i + 1) = "." THEN
+                                    call_member_end = n
+                                    call_member_depth = 0
+                                    FOR call_member_scan = i + 1 TO n
+                                        call_member_token$ = getelement$(a$, call_member_scan)
+                                        IF call_member_token$ = ")" THEN
+                                            IF call_member_depth = 0 THEN call_member_end = call_member_scan - 1: EXIT FOR
+                                            call_member_depth = call_member_depth - 1
+                                        ELSEIF call_member_token$ = "(" THEN
+                                            call_member_depth = call_member_depth + 1
+                                        ELSEIF call_member_depth = 0 AND isoperator(call_member_token$) THEN
+                                            call_member_end = call_member_scan - 1
+                                            EXIT FOR
+                                        END IF
+                                    NEXT
+                                    call_member_path = getelements$(a$, i + 1, call_member_end)
+                                    call_member_tmp = "udt_call_member_" + _TOSTR$(uniquenumber)
+                                    call_member_expr = ResolveUDTCallMember$(call_member_tmp, call_member_path, typ2 AND UDTMASK, typ2)
+                                    IF Error_Happened THEN EXIT FUNCTION
+                                    c$ = "([&](){void *" + call_member_tmp + "=(void*)(" + c$ + ");return " + call_member_expr + ";})()"
+                                    i = call_member_end
+                                END IF
+                            END IF
+                        END IF
+                        blockn = blockn + 1
+                        block(blockn) = c$
+                        evaledblock(blockn) = 2
+                        blocktype(blockn) = typ2
+                        IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
+                        GOTO evaled
                     END IF
 
                     IF try = 2 THEN findanotherid = 1: try = findid(l$) ELSE try = 0
@@ -22388,11 +22599,14 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         IF udtretowned THEN
             ' Reuse cannot memset live qbs or descriptor pointers. Release the old
             ' ownership graph, clear the record, reinitialize its owners/descriptors,
-            ' invoke the FUNCTION and return the same caller-owned address.
-            r$ = "([&](){if(" + udtrettmp + "==NULL){" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ");}else{" + udtretfree + "(" + udtrettmp + ");}memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ");" + udtretinit + "(" + udtrettmp + ");" + r$ + ";return " + udtrettmp + ";})()"
+            ' invoke the FUNCTION and use its returned result address.  The
+            ' callee contract guarantees that this is the same caller-owned
+            ' pointer passed as the hidden first argument.
+            r$ = "([&](){if(" + udtrettmp + "==NULL){" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ");}else{" + udtretfree + "(" + udtrettmp + ");}memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ");" + udtretinit + "(" + udtrettmp + ");return " + r$ + ";})()"
         ELSE
-            ' Fixed-layout results retain the compact Step 2A path.
-            r$ = "((" + udtrettmp + "==NULL?(" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ")):" + udtrettmp + "),memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ")," + r$ + "," + udtrettmp + ")"
+            ' Fixed-layout results retain the compact Step 2A path, with the
+            ' final comma operand now being the callee's returned pointer.
+            r$ = "((" + udtrettmp + "==NULL?(" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ")):" + udtrettmp + "),memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ")," + r$ + ")"
         END IF
     END IF
     IF funcargprep$ <> "" THEN r$ = "([&](){" + funcargprep$ + "return " + r$ + ";})()"
@@ -27149,6 +27363,7 @@ END FUNCTION
 SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     DIM udtElem AS LONG
     DIM asg_eval_text AS STRING
+    DIM udt_src_once AS STRING
     a$ = a2$: typ = typ2: e$ = e2$
     IF method <> 1 THEN e$ = fixoperationorder$(e$)
     IF Error_Happened THEN EXIT SUB
@@ -27202,7 +27417,13 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             rhsdynmode% = 0
             IF (t2 AND ISREFERENCE) = 0 THEN
                 IF t2 AND ISPOINTER THEN
-                    src$ = "((char*)" + e$ + ")"
+                    ' A UDT FUNCTION result is an expression with observable
+                    ' call-side effects. Ownership-aware copy walkers may read
+                    ' several disjoint members, so evaluate the expression once
+                    ' and let every emitted copy step use the same returned UDT.
+                    udt_src_once = "udt_assign_src_" + _TOSTR$(uniquenumber)
+                    WriteBufLineCpp MainTxtBuf, "void *" + udt_src_once + "=(void*)(" + e$ + ");"
+                    src$ = "((char*)" + udt_src_once + ")"
                     e2 = 0: u2 = t2 AND UDTMASK
                     ' UDT FUNCTION expressions are transported as raw pointers.
                     ' Recover the named TYPE's declaration-driven physical layout

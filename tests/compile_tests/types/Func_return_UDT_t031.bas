@@ -18,15 +18,18 @@ Print "PASS Func_return_UDT_t031"
 System 0
 
 Function MakeLocalStringArray (prefix As String) As LocalStringArrayData
+    Dim functionResult As LocalStringArrayData
+
     Dim temp As LocalStringArrayData
 
     temp.names(1) = prefix + "-1"
     temp.names(2) = prefix + "-2"
     temp.names(3) = prefix + "-3"
-    MakeLocalStringArray = temp
+    functionResult = temp
 
     'Overwrite the local owner after assignment.  The return object must already own copies.
     temp.names(1) = "changed"
     temp.names(2) = "changed"
     temp.names(3) = "changed"
+    MakeLocalStringArray = functionResult
 End Function

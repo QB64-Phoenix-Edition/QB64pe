@@ -48,14 +48,17 @@ Print "PASS Func_return_UDT_t061"
 System 0
 
 Function MakeDynOwnerReuse (writePayload As Integer) As DynOwnerReuseResultData
+    Dim functionResult As DynOwnerReuseResultData
+
     If writePayload Then
-        ReDim MakeDynOwnerReuse.items(5 To 6)
-        MakeDynOwnerReuse.items(5).textValue = "five"
-        MakeDynOwnerReuse.items(5).numberValue = 50
-        MakeDynOwnerReuse.items(6).textValue = "six"
-        MakeDynOwnerReuse.items(6).numberValue = 60
-        MakeDynOwnerReuse.callNumber = 1
+        ReDim functionResult.items(5 To 6)
+        functionResult.items(5).textValue = "five"
+        functionResult.items(5).numberValue = 50
+        functionResult.items(6).textValue = "six"
+        functionResult.items(6).numberValue = 60
+        functionResult.callNumber = 1
     Else
-        MakeDynOwnerReuse.callNumber = 2
+        functionResult.callNumber = 2
     End If
+    MakeDynOwnerReuse = functionResult
 End Function

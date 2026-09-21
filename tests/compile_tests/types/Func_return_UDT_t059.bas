@@ -36,11 +36,14 @@ Print "PASS Func_return_UDT_t059"
 System 0
 
 Function MakeDynOwnerScalar As DynOwnerScalarResultData
-    ReDim MakeDynOwnerScalar.items(-2 To 0)
-    MakeDynOwnerScalar.items(-2).textValue = "left"
-    MakeDynOwnerScalar.items(-2).numberValue = 20
-    MakeDynOwnerScalar.items(-1).textValue = "mid" + Chr$(0) + "nul"
-    MakeDynOwnerScalar.items(-1).numberValue = 21
-    MakeDynOwnerScalar.items(0).textValue = "right"
-    MakeDynOwnerScalar.items(0).numberValue = 22
+    Dim functionResult As DynOwnerScalarResultData
+
+    ReDim functionResult.items(-2 To 0)
+    functionResult.items(-2).textValue = "left"
+    functionResult.items(-2).numberValue = 20
+    functionResult.items(-1).textValue = "mid" + Chr$(0) + "nul"
+    functionResult.items(-1).numberValue = 21
+    functionResult.items(0).textValue = "right"
+    functionResult.items(0).numberValue = 22
+    MakeDynOwnerScalar = functionResult
 End Function

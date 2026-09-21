@@ -35,8 +35,11 @@ Print "PASS Func_return_UDT_t027"
 System 0
 
 Function MakeTwoOwners (textA As String, textB As String) As TwoOwnerResultData
-    MakeTwoOwners.partA.text = textA
-    MakeTwoOwners.partA.value = 11
-    MakeTwoOwners.partB.text = textB
-    MakeTwoOwners.partB.value = 22
+    Dim functionResult As TwoOwnerResultData
+
+    functionResult.partA.text = textA
+    functionResult.partA.value = 11
+    functionResult.partB.text = textB
+    functionResult.partB.value = 22
+    MakeTwoOwners = functionResult
 End Function

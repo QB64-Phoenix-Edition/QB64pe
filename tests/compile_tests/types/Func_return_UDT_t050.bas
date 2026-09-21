@@ -34,9 +34,12 @@ Print "PASS Func_return_UDT_t050"
 System 0
 
 Function MakeDynVarBasic (binaryText As String) As DynVarBasicData
-    ReDim MakeDynVarBasic.values(-1 To 1)
-    MakeDynVarBasic.values(-1) = "alpha"
-    MakeDynVarBasic.values(0) = binaryText
-    MakeDynVarBasic.values(1) = "omega"
-    MakeDynVarBasic.marker = 155
+    Dim functionResult As DynVarBasicData
+
+    ReDim functionResult.values(-1 To 1)
+    functionResult.values(-1) = "alpha"
+    functionResult.values(0) = binaryText
+    functionResult.values(1) = "omega"
+    functionResult.marker = 155
+    MakeDynVarBasic = functionResult
 End Function

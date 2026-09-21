@@ -44,14 +44,17 @@ Print "PASS Func_return_UDT_t063"
 System 0
 
 Function MakeDynOwnerDesc As DynOwnerDescResultData
-    ReDim MakeDynOwnerDesc.items(4 To 5)
-    MakeDynOwnerDesc.items(4).nameText = "first"
-    ReDim MakeDynOwnerDesc.items(4).texts(-1 To 1)
-    MakeDynOwnerDesc.items(4).texts(-1) = "a"
-    MakeDynOwnerDesc.items(4).texts(0) = "b"
-    MakeDynOwnerDesc.items(4).texts(1) = "c"
-    MakeDynOwnerDesc.items(5).nameText = "second"
-    ReDim MakeDynOwnerDesc.items(5).texts(7 To 8)
-    MakeDynOwnerDesc.items(5).texts(7) = "seven"
-    MakeDynOwnerDesc.items(5).texts(8) = "eight"
+    Dim functionResult As DynOwnerDescResultData
+
+    ReDim functionResult.items(4 To 5)
+    functionResult.items(4).nameText = "first"
+    ReDim functionResult.items(4).texts(-1 To 1)
+    functionResult.items(4).texts(-1) = "a"
+    functionResult.items(4).texts(0) = "b"
+    functionResult.items(4).texts(1) = "c"
+    functionResult.items(5).nameText = "second"
+    ReDim functionResult.items(5).texts(7 To 8)
+    functionResult.items(5).texts(7) = "seven"
+    functionResult.items(5).texts(8) = "eight"
+    MakeDynOwnerDesc = functionResult
 End Function

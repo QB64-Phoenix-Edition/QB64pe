@@ -24,6 +24,9 @@ Print "PASS Func_return_UDT_t017"
 System 0
 
 Function MakeTextData As TextData
-    MakeTextData.text = "direct scalar STRING"
-    MakeTextData.code = 109
+    Dim functionResult As TextData
+
+    functionResult.text = "direct scalar STRING"
+    functionResult.code = 109
+    MakeTextData = functionResult
 End Function
