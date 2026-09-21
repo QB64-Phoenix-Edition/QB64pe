@@ -4252,7 +4252,7 @@ DO
                 try = findid(UCASE$(a3$))
                 IF Error_Happened THEN GOTO errmes
                 DO WHILE try
-                    IF ((id.t AND ISUDT) <> 0) OR ((id.arraytype AND ISUDT) <> 0) OR (id.subfunc = 1 AND (id.ret AND ISUDT) <> 0) THEN
+                    IF ((id.t AND ISUDT) <> 0) OR ((id.arraytype AND ISUDT) <> 0) OR (id.subfunc = 1 AND id.internal_subfunc = 0 AND id.ccall = 0 AND (id.ret AND ISUDT) <> 0) THEN
                         except = 1
                         GOTO udtperiod
                     END IF
@@ -16853,6 +16853,88 @@ SUB GetAsgRefSyntax (expr AS STRING, ref_kind AS LONG, final_name AS STRING, has
     LOOP
 END SUB
 
+'Resolve a direct member assignment rooted at the current UDT FUNCTION result.
+'The outermost FUNCTION name on the left side denotes the hidden caller-owned
+'result object; expressions inside member-array indexes remain ordinary RHS
+'expressions, so the same FUNCTION name there still denotes a recursive call.
+SUB ResolveUDTFuncRetLHS (expr AS STRING, root_name AS STRING, ref_ok AS LONG, ref_text AS STRING, ref_typ AS LONG)
+    DIM work AS STRING
+    DIM root_token AS STRING
+    DIM member_path AS STRING
+    DIM token_text AS STRING
+    DIM token_count AS LONG
+    DIM scan_at AS LONG
+    DIM depth_count AS LONG
+    DIM full_wrap AS LONG
+    DIM find_try AS LONG
+
+    ref_ok = 0
+    ref_text = ""
+    ref_typ = 0
+
+    IF subfuncn = 0 THEN EXIT SUB
+    IF subfuncid < 1 OR subfuncid > idn THEN EXIT SUB
+    IF ids(subfuncid).subfunc <> 1 THEN EXIT SUB
+    IF (ids(subfuncid).ret AND ISUDT) = 0 THEN EXIT SUB
+    IF UCASE$(RTRIM$(root_name)) <> UCASE$(RTRIM$(ids(subfuncid).n)) THEN EXIT SUB
+
+    work = expr
+    token_count = numelements(work)
+    IF token_count < 3 THEN EXIT SUB
+
+    'Match GetAsgRefSyntax's allowance for complete outer parentheses.
+    DO WHILE token_count >= 2
+        IF getelement$(work, 1) <> "(" OR getelement$(work, token_count) <> ")" THEN EXIT DO
+        depth_count = 0
+        full_wrap = -1
+        FOR scan_at = 1 TO token_count
+            token_text = getelement$(work, scan_at)
+            IF token_text = "(" THEN depth_count = depth_count + 1
+            IF token_text = ")" THEN
+                depth_count = depth_count - 1
+                IF depth_count = 0 AND scan_at <> token_count THEN full_wrap = 0: EXIT FOR
+            END IF
+        NEXT
+        IF full_wrap = 0 OR depth_count <> 0 THEN EXIT DO
+        work = getelements$(work, 2, token_count - 1)
+        token_count = numelements(work)
+        IF token_count < 3 THEN EXIT SUB
+    LOOP
+
+    root_token = getelement$(work, 1)
+    IF UCASE$(RTRIM$(root_token)) <> UCASE$(RTRIM$(root_name)) THEN EXIT SUB
+    IF getelement$(work, 2) <> "." THEN EXIT SUB
+
+    'Find the BASIC-visible local result object, not the callable declaration.
+    find_try = findid(root_token)
+    IF Error_Happened THEN EXIT SUB
+    DO WHILE find_try
+        IF id.t THEN
+            IF id.insubfuncn = subfuncn THEN
+                IF (id.t AND ISUDT) THEN
+                    IF (id.t AND UDTMASK) = (ids(subfuncid).ret AND UDTMASK) THEN
+                        IF UCASE$(RTRIM$(id.n)) = UCASE$(RTRIM$(ids(subfuncid).n)) THEN
+                            member_path = getelements$(work, 2, token_count)
+                            ref_text = udtreference$("0", member_path, ref_typ)
+                            IF Error_Happened THEN EXIT SUB
+                            ref_ok = -1
+                            EXIT SUB
+                        END IF
+                    END IF
+                END IF
+            END IF
+        END IF
+        IF find_try = 2 THEN
+            findanotherid = 1
+            find_try = findid(root_token)
+        ELSE
+            find_try = 0
+        END IF
+        IF Error_Happened THEN EXIT SUB
+    LOOP
+END SUB
+
+
 'Resolve an explicit whole-array reference. Top-level name() uses the existing
 'FindArray resolver. TYPE member arrays are resolved by the normal UDT evaluator
 'with its established whole-member mode enabled.
@@ -17598,6 +17680,9 @@ SUB assign (a$, n)
     DIM rmember AS LONG
     DIM lhsstate AS LONG
     DIM saved_bare AS INTEGER
+    DIM lhs_udt_ok AS LONG
+    DIM lhs_udt_ref AS STRING
+    DIM lhs_udt_typ AS LONG
 
     FOR i = 1 TO n
         c = ASC(getelement$(a$, i))
@@ -17671,6 +17756,20 @@ SUB assign (a$, n)
                     IF try = 2 THEN findanotherid = 1: try = findid(a2$) ELSE try = 0
                     IF Error_Happened THEN EXIT SUB
                 LOOP
+            END IF
+
+            'On the left side only, FunctionName.member refers to the current
+            'UDT FUNCTION result object. Indexed member expressions are resolved
+            'by udtreference$(), whose index evaluator keeps FunctionName.member
+            'on the normal RHS/recursive-call path.
+            IF lhasmember AND (lkind = 1 OR lkind = 3) THEN
+                ResolveUDTFuncRetLHS lsrc, lroot, lhs_udt_ok, lhs_udt_ref, lhs_udt_typ
+                IF Error_Happened THEN EXIT SUB
+                IF lhs_udt_ok THEN
+                    a2$ = lhs_udt_ref
+                    typ = lhs_udt_typ
+                    GOTO assignlhsready
+                END IF
             END IF
 
             saved_bare = udt_allow_bare_array
