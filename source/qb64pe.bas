@@ -1176,14 +1176,14 @@ bitsmarkerfile$ = "internal/c/.qb64_target_bits"
 lastbuiltbits$ = ""
 IF _FILEEXISTS(bitsmarkerfile$) THEN
     lastbuiltbits$ = _READFILE$(bitsmarkerfile$)
-    _LogInfo "Last built bits: " + lastbuiltbits$ + ", val: " + _ToStr$(val(lastbuiltbits$))
+    _LOGINFO "Last built bits: " + lastbuiltbits$ + ", val: " + _TOSTR$(VAL(lastbuiltbits$))
 END IF
 ' No marker will typically mean it was built with the OS_BITs, since it likely
 ' is from before cross-compilation was introduced.
 IF LEN(lastbuiltbits$) = 0 THEN lastbuiltbits$ = _TOSTR$(OS_BITS)
 IF VAL(lastbuiltbits$) <> TARGET_BITS THEN
     PurgeTemporaryBuildFiles (os$), (MacOSX)
-    _WRITEFILE bitsmarkerfile$, _ToStr$(TARGET_BITS)
+    _WRITEFILE bitsmarkerfile$, _TOSTR$(TARGET_BITS)
 END IF
 
 FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
@@ -22728,7 +22728,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
         END IF
     END IF
 
-    IF id2.ret = ISUDT + (1) THEN
+    If id2.ret = ISUDT + (1) And udtretcall = 0 Then
         '***special case***
         v$ = "func" + _TOSTR$(uniquenumber)
         WriteBufLine defdatahandle, "mem_block " + v$ + ";"
@@ -24335,7 +24335,7 @@ FUNCTION fixoperationorder_rec$ (savea$, bare_arrays)
             IF b = 0 THEN
                 IF b1 THEN
                     IF isoperator(a2$) THEN
-                        IF a2$ <> "^" AND a2$ <> CHR$(241) AND UCASE$(a2$) <> "NOT" THEN  'solve issue #23
+                        IF a2$ <> "^" AND a2$ <> CHR$(241) AND UCASE$(a2$) <> "NOT" THEN 'solve issue #23
                             insertelements a$, i - 1, "}"
                             insertelements a$, b1, "{"
                             n = n + 2
