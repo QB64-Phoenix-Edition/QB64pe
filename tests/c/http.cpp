@@ -11,8 +11,7 @@ const char *example_result = "<!doctype html><html lang=en><head><meta charset=u
                              "<style>html{color-scheme:light dark;background:light-dark(#eee,#222)}body{font:16px/1.6 system-ui,sans-serif;max-width:30em;min-height:100vh;margin:auto;"
                              "padding:4.75em 2em 20vh;box-sizing:border-box;display:grid;place-content:center;text-align:center}</style></head><body><p>This domain is for use in documentation examples "
                              "without needing permission. This is not a service, avoid relying on it for testing and monitoring purposes.</p><a href=https://iana.org/help/example-domains>Learn more</a>"
-                             "<script src=/s.js></script></body></html>
-";
+                             "<script src=/s.js></script></body></html>\n";
 void test_http() {
     size_t expected_result_len = strlen(example_result);
     const char *urls[] = {"http://www.example.com", "https://www.example.com",   "HTTPS://WWW.EXAMPLE.COM",     "httP://wwW.example.com",
