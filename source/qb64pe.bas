@@ -20366,7 +20366,15 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                 typ& = UINTEGER64TYPE - ISPOINTER
                                 r$ = "qbs_val<uint64_t>" + r$
 
-                            CASE "!", "#", "##"
+                            CASE "!"
+                                typ& = SINGLETYPE - ISPOINTER
+                                r$ = "qbs_val<float>" + r$
+
+                            CASE "#"
+                                typ& = DOUBLETYPE - ISPOINTER
+                                r$ = "qbs_val<double>" + r$
+
+                            CASE "##"
                                 typ& = FLOATTYPE - ISPOINTER
                                 r$ = "qbs_val<long double>" + r$
 
