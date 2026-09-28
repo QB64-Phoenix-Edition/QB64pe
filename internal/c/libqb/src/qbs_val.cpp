@@ -290,6 +290,4 @@ non_decimal: // handle hexadecimal, binary, and octal cases
 // We only need to instantiate the template for the types we need
 template int64_t qbs_val<int64_t>(qbs *);
 template uint64_t qbs_val<uint64_t>(qbs *);
-template float qbs_val<float>(qbs *);
-template double qbs_val<double>(qbs *);
 template long double qbs_val<long double>(qbs *);

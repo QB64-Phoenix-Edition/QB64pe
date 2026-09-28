@@ -20368,11 +20368,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
                             CASE "!"
                                 typ& = SINGLETYPE - ISPOINTER
-                                r$ = "qbs_val<float>" + r$
+                                r$ = "(float)qbs_val<long double>" + r$
 
                             CASE "#"
                                 typ& = DOUBLETYPE - ISPOINTER
-                                r$ = "qbs_val<double>" + r$
+                                r$ = "(double)qbs_val<long double>" + r$
 
                             CASE "##"
                                 typ& = FLOATTYPE - ISPOINTER
