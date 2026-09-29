@@ -10633,12 +10633,9 @@ void qbs_print(qbs *str, int32_t finish_on_new_line) {
 
         character = str->chr[i];
 
-        if (fontflags[write_page->font] & FONT_LOAD_UNICODE) { // unicode font
-            if (i > (str->len - 4))
-                break; // not enough data for a utf32 encoding
-            character = *((int32 *)(&str->chr[i]));
-            i += 3;
-        }
+        // The active font's UNICODE flag describes the font renderer, not the
+        // representation of a normal QB string passed to PRINT. qbs_print()
+        // receives the usual byte stream here; do not reinterpret it as UTF-32.
 
         if (lprint)
             lprint_buffered = 1;
