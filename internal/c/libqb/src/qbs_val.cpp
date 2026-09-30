@@ -133,18 +133,23 @@ finish:
         return 0;
     }
 
-    // Handle cases where exponent is zero and there is no decimal part
+    // Integer target types can use the exact integer accumulator when the input has
+    // no fractional part or exponent. Floating-point target types must continue
+    // through the floating parser so large decimal integer strings are not clamped
+    // to the signed 64-bit range before conversion to SINGLE/DOUBLE/_FLOAT.
     if (exponent_value == 0 && num_significant_digits == most_significant_digit_position) {
-        if constexpr (std::is_same_v<T, uint64_t>) {
-            return value.i;
-        } else {
-            if (!negate && value.i > INT64_MAX) {
-                return T(INT64_MAX);
-            } else if (negate && value.i > (uint64_t)INT64_MAX + 1) {
-                return T(INT64_MIN);
-            }
+        if constexpr (std::is_integral_v<T>) {
+            if constexpr (std::is_same_v<T, uint64_t>) {
+                return value.i;
+            } else {
+                if (!negate && value.i > INT64_MAX) {
+                    return T(INT64_MAX);
+                } else if (negate && value.i > (uint64_t)INT64_MAX + 1) {
+                    return T(INT64_MIN);
+                }
 
-            return negate ? -(int64_t)value.i : (int64_t)value.i;
+                return negate ? -(int64_t)value.i : (int64_t)value.i;
+            }
         }
     }
 

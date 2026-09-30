@@ -704,16 +704,12 @@ static constexpr inline int TranslateKeypadDigitOrDecimal(GLUTEmu_KeyboardKey ke
     return -1;
 }
 
-static constexpr inline int TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isCapsLock, bool forceBase) {
+static constexpr inline int TranslateLetter(GLUTEmu_KeyboardKey key, bool isShift, bool isCapsLock) {
     if (key < GLUTEmu_KeyboardKey::A || key > GLUTEmu_KeyboardKey::Z) {
         return -1;
     }
 
     const int offset = int(key) - int(GLUTEmu_KeyboardKey::A);
-
-    if (forceBase) {
-        return 'a' + offset;
-    }
 
     return (isShift ^ isCapsLock ? 'A' : 'a') + offset;
 }
@@ -751,7 +747,7 @@ static constexpr inline int TranslatePunctuation(GLUTEmu_KeyboardKey key, bool i
 }
 
 static constexpr inline int TranslatePrintableKey(GLUTEmu_KeyboardKey key, bool isShift, bool isCapsLock, bool forceBase) {
-    int translated = TranslateLetter(key, isShift, isCapsLock, forceBase);
+    int translated = TranslateLetter(key, isShift, isCapsLock);
     if (translated != -1) {
         return translated;
     }
@@ -984,9 +980,17 @@ static inline int TranslateKey(GLUTEmu_KeyboardKey key, bool isShift, bool isCon
     // GLFW so non-US keyboards (e.g. AZERTY) produce the correct _KEYHIT.
     // Keep the physical-token fallback if GLFW cannot name the key.
     if (forceBase && result > 0 && result <= 255 && scancode != -1) {
-        const int layoutKey = keyboard_get_layout_base_key(key, scancode);
-        if (layoutKey != -1)
+        int layoutKey = keyboard_get_layout_base_key(key, scancode);
+        if (layoutKey != -1) {
+            if (layoutKey >= 'a' && layoutKey <= 'z') {
+                if (isShift ^ isCapsLock)
+                    layoutKey -= ('a' - 'A');
+            } else if (layoutKey >= 'A' && layoutKey <= 'Z') {
+                if (!(isShift ^ isCapsLock))
+                    layoutKey += ('a' - 'A');
+            }
             result = layoutKey;
+        }
     }
 
     return result;
