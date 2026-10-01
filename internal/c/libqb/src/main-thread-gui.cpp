@@ -2,6 +2,7 @@
 
 #include "completion.h"
 #include "glut-emu.h"
+#include "graphics.h"
 #include "gui.h"
 #include "keyboard.h"
 #include "logging.h"
@@ -20,6 +21,34 @@ extern void MAIN_LOOP(void *);
 extern void GLUT_EXIT_FUNC();
 extern void GLUT_DISPLAY_REQUEST();
 extern void GLUT_IDLE_FUNC();
+
+#if defined(QB64_WINDOWS)
+extern int32_t force_display_update;
+
+// In the Windows DPI experiment, framebuffer dimensions are physical pixels,
+// while GLUT_RESIZE_FUNC accepts logical QB64 window dimensions. Do not let
+// a framebuffer notification overwrite display_x/display_y or BASIC resize
+// events. A physical-only change still invalidates the viewport and requests
+// a redraw, including when the logical client size remains unchanged.
+static void GLUT_FRAMEBUFFER_RESIZE_FUNC(int, int) {
+    set_view(VIEW_MODE__UNKNOWN);
+    os_resize_event = 1;
+    force_display_update = 1;
+}
+
+static void GLUT_REFRESH_FUNC() {
+    // A native paint can arrive after the DPI refresh has already consumed
+    // os_resize_event. GLUT_DISPLAY_REQUEST otherwise skips an unchanged frame,
+    // even though Windows has invalidated pixels in the enlarged drawable.
+    // Mark only native damage as render work. Ordinary idle refreshes retain
+    // their existing no-new-frame fast path and do not force BASIC frame builds.
+    if (GLUTEmu_WindowIsDamageRefresh()) {
+        set_view(VIEW_MODE__UNKNOWN);
+        os_resize_event = 1;
+    }
+    GLUT_DISPLAY_REQUEST();
+}
+#endif
 
 static void GLUT_WINDOW_FOCUS_FUNC(bool focused) {
     GLUT_KEYBOARD_FOCUS_FUNC(focused);
@@ -56,11 +85,20 @@ static void initialize_glut() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     GLUTEmu_WindowSetCloseFunction(GLUT_EXIT_FUNC);
+#if defined(QB64_WINDOWS)
+    GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_FRAMEBUFFER_RESIZE_FUNC);
+#else
     GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_RESIZE_FUNC);
+#endif
+    // Only the window callback supplies logical dimensions on Windows.
     GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
     //   GLFW_TODO: Maximize/Minimize handling
     GLUTEmu_WindowSetFocusedFunction(GLUT_WINDOW_FOCUS_FUNC);
+#if defined(QB64_WINDOWS)
+    GLUTEmu_WindowSetRefreshFunction(GLUT_REFRESH_FUNC);
+#else
     GLUTEmu_WindowSetRefreshFunction(GLUT_DISPLAY_REQUEST);
+#endif
     GLUTEmu_WindowSetIdleFunction(GLUT_IDLE_FUNC);
 
     GLUTEmu_KeyboardSetButtonFunction(GLUT_KEYBOARD_BUTTON_FUNC);

@@ -280,6 +280,9 @@ void GLUTEmu_WindowSetMaximumSizeLimits(int maxWidth, int maxHeight);
 void GLUTEmu_WindowSetShouldClose(bool shouldClose);
 void GLUTEmu_WindowSwapBuffers();
 void GLUTEmu_WindowRefresh();
+// True only inside a Windows native damage callback, not ordinary idle refresh.
+// This permits repainting an unchanged frame without forcing work every idle tick.
+bool GLUTEmu_WindowIsDamageRefresh();
 const void *GLUTEmu_WindowGetNativeHandle(int32_t type);
 void GLUTEmu_WindowSetCloseFunction(GLUTEmu_CallbackWindowClose func);
 void GLUTEmu_WindowSetResizedFunction(GLUTEmu_CallbackWindowResized func);

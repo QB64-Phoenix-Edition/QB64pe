@@ -28,6 +28,10 @@
 #endif
 #include <GLFW/glfw3native.h>
 
+#if defined(QB64_WINDOWS)
+#    include "win-wgl-surface.h"
+#endif
+
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -487,15 +491,43 @@ class GLUTEmu {
             libqb_log_error("Window already created, cannot create another window");
         } else {
             if (std::this_thread::get_id() == mainThreadId) {
-                // GLFW creates the window using screen coordinates, so we need to fix it below
+#if defined(QB64_WINDOWS)
+                // Keep QB64 window and mouse coordinates logical on Windows,
+                // and let GLFW scale the native client area for the monitor's DPI.
+                // This applies to every Windows program linked with this runtime.
+                glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+#endif
+                // GLFW creates the window using native screen coordinates.
                 window = glfwCreateWindow(width, height, windowTitle.empty() ? "Untitled" : windowTitle.c_str(), nullptr, nullptr);
                 if (window != nullptr) {
                     glfwSetWindowUserPointer(window, this);
                     glfwMakeContextCurrent(window);
 
+#if defined(QB64_WINDOWS)
+                    // Own the client-local drawable in libqb. GLFW remains
+                    // unmodified and owns the top-level HWND and OpenGL HGLRC.
+                    if (!winSurface.Create(window, [](GLFWwindow *win) {
+                            auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                            // A nested native loop (for example a dialog opened
+                            // by _GL) may dispatch this while rendering. Retain
+                            // the request until that outer render has finished.
+                            if (instance->isWindowRefreshing)
+                                instance->isWindowRefreshPending = true;
+                            else
+                                instance->WindowRefresh(true);
+                        })) {
+                        glfwDestroyWindow(window);
+                        window = nullptr;
+                        return false;
+                    }
+#endif
+
                     auto version = gladLoadGL(glfwGetProcAddress);
                     if (version == 0) {
                         libqb_log_error("Failed to initialize OpenGL context");
+#if defined(QB64_WINDOWS)
+                        winSurface.Destroy();
+#endif
                         glfwDestroyWindow(window);
                         window = nullptr;
                         return false;
@@ -514,9 +546,17 @@ class GLUTEmu {
                     glfwGetWindowContentScale(window, &windowScaleX, &windowScaleY);
                     glfwSetWindowContentScaleCallback(window, [](GLFWwindow *win, float xScale, float yScale) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+#if defined(QB64_WINDOWS)
+                        // WM_DPICHANGED can dispatch size events before the scale callback.
+                        // Re-read the native state and publish a coherent logical size.
+                        instance->SyncWinDpiSize(true);
+                        instance->WindowSetSizeLimits(instance->windowMinWidth, instance->windowMinHeight, instance->windowMaxWidth,
+                                                      instance->windowMaxHeight);
+#else
                         instance->windowScaleX = xScale;
                         instance->windowScaleY = yScale;
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
+#endif
 
                         libqb_log_trace("Window content scale changed to (%fx%f)", xScale, yScale);
                     });
@@ -527,6 +567,11 @@ class GLUTEmu {
                     windowHeight = ToPixelCoordsY(windowHeight);
                     glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+#if defined(QB64_WINDOWS)
+                        // Query the current DPI before converting a WM_SIZE notification.
+                        // Do not use the scale cached before crossing to another monitor.
+                        instance->SyncWinDpiSize(false);
+#else
                         instance->windowWidth = instance->ToPixelCoordsX(width);
                         instance->windowHeight = instance->ToPixelCoordsY(height);
 
@@ -535,6 +580,7 @@ class GLUTEmu {
                         if (instance->windowResizedFunction) {
                             instance->windowResizedFunction(instance->windowWidth, instance->windowHeight);
                         }
+#endif
                     });
 
                     // If the window size is not the same as requested, we are likely on a high-DPI display, so we need to adjust our size using the scale
@@ -565,6 +611,11 @@ class GLUTEmu {
                     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
                     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+#if defined(QB64_WINDOWS)
+                        // GLFW sends this before its window-size callback on Windows.
+                        // Update both caches before any renderer callback can run.
+                        instance->SyncWinDpiSize(false);
+#else
                         instance->framebufferWidth = width;
                         instance->framebufferHeight = height;
 
@@ -573,15 +624,24 @@ class GLUTEmu {
                         if (instance->windowFramebufferResizedFunction) {
                             instance->windowFramebufferResizedFunction(instance->framebufferWidth, instance->framebufferHeight);
                         }
+#endif
                     });
 
                     // Set a hook into the maximization callback to track restore events
                     glfwSetWindowMaximizeCallback(window, [](GLFWwindow *win, int maximized) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+#if defined(QB64_WINDOWS)
+                        instance->isWindowMaximized = (maximized == GLFW_TRUE);
+                        // GLFW emits this before its framebuffer/window-size callbacks.
+                        // Publish the size now; pre-filling just the cache would make the
+                        // subsequent DPI sync suppress the logical resize notification.
+                        instance->SyncWinDpiSize(true);
+#else
                         glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
                         instance->windowWidth = instance->ToPixelCoordsX(instance->windowWidth);
                         instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
                         instance->isWindowMaximized = (maximized == GLFW_TRUE);
+#endif
 
                         libqb_log_trace("Window %s", maximized ? "maximized" : "restored");
 
@@ -594,6 +654,13 @@ class GLUTEmu {
                     glfwSetWindowIconifyCallback(window, [](GLFWwindow *win, int iconified) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->isWindowMinimized = (iconified == GLFW_TRUE);
+#if defined(QB64_WINDOWS)
+                        // Restoring can deliver this before the size callbacks too.
+                        // Refresh and publish the usable size even without a minimize
+                        // listener; keep the last usable size while minimized.
+                        if (iconified != GLFW_TRUE)
+                            instance->SyncWinDpiSize(true);
+#endif
 
                         libqb_log_trace("Window %s", iconified == GLFW_TRUE ? "minimized" : "restored");
 
@@ -601,9 +668,11 @@ class GLUTEmu {
                             if (iconified == GLFW_TRUE) {
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, true);
                             } else {
+#if !defined(QB64_WINDOWS)
                                 glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
                                 instance->windowWidth = instance->ToPixelCoordsX(instance->windowWidth);
                                 instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
+#endif
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, false);
                             }
                         }
@@ -1081,18 +1150,67 @@ class GLUTEmu {
 
     void WindowSwapBuffers() const {
         if (window != nullptr) {
+#if defined(QB64_WINDOWS)
+            // GLFW's unmodified swap function targets its parent DC. Present
+            // the drawable actually used for rendering when libqb owns one.
+            if (winSurface.Active()) {
+                winSurface.Swap();
+                return;
+            }
+#endif
             glfwSwapBuffers(window);
         } else {
             libqb_log_error("Window not created, cannot swap buffers");
         }
     }
 
+#if defined(QB64_WINDOWS)
+    void WindowRefresh(bool damage = false) {
+#else
     void WindowRefresh() {
+#endif
         // We will avoid refreshing the window if it is hidden
         // GLFW_TODO: check if not calling the refresh callback when the window is hidden causes any issues
         if (windowRefreshFunction != nullptr && !isWindowHidden) {
+#if defined(QB64_WINDOWS)
+            // Native paint/resize dispatch can request a refresh from inside
+            // rendering (for example when window policy changes the size).
+            // All Windows refresh entry points share this guard and select
+            // the child DC before rendering, not just before buffer swapping.
+            if (isWindowRefreshing) {
+                if (damage)
+                    isWindowRefreshPending = true;
+                return;
+            }
+            if (!winSurface.Bind())
+                return;
+            isWindowRefreshing = true;
+            isWindowDamageRefresh = damage;
+            struct RefreshScope {
+                bool &active;
+                bool &pending;
+                bool &damage;
+                WinWglSurface &surface;
+                ~RefreshScope() {
+                    damage = false;
+                    active = false;
+                    if (pending) {
+                        pending = false;
+                        surface.RequestRefresh();
+                    }
+                }
+            } refreshScope{isWindowRefreshing, isWindowRefreshPending, isWindowDamageRefresh, winSurface};
+#endif
             windowRefreshFunction();
         }
+    }
+
+    bool WindowIsDamageRefresh() const {
+#if defined(QB64_WINDOWS)
+        return isWindowDamageRefresh;
+#else
+        return false;
+#endif
     }
 
     [[nodiscard]] const void *WindowGetNativeHandle(int32_t type) const {
@@ -1232,9 +1350,13 @@ class GLUTEmu {
 
             glfwSetWindowRefreshCallback(window, [](GLFWwindow *win) {
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+#if defined(QB64_WINDOWS)
+                instance->WindowRefresh(true);
+#else
                 if (instance->windowRefreshFunction) {
                     instance->windowRefreshFunction();
                 }
+#endif
             });
 
             libqb_log_trace("Display function set: %p", function);
@@ -1579,6 +1701,14 @@ class GLUTEmu {
                         MessageProcess();
 
                         if (windowIdleFunction != nullptr) {
+#if defined(QB64_WINDOWS)
+                            // Native interop may have rebound the HGLRC. Select
+                            // our drawable before any frame rendering begins.
+                            if (!winSurface.Bind()) {
+                                glfwWaitEventsTimeout(0.01);
+                                continue;
+                            }
+#endif
                             windowIdleFunction();
                         }
                     }
@@ -1675,6 +1805,11 @@ class GLUTEmu {
         }
 
         if (window != nullptr) {
+#if defined(QB64_WINDOWS)
+            // Detach the subclass and unbind/release the child DC while the
+            // GLFW parent/context are still alive. GLFW destroys its HGLRC.
+            winSurface.Destroy();
+#endif
             glfwDestroyWindow(window);
             window = nullptr;
             libqb_log_trace("Window closed");
@@ -1698,84 +1833,201 @@ class GLUTEmu {
         }
     }
 
+#if defined(QB64_WINDOWS)
+    // Reconcile one native Windows client state before publishing resize events.
+    // WM_DPICHANGED resizes the HWND before GLFW emits the content-scale event;
+    // querying GLFW here prevents new physical dimensions being divided by an
+    // old DPI scale. Keep the framebuffer cache physical and the window cache
+    // logical. Publish logical dimensions first so rendering never receives a
+    // physical-only update paired with the previous logical client size.
+    void SyncWinDpiSize(bool forceNotify) {
+        // Also reconcile on content-scale/restore notifications. WM_SIZE is
+        // intercepted before GLFW callbacks, but this covers physical changes
+        // without a distinct size notification as well.
+        if (!winSurface.Resize()) {
+            libqb_log_error("Windows WGL surface: cannot synchronize the drawable");
+            return; // Keep the last coherent drawable/cache state on failure.
+        }
+        float xScale = 1.0f, yScale = 1.0f;
+        int nativeWidth = 0, nativeHeight = 0, fbWidth = 0, fbHeight = 0;
+        glfwGetWindowContentScale(window, &xScale, &yScale);
+        glfwGetWindowSize(window, &nativeWidth, &nativeHeight);
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        if (nativeWidth <= 0 || nativeHeight <= 0 || fbWidth <= 0 || fbHeight <= 0)
+            return; // Preserve the last usable state while minimized.
+        if (xScale <= 0.0f) xScale = 1.0f;
+        if (yScale <= 0.0f) yScale = 1.0f;
+
+        const bool scaleChanged = windowScaleX != xScale || windowScaleY != yScale;
+        windowScaleX = xScale;
+        windowScaleY = yScale;
+        const int logicalWidth = ToPixelCoordsX(nativeWidth);
+        const int logicalHeight = ToPixelCoordsY(nativeHeight);
+        const bool windowChanged = windowWidth != logicalWidth || windowHeight != logicalHeight;
+        const bool framebufferChanged = framebufferWidth != fbWidth || framebufferHeight != fbHeight;
+        windowWidth = logicalWidth;
+        windowHeight = logicalHeight;
+        framebufferWidth = fbWidth;
+        framebufferHeight = fbHeight;
+        glfwGetWindowPos(window, &windowX, &windowY);
+        monitor = WindowGetCurrentMonitorInfo();
+
+        libqb_log_trace("DPI sync: native=%dx%d logical=%dx%d framebuffer=%dx%d scale=%fx%f position=%d,%d",
+                        nativeWidth, nativeHeight, windowWidth, windowHeight, framebufferWidth, framebufferHeight,
+                        windowScaleX, windowScaleY, windowX, windowY);
+
+        if ((forceNotify || scaleChanged || windowChanged) && windowResizedFunction)
+            windowResizedFunction(windowWidth, windowHeight);
+        if ((forceNotify || scaleChanged || framebufferChanged) && windowFramebufferResizedFunction)
+            windowFramebufferResizedFunction(framebufferWidth, framebufferHeight);
+
+        // Request a frame only for a real physical-size/scale change. Forced
+        // duplicate notifications still reach the existing resize callbacks,
+        // but do not add another render. The helper queues/coalesces requests
+        // only while Windows is running its native move/size loop.
+        if (scaleChanged || framebufferChanged)
+            winSurface.RequestRefresh();
+    }
+#endif
+
+    // Convert native Windows client coordinates to logical QB64 coordinates.
+    // Other platforms retain their existing GLFW coordinate conversion.
     template <typename T>
     requires std::is_arithmetic_v<T>
     T ToPixelCoordsX(T x) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(x * windowScaleX));
-        } else {
-            return x * windowScaleX;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToPixelCoordsY(T y) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(y * windowScaleY));
-        } else {
-            return y * windowScaleY;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToScreenCoordsX(T x) const {
+#if defined(QB64_WINDOWS)
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(x / windowScaleX));
         } else {
             return x / windowScaleX;
         }
+#else
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(x * windowScaleX));
+        } else {
+            return x * windowScaleX;
+        }
+#endif
     }
 
+    // Convert native Windows client coordinates to logical QB64 coordinates.
+    // Other platforms retain their existing GLFW coordinate conversion.
     template <typename T>
     requires std::is_arithmetic_v<T>
-    T ToScreenCoordsY(T y) const {
+    T ToPixelCoordsY(T y) const {
+#if defined(QB64_WINDOWS)
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(y / windowScaleY));
         } else {
             return y / windowScaleY;
         }
+#else
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(y * windowScaleY));
+        } else {
+            return y * windowScaleY;
+        }
+#endif
+    }
+
+    // Convert logical QB64 coordinates to native Windows client coordinates.
+    // Other platforms retain their existing GLFW coordinate conversion.
+    template <typename T>
+    requires std::is_arithmetic_v<T>
+    T ToScreenCoordsX(T x) const {
+#if defined(QB64_WINDOWS)
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(x * windowScaleX));
+        } else {
+            return x * windowScaleX;
+        }
+#else
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(x / windowScaleX));
+        } else {
+            return x / windowScaleX;
+        }
+#endif
+    }
+
+    // Convert logical QB64 coordinates to native Windows client coordinates.
+    // Other platforms retain their existing GLFW coordinate conversion.
+    template <typename T>
+    requires std::is_arithmetic_v<T>
+    T ToScreenCoordsY(T y) const {
+#if defined(QB64_WINDOWS)
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(y * windowScaleY));
+        } else {
+            return y * windowScaleY;
+        }
+#else
+        if constexpr (std::integral<T>) {
+            return static_cast<T>(std::round(y / windowScaleY));
+        } else {
+            return y / windowScaleY;
+        }
+#endif
     }
 
     template <typename T>
     requires std::is_arithmetic_v<T>
     T ToPixelDesktopCoordsX(T x) const {
+#if defined(QB64_WINDOWS)
+        // Desktop positions must not be scaled about the global desktop origin.
+        return x;
+#else
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(x * monitorScaleX));
         } else {
             return x * monitorScaleX;
         }
+#endif
     }
 
     template <typename T>
     requires std::is_arithmetic_v<T>
     T ToPixelDesktopCoordsY(T y) const {
+#if defined(QB64_WINDOWS)
+        // Desktop positions must not be scaled about the global desktop origin.
+        return y;
+#else
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(y * monitorScaleY));
         } else {
             return y * monitorScaleY;
         }
+#endif
     }
 
     template <typename T>
     requires std::is_arithmetic_v<T>
     T ToScreenDesktopCoordsX(T x) const {
+#if defined(QB64_WINDOWS)
+        // Desktop positions must not be scaled about the global desktop origin.
+        return x;
+#else
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(x / monitorScaleX));
         } else {
             return x / monitorScaleX;
         }
+#endif
     }
 
     template <typename T>
     requires std::is_arithmetic_v<T>
     T ToScreenDesktopCoordsY(T y) const {
+#if defined(QB64_WINDOWS)
+        // Desktop positions must not be scaled about the global desktop origin.
+        return y;
+#else
         if constexpr (std::integral<T>) {
             return static_cast<T>(std::round(y / monitorScaleY));
         } else {
             return y / monitorScaleY;
         }
+#endif
     }
 
     GLFWmonitor *WindowGetCurrentMonitorInfo() {
@@ -1821,8 +2073,13 @@ class GLUTEmu {
             const auto *mode = glfwGetVideoMode(best);
             if (mode != nullptr) {
                 glfwGetMonitorContentScale(best, &monitorScaleX, &monitorScaleY);
+#if defined(QB64_WINDOWS)
+                // GLFW video mode dimensions are already native desktop pixels.
+                screenMode = {mode->width, mode->height, mode->refreshRate};
+#else
                 screenMode = {static_cast<int>(std::round(mode->width * monitorScaleX)), static_cast<int>(std::round(mode->height * monitorScaleY)),
                               mode->refreshRate};
+#endif
             }
         }
 
@@ -2181,6 +2438,12 @@ class GLUTEmu {
     GLFWmonitor *monitor = nullptr;                   // current monitor
     float monitorScaleX = 1.0f, monitorScaleY = 1.0f; // current monitor content scale for DPI scaling
     GLFWwindow *window = nullptr;                     // current window
+#if defined(QB64_WINDOWS)
+    WinWglSurface winSurface; // libqb-owned client drawable; GLFW owns the HGLRC
+    bool isWindowRefreshing = false; // owner-thread guard for every refresh path
+    bool isWindowRefreshPending = false; // a modal request consumed during rendering
+    bool isWindowDamageRefresh = false; // native damage must redraw the last frame
+#endif
     std::string windowTitle;                          // current window title
     int windowX = 0, windowY = 0;                     // current window position (in pixel coordinates)
     int windowWidth = 0, windowHeight = 0;            // current window size (in pixel coordinates)
@@ -2481,6 +2744,10 @@ void GLUTEmu_WindowSwapBuffers() {
 
 void GLUTEmu_WindowRefresh() {
     GLUTEmu::Instance().WindowRefresh();
+}
+
+bool GLUTEmu_WindowIsDamageRefresh() {
+    return GLUTEmu::Instance().WindowIsDamageRefresh();
 }
 
 const void *GLUTEmu_WindowGetNativeHandle(int32_t type) {
