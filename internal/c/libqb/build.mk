@@ -52,6 +52,12 @@ libqb-objs-y += $(PATH_LIBQB)/src/threading-$(PLATFORM).o
 libqb-objs-y$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/main-thread-gui.o
 libqb-objs-$(DEP_CONSOLE_ONLY) += $(PATH_LIBQB)/src/main-thread-console.o
 
+# The Windows drawable is header-only; changing it must rebuild its owner.
+$(PATH_LIBQB)/src/glut-emu.o: $(PATH_LIBQB)/include/win-wgl-surface.h
+
+# The native-damage query is shared by the window owner and refresh wrapper.
+$(PATH_LIBQB)/src/glut-emu.o $(PATH_LIBQB)/src/main-thread-gui.o: $(PATH_LIBQB)/include/glut-emu.h
+
 $(PATH_LIBQB)/src/%.o: $(PATH_LIBQB)/src/%.cpp
 	$(CXX) -O3 $(CXXFLAGS) -Wall -Wextra $< -c -o $@
 
