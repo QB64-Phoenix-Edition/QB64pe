@@ -510,9 +510,16 @@ class GLUTEmu {
                     glfwSwapInterval(1);
 
                     // Track the current monitor when the window crosses onto another display.
+                    float xScale, yScale;
+                    glfwGetWindowContentScale(window, &xScale, &yScale);
+                    windowContentScaleX.store(xScale);
+                    windowContentScaleY.store(yScale);
+                    libqb_log_trace("Window content scale is (%fx%f)", xScale, yScale);
                     glfwSetWindowContentScaleCallback(window, [](GLFWwindow *win, float xScale, float yScale) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
+                        instance->windowContentScaleX.store(xScale);
+                        instance->windowContentScaleY.store(yScale);
 
                         libqb_log_trace("Window content scale changed to (%fx%f)", xScale, yScale);
                     });
@@ -977,6 +984,10 @@ class GLUTEmu {
 
     [[nodiscard]] std::pair<int, int> WindowGetSize() const {
         return {windowWidth, windowHeight};
+    }
+
+    [[nodiscard]] std::pair<float, float> WindowGetContentScale() const {
+        return {windowContentScaleX.load(), windowContentScaleY.load()};
     }
 
     [[nodiscard]] std::pair<int, int> WindowGetFramebufferSize() const {
@@ -2080,31 +2091,31 @@ class GLUTEmu {
         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor = nullptr;                // current monitor
-    GLFWwindow *window = nullptr;                  // current window
-    std::string windowTitle;                       // current window title
-    int windowX = 0, windowY = 0;                  // current window position (in GLFW screen coordinates)
-    int windowWidth = 0, windowHeight = 0;         // current window size (in GLFW screen coordinates)
-    bool isWindowFullscreen = false;               // whether the window is in fullscreen mode
-    bool isWindowMaximized = false;                // whether the window is currently maximized
-    bool isWindowMinimized = false;                // whether the window is currently minimized
-    bool isWindowFocused = false;                  // whether the window is currently focused
-    bool isWindowHidden = false;                   // whether the window is currently hidden
-    bool isWindowFloating = false;                 // whether the window is currently floating
-    float windowOpacity = 1.0f;                    // current window opacity
-    bool isWindowBordered = true;                  // whether the window is currently bordered
-    bool isWindowMousePassthrough = false;         // whether the window is currently allowing mouse passthrough
-    int windowedX = 0, windowedY = 0;              // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth = 0, windowedHeight = 0;     // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidth = -1, windowMinHeight = -1; // current window size limits (in screen coordinates, -1 for no limit)
-    int windowMaxWidth = -1, windowMaxHeight = -1; // current window size limits (in screen coordinates, -1 for no limit)
-
-    int framebufferWidth = 0, framebufferHeight = 0;                        // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode = {0, 0, 0};                       // current screen mode (width, height, refresh rate)
-    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0};             // GLFW screen coordinates, {0,0,0}: default, {1,x,y}: user, {-1,0,0}: centered
-    GLFWcursor *cursor = nullptr;                                           // current mouse cursor
-    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal; // current mouse cursor mode (normal, hidden, disabled, captured)
-    int keyboardModifiers = 0;                                              // current keyboard modifiers
+    GLFWmonitor *monitor = nullptr;                                            // current monitor
+    GLFWwindow *window = nullptr;                                              // current window
+    std::string windowTitle;                                                   // current window title
+    int windowX = 0, windowY = 0;                                              // current window position (in GLFW screen coordinates)
+    int windowWidth = 0, windowHeight = 0;                                     // current window size (in GLFW screen coordinates)
+    bool isWindowFullscreen = false;                                           // whether the window is in fullscreen mode
+    bool isWindowMaximized = false;                                            // whether the window is currently maximized
+    bool isWindowMinimized = false;                                            // whether the window is currently minimized
+    bool isWindowFocused = false;                                              // whether the window is currently focused
+    bool isWindowHidden = false;                                               // whether the window is currently hidden
+    bool isWindowFloating = false;                                             // whether the window is currently floating
+    float windowOpacity = 1.0f;                                                // current window opacity
+    bool isWindowBordered = true;                                              // whether the window is currently bordered
+    bool isWindowMousePassthrough = false;                                     // whether the window is currently allowing mouse passthrough
+    int windowedX = 0, windowedY = 0;                                          // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth = 0, windowedHeight = 0;                                 // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidth = -1, windowMinHeight = -1;                             // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidth = -1, windowMaxHeight = -1;                             // current window size limits (in screen coordinates, -1 for no limit)
+    int framebufferWidth = 0, framebufferHeight = 0;                           // current framebuffer size (in pixel coordinates)
+    std::atomic<float> windowContentScaleX = 1.0f, windowContentScaleY = 1.0f; // current window content scale (for high-DPI displays)
+    std::tuple<int, int, int> screenMode = {0, 0, 0};                          // current screen mode (width, height, refresh rate)
+    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0};                // GLFW screen coordinates, {0,0,0}: default, {1,x,y}: user, {-1,0,0}: centered
+    GLFWcursor *cursor = nullptr;                                              // current mouse cursor
+    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal;    // current mouse cursor mode (normal, hidden, disabled, captured)
+    int keyboardModifiers = 0;                                                 // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
 #endif
@@ -2316,6 +2327,10 @@ void GLUTEmu_WindowResize(int width, int height) {
 
 std::pair<int, int> GLUTEmu_WindowGetSize() {
     return GLUTEmu::Instance().WindowGetSize();
+}
+
+std::pair<float, float> GLUTEmu_WindowGetContentScale() {
+    return GLUTEmu::Instance().WindowGetContentScale();
 }
 
 std::pair<int, int> GLUTEmu_WindowGetFramebufferSize() {

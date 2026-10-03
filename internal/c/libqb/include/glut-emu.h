@@ -269,6 +269,7 @@ void GLUTEmu_WindowSetMousePassthrough(bool passthrough);
 bool GLUTEmu_WindowAllowsMousePassthrough();
 void GLUTEmu_WindowResize(int width, int height);
 std::pair<int, int> GLUTEmu_WindowGetSize();
+std::pair<float, float> GLUTEmu_WindowGetContentScale();
 std::pair<int, int> GLUTEmu_WindowGetFramebufferSize();
 void GLUTEmu_WindowMove(int x, int y);
 std::pair<int, int> GLUTEmu_WindowGetPosition();
