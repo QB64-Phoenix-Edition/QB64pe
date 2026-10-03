@@ -107,7 +107,7 @@ class GLUTEmu {
         int32_t smallImageHandle;
 
         MessageWindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle)
-            : Message(false), largeImageHandle(largeImageHandle), smallImageHandle(smallImageHandle) {}
+            : Message(true), largeImageHandle(largeImageHandle), smallImageHandle(smallImageHandle) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
@@ -2279,7 +2279,9 @@ void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle) {
     if (GLUTEmu::Instance().MessageIsMainThread()) {
         GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetIcon(largeImageHandle, smallImageHandle));
+        GLUTEmu::MessageWindowSetIcon msg(largeImageHandle, smallImageHandle);
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
     }
 }
 
