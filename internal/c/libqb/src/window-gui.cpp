@@ -79,6 +79,10 @@ void GLUT_RESIZE_FUNC(int width, int height) {
     }
 }
 
+void GLUT_FRAMEBUFFER_RESIZE_FUNC([[maybe_unused]] int width, [[maybe_unused]] int height) {
+    set_view(VIEW_MODE__UNKNOWN);
+}
+
 void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
     os_resize_event = 0;
 
