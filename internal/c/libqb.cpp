@@ -24312,6 +24312,12 @@ void prepare_environment_2d() { // called prior to rendering 2D content
                 environment_2d__screen_smooth = 1;
             // note: screen will fix its aspect ratio automatically, so there is
             // no need to enforce squarepixels
+        } else if (!ScreenResize) {
+            // DPI-sized OFF/default windows still need their SCREEN output scaled.
+            const auto [x_scale, y_scale] = GLUTEmu_WindowGetContentScale();
+            if (x_scale > 0.0f && y_scale > 0.0f && (x_scale != 1.0f || y_scale != 1.0f)) {
+                can_scale = 1;
+            }
         }
     }
 

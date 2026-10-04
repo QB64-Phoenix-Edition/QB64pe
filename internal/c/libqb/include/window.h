@@ -20,6 +20,7 @@ extern int32_t screen_hide;
 void window_update_for_frame(int32_t frame_width, int32_t frame_height);
 void window_update_environment_size();
 void GLUT_RESIZE_FUNC(int width, int height);
+void GLUT_FRAMEBUFFER_RESIZE_FUNC(int width, int height);
 void GLUT_DROPFILES_FUNC(int count, const char *paths[]);
 
 void sub__fullscreen(int32_t method, int32_t passed);

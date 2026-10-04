@@ -5,9 +5,14 @@
 #include "graphics.h"
 #include "main-thread.h"
 #include "window.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <vector>
+
+// GLFW_TODO: Cleanup the naming conventions in this file
 
 extern int32_t force_display_update;
 
@@ -38,7 +43,25 @@ static int32_t acceptFileDrop = 0;
 static int32_t droppedFileIndex = -1;
 static std::vector<std::string> droppedFiles;
 
-// GLFW_TODO: Implement a func_screenrefreshrate() function
+static std::pair<int32_t, int32_t> window_size_for_frame(int32_t frame_width, int32_t frame_height) {
+    if (ScreenResize && !resize_auto) {
+        return {frame_width, frame_height};
+    }
+
+    const auto [x_scale, y_scale] = GLUTEmu_WindowGetContentScale();
+    double scale = 1.0;
+
+    if (x_scale > 0.0f && y_scale > 0.0f) {
+        scale = std::sqrt(static_cast<double>(x_scale) * y_scale);
+    }
+
+    const auto scale_dimension = [scale](int32_t dimension) {
+        const double scaled = std::round(static_cast<double>(dimension) * scale);
+        return static_cast<int32_t>(std::clamp(scaled, 1.0, static_cast<double>(std::numeric_limits<int32_t>::max())));
+    };
+
+    return {scale_dimension(frame_width), scale_dimension(frame_height)};
+}
 
 static void sync_resize_auto_aspect_constraint() {
     static int32_t last_constraint_enabled = -1;
@@ -79,8 +102,13 @@ void GLUT_RESIZE_FUNC(int width, int height) {
     }
 }
 
+void GLUT_FRAMEBUFFER_RESIZE_FUNC([[maybe_unused]] int width, [[maybe_unused]] int height) {
+    set_view(VIEW_MODE__UNKNOWN);
+}
+
 void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
     os_resize_event = 0;
+    const auto [target_window_width, target_window_height] = window_size_for_frame(frame_width, frame_height);
 
     if ((full_screen == 0) && (full_screen_set == -1)) {
         display_required_x = frame_width;
@@ -95,9 +123,9 @@ void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
 
         sync_resize_auto_aspect_constraint();
 
-        if ((display_required_x != display_x) || (display_required_y != display_y)) {
+        if ((target_window_width != display_x) || (target_window_height != display_y)) {
             if (resize_snapback || framesize_changed) {
-                GLUTEmu_WindowResize(display_required_x, display_required_y);
+                GLUTEmu_WindowResize(target_window_width, target_window_height);
                 GLUTEmu_WindowRefresh();
                 resize_pending = true;
             }
@@ -114,7 +142,7 @@ void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
             full_screen_set = -1;
         } else {
             if (resize_pending && full_screen == 0) {
-                if (display_x == frame_width && display_y == frame_height) {
+                if (display_x == target_window_width && display_y == target_window_height) {
                     resize_pending = false;
                 }
             }
