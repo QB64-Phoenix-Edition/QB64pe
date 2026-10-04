@@ -51,7 +51,7 @@ static std::pair<int32_t, int32_t> window_size_for_frame(int32_t frame_width, in
     const auto [x_scale, y_scale] = GLUTEmu_WindowGetContentScale();
     double scale = 1.0;
 
-    if (std::isfinite(x_scale) && std::isfinite(y_scale) && x_scale > 0.0f && y_scale > 0.0f) {
+    if (x_scale > 0.0f && y_scale > 0.0f) {
         scale = std::sqrt(static_cast<double>(x_scale) * y_scale);
     }
 

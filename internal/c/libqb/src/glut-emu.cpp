@@ -1705,6 +1705,7 @@ class GLUTEmu {
                     }
                     mw = mode->width;
                     mh = mode->height;
+
 #if defined(QB64_MACOSX)
                     float xScale, yScale;
                     glfwGetMonitorContentScale(monitors[i], &xScale, &yScale);
