@@ -18210,13 +18210,20 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         END IF
         'standard bit-length variable
         n$ = scope2$ + n$
-        WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
-        WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
-        WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
-        WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
-        WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
-        WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
-        WriteBufLineCpp DataTxtBuf, "}"
+        'Register SUB/FUNCTION parameters without emitting a second C++ declaration.
+        IF f THEN
+            WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
+            IF bits <= 32 THEN
+                WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
+            ELSE
+                WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
+            END IF
+            WriteBufLineCpp DataTxtBuf, "if (cmem_sp<qbs_cmem_sp) error(257);"
+            WriteBufLineCpp DataTxtBuf, n$ + "=(" + ct$ + "*)(dblock+cmem_sp);"
+            WriteBufLineCpp DataTxtBuf, "*" + n$ + "=0;"
+            WriteBufLineCpp DataTxtBuf, "}"
+        END IF
         clearid
         id.n = cvarname$
         id.t = BITTYPE - 1 + bits + ISINCONVENTIONALMEMORY: IF unsgn THEN id.t = id.t + ISUNSIGNED
