@@ -20,17 +20,17 @@
 
 '--- docs\CreateBuf.html
 '---------------------------------------------------------------------
-FUNCTION CreateBuf%
+FUNCTION CreateBuf&
     '--- option _explicit requirements ---
     DIM aub&, buf&, idx%, bufs&, newBufs&
 
     aub& = UBOUND(simplebuffer_array$)
-    buf& = simplebuffer_freeHint&: CreateBuf% = SBE_NoMoreBuffers
+    buf& = simplebuffer_freeHint&: CreateBuf& = SBE_NoMoreBuffers
     IF buf& < 0 THEN buf& = 0
     WHILE buf& < aub&
         IF LEN(simplebuffer_array$(buf& + 1)) = 0 THEN EXIT WHILE
         buf& = buf& + simplebuffer_slots
-        IF buf& >= 32765 * simplebuffer_slots THEN EXIT FUNCTION '=> allow max. 32765 buffers
+        IF buf& >= simplebuffer_maxBufs * simplebuffer_slots THEN EXIT FUNCTION '=> allow max. simplebuffer_maxBufs buffers
     WEND
 
     simplebuffer_freeHint& = buf& + simplebuffer_slots
@@ -44,24 +44,24 @@ FUNCTION CreateBuf%
         bufs& = (aub& + 1) \ simplebuffer_slots
         newBufs& = bufs& + bufs& \ 2
         IF newBufs& < (buf& \ simplebuffer_slots) + 100 THEN newBufs& = (buf& \ simplebuffer_slots) + 100 '=> at least 100 more buffers
-        IF newBufs& > 32766 THEN newBufs& = 32766
+        IF newBufs& > simplebuffer_maxBufs + 1 THEN newBufs& = simplebuffer_maxBufs + 1
         REDIM _PRESERVE simplebuffer_array$(0 TO newBufs& * simplebuffer_slots - 1)
     END IF
     '--- init buffer ---
-    simplebuffer_array$(buf& + 0) = SPACE$(16384) '                        => the actual buffer (will grow as needed)
+    simplebuffer_array$(buf& + 0) = SPACE$(simplebuffer_initSize) '  => the actual buffer (will grow as needed)
     simplebuffer_array$(buf& + 1) = MKL$(1) + MKL$(0) + "EolU" + MKL$(-1) '=> cursor position + buffer length + EOL mode + change state
     '--- return new handle ---
-    CreateBuf% = buf& \ simplebuffer_slots
+    CreateBuf& = buf& \ simplebuffer_slots
 END FUNCTION
 
 '--- docs\DisposeBuf.html
 '---------------------------------------------------------------------
-SUB DisposeBuf (handle%)
+SUB DisposeBuf (handle&)
     '--- option _explicit requirements ---
     DIM buf&, idx%, aub&, usedBufs&, keepBufs&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- erase buffer data ---
     FOR idx% = 0 TO simplebuffer_slots - 1
         simplebuffer_array$(buf& + idx%) = ""
@@ -94,14 +94,14 @@ END SUB
 
 '--- docs\FileToBuf.html
 '---------------------------------------------------------------------
-FUNCTION FileToBuf% (fileSpec$)
+FUNCTION FileToBuf& (fileSpec$)
     '--- option _explicit requirements ---
-    DIM han%, buf&, ff%, fl&&, ext&
+    DIM han&, buf&, ff%, fl&&, ext&
     '--- create a new buffer ---
-    han% = CreateBuf%
-    buf& = han% * simplebuffer_slots
+    han& = CreateBuf&
+    buf& = han& * simplebuffer_slots
     '--- on success, open file ---
-    IF han% >= 0 THEN
+    IF han& >= 0 THEN
         ff% = FREEFILE
         OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
         fl&& = LOF(ff%): ext& = fl&& MOD 16384
@@ -125,19 +125,19 @@ FUNCTION FileToBuf% (fileSpec$)
         CLOSE ff%
     END IF
     '--- return new handle ---
-    FileToBuf% = han%
+    FileToBuf& = han&
 END FUNCTION
 
 '--- docs\BufToFile.html
 '---------------------------------------------------------------------
-SUB BufToFile (handle%, fileSpec$)
+SUB BufToFile (handle&, fileSpec$)
     '--- option _explicit requirements ---
     DIM buf&, ff%, dat$
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- write file (overwrite existing !!!) ---
-    ff% = FREEFILE: dat$ = LEFT$(simplebuffer_array$(buf& + 0), GetBufLen&(handle%))
+    ff% = FREEFILE: dat$ = LEFT$(simplebuffer_array$(buf& + 0), GetBufLen&(handle&))
     OPEN fileSpec$ FOR OUTPUT LOCK WRITE AS ff%: CLOSE ff%
     OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
     PUT ff%, , dat$
@@ -148,14 +148,14 @@ END SUB
 
 '--- docs\CloneBuf.html
 '---------------------------------------------------------------------
-'FUNCTION CloneBuf% (handle%)
+'FUNCTION CloneBuf% (handle&)
 '    '--- option _explicit requirements ---
 '    DIM buf&, dhan%, dbuf&, idx%
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-'    buf& = handle% * simplebuffer_slots
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle& * simplebuffer_slots
 '    '--- create a new buffer ---
-'    dhan% = CreateBuf%
+'    dhan% = CreateBuf&
 '    dbuf& = dhan% * simplebuffer_slots
 '    '--- on success, copy buffer values ---
 '    IF dhan% >= 0 THEN
@@ -170,44 +170,44 @@ END SUB
 
 '--- docs\BufInsertFile.html
 '---------------------------------------------------------------------
-'SUB BufInsertFile (handle%, fileSpec$)
+'SUB BufInsertFile (handle&, fileSpec$)
 '    '--- option _explicit requirements ---
 '    DIM than%
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
 '    '--- load file into a temp buffer ---
-'    than% = FileToBuf%(fileSpec$)
+'    than% = FileToBuf&(fileSpec$)
 '    '--- on success, insert into buffer ---
 '    IF than% >= 0 THEN
-'        BufInsertBuf handle%, than%
+'        BufInsertBuf handle&, than%
 '        DisposeBuf than%
 '    END IF
 'END SUB
 
 '--- docs\BufInsertBuf.html
 '---------------------------------------------------------------------
-SUB BufInsertBuf (handle%, fromHandle%)
+SUB BufInsertBuf (handle&, fromHandle&)
     '--- option _explicit requirements ---
     DIM fbuf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    IF NOT CheckHandle%(fromHandle%) THEN ERROR 258: STOP 'invalid fromHandle
-    fbuf& = fromHandle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    IF NOT CheckHandle%(fromHandle&) THEN ERROR 258: STOP 'invalid fromHandle
+    fbuf& = fromHandle& * simplebuffer_slots
     '--- insert data of another buffer ---
-    WriteBufRawData handle%, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle%))
+    WriteBufRawData handle&, LEFT$(simplebuffer_array$(fbuf& + 0), GetBufLen&(fromHandle&))
 END SUB
 
 '--- docs\ReadBufLine.html
 '---------------------------------------------------------------------
-FUNCTION ReadBufLine$ (handle%)
+FUNCTION ReadBufLine$ (handle&)
     '--- option _explicit requirements ---
     DIM buf&, cur&, cbl&&, brc$, brl%, eol&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
-    brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+    cur& = GetBufPos&(handle&): cbl&& = GetBufLen&(handle&)
+    brc$ = BufEolSeq$(handle&): brl% = LEN(brc$)
     '--- find next line break ---
     eol& = INSTR(cur&, simplebuffer_array$(buf& + 0), brc$)
     IF eol& = 0 OR eol& > cbl&& THEN eol& = cbl&& + 1: brl% = 0
@@ -218,16 +218,16 @@ END FUNCTION
 
 '--- docs\WriteBufLine.html
 '---------------------------------------------------------------------
-SUB WriteBufLine (handle%, text$)
+SUB WriteBufLine (handle&, text$)
     '--- option _explicit requirements ---
     DIM buf&, cur&, txl&, brc$, brl%, cbl&&, chg&, bsz&, ext&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): txl& = LEN(text$)
-    brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
-    cbl&& = GetBufLen&(handle%): chg& = txl& + brl%
+    cur& = GetBufPos&(handle&): txl& = LEN(text$)
+    brc$ = BufEolSeq$(handle&): brl% = LEN(brc$)
+    cbl&& = GetBufLen&(handle&): chg& = txl& + brl%
     '--- check buffer length ---
     IF cbl&& + chg& > &H40000000&& THEN
         ERROR 7 'buffer overflow (text$ too long)
@@ -261,15 +261,15 @@ END SUB
 
 '--- docs\DeleteBufLine.html
 '---------------------------------------------------------------------
-SUB DeleteBufLine (handle%)
+SUB DeleteBufLine (handle&)
     '--- option _explicit requirements ---
     DIM buf&, cur&, cbl&&, brc$, brl%, eol&, chg&, ext&, fsz&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): cbl&& = GetBufLen&(handle%)
-    brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+    cur& = GetBufPos&(handle&): cbl&& = GetBufLen&(handle&)
+    brc$ = BufEolSeq$(handle&): brl% = LEN(brc$)
     '--- find next line break ---
     eol& = INSTR(cur&, simplebuffer_array$(buf& + 0), brc$)
     IF eol& = 0 OR eol& > cbl&& THEN eol& = cbl&& + 1: brl% = 0
@@ -290,14 +290,14 @@ END SUB
 
 '--- docs\ReadBufRawData.html
 '---------------------------------------------------------------------
-FUNCTION ReadBufRawData$ (handle%, size&) 'size change intended
+FUNCTION ReadBufRawData$ (handle&, size&) 'size change intended
     '--- option _explicit requirements ---
     DIM buf&, cur&, eob&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
+    cur& = GetBufPos&(handle&): eob& = GetBufLen&(handle&) + 1
     IF size& > eob& - cur& THEN size& = eob& - cur&
     '--- read from buffer ---
     ReadBufRawData$ = MID$(simplebuffer_array$(buf& + 0), cur&, size&)
@@ -306,15 +306,15 @@ END FUNCTION
 
 '--- docs\WriteBufRawData.html
 '---------------------------------------------------------------------
-SUB WriteBufRawData (handle%, rawData$)
+SUB WriteBufRawData (handle&, rawData$)
     '--- option _explicit requirements ---
     DIM buf&, cur&, rdl&, cbl&&, bsz&, ext&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): rdl& = LEN(rawData$)
-    cbl&& = GetBufLen&(handle%)
+    cur& = GetBufPos&(handle&): rdl& = LEN(rawData$)
+    cbl&& = GetBufLen&(handle&)
     '--- check buffer length ---
     IF cbl&& + rdl& > &H40000000&& THEN
         ERROR 7 'buffer overflow (rawData$ too long)
@@ -348,15 +348,15 @@ END SUB
 
 '--- docs\DeleteBufRawData.html
 '---------------------------------------------------------------------
-SUB DeleteBufRawData (handle%, size&) 'size change intended
+SUB DeleteBufRawData (handle&, size&) 'size change intended
     '--- option _explicit requirements ---
     DIM buf&, cur&, cbl&&, eob&, ext&, fsz&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%)
-    cbl&& = GetBufLen&(handle%): eob& = cbl&& + 1
+    cur& = GetBufPos&(handle&)
+    cbl&& = GetBufLen&(handle&): eob& = cbl&& + 1
     IF size& > eob& - cur& THEN size& = eob& - cur&
     '--- delete from buffer ---
     MID$(simplebuffer_array$(buf& + 0), cur&) = MID$(simplebuffer_array$(buf& + 0), cur& + size&, cbl&& - (cur& + size&) + 1)
@@ -374,11 +374,11 @@ END SUB
 
 '--- docs\GetBufMemData.html
 '---------------------------------------------------------------------
-'SUB GetBufMemData (handle%, memData AS _MEM)
+'SUB GetBufMemData (handle&, memData AS _MEM)
 '    '--- option _explicit requirements ---
 '    DIM size&&, temp&, datStr$
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
 '    '--- get memory data size ---
 '    DIM sizeRef AS _MEM
 '    sizeRef = _MEM(memData.SIZE)
@@ -390,18 +390,18 @@ END SUB
 '    END IF
 '    _MEMFREE sizeRef
 '    '--- read amount of data from buffer ---
-'    datStr$ = ReadBufRawData$(handle%, size&&)
+'    datStr$ = ReadBufRawData$(handle&, size&&)
 '    '--- then copy into the memory block ---
 '    _MEMPUT memData, memData.OFFSET, datStr$
 'END SUB
 
 '--- docs\PutBufMemData.html
 '---------------------------------------------------------------------
-'SUB PutBufMemData (handle%, memData AS _MEM)
+'SUB PutBufMemData (handle&, memData AS _MEM)
 '    '--- option _explicit requirements ---
 '    DIM size&&, temp&, datStr$
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
 '    '--- get memory data size ---
 '    DIM sizeRef AS _MEM
 '    sizeRef = _MEM(memData.SIZE)
@@ -416,21 +416,21 @@ END SUB
 '    datStr$ = SPACE$(size&&)
 '    _MEMGET memData, memData.OFFSET, datStr$
 '    '--- then write it into the buffer ---
-'    WriteBufRawData handle%, datStr$
+'    WriteBufRawData handle&, datStr$
 'END SUB
 
 '--- docs\CopyBufBlock.html
 '---------------------------------------------------------------------
-'FUNCTION CopyBufBlock% (handle%, bound&)
+'FUNCTION CopyBufBlock% (handle&, bound&)
 '    '--- option _explicit requirements ---
 '    DIM buf&, sPo&, ePo&
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-'    buf& = handle% * simplebuffer_slots
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle& * simplebuffer_slots
 '    '--- get & check positions ---
 '    CopyBufBlock% = SBE_OutOfBounds
-'    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-'    sPo& = bound&: ePo& = GetBufPos&(handle%)
+'    IF bound& < 1 OR bound& > GetBufLen&(handle&) + 1 THEN EXIT FUNCTION
+'    sPo& = bound&: ePo& = GetBufPos&(handle&)
 '    IF ePo& < sPo& THEN SWAP sPo&, ePo&
 '    '--- copy block to clip ---
 '    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
@@ -439,59 +439,59 @@ END SUB
 
 '--- docs\CutBufBlock.html
 '---------------------------------------------------------------------
-'FUNCTION CutBufBlock% (handle%, bound&)
+'FUNCTION CutBufBlock% (handle&, bound&)
 '    '--- option _explicit requirements ---
 '    DIM buf&, sPo&, ePo&, old&
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-'    buf& = handle% * simplebuffer_slots
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+'    buf& = handle& * simplebuffer_slots
 '    '--- get & check positions ---
 '    CutBufBlock% = SBE_OutOfBounds
-'    IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-'    sPo& = bound&: ePo& = GetBufPos&(handle%)
+'    IF bound& < 1 OR bound& > GetBufLen&(handle&) + 1 THEN EXIT FUNCTION
+'    sPo& = bound&: ePo& = GetBufPos&(handle&)
 '    IF ePo& < sPo& THEN SWAP sPo&, ePo&
 '    '--- copy block to clip ---
 '    _CLIPBOARD$ = MID$(simplebuffer_array$(buf& + 0), sPo&, ePo& - sPo&)
 '    '--- then delete block ---
-'    old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
-'    DeleteBufRawData handle%, ePo& - sPo&
+'    old& = SeekBuf&(handle&, sPo&, SBM_PosRestore)
+'    DeleteBufRawData handle&, ePo& - sPo&
 '    CutBufBlock% = 0
 'END FUNCTION
 
 '--- docs\PasteBufBlock.html
 '---------------------------------------------------------------------
-'FUNCTION PasteBufBlock% (handle%, bound&)
+'FUNCTION PasteBufBlock% (handle&, bound&)
 '    '--- option _explicit requirements ---
 '    DIM sPo&, ePo&, old&
 '    '--- check handle ---
-'    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+'    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
 '    '--- replace check ---
 '    IF bound& <> 0 THEN
 '        '--- get & check positions ---
 '        PasteBufBlock% = SBE_OutOfBounds
-'        IF bound& < 1 OR bound& > GetBufLen&(handle%) + 1 THEN EXIT FUNCTION
-'        sPo& = bound&: ePo& = GetBufPos&(handle%)
+'        IF bound& < 1 OR bound& > GetBufLen&(handle&) + 1 THEN EXIT FUNCTION
+'        sPo& = bound&: ePo& = GetBufPos&(handle&)
 '        IF ePo& < sPo& THEN SWAP sPo&, ePo&
 '        '--- delete old block ---
-'        old& = SeekBuf&(handle%, sPo&, SBM_PosRestore)
-'        DeleteBufRawData handle%, ePo& - sPo&
+'        old& = SeekBuf&(handle&, sPo&, SBM_PosRestore)
+'        DeleteBufRawData handle&, ePo& - sPo&
 '    END IF
 '    '--- finally paste block from clip ---
-'    WriteBufRawData handle%, _CLIPBOARD$
+'    WriteBufRawData handle&, _CLIPBOARD$
 '    PasteBufBlock% = 0
 'END FUNCTION
 
 '--- docs\SeekBuf.html
 '---------------------------------------------------------------------
-FUNCTION SeekBuf& (handle%, displace&, mode%)
+FUNCTION SeekBuf& (handle&, displace&, mode%)
     '--- option _explicit requirements ---
     DIM buf&, cur&, eob&, brc$, brl%, origin&, newPos&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- prepare values ---
-    cur& = GetBufPos&(handle%): eob& = GetBufLen&(handle%) + 1
-    brc$ = BufEolSeq$(handle%): brl% = LEN(brc$)
+    cur& = GetBufPos&(handle&): eob& = GetBufLen&(handle&) + 1
+    brc$ = BufEolSeq$(handle&): brl% = LEN(brc$)
     '--- select origin ---
     SELECT CASE mode%
         CASE SBM_PosRestore: origin& = 0
@@ -537,57 +537,57 @@ END FUNCTION
 
 '--- docs\GetBufPos.html
 '---------------------------------------------------------------------
-FUNCTION GetBufPos& (handle%)
+FUNCTION GetBufPos& (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- return cursor position in buffer ---
     GetBufPos& = CVL(MID$(simplebuffer_array$(buf& + 1), 1, 4))
 END FUNCTION
 
 '--- docs\GetBufLen.html
 '---------------------------------------------------------------------
-FUNCTION GetBufLen& (handle%)
+FUNCTION GetBufLen& (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- return actual buffer length ---
     GetBufLen& = CVL(MID$(simplebuffer_array$(buf& + 1), 5, 4))
 END FUNCTION
 
 '--- docs\EndOfBuf.html
 '---------------------------------------------------------------------
-FUNCTION EndOfBuf% (handle%)
+FUNCTION EndOfBuf% (handle&)
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
     '--- return EndOfBuffer condition ---
-    EndOfBuf% = (GetBufPos&(handle%) > GetBufLen&(handle%))
+    EndOfBuf% = (GetBufPos&(handle&) > GetBufLen&(handle&))
 END FUNCTION
 
 '--- docs\IsBufChanged.html
 '---------------------------------------------------------------------
-FUNCTION IsBufChanged% (handle%)
+FUNCTION IsBufChanged% (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- return BufChanged condition ---
     IsBufChanged% = CVL(MID$(simplebuffer_array$(buf& + 1), 13, 4))
 END FUNCTION
 
 '--- docs\BufEolSeq.html
 '---------------------------------------------------------------------
-FUNCTION BufEolSeq$ (handle%)
+FUNCTION BufEolSeq$ (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- return buffer specific EndOfLine sequence ---
     SELECT CASE MID$(simplebuffer_array$(buf& + 1), 9, 4)
         CASE "EolU", "EolN" 'unknown (maybe mixed) or OS-native EOL mode
@@ -601,34 +601,34 @@ END FUNCTION
 
 '--- docs\ConvBufToAnyEol.html
 '---------------------------------------------------------------------
-SUB ConvBufToNativeEol (handle%)
+SUB ConvBufToNativeEol (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- convert buffer to OS native EndOfLine sequence ---
     IF INSTR(_OS$, "[LINUX]") > 0 THEN 'true for MacOSX too
-        ConvBufToLnxMacEol handle%
+        ConvBufToLnxMacEol handle&
     ELSE
-        ConvBufToWinEol handle%
+        ConvBufToWinEol handle&
     END IF
     MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN"
 END SUB
 
 '--- docs\ConvBufToAnyEol.html
 '---------------------------------------------------------------------
-SUB ConvBufToLnxMacEol (handle%)
+SUB ConvBufToLnxMacEol (handle&)
     '--- option _explicit requirements ---
     DIM buf&, cbl&, cur&, srcPos&, dstPos&, span&, po&, removed&, newLen&, ext&, fsz&
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- check current EndOfLine sequence ---
     IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolL" THEN EXIT SUB
-    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle%)) = 1 THEN EXIT SUB
+    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle&)) = 1 THEN EXIT SUB
     '--- prepare values ---
-    cbl& = GetBufLen&(handle%): cur& = GetBufPos&(handle%)
+    cbl& = GetBufLen&(handle&): cur& = GetBufPos&(handle&)
 
     ' If the cursor is already on a CRLF, point it at the LF (since that's what will be left over)
     IF MID$(simplebuffer_array$(buf& + 0), cur&, 2) = simplebuffer_winEol$ THEN cur& = cur& + 1
@@ -674,18 +674,18 @@ END SUB
 
 '--- docs\ConvBufToAnyEol.html
 '---------------------------------------------------------------------
-SUB ConvBufToWinEol (handle%)
+SUB ConvBufToWinEol (handle&)
     '--- option _explicit requirements ---
     DIM buf&, cbl&, cur&, srcPos&, dstPos&, span&, po&, breaks&, added&, newDat$
     '--- check handle ---
-    IF NOT CheckHandle%(handle%) THEN ERROR 258: STOP 'invalid handle
-    buf& = handle% * simplebuffer_slots
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    buf& = handle& * simplebuffer_slots
     '--- check current EndOfLine sequence ---
     IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolW" THEN EXIT SUB
-    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle%)) = 2 THEN EXIT SUB
-    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU" THEN ConvBufToLnxMacEol handle% 'safety measure for unknown (maybe mixed) EOL mode
+    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolN" AND LEN(BufEolSeq$(handle&)) = 2 THEN EXIT SUB
+    IF MID$(simplebuffer_array$(buf& + 1), 9, 4) = "EolU" THEN ConvBufToLnxMacEol handle& 'safety measure for unknown (maybe mixed) EOL mode
     '--- prepare values ---
-    cbl& = GetBufLen&(handle%): cur& = GetBufPos&(handle%)
+    cbl& = GetBufLen&(handle&): cur& = GetBufPos&(handle&)
     ' To make things faster we first calculate what the final string length
     ' will be, then we allocate that size and copy the string data into place
     srcPos& = 1
@@ -723,11 +723,11 @@ END SUB
 
 '--- undocumented - for internal use only
 '---------------------------------------------------------------------
-FUNCTION CheckHandle% (handle%)
+FUNCTION CheckHandle% (handle&)
     '--- option _explicit requirements ---
     DIM buf&
     '--- check handle ---
-    buf& = handle% * simplebuffer_slots: CheckHandle% = 0
+    buf& = handle& * simplebuffer_slots: CheckHandle% = 0
     IF buf& < 0 OR buf& > UBOUND(simplebuffer_array$) THEN EXIT FUNCTION
     IF LEN(simplebuffer_array$(buf& + 1)) = 0 THEN EXIT FUNCTION
     CheckHandle% = -1

@@ -29,6 +29,8 @@
 '  +0  the buffer data
 '  +1  cursor position, buffer length, EOL mode and change state
 CONST simplebuffer_slots = 2
+CONST simplebuffer_maxBufs = 1073741823 'max. number of buffers (buffer handles are LONG)
+CONST simplebuffer_initSize = 512 'initial bytes per buffer (a buffer doubles as needed)
 REDIM SHARED simplebuffer_array$(0 TO 100 * simplebuffer_slots - 1)
 
 '--- Bookkeeping so that CreateBuf/DisposeBuf don't have to walk the array
