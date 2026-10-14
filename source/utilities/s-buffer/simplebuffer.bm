@@ -48,7 +48,7 @@ FUNCTION CreateBuf&
         REDIM _PRESERVE simplebuffer_array$(0 TO newBufs& * simplebuffer_slots - 1)
     END IF
     '--- init buffer ---
-    simplebuffer_array$(buf& + 0) = SPACE$(16384) '                        => the actual buffer (will grow as needed)
+    simplebuffer_array$(buf& + 0) = SPACE$(simplebuffer_initSize) '  => the actual buffer (will grow as needed)
     simplebuffer_array$(buf& + 1) = MKL$(1) + MKL$(0) + "EolU" + MKL$(-1) '=> cursor position + buffer length + EOL mode + change state
     '--- return new handle ---
     CreateBuf& = buf& \ simplebuffer_slots
