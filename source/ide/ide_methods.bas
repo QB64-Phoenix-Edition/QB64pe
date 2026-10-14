@@ -6803,24 +6803,24 @@ FUNCTION ide2 (ignore)
     RETURN
 
     CleanUpRecentList:
-    bh% = FileToBuf%(RecentFile$)
+    bh& = FileToBuf&(RecentFile$)
     allOk% = _TRUE 'let's assume the list is OK
-    WHILE NOT EndOfBuf%(bh%)
-        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%)
+    WHILE NOT EndOfBuf%(bh&)
+        bp& = GetBufPos&(bh&): be$ = ReadBufLine$(bh&)
         IF NOT _FILEEXISTS(be$) THEN 'accessible?
-            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
-            DeleteBufLine bh% 'remove that entry
+            nul& = SeekBuf&(bh&, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh& 'remove that entry
             allOk% = _FALSE 'delete OK status
         END IF
     WEND
     IF allOk% THEN
         result = idemessagebox("Remove Broken Links", "All files in the list are accessible.", "#OK")
     ELSE
-        BufToFile bh%, RecentFile$
+        BufToFile bh&, RecentFile$
         IF ideerror > 1 _ANDALSO AttemptToLoadRecent THEN PCOPY 3, 0
         result = idemessagebox("Remove Broken Links", "All broken links have been removed.", "#OK")
     END IF
-    DisposeBuf bh%
+    DisposeBuf bh&
     RETURN
 
     redrawItAll:
@@ -19285,14 +19285,14 @@ FUNCTION iderecentbox$
     '-------- init --------
     l$ = "": dialogWidth = 72: numFiles% = 0
     REDIM tempList$(1 TO ideMaxRecent)
-    bh% = FileToBuf%(RecentFile$)
-    WHILE EndOfBuf%(bh%) = 0 AND numFiles% < ideMaxRecent
-        f$ = ReadBufLine$(bh%)
+    bh& = FileToBuf&(RecentFile$)
+    WHILE EndOfBuf%(bh&) = 0 AND numFiles% < ideMaxRecent
+        f$ = ReadBufLine$(bh&)
         IF LEN(f$) + 6 > dialogWidth THEN dialogWidth = LEN(f$) + 6
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
         l$ = l$ + sep + f$
     WEND
-    DisposeBuf bh%
+    DisposeBuf bh&
     REDIM _PRESERVE tempList$(1 TO numFiles%)
 
     '72,19
@@ -19427,11 +19427,11 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     menu$(m, i) = eaa$ + "#Export As...  " + CHR$(16): i = i + 1
     menuDesc$(m, i - 1) = "Export current program (or active selection) into various formats"
 
-    bh% = FileToBuf%(RecentFile$)
+    bh& = FileToBuf&(RecentFile$)
     maxFiles% = UBOUND(IdeRecentLink, 1): maxLength% = 35
     FOR r% = 1 TO maxFiles% + 1
         IF r% <= maxFiles% THEN IdeRecentLink(r%, 1) = ""
-        f$ = ReadBufLine$(bh%) 'returns empty when out of lines
+        f$ = ReadBufLine$(bh&) 'returns empty when out of lines
         IF LEN(f$) THEN
             IF r% = 1 THEN menu$(m, i) = "-": i = i + 1
             IF r% <= maxFiles% THEN IdeRecentLink(r%, 2) = f$
@@ -19451,7 +19451,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             i = i + 1
         END IF
     NEXT r%
-    DisposeBuf bh%
+    DisposeBuf bh&
     IF LEFT$(menuDesc$(m, i - 1), 4) = "Open" THEN
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
@@ -19901,31 +19901,31 @@ SUB AddToHistory (which$, entry$)
     SELECT CASE which$
         CASE "RECENT"
             e$ = RemoveDoubleSlashes$(entry$)
-            bh% = FileToBuf%(RecentFile$)
+            bh& = FileToBuf&(RecentFile$)
             mx% = ideMaxRecent: GOSUB athProcess
-            BufToFile bh%, RecentFile$
+            BufToFile bh&, RecentFile$
         CASE "SEARCH"
             e$ = entry$
-            bh% = FileToBuf%(SearchedFile$)
+            bh& = FileToBuf&(SearchedFile$)
             mx% = ideMaxSearch: GOSUB athProcess
-            BufToFile bh%, SearchedFile$
+            BufToFile bh&, SearchedFile$
     END SELECT
-    DisposeBuf bh%
+    DisposeBuf bh&
     EXIT SUB
     '-----
     athProcess:
     lc% = 0: ue$ = UCASE$(e$)
-    WHILE NOT EndOfBuf%(bh%)
-        bp& = GetBufPos&(bh%): be$ = ReadBufLine$(bh%): lc% = lc% + 1
+    WHILE NOT EndOfBuf%(bh&)
+        bp& = GetBufPos&(bh&): be$ = ReadBufLine$(bh&): lc% = lc% + 1
         IF UCASE$(be$) = ue$ OR lc% >= mx% THEN 'already known or limit reached?
-            nul& = SeekBuf&(bh%, bp&, SBM_PosRestore) 'back to that entry
-            DeleteBufLine bh% 'remove that entry
+            nul& = SeekBuf&(bh&, bp&, SBM_PosRestore) 'back to that entry
+            DeleteBufLine bh& 'remove that entry
             'we could EXIT WHILE here, but for auto-removal of over limit
             'entries (in case the limit was lowered) we continue the loop
         END IF
     WEND
-    nul& = SeekBuf&(bh%, 0, SBM_BufStart) 'rewind
-    WriteBufLine bh%, e$ 'put new (or known) in 1st position (again)
+    nul& = SeekBuf&(bh&, 0, SBM_BufStart) 'rewind
+    WriteBufLine bh&, e$ 'put new (or known) in 1st position (again)
     RETURN
 END SUB
 
@@ -19943,17 +19943,17 @@ END FUNCTION
 'Load the search history into the specified array used by the IDE.
 '---------------------------------------------------------------------
 SUB RetrieveSearchHistory (shArr$())
-    bh% = FileToBuf%(SearchedFile$)
-    IF GetBufLen&(bh%) THEN
+    bh& = FileToBuf&(SearchedFile$)
+    IF GetBufLen&(bh&) THEN
         REDIM shArr$(1 TO ideMaxSearch): lc% = 0
-        WHILE EndOfBuf%(bh%) = 0 AND lc% < ideMaxSearch
-            lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh%)
+        WHILE EndOfBuf%(bh&) = 0 AND lc% < ideMaxSearch
+            lc% = lc% + 1: shArr$(lc%) = ReadBufLine$(bh&)
         WEND
         REDIM _PRESERVE shArr$(1 TO lc%)
     ELSE
         REDIM shArr$(1 TO 1): shArr$(1) = ""
     END IF
-    DisposeBuf bh%
+    DisposeBuf bh&
 END SUB
 
 FUNCTION ideupdatehelpbox
