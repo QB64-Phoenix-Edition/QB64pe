@@ -704,7 +704,7 @@ DIM SHARED subfuncn AS LONG
 DIM SHARED subfuncnlast AS LONG
 DIM SHARED subfuncid AS LONG
 
-DIM SHARED defdatahandle AS INTEGER
+DIM SHARED defdatahandle AS LONG
 DIM SHARED dimsfarray AS INTEGER
 DIM SHARED dimshared AS INTEGER
 
@@ -1193,7 +1193,7 @@ FOR closeall = 1 TO 300: CLOSE closeall: NEXT
 
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
-bh = OpenBuffer%("O", tmpdir$ + "dyninfo.txt")
+bh = OpenBuffer&("O", tmpdir$ + "dyninfo.txt")
 
 IF Debug THEN CLOSE #9: OPEN tmpdir$ + "debug.txt" FOR OUTPUT AS #9
 
@@ -1659,19 +1659,19 @@ FOR i = 1 TO UBOUND(unstableFlags): unstableFlags(i) = 0: NEXT
 REDIM SHARED embedFileList$(3, 10)
 
 'External dependencies buffer
-DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer%("O", tmpdir$ + "extdep.txt")
+DIM SHARED ExtDepBuf: ExtDepBuf = OpenBuffer&("O", tmpdir$ + "extdep.txt")
 
 'The $INCLUDEONCE check buffer
-DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt")
+DIM SHARED IncOneBuf: IncOneBuf = OpenBuffer&("O", tmpdir$ + "incone.txt")
 
 'Output for format mode
-DIM SHARED FormatBuf: FormatBuf = OpenBuffer%("O", tmpdir$ + "format.out")
+DIM SHARED FormatBuf: FormatBuf = OpenBuffer&("O", tmpdir$ + "format.out")
 
 'begin compilation
 FOR closeall = 1 TO 300: CLOSE closeall: NEXT
 OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
-bh = OpenBuffer%("O", tmpdir$ + "icon.rc")
+bh = OpenBuffer&("O", tmpdir$ + "icon.rc")
 
 IF Debug THEN CLOSE #9: OPEN tmpdir$ + "debug.txt" FOR APPEND AS #9
 
@@ -1692,7 +1692,7 @@ END IF
 
 reginternal
 
-DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer%("O", tmpdir$ + "global.txt")
+DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer&("O", tmpdir$ + "global.txt")
 defdatahandle = GlobTxtBuf
 WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_idiv(QBL qb_l,QBR qb_r)->decltype(qb_l/qb_r){if (!qb_r){error(11);return (decltype(qb_l/qb_r))0;}return qb_l/qb_r;}"
 WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_mod(QBL qb_l,QBR qb_r)->decltype(qb_l%qb_r){if (!qb_r){error(11);return (decltype(qb_l%qb_r))0;}return qb_l%qb_r;}"
@@ -1723,7 +1723,7 @@ SetPreLET "_SOCKETS_", _TOSTR$(GetRCStateVar(SockDepOn))
 RETURN
 
 autoIncludeManager:
-autoIncludeBuffer = OpenBuffer%("O", tmpdir$ + "autoinc.txt")
+autoIncludeBuffer = OpenBuffer&("O", tmpdir$ + "autoinc.txt")
 'following IF blocks must be independent, don't connect them using ELSEIF
 IF firstLine = 1 THEN
     IF ideprogname$ <> "beforefirstline.bi" THEN
@@ -3245,7 +3245,7 @@ lineinput3index = 1 'reset input line
 ide3:
 
 addmetainclude$ = "" 'reset stray meta-includes
-IncOneBuf = OpenBuffer%("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
+IncOneBuf = OpenBuffer&("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
 
 'reset altered variables
 DataOffset = 0
@@ -3264,41 +3264,41 @@ FOR i = 0 TO constlast: constdefined(i) = 0: NEXT 'undefine constants
 
 FOR i = 1 TO 27: defineaz(i) = "SINGLE": defineextaz(i) = "!": NEXT
 
-DIM SHARED DataBinBuf: DataBinBuf = OpenBuffer%("O", tmpdir$ + "data.bin")
+DIM SHARED DataBinBuf: DataBinBuf = OpenBuffer&("O", tmpdir$ + "data.bin")
 
-DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main0.txt")
+DIM SHARED MainTxtBuf: MainTxtBuf = OpenBuffer&("O", tmpdir$ + "main0.txt")
 'Mark source-location tracking as explicitly controlled by this generated program.
 'This one-time clear keeps $ErrorLocation:OFF independent of the legacy evnt() path.
 WriteBufLineCpp MainTxtBuf, "error_track_line(0,0,NULL);"
-DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer%("O", tmpdir$ + "maindata.txt")
-DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer%("O", tmpdir$ + "vw_main_dispatch.txt")
-DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer%("O", tmpdir$ + "vw_main_skip.txt")
+DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer&("O", tmpdir$ + "maindata.txt")
+DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer&("O", tmpdir$ + "vw_main_dispatch.txt")
+DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer&("O", tmpdir$ + "vw_main_skip.txt")
 
-DIM SHARED RegTxtBuf: RegTxtBuf = OpenBuffer%("O", tmpdir$ + "regsf.txt")
+DIM SHARED RegTxtBuf: RegTxtBuf = OpenBuffer&("O", tmpdir$ + "regsf.txt")
 
-DIM SHARED FreeTxtBuf: FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "mainfree.txt")
-DIM SHARED RunTxtBuf: RunTxtBuf = OpenBuffer%("O", tmpdir$ + "runline.txt")
+DIM SHARED FreeTxtBuf: FreeTxtBuf = OpenBuffer&("O", tmpdir$ + "mainfree.txt")
+DIM SHARED RunTxtBuf: RunTxtBuf = OpenBuffer&("O", tmpdir$ + "runline.txt")
 
-DIM SHARED ErrTxtBuf: ErrTxtBuf = OpenBuffer%("O", tmpdir$ + "mainerr.txt")
+DIM SHARED ErrTxtBuf: ErrTxtBuf = OpenBuffer&("O", tmpdir$ + "mainerr.txt")
 'i. check the value of error_line
 'ii. jump to the appropriate label
 errorlabels = 0
 WriteBufLine ErrTxtBuf, "if (!error_handler_history) error_handler_history = qbs_new(0, 0);"
 WriteBufLine ErrTxtBuf, "if (error_occurred){ error_occurred=0;"
 
-DIM SHARED ChainTxtBuf: ChainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain.txt")
-DIM SHARED InpChainTxtBuf: InpChainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain.txt")
+DIM SHARED ChainTxtBuf: ChainTxtBuf = OpenBuffer&("O", tmpdir$ + "chain.txt")
+DIM SHARED InpChainTxtBuf: InpChainTxtBuf = OpenBuffer&("O", tmpdir$ + "inpchain.txt")
 
-DIM SHARED TimeTxtBuf: TimeTxtBuf = OpenBuffer%("O", tmpdir$ + "ontimer.txt")
-DIM SHARED TimejTxtBuf: TimejTxtBuf = OpenBuffer%("O", tmpdir$ + "ontimerj.txt")
+DIM SHARED TimeTxtBuf: TimeTxtBuf = OpenBuffer&("O", tmpdir$ + "ontimer.txt")
+DIM SHARED TimejTxtBuf: TimejTxtBuf = OpenBuffer&("O", tmpdir$ + "ontimerj.txt")
 
 '*****#26 used for locking qb64pe
 
-DIM SHARED KeyTxtBuf: KeyTxtBuf = OpenBuffer%("O", tmpdir$ + "onkey.txt")
-DIM SHARED KeyjTxtBuf: KeyjTxtBuf = OpenBuffer%("O", tmpdir$ + "onkeyj.txt")
+DIM SHARED KeyTxtBuf: KeyTxtBuf = OpenBuffer&("O", tmpdir$ + "onkey.txt")
+DIM SHARED KeyjTxtBuf: KeyjTxtBuf = OpenBuffer&("O", tmpdir$ + "onkeyj.txt")
 
-DIM SHARED StrigTxtBuf: StrigTxtBuf = OpenBuffer%("O", tmpdir$ + "onstrig.txt")
-DIM SHARED StrigjTxtBuf: StrigjTxtBuf = OpenBuffer%("O", tmpdir$ + "onstrigj.txt")
+DIM SHARED StrigTxtBuf: StrigTxtBuf = OpenBuffer&("O", tmpdir$ + "onstrig.txt")
+DIM SHARED StrigjTxtBuf: StrigjTxtBuf = OpenBuffer&("O", tmpdir$ + "onstrigj.txt")
 
 gosubid = 1
 'to be included whenever return without a label is called
@@ -3308,7 +3308,7 @@ gosubid = 1
 '0=return from main to calling sub/function/proc by return [NULL];
 '1... a global number representing a return point after a gosub
 'note: RETURN [label] should fail if a "return [NULL];" type return is required
-DIM SHARED RetTxtBuf: RetTxtBuf = OpenBuffer%("O", tmpdir$ + "ret0.txt")
+DIM SHARED RetTxtBuf: RetTxtBuf = OpenBuffer&("O", tmpdir$ + "ret0.txt")
 WriteBufLine RetTxtBuf, "if (next_return_point){"
 WriteBufLine RetTxtBuf, "next_return_point--;"
 WriteBufLine RetTxtBuf, "switch(return_point[next_return_point]){"
@@ -5232,7 +5232,7 @@ DO
                             IF LEN(headername$) = 0 THEN 'no header
 
                                 IF subfuncn THEN
-                                    f = OpenBuffer%("A", tmpdir$ + "maindata.txt")
+                                    f = OpenBuffer&("A", tmpdir$ + "maindata.txt")
                                 ELSE
                                     f = DataTxtBuf
                                 END IF
@@ -5427,10 +5427,10 @@ DO
                 firstLineNumberLabelvWatch = 0
             END IF
 
-            MainTxtBuf = OpenBuffer%("O", tmpdir$ + "main" + _TOSTR$(subfuncn) + ".txt")
-            DataTxtBuf = OpenBuffer%("O", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
-            FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
-            RetTxtBuf = OpenBuffer%("O", tmpdir$ + "ret" + _TOSTR$(subfuncn) + ".txt")
+            MainTxtBuf = OpenBuffer&("O", tmpdir$ + "main" + _TOSTR$(subfuncn) + ".txt")
+            DataTxtBuf = OpenBuffer&("O", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
+            FreeTxtBuf = OpenBuffer&("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
+            RetTxtBuf = OpenBuffer&("O", tmpdir$ + "ret" + _TOSTR$(subfuncn) + ".txt")
             defdatahandle = DataTxtBuf
             WriteBufLine RetTxtBuf, "if (next_return_point){"
             WriteBufLine RetTxtBuf, "next_return_point--;"
@@ -5443,7 +5443,7 @@ DO
 
             IF declaringlibrary THEN
                 IF sfdeclare = 0 AND indirectlibrary = 0 THEN
-                    RegTxtBuf = OpenBuffer%("O", tmpdir$ + "regsf_ignore.txt")
+                    RegTxtBuf = OpenBuffer&("O", tmpdir$ + "regsf_ignore.txt")
                 END IF
                 IF sfdeclare = 1 AND customtypelibrary = 0 AND dynamiclibrary = 0 AND indirectlibrary = 0 THEN
                     WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "externtype" + _TOSTR$(ResolveStaticFunctions + 1) + ".txt" + CHR$(34)
@@ -5493,7 +5493,7 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 reginternalvariable = 0
                 'the following line stops the return variable from being free'd before being returned
-                FreeTxtBuf = OpenBuffer%("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
+                FreeTxtBuf = OpenBuffer&("O", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
                 'create return
                 IF (rettyp AND ISSTRING) THEN
                     r$ = refer$(_TOSTR$(currentid), id.t, 1)
@@ -5837,7 +5837,7 @@ DO
                     WriteBufLine RegTxtBuf, "CUSTOMCALL_" + callname$ + " *" + callname$ + "=NULL;"
 
                     IF subfuncn THEN
-                        f = OpenBuffer%("A", tmpdir$ + "maindata.txt")
+                        f = OpenBuffer&("A", tmpdir$ + "maindata.txt")
                     ELSE
                         f = DataTxtBuf
                     END IF
@@ -5866,7 +5866,7 @@ DO
                         WriteBufLine RegTxtBuf, "DLLCALL_" + removecast$(RTRIM$(id2.callname)) + " " + removecast$(RTRIM$(id2.callname)) + "=NULL;"
 
                         IF subfuncn THEN
-                            f = OpenBuffer%("A", tmpdir$ + "maindata.txt")
+                            f = OpenBuffer&("A", tmpdir$ + "maindata.txt")
                         ELSE
                             f = DataTxtBuf
                         END IF
@@ -5912,7 +5912,7 @@ DO
                 END IF
 
                 IF sfdeclare = 0 AND indirectlibrary = 0 THEN
-                    RegTxtBuf = OpenBuffer%("A", tmpdir$ + "regsf.txt")
+                    RegTxtBuf = OpenBuffer&("A", tmpdir$ + "regsf.txt")
                 END IF
 
             END IF 'declaring library
@@ -6020,11 +6020,11 @@ DO
                 WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
                 subfunc = ""
                 subfuncn = 0
-                MainTxtBuf = OpenBuffer%("A", tmpdir$ + "main0.txt")
-                DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
+                MainTxtBuf = OpenBuffer&("A", tmpdir$ + "main0.txt")
+                DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
                 defdatahandle = GlobTxtBuf
-                FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
-                RetTxtBuf = OpenBuffer%("A", tmpdir$ + "ret0.txt")
+                FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "mainfree.txt")
+                RetTxtBuf = OpenBuffer&("A", tmpdir$ + "ret0.txt")
 
                 'unshare temp. shared variables
                 FOR i = 1 TO idn
@@ -8137,8 +8137,8 @@ DO
                 oldsubfunc$ = subfunc$
                 subfunc$ = ""
                 defdatahandle = GlobTxtBuf
-                DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
-                FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
+                DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
+                FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "mainfree.txt")
 
                 'use 'try' to locate the variable (if it already exists)
                 n2$ = n$ + s$ + ts$ 'note: either ts$ or s$ will exist unless it is a UDT
@@ -8215,8 +8215,8 @@ DO
 
                 'switch back to sub/func
                 subfunc$ = oldsubfunc$
-                DataTxtBuf = OpenBuffer%("A", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
-                FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
+                DataTxtBuf = OpenBuffer&("A", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
+                FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
                 defdatahandle = DataTxtBuf
 
                 IF newSharedSyntax THEN RETURN
@@ -9366,17 +9366,17 @@ DO
                             IF x = 0 THEN x = idn + 1
 
                             'note: the following code only adds include directives, everything else is deferred
-                            ChainTxtBuf = OpenBuffer%("A", tmpdir$ + "chain.txt")
+                            ChainTxtBuf = OpenBuffer&("A", tmpdir$ + "chain.txt")
                             'include directive
                             WriteBufLine ChainTxtBuf, "#include " + CHR$(34) + "chain" + _TOSTR$(x) + ".txt" + CHR$(34)
                             'create/clear include file
-                            ChainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain" + _TOSTR$(x) + ".txt")
+                            ChainTxtBuf = OpenBuffer&("O", tmpdir$ + "chain" + _TOSTR$(x) + ".txt")
 
-                            ChainTxtBuf = OpenBuffer%("A", tmpdir$ + "inpchain.txt")
+                            ChainTxtBuf = OpenBuffer&("A", tmpdir$ + "inpchain.txt")
                             'include directive
                             WriteBufLine ChainTxtBuf, "#include " + CHR$(34) + "inpchain" + _TOSTR$(x) + ".txt" + CHR$(34)
                             'create/clear include file
-                            ChainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain" + _TOSTR$(x) + ".txt")
+                            ChainTxtBuf = OpenBuffer&("O", tmpdir$ + "inpchain" + _TOSTR$(x) + ".txt")
 
                             'note: elements$="?"
                             IF x <> idn + 1 THEN GOTO skipdim 'array already exists
@@ -9434,7 +9434,7 @@ DO
 
                         'switch output from main to chain.txt
                         maintxtbufprev = MainTxtBuf
-                        MainTxtBuf = OpenBuffer%("A", tmpdir$ + "chain.txt")
+                        MainTxtBuf = OpenBuffer&("A", tmpdir$ + "chain.txt")
                         l2$ = tlayout$
 
                         WriteBufLineCpp MainTxtBuf, "int32val=1;" 'simple variable
@@ -9478,7 +9478,7 @@ DO
                         'INPCHAIN.TXT (load)
 
                         'switch output from chain.txt to inpchain.txt
-                        MainTxtBuf = OpenBuffer%("A", tmpdir$ + "inpchain.txt")
+                        MainTxtBuf = OpenBuffer&("A", tmpdir$ + "inpchain.txt")
                         l2$ = tlayout$
 
 
@@ -12732,7 +12732,7 @@ WriteBufLine ErrTxtBuf, "exit(99);" 'in theory this line should never be run!
 WriteBufLine ErrTxtBuf, "}" 'close error jump handler
 
 'create CLEAR method "CLEAR"
-MainTxtBuf = OpenBuffer%("O", tmpdir$ + "clear.txt")
+MainTxtBuf = OpenBuffer&("O", tmpdir$ + "clear.txt")
 
 FOR i = 1 TO idn
 
@@ -13070,8 +13070,8 @@ IF Debug THEN PRINT #9, "Finished check!"
 'return to 'main'
 subfunc$ = ""
 defdatahandle = GlobTxtBuf
-DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
-FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
+DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
+FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "mainfree.txt")
 
 IF GetRCStateVar(ConsoleOn) THEN
     WriteBufLine GlobTxtBuf, "int32 console=1;"
@@ -13097,7 +13097,7 @@ ELSE
     WriteBufLine GlobTxtBuf, "int32 vwatch=0;"
 END IF
 
-bh = OpenBuffer%("A", tmpdir$ + "dyninfo.txt")
+bh = OpenBuffer&("A", tmpdir$ + "dyninfo.txt")
 IF ResizeOn THEN
     WriteBufLine bh, "ScreenResize=1;"
 END IF
@@ -13119,7 +13119,7 @@ IF DataOffset = 0 THEN
 ELSE
 
     'inline data
-    ff = OpenBuffer%("B", tmpdir$ + "data.bin")
+    ff = OpenBuffer&("B", tmpdir$ + "data.bin")
     x$ = ReadBufRawData$(ff, GetBufLen&(ff))
 
     idsL = LEN(inlinedatastr(255))
@@ -13201,7 +13201,7 @@ FOR x = 1 TO commonarraylistn
 
 
 
-        MainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
+        MainTxtBuf = OpenBuffer&("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
         WriteBufLineCpp MainTxtBuf, "if (int32val==2){" 'array place-holder
         'create buffer to store array as-is in global.txt
         x$ = _TOSTR$(uniquenumber)
@@ -13264,7 +13264,7 @@ FOR x = 1 TO commonarraylistn
 
         'save array (saves the buffered data, if any, for later)
 
-        MainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
+        MainTxtBuf = OpenBuffer&("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
         WriteBufLineCpp MainTxtBuf, "int32val=2;" 'placeholder
         WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
 
@@ -13278,7 +13278,7 @@ FOR x = 1 TO commonarraylistn
 
         'load array
 
-        MainTxtBuf = OpenBuffer%("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
+        MainTxtBuf = OpenBuffer&("O", tmpdir$ + "inpchain" + _TOSTR$(i) + ".txt")
 
         WriteBufLineCpp MainTxtBuf, "if (int32val==2){" 'array place-holder
         WriteBufLineCpp MainTxtBuf, "sub_get(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
@@ -13361,7 +13361,7 @@ FOR x = 1 TO commonarraylistn
 
         'save array
 
-        MainTxtBuf = OpenBuffer%("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
+        MainTxtBuf = OpenBuffer&("O", tmpdir$ + "chain" + _TOSTR$(i) + ".txt")
 
         WriteBufLineCpp MainTxtBuf, "int32val=2;" 'placeholder
         WriteBufLineCpp MainTxtBuf, "sub_put(FF,NULL,byte_element((uint64)&int32val,4," + NewByteElement$ + "),0);"
@@ -13559,7 +13559,7 @@ IF ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
 END IF
 
 IF VersionInfoSet THEN
-    ManiBuf = OpenBuffer%("O", tmpdir$ + file$ + extension$ + ".manifest")
+    ManiBuf = OpenBuffer&("O", tmpdir$ + file$ + extension$ + ".manifest")
     WriteBufLine ManiBuf, "<?xml version=" + AddQuotes$("1.0") + " encoding=" + AddQuotes$("UTF-8") + " standalone=" + AddQuotes$("yes") + "?>"
     WriteBufLine ManiBuf, "<assembly xmlns=" + AddQuotes$("urn:schemas-microsoft-com:asm.v1") + " manifestVersion=" + AddQuotes$("1.0") + ">"
     WriteBufLine ManiBuf, "<assemblyIdentity"
@@ -13583,7 +13583,7 @@ IF VersionInfoSet THEN
     WriteBufLine ManiBuf, "</dependency>"
     WriteBufLine ManiBuf, "</assembly>"
 
-    ManiBuf = OpenBuffer%("O", tmpdir$ + "manifest.h")
+    ManiBuf = OpenBuffer&("O", tmpdir$ + "manifest.h")
     WriteBufLine ManiBuf, "#ifndef RESOURCE_H"
     WriteBufLine ManiBuf, "#define   RESOURCE_H"
     WriteBufLine ManiBuf, "#ifdef    __cplusplus"
@@ -13598,7 +13598,7 @@ IF VersionInfoSet THEN
 END IF
 
 IF VersionInfoSet OR ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
-    IconRcBuf = OpenBuffer%("O", tmpdir$ + "icon.rc")
+    IconRcBuf = OpenBuffer&("O", tmpdir$ + "icon.rc")
 
     IF ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line number
         WriteBufLine IconRcBuf, "0 ICON " + AddQuotes$("icon.ico")
@@ -13812,7 +13812,7 @@ IF os$ = "WIN" THEN
                 SHELL _HIDE "cmd /c " + GetCompilerPath$ + "nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " --demangle -g >" + AddQuotes$(nm_output_file$)
             END IF
             s$ = " " + ResolveStaticFunction_Name(x) + "("
-            fh = OpenBuffer%("I", nm_output_file$)
+            fh = OpenBuffer&("I", nm_output_file$)
             DO UNTIL EndOfBuf%(fh)
                 a$ = ReadBufLine$(fh)
                 IF LEN(a$) THEN
@@ -13835,7 +13835,7 @@ IF os$ = "WIN" THEN
 
             IF n = 0 THEN 'attempt to locate simple function name without brackets
                 s$ = ResolveStaticFunction_Name(x)
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer&("I", nm_output_file$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -13872,7 +13872,7 @@ IF os$ = "WIN" THEN
                     SHELL _HIDE "cmd /c " + GetCompilerPath$ + "nm.exe " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file_dynamic$)
                 END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer&("I", nm_output_file$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -13896,7 +13896,7 @@ IF os$ = "WIN" THEN
 
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = ResolveStaticFunction_Name(x)
-                fh = OpenBuffer%("I", nm_output_file_dynamic$)
+                fh = OpenBuffer&("I", nm_output_file_dynamic$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -13979,7 +13979,7 @@ IF os$ = "LNX" THEN
 
             IF MacOSX = 0 THEN 'C++ name demangling not supported in MacOSX
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer&("I", nm_output_file$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -14004,7 +14004,7 @@ IF os$ = "LNX" THEN
             IF n = 0 THEN 'attempt to locate simple function name without brackets
                 s$ = " " + ResolveStaticFunction_Name(x): s2$ = s$
                 IF MacOSX THEN s$ = " _" + ResolveStaticFunction_Name(x) 'search for C mangled name
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer&("I", nm_output_file$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -14035,7 +14035,7 @@ IF os$ = "LNX" THEN
                     SHELL _HIDE "nm " + AddQuotes$(ResolveStaticFunction_File(x)) + " -D --demangle -g >" + AddQuotes$(nm_output_file_dynamic$) + " 2>" + AddQuotes$(tmpdir$ + "nm_error.txt")
                 END IF
                 s$ = " " + ResolveStaticFunction_Name(x) + "("
-                fh = OpenBuffer%("I", nm_output_file$)
+                fh = OpenBuffer&("I", nm_output_file$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -14059,7 +14059,7 @@ IF os$ = "LNX" THEN
 
             IF n = 0 THEN 'a C dynamic object library?
                 s$ = " " + ResolveStaticFunction_Name(x)
-                fh = OpenBuffer%("I", nm_output_file_dynamic$)
+                fh = OpenBuffer&("I", nm_output_file_dynamic$)
                 DO UNTIL EndOfBuf%(fh)
                     a$ = ReadBufLine$(fh)
                     IF LEN(a$) THEN
@@ -14902,7 +14902,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoarray = 1 THEN autoarray = 0: autoary = 1 'clear global value & set local value
 
-    f12Buf% = CreateBuf% 'temporary buffer for code accumulation
+    f12Buf& = CreateBuf& 'temporary buffer for code accumulation
 
     'changelog:
     'added 4 to [2] to indicate cmem array where appropriate
@@ -15197,101 +15197,101 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
 
             'Generate error if array is static
-            WriteBufLine f12Buf%, "if (" + n$ + "[2]&2){" 'static array
-            WriteBufLine f12Buf%, "error(10);" 'cannot redefine a static array!
-            WriteBufLine f12Buf%, "}else{"
+            WriteBufLine f12Buf&, "if (" + n$ + "[2]&2){" 'static array
+            WriteBufLine f12Buf&, "error(10);" 'cannot redefine a static array!
+            WriteBufLine f12Buf&, "}else{"
             'Note: Array is either undefined or dynamically defined at this point
 
 
             'REDIM (not DIM) must be used to redefine an array
-            WriteBufLine f12Buf%, "static int64 alloc_new_desc[" + _TOSTR$(4 * nume + 4) + "];"
-            WriteBufLine f12Buf%, "static uint64 alloc_req_elems;"
-            WriteBufLine f12Buf%, "static uint64 alloc_req_bytes;"
-            WriteBufLine f12Buf%, "static uint64 alloc_dim_value;"
-            WriteBufLine f12Buf%, "static uint64 alloc_bytes_per_element;"
+            WriteBufLine f12Buf&, "static int64 alloc_new_desc[" + _TOSTR$(4 * nume + 4) + "];"
+            WriteBufLine f12Buf&, "static uint64 alloc_req_elems;"
+            WriteBufLine f12Buf&, "static uint64 alloc_req_bytes;"
+            WriteBufLine f12Buf&, "static uint64 alloc_dim_value;"
+            WriteBufLine f12Buf&, "static uint64 alloc_bytes_per_element;"
             IF redimoption = 0 THEN
-                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
-                WriteBufLine f12Buf%, "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
-                WriteBufLine f12Buf%, "}else{"
+                WriteBufLine f12Buf&, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf&, "if (!error_occurred) error(10);" 'cannot redefine an array without using REDIM!
+                WriteBufLine f12Buf&, "}else{"
             ELSE
                 '--------CAPTURE EXISTING ARRAY IF NECESSARY--------
                 'Do not destroy the old allocation until the new one has succeeded.
 
                 'refresh lock ID (_MEM)
-                WriteBufLine f12Buf%, "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
-                WriteBufLine f12Buf%, "static ptrszint preserve_old_ptr;"
-                WriteBufLine f12Buf%, "static ptrszint preserve_old_flags;"
-                WriteBufLine f12Buf%, "static uint64 preserve_old_total;"
-                WriteBufLine f12Buf%, "static uint64 preserve_new_total;"
-                WriteBufLine f12Buf%, "static uint64 preserve_copy_count;"
-                WriteBufLine f12Buf%, "static ptrszint preserve_new_ptr;"
+                WriteBufLine f12Buf&, "((mem_lock*)((ptrszint*)" + n$ + ")[" + _TOSTR$(4 * nume + 4 + 1 - 1) + "])->id=(++mem_lock_id);"
+                WriteBufLine f12Buf&, "static ptrszint preserve_old_ptr;"
+                WriteBufLine f12Buf&, "static ptrszint preserve_old_flags;"
+                WriteBufLine f12Buf&, "static uint64 preserve_old_total;"
+                WriteBufLine f12Buf&, "static uint64 preserve_new_total;"
+                WriteBufLine f12Buf&, "static uint64 preserve_copy_count;"
+                WriteBufLine f12Buf&, "static ptrszint preserve_new_ptr;"
                 IF redimoption = 3 THEN
-                    WriteBufLine f12Buf%, "static int32 preserve_any;"
-                    WriteBufLine f12Buf%, "static int64 preserve_old_desc[" + _TOSTR$(4 * nume + 4) + "];"
-                    WriteBufLine f12Buf%, "static int64 preserve_lo[" + _TOSTR$(nume) + "];"
-                    WriteBufLine f12Buf%, "static int64 preserve_hi[" + _TOSTR$(nume) + "];"
-                    WriteBufLine f12Buf%, "static int64 preserve_idx[" + _TOSTR$(nume) + "];"
-                    WriteBufLine f12Buf%, "static int64 preserve_old_off;"
-                    WriteBufLine f12Buf%, "static int64 preserve_new_off;"
-                    WriteBufLine f12Buf%, "static ptrszint preserve_dim;"
+                    WriteBufLine f12Buf&, "static int32 preserve_any;"
+                    WriteBufLine f12Buf&, "static int64 preserve_old_desc[" + _TOSTR$(4 * nume + 4) + "];"
+                    WriteBufLine f12Buf&, "static int64 preserve_lo[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf&, "static int64 preserve_hi[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf&, "static int64 preserve_idx[" + _TOSTR$(nume) + "];"
+                    WriteBufLine f12Buf&, "static int64 preserve_old_off;"
+                    WriteBufLine f12Buf&, "static int64 preserve_new_off;"
+                    WriteBufLine f12Buf&, "static ptrszint preserve_dim;"
                 END IF
 
-                WriteBufLine f12Buf%, "if (" + n$ + "[2]&1){" 'array is defined
-                WriteBufLine f12Buf%, "preserve_old_ptr=" + n$ + "[0];"
-                WriteBufLine f12Buf%, "preserve_old_flags=" + n$ + "[2];"
-                WriteBufLine f12Buf%, "preserve_old_total=" + elesizestr$ + ";"
+                WriteBufLine f12Buf&, "if (" + n$ + "[2]&1){" 'array is defined
+                WriteBufLine f12Buf&, "preserve_old_ptr=" + n$ + "[0];"
+                WriteBufLine f12Buf&, "preserve_old_flags=" + n$ + "[2];"
+                WriteBufLine f12Buf&, "preserve_old_total=" + elesizestr$ + ";"
                 IF redimoption = 3 THEN
                     FOR i = 4 TO 4 + nume * 4 - 1
-                        WriteBufLine f12Buf%, "preserve_old_desc[" + _TOSTR$(i) + "]=" + n$ + "[" + _TOSTR$(i) + "];"
+                        WriteBufLine f12Buf&, "preserve_old_desc[" + _TOSTR$(i) + "]=" + n$ + "[" + _TOSTR$(i) + "];"
                     NEXT
                 END IF
-                WriteBufLine f12Buf%, "}else{"
-                WriteBufLine f12Buf%, "preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;"
-                IF redimoption = 3 THEN WriteBufLine f12Buf%, "preserve_any=0;"
-                WriteBufLine f12Buf%, "}"
+                WriteBufLine f12Buf&, "}else{"
+                WriteBufLine f12Buf&, "preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;"
+                IF redimoption = 3 THEN WriteBufLine f12Buf&, "preserve_any=0;"
+                WriteBufLine f12Buf&, "}"
                 '--------EXISTING ARRAY CAPTURED AS NECESSARY--------
             END IF 'redim specified
 
 
             '--------CREATE ARRAY & CLEAN-UP CODE--------
             'Build the new descriptor in temporary storage first.
-            WriteBufLine f12Buf%, newsd$
-            WriteBufLine f12Buf%, "alloc_req_elems=1;"
-            WriteBufLine f12Buf%, "alloc_bytes_per_element=(uint64)(" + bytesperelement$ + ");"
-            WriteBufLine f12Buf%, "if (!alloc_bytes_per_element) error(257);"
+            WriteBufLine f12Buf&, newsd$
+            WriteBufLine f12Buf&, "alloc_req_elems=1;"
+            WriteBufLine f12Buf&, "alloc_bytes_per_element=(uint64)(" + bytesperelement$ + ");"
+            WriteBufLine f12Buf&, "if (!alloc_bytes_per_element) error(257);"
             FOR i = 1 TO nume
                 argi = i * 4 - 4 + 4
-                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi) + "]))!=alloc_new_desc[" + _TOSTR$(argi) + "]) error(257);"
-                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 1) + "]<0) error(257);"
-                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 1) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 1) + "]) error(257);"
-                WriteBufLine f12Buf%, "if (alloc_new_desc[" + _TOSTR$(argi + 2) + "]<0) error(257);"
-                WriteBufLine f12Buf%, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 2) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 2) + "]) error(257);"
-                WriteBufLine f12Buf%, "alloc_dim_value=(uint64)alloc_new_desc[" + _TOSTR$(argi + 1) + "];"
-                WriteBufLine f12Buf%, "if (alloc_dim_value){"
-                WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);"
-                WriteBufLine f12Buf%, "alloc_req_elems*=alloc_dim_value;"
-                WriteBufLine f12Buf%, "}"
+                WriteBufLine f12Buf&, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi) + "]))!=alloc_new_desc[" + _TOSTR$(argi) + "]) error(257);"
+                WriteBufLine f12Buf&, "if (alloc_new_desc[" + _TOSTR$(argi + 1) + "]<0) error(257);"
+                WriteBufLine f12Buf&, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 1) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 1) + "]) error(257);"
+                WriteBufLine f12Buf&, "if (alloc_new_desc[" + _TOSTR$(argi + 2) + "]<0) error(257);"
+                WriteBufLine f12Buf&, "if (((int64)((ptrszint)alloc_new_desc[" + _TOSTR$(argi + 2) + "]))!=alloc_new_desc[" + _TOSTR$(argi + 2) + "]) error(257);"
+                WriteBufLine f12Buf&, "alloc_dim_value=(uint64)alloc_new_desc[" + _TOSTR$(argi + 1) + "];"
+                WriteBufLine f12Buf&, "if (alloc_dim_value){"
+                WriteBufLine f12Buf&, "if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);"
+                WriteBufLine f12Buf&, "alloc_req_elems*=alloc_dim_value;"
+                WriteBufLine f12Buf&, "}"
             NEXT
-            WriteBufLine f12Buf%, "if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);"
-            WriteBufLine f12Buf%, "alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;"
-            WriteBufLine f12Buf%, "if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);"
-            WriteBufLine f12Buf%, "if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);"
+            WriteBufLine f12Buf&, "if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);"
+            WriteBufLine f12Buf&, "alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;"
+            WriteBufLine f12Buf&, "if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);"
+            WriteBufLine f12Buf&, "if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);"
 
             IF redimoption THEN
-                WriteBufLine f12Buf%, "preserve_new_total=alloc_req_elems;"
-                WriteBufLine f12Buf%, "preserve_copy_count=preserve_old_total;"
-                WriteBufLine f12Buf%, "if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;"
+                WriteBufLine f12Buf&, "preserve_new_total=alloc_req_elems;"
+                WriteBufLine f12Buf&, "preserve_copy_count=preserve_old_total;"
+                WriteBufLine f12Buf&, "if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;"
             END IF
 
             IF redimoption = 3 THEN 'for _Retain, preserve overlap region by coordinates
-                WriteBufLine f12Buf%, "preserve_any=(preserve_old_total!=0);"
+                WriteBufLine f12Buf&, "preserve_any=(preserve_old_total!=0);"
                 FOR i = 1 TO nume
                     argi = (nume - i) * 4 + 4
-                    WriteBufLine f12Buf%, "preserve_lo[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "];"
-                    WriteBufLine f12Buf%, "if (preserve_old_desc[" + _TOSTR$(argi) + "]>preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_lo[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "];"
-                    WriteBufLine f12Buf%, "preserve_hi[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "]+(alloc_new_desc[" + _TOSTR$(argi + 1) + "]-1);"
-                    WriteBufLine f12Buf%, "if ((preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1))<preserve_hi[" + _TOSTR$(i - 1) + "]) preserve_hi[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1);"
-                    WriteBufLine f12Buf%, "if (preserve_hi[" + _TOSTR$(i - 1) + "]<preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_any=0;"
+                    WriteBufLine f12Buf&, "preserve_lo[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf&, "if (preserve_old_desc[" + _TOSTR$(argi) + "]>preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_lo[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "];"
+                    WriteBufLine f12Buf&, "preserve_hi[" + _TOSTR$(i - 1) + "]=alloc_new_desc[" + _TOSTR$(argi) + "]+(alloc_new_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf&, "if ((preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1))<preserve_hi[" + _TOSTR$(i - 1) + "]) preserve_hi[" + _TOSTR$(i - 1) + "]=preserve_old_desc[" + _TOSTR$(argi) + "]+(preserve_old_desc[" + _TOSTR$(argi + 1) + "]-1);"
+                    WriteBufLine f12Buf&, "if (preserve_hi[" + _TOSTR$(i - 1) + "]<preserve_lo[" + _TOSTR$(i - 1) + "]) preserve_any=0;"
                 NEXT
             END IF
 
@@ -15300,39 +15300,39 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 'Note: String and variable-length udt arrays are always created in 64bit memory
 
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "if (preserve_old_total){"
-                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);"
-                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);" 'not enough memory
-                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
-                    WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
-                    WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
+                    WriteBufLine f12Buf&, "if (preserve_old_total){"
+                    WriteBufLine f12Buf&, "preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf&, "if (!preserve_new_ptr) error(257);" 'not enough memory
+                    WriteBufLine f12Buf&, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf&, n$ + "[2]|=1;" 'ADD initialized flag
+                    WriteBufLine f12Buf&, "tmp_long=(ptrszint)alloc_req_elems;"
 
                     'init individual strings / var-len UDT members in the NEW array
                     IF stringarray THEN
-                        WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array/string content in cmem
-                        WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
-                        WriteBufLine f12Buf%, "}else{" 'not in cmem
-                        WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
-                        WriteBufLine f12Buf%, "}" 'not in cmem
+                        WriteBufLine f12Buf&, "if (" + n$ + "[2]&4){" 'array/string content in cmem
+                        WriteBufLine f12Buf&, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
+                        WriteBufLine f12Buf&, "}else{" 'not in cmem
+                        WriteBufLine f12Buf&, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
+                        WriteBufLine f12Buf&, "}" 'not in cmem
                     ELSE
-                        WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        WriteBufLine f12Buf&, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                        WriteBufLine f12Buf&, "while(tmp_long--){"
                         acc$ = ""
                         initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        WriteBufLine f12Buf%, acc$ + "}"
+                        WriteBufLine f12Buf&, acc$ + "}"
                     END IF
 
                     IF redimoption = 2 THEN
-                        WriteBufLine f12Buf%, "tmp_long=preserve_copy_count;"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        WriteBufLine f12Buf&, "tmp_long=preserve_copy_count;"
+                        WriteBufLine f12Buf&, "while(tmp_long--){"
                         IF stringarray THEN
-                            WriteBufLine f12Buf%, "qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);"
+                            WriteBufLine f12Buf&, "qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);"
                         ELSE
                             acc$ = ""
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(tmp_long*" + bytesperelement$ + ")", "(tmp_long*" + bytesperelement$ + ")", acc$
-                            WriteBufLine f12Buf%, acc$
+                            WriteBufLine f12Buf&, acc$
                         END IF
-                        WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf&, "}"
                     ELSEIF redimoption = 3 THEN
                         'copy overlap region by coordinates
                         acc$ = ""
@@ -15341,52 +15341,52 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                         ELSE
                             copy_preserve_udt_varstrings "preserve_new_ptr", "preserve_old_ptr", udt, "(preserve_new_off*" + bytesperelement$ + ")", "(preserve_old_off*" + bytesperelement$ + ")", acc$
                         END IF
-                        AppendRetainCoordinateWalk f12Buf%, nume, acc$
+                        AppendRetainCoordinateWalk f12Buf&, nume, acc$
                     END IF
 
                     'free OLD array content and OLD raw block
                     IF stringarray THEN
-                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
-                        WriteBufLine f12Buf%, "while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);"
-                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                        WriteBufLine f12Buf&, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf&, "while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);"
+                        WriteBufLine f12Buf&, "free((void*)(preserve_old_ptr));"
                     ELSE
-                        WriteBufLine f12Buf%, n$ + "[0]=preserve_old_ptr;"
-                        WriteBufLine f12Buf%, "tmp_long=preserve_old_total;"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        WriteBufLine f12Buf&, n$ + "[0]=preserve_old_ptr;"
+                        WriteBufLine f12Buf&, "tmp_long=preserve_old_total;"
+                        WriteBufLine f12Buf&, "while(tmp_long--){"
                         acc$ = ""
                         free_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                        WriteBufLine f12Buf%, acc$ + "}"
-                        WriteBufLine f12Buf%, "free((void*)(preserve_old_ptr));"
+                        WriteBufLine f12Buf&, acc$ + "}"
+                        WriteBufLine f12Buf&, "free((void*)(preserve_old_ptr));"
                     END IF
 
-                    WriteBufLine f12Buf%, n$ + "[0]=preserve_new_ptr;"
-                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf&, n$ + "[0]=preserve_new_ptr;"
+                    WriteBufLine f12Buf&, "}else{"
                 END IF
 
                 '1. Create array
-                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)malloc((size_t)alloc_req_bytes);"
-                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
-                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
-                WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
+                WriteBufLine f12Buf&, n$ + "[0]=(ptrszint)malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf&, "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                WriteBufLine f12Buf&, n$ + "[2]|=1;" 'ADD initialized flag
+                WriteBufLine f12Buf&, "tmp_long=(ptrszint)alloc_req_elems;"
 
 
                 'init individual strings
                 IF stringarray THEN
-                    WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array is in cmem
-                    WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
-                    WriteBufLine f12Buf%, "}else{" 'not in cmem
-                    WriteBufLine f12Buf%, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
-                    WriteBufLine f12Buf%, "}" 'not in cmem
+                    WriteBufLine f12Buf&, "if (" + n$ + "[2]&4){" 'array is in cmem
+                    WriteBufLine f12Buf&, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new_cmem(0,0);"
+                    WriteBufLine f12Buf&, "}else{" 'not in cmem
+                    WriteBufLine f12Buf&, "while(tmp_long--) ((qbs**)(" + n$ + "[0]))[tmp_long]=qbs_new(0,0);"
+                    WriteBufLine f12Buf&, "}" 'not in cmem
                 ELSE 'initialise udt's
-                    WriteBufLine f12Buf%, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
-                    WriteBufLine f12Buf%, "while(tmp_long--){"
+                    WriteBufLine f12Buf&, "ZeroMemory((uint8*)(" + n$ + "[0]),tmp_long*" + bytesperelement$ + ");"
+                    WriteBufLine f12Buf&, "while(tmp_long--){"
                     acc$ = ""
                     initialise_array_udt_varstrings n$, udt, 0, bytesperelement$, acc$
-                    WriteBufLine f12Buf%, acc$ + "}"
+                    WriteBufLine f12Buf&, acc$ + "}"
                 END IF
 
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf&, "}"
                 END IF
 
 
@@ -15412,63 +15412,63 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
             ELSE 'not string/var-udt array
 
                 '1. Create array
-                WriteBufLine f12Buf%, "if (" + n$ + "[2]&4){" 'array will be in cmem
+                WriteBufLine f12Buf&, "if (" + n$ + "[2]&4){" 'array will be in cmem
 
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "if (preserve_old_total){"
-                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
-                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
-                    WriteBufLine f12Buf%, "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
-                    AppendRawRedimPreserve f12Buf%, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
+                    WriteBufLine f12Buf&, "if (preserve_old_total){"
+                    WriteBufLine f12Buf&, "preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                    WriteBufLine f12Buf&, "if (!preserve_new_ptr) error(257);"
+                    WriteBufLine f12Buf&, "memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);"
+                    AppendRawRedimPreserve f12Buf&, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
                     IF Error_Happened THEN EXIT FUNCTION
-                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf&, "}else{"
                 END IF
 
                 'standard cmem method
-                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
-                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);"
-                WriteBufLine f12Buf%, "memset((void*)(" + n$ + "[0]),0,(size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf&, n$ + "[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);"
+                WriteBufLine f12Buf&, "if (!" + n$ + "[0]) error(257);"
+                WriteBufLine f12Buf&, "memset((void*)(" + n$ + "[0]),0,(size_t)alloc_req_bytes);"
 
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf&, "}"
                 END IF
 
-                WriteBufLine f12Buf%, "}else{" 'not in cmem
+                WriteBufLine f12Buf&, "}else{" 'not in cmem
 
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "if (preserve_old_total){"
-                    WriteBufLine f12Buf%, "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
-                    WriteBufLine f12Buf%, "if (!preserve_new_ptr) error(257);"
-                    AppendRawRedimPreserve f12Buf%, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
+                    WriteBufLine f12Buf&, "if (preserve_old_total){"
+                    WriteBufLine f12Buf&, "preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                    WriteBufLine f12Buf&, "if (!preserve_new_ptr) error(257);"
+                    AppendRawRedimPreserve f12Buf&, n$, nume, elementsize, bytesperelement$, udt, dynarrmode, bitarray, redimoption
                     IF Error_Happened THEN EXIT FUNCTION
-                    WriteBufLine f12Buf%, "}else{"
+                    WriteBufLine f12Buf&, "}else{"
                 END IF
                 'standard allocation method
-                WriteBufLine f12Buf%, n$ + "[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
-                WriteBufLine f12Buf%, "if (!" + n$ + "[0]) error(257);" 'not enough memory
+                WriteBufLine f12Buf&, n$ + "[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);"
+                WriteBufLine f12Buf&, "if (!" + n$ + "[0]) error(257);" 'not enough memory
                 IF redimoption THEN
-                    WriteBufLine f12Buf%, "}"
+                    WriteBufLine f12Buf&, "}"
                 END IF
 
 
-                WriteBufLine f12Buf%, "}" 'not in cmem
-                WriteBufLine f12Buf%, n$ + "[2]|=1;" 'ADD initialized flag
+                WriteBufLine f12Buf&, "}" 'not in cmem
+                WriteBufLine f12Buf&, n$ + "[2]|=1;" 'ADD initialized flag
 
                 IF udt > 0 AND dynarrmode <> 0 THEN
                     IF UDTDynHasMemberArrays%(udt, dynarrmode) THEN
                         ' Fresh dynamic allocation path: descriptors are initialized only once after
                         ' the raw array payload exists. Do not also initialize in the REDIM capture
                         ' path, or ordinary REDIM leaks/double-initializes member descriptors.
-                        WriteBufLine f12Buf%, n$ + "[2]|=8;" 'dynamic UDT descriptor-layout flag
-                        IF redimoption > 1 THEN WriteBufLine f12Buf%, "if (!(preserve_old_total&&(preserve_old_flags&8))){"
-                        WriteBufLine f12Buf%, "tmp_long=(ptrszint)alloc_req_elems;"
-                        WriteBufLine f12Buf%, "while(tmp_long--){"
+                        WriteBufLine f12Buf&, n$ + "[2]|=8;" 'dynamic UDT descriptor-layout flag
+                        IF redimoption > 1 THEN WriteBufLine f12Buf&, "if (!(preserve_old_total&&(preserve_old_flags&8))){"
+                        WriteBufLine f12Buf&, "tmp_long=(ptrszint)alloc_req_elems;"
+                        WriteBufLine f12Buf&, "while(tmp_long--){"
                         acc$ = ""
                         AppendDynUDTDescInit n$, udt, 0, bytesperelement$, acc$, dynarrmode
                         IF Error_Happened THEN EXIT FUNCTION
-                        WriteBufLine f12Buf%, acc$
-                        WriteBufLine f12Buf%, "}"
-                        IF redimoption > 1 THEN WriteBufLine f12Buf%, "}"
+                        WriteBufLine f12Buf&, acc$
+                        WriteBufLine f12Buf&, "}"
+                        IF redimoption > 1 THEN WriteBufLine f12Buf&, "}"
                     END IF
                 END IF
 
@@ -15500,7 +15500,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
                 END IF
             END IF 'not string array
 
-            WriteBufLine f12Buf%, commitdesc$
+            WriteBufLine f12Buf&, commitdesc$
 
         END IF 'undefined=0
 
@@ -15527,8 +15527,8 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
         IF undefined = 0 THEN
 
-            IF redimoption = 0 THEN WriteBufLine f12Buf%, "}" 'if REDIM not specified the above is conditional
-            WriteBufLine f12Buf%, "}" 'not static
+            IF redimoption = 0 THEN WriteBufLine f12Buf&, "}" 'if REDIM not specified the above is conditional
+            WriteBufLine f12Buf&, "}" 'not static
 
         END IF 'undefined=0
 
@@ -15539,9 +15539,9 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     IF autoary = 0 THEN
         IF dimoption = 3 THEN 'STATIC a(100) puts creation code in main
-            BufInsertBuf DataTxtBuf, f12Buf% 'insert accumulated code into target buffer
+            BufInsertBuf DataTxtBuf, f12Buf& 'insert accumulated code into target buffer
         ELSE
-            BufInsertBuf MainTxtBuf, f12Buf% 'insert accumulated code into target buffer
+            BufInsertBuf MainTxtBuf, f12Buf& 'insert accumulated code into target buffer
         END IF
     END IF
 
@@ -15553,7 +15553,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
     '[4] multiplier (the last multiplier doesn't actually exist)
     '[4] reserved
 
-    DisposeBuf f12Buf% 'destroy and free temporary buffer
+    DisposeBuf f12Buf& 'destroy and free temporary buffer
 
     dimshared = dimsharedlast
 
@@ -17589,7 +17589,7 @@ SUB closemain
     WriteBufLine RetTxtBuf, "}"
     WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
 
-    mainincbuf = OpenBuffer%("O", tmpdir$ + "main.txt")
+    mainincbuf = OpenBuffer&("O", tmpdir$ + "main.txt")
     FOR i = 0 TO subfuncnlast
         WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
     NEXT i
@@ -17656,8 +17656,8 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         'name will have include the sub/func name in its scope
         'variable/array will be created in main on startup
         defdatahandle = GlobTxtBuf
-        DataTxtBuf = OpenBuffer%("A", tmpdir$ + "maindata.txt")
-        FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "mainfree.txt")
+        DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
+        FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "mainfree.txt")
     END IF
 
 
@@ -18936,8 +18936,8 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
     'restore STATIC state
     IF dimstatic <> 0 AND dimshared = 0 THEN
-        DataTxtBuf = OpenBuffer%("A", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
-        FreeTxtBuf = OpenBuffer%("A", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
+        DataTxtBuf = OpenBuffer&("A", tmpdir$ + "data" + _TOSTR$(subfuncn) + ".txt")
+        FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "free" + _TOSTR$(subfuncn) + ".txt")
         defdatahandle = DataTxtBuf
     END IF
 
