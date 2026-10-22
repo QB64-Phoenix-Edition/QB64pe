@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,23 +47,23 @@
 #include "far_extras.h"
 #endif
 
-#define VBLANK_TIME_THRESHOLD	480000 /* 8 minutes */
+#define VBLANK_TIME_THRESHOLD	480000.0 /* 8 minutes */
 
 
-static int scan_module(struct context_data *ctx, int ep, int chain)
+static double scan_module(struct context_data *ctx, int ep, int chain)
 {
     struct player_data *p = &ctx->p;
     struct module_data *m = &ctx->m;
     const struct xmp_module *mod = &m->mod;
     const struct xmp_track *tracks[XMP_MAX_CHANNELS];
     const struct xmp_event *event;
-    int parm, gvol_memory, f1, f2, p1, p2, ord, ord2;
-    int row, last_row, break_row, row_count, row_count_total;
+    int parm, gvol_memory, f1, f2, p1, p2, ord;
+    int row, last_row, row_count, row_count_total;
     int orders_since_last_valid, any_valid;
     int gvl, bpm, speed, base_time, chn;
     int frame_count;
-    double time, start_time, time_calc;
-    int inside_loop, line_jump;
+    double time, start_time;
+    int inside_loop;
     int pdelay = 0;
     struct flow_control f;
     struct pattern_loop loop[XMP_MAX_CHANNELS];
@@ -75,8 +75,9 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
     int far_tempo_coarse, far_tempo_fine, far_tempo_mode;
 #endif
     /* was 255, but Global trash goes to 318.
+     * Real Tracker supports up to 999 rows, increasing again from 512.
      * Higher limit for MEDs, defiance.crybaby.5 has blocks with 2048+ rows. */
-    const int row_limit = IS_PLAYER_MODE_MED() ? 3200 : 512;
+    const int row_limit = IS_PLAYER_MODE_MED() ? 3200 : 1024;
 
     if (mod->len == 0)
 	return 0;
@@ -100,7 +101,8 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
     f.loop_start = -1;
     f.loop_count = 0;
     f.loop_active_num = 0;
-    line_jump = 0;
+    f.jump = -1;
+    f.jumpline = 0;
 
     gvl = mod->gvl;
     bpm = mod->bpm;
@@ -138,10 +140,9 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
      * CM: Fixed by using different "sequences" for each loop or subsong.
      *     Each sequence has its entry point. Sequences don't overlap.
      */
-    ord2 = -1;
     ord = ep - 1;
 
-    gvol_memory = break_row = row_count = row_count_total = frame_count = 0;
+    gvol_memory = row_count = row_count_total = frame_count = 0;
     orders_since_last_valid = any_valid = 0;
     start_time = time = 0.0;
     inside_loop = 0;
@@ -204,8 +205,8 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	    continue;
 	}
 
-        if (break_row >= mod->xxp[pat]->rows) {
-            break_row = 0;
+        if (f.jumpline >= mod->xxp[pat]->rows) {
+            f.jumpline = 0;
         }
 
 	/* Changing patterns may reset loop vars. */
@@ -219,7 +220,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	}
 
         /* Loops can cross pattern boundaries, so check if we're not looping */
-        if (m->scan_cnt[ord][break_row] && !inside_loop) {
+        if (m->scan_cnt[ord][f.jumpline] && !inside_loop) {
             break;
         }
 
@@ -233,20 +234,17 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
             info->gvl = gvl;
             info->bpm = bpm;
             info->speed = speed;
-	    /* TODO: double ord_data::time */
-	    time_calc = time + m->time_factor * frame_count * base_time / bpm;
-            info->time = time_calc > (double)INT_MAX ? INT_MAX : (int)time_calc;
+	    info->time = time + m->time_factor * frame_count * base_time / bpm;
 #ifndef LIBXMP_CORE_PLAYER
             info->st26_speed = st26_speed;
 #endif
-        }
+	    info->start_row = f.jumpline;
+	}
 
 	if (info->start_row == 0 && ord != 0) {
 	    if (ord == ep) {
 		start_time = time + m->time_factor * frame_count * base_time / bpm;
 	    }
-
-	    info->start_row = break_row;
 	}
 
 	/* Get tracks in advance to speed up the event parsing loop. */
@@ -255,7 +253,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	}
 
 	last_row = mod->xxp[pat]->rows;
-	for (row = break_row, break_row = 0; row < last_row; row++, row_count++, row_count_total++) {
+	for (row = f.jumpline, f.jumpline = 0; row < last_row; row++, row_count++, row_count_total++) {
 	    /* Prevent crashes caused by large softmixer frames */
 	    if (bpm < XMP_MIN_BPM) {
 	        bpm = XMP_MIN_BPM;
@@ -279,7 +277,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		goto end_module;
 	    }
 
-	    if (!f.loop_active_num && !line_jump && m->scan_cnt[ord][row]) {
+	    if (!f.loop_active_num && m->scan_cnt[ord][row]) {
 		row_count--;
 		goto end_module;
 	    }
@@ -295,7 +293,6 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	    }
 
 	    pdelay = 0;
-	    line_jump = 0;
 
 	    for (chn = 0; chn < mod->chn; chn++) {
 		if (row >= tracks[chn]->rows)
@@ -534,22 +531,12 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		if (f1 == FX_IT_BREAK || f2 == FX_IT_BREAK) {
 		    parm = (f1 == FX_IT_BREAK) ? p1 : p2;
 		    libxmp_process_pattern_break(ctx, &f, parm);
-		    /* TODO: fully replace these variables with f */
-		    if (f.pbreak) {
-			break_row = f.jumpline;
-			last_row = 0;
-		    }
 		}
 #endif
 
 		if (f1 == FX_JUMP || f2 == FX_JUMP) {
 		    libxmp_process_pattern_jump(ctx, &f, (f1 == FX_JUMP ? p1 : p2));
-		    /* TODO: fully replace these variables with f */
 		    if (f.pbreak) {
-			ord2 = f.jump;
-			break_row = f.jumpline;
-			last_row = 0;
-
 			/* prevent infinite loop, see OpenMPT PatLoop-Various.xm */
 			inside_loop = 0;
 		    }
@@ -560,11 +547,6 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		    parm = (f1 == FX_BREAK) ? p1 : p2;
 		    parm = 10 * MSN(parm) + LSN(parm);
 		    libxmp_process_pattern_break(ctx, &f, parm);
-		    /* TODO: fully replace these variables with f */
-		    if (f.pbreak) {
-			break_row = f.jumpline;
-			last_row = 0;
-		    }
 		}
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -572,13 +554,6 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		if (f1 == FX_LINE_JUMP || f2 == FX_LINE_JUMP) {
 		    libxmp_process_line_jump(ctx, &f, ord,
 					     (f1 == FX_LINE_JUMP ? p1 : p2));
-		    /* Don't set order if preceded by jump or break. */
-		    /* TODO: fully replace these variables with f */
-		    if (last_row > 0)
-			ord2 = ord;
-		    break_row = f.jumpline;
-		    last_row = 0;
-		    line_jump = 1;
 		}
 #endif
 
@@ -592,10 +567,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		    }
 
 		    if ((parm >> 4) == EX_PATTERN_LOOP) {
-			/* QUIRK_FT2BUGS may set break_row */
-			f.jumpline = break_row;
 			libxmp_process_pattern_loop(ctx, &f, chn, row, LSN(parm));
-			break_row = f.jumpline;
 
 			/* Attempt to detect the inside of a loop.
 			 * TODO: this won't detect all cases. */
@@ -606,6 +578,16 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 			}
 		    }
 		}
+
+#ifndef LIBXMP_CORE_PLAYER
+		/* OctaMED pattern delay */
+		if (f1 == FX_PATT_DELAY) {
+		    pdelay += p1;
+		}
+		if (f2 == FX_PATT_DELAY) {
+		    pdelay += p2;
+		}
+#endif
 	    }
 
 	    if (pdelay > 0) {
@@ -617,6 +599,11 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		/* -1 as it will be incremented immediately by the loop. */
 		row = f.loop_dest - 1;
 		f.loop_dest = -1;
+	    }
+
+	    if (f.pbreak) {
+		f.pbreak = 0;
+		last_row = 0;
 	    }
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -633,20 +620,20 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 #endif
 	}
 
-	if (break_row && pdelay) {
-	    break_row++;
+	if (f.jumpline && pdelay) {
+	    f.jumpline++;
 	}
 
-	if (ord2 >= 0) {
-	    ord = ord2 - 1;
-	    ord2 = -1;
+	if (f.jump >= 0) {
+	    ord = f.jump - 1;
+	    f.jump = -1;
 	}
 
 	frame_count += row_count * speed;
 	row_count_total = 0;
 	row_count = 0;
     }
-    row = break_row;
+    row = f.jumpline;
 
 end_module:
 
@@ -668,18 +655,17 @@ end_module:
     time -= start_time;
     frame_count += row_count * speed;
 
-    /* TODO: double scan_data::time */
-    time_calc = time + m->time_factor * frame_count * base_time / bpm;
-    return time_calc > (double)INT_MAX ? INT_MAX : (int)time_calc;
+    return time + m->time_factor * frame_count * base_time / bpm;
 }
 
 static void reset_scan_data(struct context_data *ctx)
 {
 	int i;
 	for (i = 0; i < XMP_MAX_MOD_LENGTH; i++) {
-		ctx->m.xxo_info[i].time = -1;
+		ctx->m.xxo_info[i].time = -1.0;
 	}
 	memset(ctx->p.sequence_control, NO_SEQUENCE, XMP_MAX_MOD_LENGTH);
+	memset(&ctx->p.scan[0], 0, sizeof(struct scan_data));
 }
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -707,8 +693,8 @@ static void compare_vblank_scan(struct context_data *ctx)
 		m->quirk ^= QUIRK_NOBPM;
 		p->scan[0].time = scan_module(ctx, 0, 0);
 
-		D_(D_INFO "%-6s %dms", !HAS_QUIRK(QUIRK_NOBPM)?"VBlank":"CIA", scan_backup.time);
-		D_(D_INFO "%-6s %dms",  HAS_QUIRK(QUIRK_NOBPM)?"VBlank":"CIA", p->scan[0].time);
+		D_(D_INFO "%-6s %.2fms", !HAS_QUIRK(QUIRK_NOBPM)?"VBlank":"CIA", scan_backup.time);
+		D_(D_INFO "%-6s %.2fms",  HAS_QUIRK(QUIRK_NOBPM)?"VBlank":"CIA", p->scan[0].time);
 
 		if (p->scan[0].time >= scan_backup.time) {
 			m->quirk ^= QUIRK_NOBPM;
@@ -765,9 +751,8 @@ int libxmp_scan_sequences(struct context_data *ctx)
 	}
 #endif
 
-	if (p->scan[0].time < 0) {
-		D_(D_CRIT "scan was not able to find any valid orders");
-		return -1;
+	if (p->scan[0].time < 0.0) {
+		D_(D_WARN "main sequence contains no valid orders");
 	}
 
 	while (1) {
@@ -783,7 +768,7 @@ int libxmp_scan_sequences(struct context_data *ctx)
 			ep = i;
 			temp_ep[seq] = ep;
 			p->scan[seq].time = scan_module(ctx, ep, seq);
-			if (p->scan[seq].time > 0)
+			if (p->scan[seq].time > 0.0)
 				seq++;
 		} else {
 			break;
@@ -804,8 +789,12 @@ int libxmp_scan_sequences(struct context_data *ctx)
 
 	/* Now place entry points in the public accessible array */
 	for (i = 0; i < m->num_sequences; i++) {
+		/* API still uses integers for time... */
+		double time = p->scan[i].time;
+		CLAMP(time, 0.0, (double)INT_MAX);
+
 		m->seq_data[i].entry_point = temp_ep[i];
-		m->seq_data[i].duration = p->scan[i].time;
+		m->seq_data[i].duration = time;
 	}
 	/* Wipe the remaining entries so the player doesn't think they're
 	 * valid e.g. when handling end-of-module markers. */
@@ -821,6 +810,13 @@ int libxmp_scan_sequences(struct context_data *ctx)
 			p->sequence_control[i] =
 				(i > 0) ? p->sequence_control[i - 1] : 0;
 		}
+	}
+
+	/* If the module is currently playing, rescanning the sequences may
+	 * invalidate the current sequence. */
+	if (ctx->state >= XMP_STATE_PLAYING) {
+		seq = libxmp_get_sequence(ctx, p->pos);
+		p->sequence = (seq != NO_SEQUENCE) ? seq : 0;
 	}
 
 	return 0;

@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
 
 #ifndef LIBXMP_CORE_PLAYER
 #include "med_extras.h"
+#include "loaders/med.h"
 #endif
 
 
@@ -160,6 +161,30 @@ static void set_effect_defaults(struct context_data *ctx, int note,
 	xc->arpeggio.val[0] = 0;
 	xc->arpeggio.count = 0;
 	xc->arpeggio.size = 1;
+
+	/* Reset toneporta--each libxmp_process_fx may add to the rate. */
+	if (is_toneporta) {
+		xc->porta.slide = 0;
+	}
+}
+
+static void set_channel_volume(struct channel_data *xc, int vol)
+{
+	if (vol >= 0) {
+		xc->volume = vol;
+		SET(NEW_VOL);
+	}
+}
+
+static void set_channel_pan(struct channel_data *xc, int pan)
+{
+	/* TODO: LIQ supports surround for default panning, unclear if it works.
+	 * TODO: Imago Orpheus only temporarily sets channel panning for
+	 *       instrument numbers with no note. */
+	if (pan >= 0) {
+		xc->pan.val = pan;
+		xc->pan.surround = 0;
+	}
 }
 
 /* From OpenMPT PortaTarget.mod:
@@ -201,12 +226,19 @@ static void set_period(struct context_data *ctx, int note,
  *  portamento target is valid until a new target is specified by combining a
  *  note and a portamento effect."
  */
-static void set_period_ft2(struct context_data *ctx, int note,
+static void set_period_ft2(struct context_data *ctx, int key, int note,
 				struct xmp_subinstrument *sub,
 				struct channel_data *xc, int is_toneporta)
 {
-	if (note > 0 && is_toneporta) {
-		xc->porta.target = libxmp_note_to_period(ctx, note, xc->finetune,
+	if (IS_VALID_NOTE(key - 1) && is_toneporta) {
+		/* Toneporta target updates even for invalid instruments, using
+		 * the default transpose +0 (ft2_invalid_porta_target.xm). */
+		int n = key - 1;
+		if (sub != NULL) {
+			n += ctx->m.mod.xxi[xc->ins].map[key - 1].xpo;
+			n += sub->xpo;
+		}
+		xc->porta.target = libxmp_note_to_period(ctx, n, xc->finetune,
 								xc->per_adj);
 	}
 	if (sub != NULL && note >= 0) {
@@ -232,7 +264,7 @@ static void set_period_ft2(struct context_data *ctx, int note,
 #define set_patch(ctx,chn,ins,smp,note) \
 	libxmp_virt_setpatch(ctx, chn, ins, smp, note, 0, 0, 0, 0)
 
-static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_mod(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
@@ -244,13 +276,11 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 	int new_swap_ins = 0;
 	int is_toneporta;
 	int is_retrig;
-	int use_ins_vol;
 
 	xc->flags = 0;
 	note = -1;
 	is_toneporta = 0;
 	is_retrig = 0;
-	use_ins_vol = 0;
 
 	if (IS_TONEPORTA(e->fxt) || IS_TONEPORTA(e->f2t)) {
 		is_toneporta = 1;
@@ -261,17 +291,21 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 
 	/* Check instrument */
 
+	if (IS_VALID_NOTE(e->note - 1) && !is_toneporta) {
+		xc->key = e->note - 1;
+	}
 	if (e->ins) {
 		int ins = e->ins - 1;
-		use_ins_vol = 1;
 		SET(NEW_INS);
 		xc->fadeout = 0x10000;	/* for painlace.mod pat 0 ch 3 echo */
+		/* TODO: FunkTracker: instruments probably don't reset
+		 * effects, investigate: fnk_note_vslide_cancel.fnk */
 		xc->per_flags = 0;
 		xc->offset.val = 0;
 		RESET_NOTE(NOTE_RELEASE|NOTE_FADEOUT);
 
 		if (IS_VALID_INSTRUMENT(ins)) {
-			sub = get_subinstrument(ctx, ins, e->note - 1);
+			sub = get_subinstrument(ctx, ins, xc->key);
 
 			if (sub != NULL) {
 				new_swap_ins = 1;
@@ -283,20 +317,17 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 					xc->finetune = sub->fin;
 					xc->ins = ins;
 				}
+
+				/* Dennis Lindroos: instrument volume
+				 * is not used on split channels
+				 */
+				if (!xc->split && e->note != XMP_KEY_OFF) {
+					set_channel_volume(xc, sub->vol);
+					set_channel_pan(xc, sub->pan);
+				}
 			}
 
-			if (is_toneporta) {
-				/* Get new instrument volume */
-				if (sub != NULL) {
-					/* Dennis Lindroos: instrument volume
-					 * is not used on split channels
-					 */
-					if (!xc->split) {
-						xc->volume = sub->vol;
-					}
-					use_ins_vol = 0;
-				}
-			} else {
+			if (!is_toneporta) {
 				xc->ins = ins;
 				xc->ins_fade = mod->xxi[ins].rls;
 			}
@@ -326,12 +357,14 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 
 	if (e->note) {
 		SET(NEW_NOTE);
+		/* FunkTracker - new notes cancel persistent volume slide.
+		 * Farandole Composer notes are always paired with volume,
+		 * so this doesn't notably affect it. */
+		RESET_PER(VOL_SLIDE);
 
 		if (e->note == XMP_KEY_OFF) {
 			SET_NOTE(NOTE_RELEASE);
-			use_ins_vol = 0;
 		} else if (!is_toneporta && IS_VALID_NOTE(e->note - 1)) {
-			xc->key = e->note - 1;
 			RESET_NOTE(NOTE_END);
 
 			sub = get_subinstrument(ctx, xc->ins, xc->key);
@@ -354,7 +387,6 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 				}
 			} else {
 				xc->flags = 0;
-				use_ins_vol = 0;
 				note = xc->key;
 			}
 		}
@@ -374,10 +406,13 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 	 * of its loop (see above).
 	 */
 	if (new_swap_ins && sub && HAS_QUIRK(QUIRK_PROTRACK) && TEST_NOTE(NOTE_SET)) {
-		libxmp_virt_queuepatch(ctx, chn, e->ins - 1, sub->sid, xc->note);
+		int smp = IS_VALID_SAMPLE(sub->sid) ? sub->sid : -1;
+		libxmp_virt_queuepatch(ctx, chn, e->ins - 1, smp, xc->note);
 		xc->smp = sub->sid;
 	}
 
+	/* sub is now the currently playing subinstrument, which may not be
+	 * related to e->ins if there is active toneporta! */
 	sub = get_subinstrument(ctx, xc->ins, xc->key);
 
 	set_effect_defaults(ctx, note, sub, xc, is_toneporta);
@@ -386,10 +421,10 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 	}
 
 	/* Process new volume */
+	set_channel_volume(xc, e->vol - 1);
 	if (e->vol) {
-		xc->volume = e->vol - 1;
-		SET(NEW_VOL);
-		RESET_PER(VOL_SLIDE); /* FIXME: should this be for FAR only? */
+		/* Farandole Composer - volume resets slide to volume. */
+		RESET_PER(VOL_SLIDE);
 	}
 
 	/* Secondary effect handled first */
@@ -426,10 +461,6 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 		RESET(OFFSET);
 	}
 
-	if (use_ins_vol && !TEST(NEW_VOL) && !xc->split) {
-		xc->volume = sub->vol;
-	}
-
 	return 0;
 }
 
@@ -442,22 +473,20 @@ static int sustain_check(struct xmp_envelope *env, int idx)
 		idx == env->data[env->sus << 1]);
 }
 
-static int read_event_ft2(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_ft2(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
 	struct xmp_module *mod = &m->mod;
 	struct channel_data *xc = &p->xc_data[chn];
-	int note, key, ins;
+	int note, key;
 	struct xmp_subinstrument *sub;
-	int new_invalid_ins;
 	int is_toneporta;
-	int use_ins_vol;
-	int k00 = 0;
+	int is_delayed;
 	struct xmp_event ev;
 
 	/* From the OpenMPT DelayCombination.xm test case:
-         * "Naturally, Fasttracker 2 ignores notes next to an out-of-range
+	 * "Naturally, Fasttracker 2 ignores notes next to an out-of-range
 	 *  note delay. However, to check whether the delay is out of range,
 	 *  it is simply compared against the current song speed, not taking
 	 *  any pattern delays into account."
@@ -468,289 +497,201 @@ static int read_event_ft2(struct context_data *ctx, struct xmp_event *e, int chn
 
 	memcpy(&ev, e, sizeof (struct xmp_event));
 
-	/* From OpenMPT TremorReset.xm test case:
-	 * "Even if a tremor effect muted the sample on a previous row, volume
-	 *  commands should be able to override this effect."
-	 */
-	if (ev.vol) {
-		xc->tremor.count &= ~0x80;
-	}
-
 	xc->flags = 0;
 	note = -1;
 	key = ev.note;
-	ins = ev.ins;
-	new_invalid_ins = 0;
 	is_toneporta = 0;
-	use_ins_vol = 0;
+	is_delayed = 0;
 
-	/* From the OpenMPT key_off.xm test case:
-	 * "Key off at tick 0 (K00) is very dodgy command. If there is a note
-	 *  next to it, the note is ignored. If there is a volume column
-	 *  command or instrument next to it and the current instrument has
-	 *  no volume envelope, the note is faded out instead of being cut."
-	 */
-	if (ev.fxt == FX_KEYOFF && ev.fxp == 0) {
-		k00 = 1;
-		key = 0;
+	/* Delay has a few bizarre hacks that need to be supported. */
+	if (ev.fxt == FX_EXTENDED && MSN(ev.fxp) == EX_DELAY && LSN(ev.fxp)) {
+		/* No note + delay -> note memory (ft2_delay_note_memory.xm).
+		 * Combined with ins# memory, effectively causes a retrigger. */
+		key = key ? key : xc->key_memory ? xc->key_memory : xc->key + 1;
 
-		if (ins || ev.vol || ev.f2t) {
-			if (IS_VALID_INSTRUMENT(xc->ins) &&
-			    ~mod->xxi[xc->ins].aei.flg & XMP_ENVELOPE_ON) {
-				SET_NOTE(NOTE_FADEOUT);
-				ev.fxt = 0;
-			}
+		/* Key off + no ins# + delay + volume column pan -> ignore pan
+		 * (OpenMPT PanOff.xm) (ft2_delay_volume_column.xm).
+		 */
+		if (HAS_QUIRK(QUIRK_FT2BUGS) && key == XMP_KEY_OFF &&
+		    !ev.ins && ev.f2t == FX_SETPAN) {
+			ev.f2t = ev.f2p = 0;
 		}
+		is_delayed = 1;
 	}
 
 	if (IS_TONEPORTA(ev.fxt) || IS_TONEPORTA(ev.f2t)) {
 		is_toneporta = 1;
-	}
-
-	/* Check instrument */
-
-	/* Ignore invalid instruments. The last instrument, invalid or
-	 * not, is preserved in channel data (see read_event() below).
-	 * Fixes stray delayed notes in forgotten_city.xm.
-	 */
-	if (ins > 0 && !IS_VALID_INSTRUMENT(ins - 1)) {
-		ins = 0;
-	}
-
-	/* FT2: Retrieve old instrument volume */
-	if (ins) {
-		if (key == 0 || key >= XMP_KEY_OFF) {
-			/* Previous instrument */
-			sub = get_subinstrument(ctx, xc->ins, xc->key);
-
-			/* No note */
-			if (sub != NULL) {
-				int pan = mod->xxc[chn].pan - 128;
-				xc->volume = sub->vol;
-
-				if (!HAS_QUIRK(QUIRK_FTMOD)) {
-					xc->pan.val = pan + ((sub->pan - 128) *
-						(128 - abs(pan))) / 128 + 128;
-				}
-
-				xc->ins_fade = mod->xxi[xc->ins].rls;
-				SET(NEW_VOL);
-			}
+		/* Mx + 3xx/5xy applies toneporta for both commands, but 3xx
+		 * uses the rate from the volume slot (ft2_double_toneporta.xm,
+		 * OpenMPT TonePortamentoMemory.xm). */
+		if (HAS_QUIRK(QUIRK_FT2BUGS) &&
+		    ev.fxt == FX_TONEPORTA && IS_TONEPORTA(ev.f2t)) {
+			ev.fxp = 0;
 		}
 	}
 
-	/* Do this regardless if the instrument is invalid or not -- unless
-	 * XM keyoff is used. Fixes xyce-dans_la_rue.xm chn 0 patterns 0E/0F and
-	 * chn 10 patterns 0D/0E, see https://github.com/libxmp/libxmp/issues/152
-	 * for details.
-         */
-	if (ev.ins && key != XMP_KEY_FADE) {
+	/* FT2 deletes K00 and, if there is no volume fx toneporta, overwrites
+	 * the note with keyoff (ft2_k00_is_note_off.xm, OpenMPT key_off.xm,
+	 * ft2_envelope_reset.xm). */
+	if (ev.fxt == FX_KEYOFF && ev.fxp == 0) {
+		ev.fxt = 0;
+		if (!is_toneporta) {
+			key = XMP_KEY_OFF;
+		}
+	}
+
+	/* Check instrument
+	 *
+	 * Only update instrument/sample on new valid note + no toneporta/K00.
+	 * Lamb/forgotten city.xm relies heavily on quirks here.
+	 */
+	if (ev.ins) {
 		SET(NEW_INS);
-		use_ins_vol = 1;
-		xc->per_flags = 0;
+		xc->per_flags = 0; /* For posterity; not used by XM */
+	}
+	if (IS_VALID_NOTE(key - 1) && !is_toneporta) {
+		struct xmp_instrument *xxi = NULL;
+		/* Note w/o instrument loads the last referenced instrument. */
+		int ins = ev.ins ? ev.ins : xc->old_ins;
+		int smp = -1;
+		int n = key - 1;
 
-		RESET_NOTE(NOTE_RELEASE|NOTE_SUSEXIT);
-		if (!k00) {
-			RESET_NOTE(NOTE_FADEOUT);
-		}
+		/* Updates on note + !toneporta + !K00 and is unaffected by
+		 * out-of-range transposition checks (ft2_note_range.xm). */
+		xc->key_memory = key;
 
-		xc->fadeout = 0x10000;
-
+		/* Unused instruments have fade 0x80, no envelopes, no vibrato.
+		 * Unused samples have volume 0, pan 0x80, transpose 0, no data.
+		 * libxmp represents unused/invalid instruments/samples as -1.
+		 * (test_player_ft2_note_noins_after_invalid_ins)
+		 * (test_player_ft2_note_off_after_invalid_ins)
+		 */
 		if (IS_VALID_INSTRUMENT(ins - 1)) {
-			if (!is_toneporta)
-				xc->ins = ins - 1;
+			xxi = &mod->xxi[ins - 1];
+			sub = get_subinstrument(ctx, ins - 1, key - 1);
+			if (sub) {
+				n += xxi->map[key - 1].xpo;
+				n += sub->xpo;
+				smp = sub->sid;
+			}
+		}
+		/* TODO: out-of-range notes update envelopes, no ins.# req. */
+
+		/* Fade update requires ins.# (ft2_instrument_fade_update.xm).
+		 * Out-of-range notes update (ft2_note_range_instrument_fade.xm). */
+		if (ev.ins) {
+			xc->ins_fade = xxi ? xxi->rls :
+					0x80 /* FT2 default */ << 1 /* conv */;
+		}
+
+		/* Valid notes update the instrument, sample, key, and note.
+		 * Note B-(-1) updates key/instrument/sample, but not the note.
+		 * Notes >A#9, <B-(-1) act as if the key does not exist at all.
+		 * (ft2_note_range.xm, OpenMPT NoteLimit.xm/NoteLimit2.xm)
+		 */
+		if (n >= FT2_NOTE_BN1 && n <= FT2_NOTE_AS9) {
+			if (n >= FT2_NOTE_C0) {
+				xc->note = n;
+			}
+			xc->key = key - 1;
+			xc->ins = IS_VALID_INSTRUMENT(ins - 1) ? ins - 1 : -1;
+			xc->smp = IS_VALID_SAMPLE(smp) ? smp : -1;
 		} else {
-			new_invalid_ins = 1;
-
-			/* If no note is set FT2 doesn't cut on invalid
-			 * instruments (it keeps playing the previous one).
-			 * If a note is set it cuts the current sample.
-			 */
-			xc->flags = 0;
-
-			if (is_toneporta) {
-				key = 0;
-			}
-		}
-
-		xc->tremor.count = 0x20;
-	}
-
-	/* Check note */
-	if (ins) {
-		if (key > 0 && key < XMP_KEY_OFF) {
-			/* Retrieve volume when we have note */
-
-			/* and only if we have instrument, otherwise we're in
-			 * case 1: new note and no instrument
-			 */
-
-			/* Current instrument */
-			sub = get_subinstrument(ctx, xc->ins, key - 1);
-			if (sub != NULL) {
-				int pan = mod->xxc[chn].pan - 128;
-				xc->volume = sub->vol;
-
-				if (!HAS_QUIRK(QUIRK_FTMOD)) {
-					xc->pan.val = pan + ((sub->pan - 128) *
-						(128 - abs(pan))) / 128 + 128;
-				}
-
-				xc->ins_fade = mod->xxi[xc->ins].rls;
-			} else {
-				xc->volume = 0;
-			}
-			SET(NEW_VOL);
-		}
-	}
-
-	if (key) {
-		SET(NEW_NOTE);
-
-		if (key == XMP_KEY_OFF) {
-			int env_on = 0;
-			int vol_set = ev.vol != 0 || ev.fxt == FX_VOLSET;
-			int delay_fx = ev.fxt == FX_EXTENDED && ev.fxp == 0xd0;
-			struct xmp_envelope *env = NULL;
-
-			/* OpenMPT NoteOffVolume.xm:
-			 * "If an instrument has no volume envelope, a note-off
-			 *  command should cut the sample completely - unless
-			 *  there is a volume command next it. This applies to
-			 *  both volume commands (volume and effect column)."
-			 *
-			 * ...and unless we have a keyoff+delay without setting
-			 * an instrument. See OffDelay.xm.
-			 */
-			if (IS_VALID_INSTRUMENT(xc->ins)) {
-				env = &mod->xxi[xc->ins].aei;
-				if (env->flg & XMP_ENVELOPE_ON) {
-					env_on = 1;
-				}
-			}
-
-			if (env_on || (!vol_set && (!ev.ins || !delay_fx))) {
-				if (sustain_check(env, xc->v_idx)) {
-					/* See OpenMPT EnvOff.xm. In certain
-					 * cases a release event is effective
-					 * only in the next frame
-					 */
-					SET_NOTE(NOTE_SUSEXIT);
-				} else {
-					SET_NOTE(NOTE_RELEASE);
-				}
-				use_ins_vol = 0;
-			} else {
-				SET_NOTE(NOTE_FADEOUT);
-			}
-
-			/* See OpenMPT keyoff+instr.xm, pattern 2 row 0x40 */
-			if (env_on && ev.fxt == FX_EXTENDED &&
-			    (ev.fxp >> 4) == EX_DELAY) {
-				/* See OpenMPT OffDelay.xm test case */
-				if ((ev.fxp & 0xf) != 0) {
-					RESET_NOTE(NOTE_RELEASE|NOTE_SUSEXIT);
-				}
-			}
-		} else if (key == XMP_KEY_FADE) {
-			/* Handle keyoff + instrument case (NoteOff2.xm) */
-			SET_NOTE(NOTE_FADEOUT);
-		} else if (is_toneporta) {
-			/* set key to 0 so we can have the tone portamento from
-			 * the original note (see funky_stars.xm pos 5 ch 9)
-			 */
 			key = 0;
-
-			/* And do the same if there's no keyoff (see comic
-			 * bakery remix.xm pos 1 ch 3)
-			 */
-		}
-
-		if (ev.ins == 0 && !IS_VALID_INSTRUMENT(xc->old_ins - 1)) {
-			new_invalid_ins = 1;
-		}
-
-		if (new_invalid_ins) {
-			libxmp_virt_resetchannel(ctx, chn);
 		}
 	}
-
-
-	/* Check note range -- from the OpenMPT test NoteLimit.xm:
-	 * "I think one of the first things Fasttracker 2 does when parsing a
-	 *  pattern cell is calculating the “real” note (i.e. pattern note +
-	 *  sample transpose), and if this “real” note falls out of its note
-	 *  range, it is ignored completely (wiped from its internal channel
-	 *  memory). The instrument number next it, however, is not affected
-	 *  and remains in the memory."
-	 */
-	sub = NULL;
-	if (IS_VALID_NOTE(key - 1)) {
-		int k = key - 1;
-		sub = get_subinstrument(ctx, xc->ins, k);
-		if (!new_invalid_ins && sub != NULL) {
-			int transp = mod->xxi[xc->ins].map[k].xpo;
-			int k2 = k + sub->xpo + transp;
-			if (k2 < 12 || k2 > 130) {
-				key = 0;
-				RESET(NEW_NOTE);
-			}
-		}
-	}
-
-	if (IS_VALID_NOTE(key - 1)) {
-		xc->key = --key;
-		xc->fadeout = 0x10000;
-		RESET_NOTE(NOTE_END);
-
-		if (sub != NULL) {
-			if (~mod->xxi[xc->ins].aei.flg & XMP_ENVELOPE_ON) {
-				RESET_NOTE(NOTE_RELEASE|NOTE_FADEOUT);
-			}
-		}
-
-		if (!new_invalid_ins && sub != NULL) {
-			int transp = mod->xxi[xc->ins].map[key].xpo;
-			int smp;
-
-			note = key + sub->xpo + transp;
-			smp = sub->sid;
-
-			if (!IS_VALID_SAMPLE(smp)) {
-				smp = -1;
-			}
-
-			if (smp >= 0 && smp < mod->smp) {
-				set_patch(ctx, chn, xc->ins, smp, note);
-				xc->smp = smp;
-			}
-		} else {
-			xc->flags = 0;
-			use_ins_vol = 0;
-		}
-	}
-
+	/* Get the new instrument. If the instrument/key wasn't updated, this
+	 * is equivalent to FT2 retaining the previous instrument/sample. */
 	sub = get_subinstrument(ctx, xc->ins, xc->key);
 
+	/* Check note
+	 *
+	 * Do not send a new note for toneporta (Quazar/funky stars.xm pos 5
+	 * ch 9, Mark Birch/comic bakery remix.xm pos 1 ch 3).
+	 */
+	if (key) {
+		SET(NEW_NOTE);
+	}
+	if (IS_VALID_NOTE(key - 1) && !is_toneporta) {
+		RESET_NOTE(NOTE_END);
+
+		/* Send note even if the current sample is invalid.
+		 * Playing with an active invalid sample cuts the channel:
+		 * invalid instrument, valid instrument with invalid subins, or
+		 * zero-length sample (test_player_ft2_invalid_ins_defaults).
+		 */
+		set_patch(ctx, chn, xc->ins, xc->smp, xc->note);
+		note = xc->note;
+	}
+
+	/* Check key off/envelopes */
+
+	if (key == XMP_KEY_OFF) {
+		struct xmp_envelope *env = NULL;
+
+		if (IS_VALID_INSTRUMENT(xc->ins)) {
+			env = &mod->xxi[xc->ins].aei;
+		}
+
+		if (env != NULL && (env->flg & XMP_ENVELOPE_ON)) {
+			if (sustain_check(env, xc->v_idx)) {
+				/* See OpenMPT EnvOff.xm. In certain
+				 * cases a release event is effective
+				 * only in the next frame
+				 */
+				SET_NOTE(NOTE_SUSEXIT);
+			} else {
+				SET_NOTE(NOTE_RELEASE);
+			}
+		} else {
+			/* No volume envelope -> cut volume to 0
+			 * (ft2_note_off_fade.xm, OpenMPT NoteOffVolume.xm). */
+			set_channel_volume(xc, 0);
+		}
+
+		/* Keyoff always begins fadeout (ft2_note_off_fade.xm). */
+		SET_NOTE(NOTE_FADEOUT);
+	}
+	if ((ev.ins && key != XMP_KEY_OFF) || is_delayed) {
+		/* Reset release/fadeout for instrument numbers with no keyoff/K00
+		 * (xyce-dans_la_rue.xm chn 0 pat. 0E/0F, chn 10 pat. 0D/0E;
+		 * ft2_k00_defaults.xm; ft2_note_off_sustain.xm), and on
+		 * delayed rows (ft2_delay_envelope_*.xm, ft2_note_off_fade.xm,
+		 * OpenMPT NoteOff.xm). Other cases like note w/o ins# don't
+		 * reset fadeout (Cave Story - Last Battle.xm pos 11 chn 2,
+		 * ft2_note_no_fadeout_reset.xm).
+		 */
+		xc->fadeout = 0x10000;
+		RESET_NOTE(NOTE_FADEOUT);
+		RESET_NOTE(NOTE_RELEASE|NOTE_SUSEXIT);
+
+		if (sub != NULL) {
+			/* Only reset envelopes with a valid active instrument
+			 * (ft2_envelope_invalid_ins.xm)
+			 * (Ghidorah/olympic dance.xm pos 10)
+			 * (Jeroen Tel/letting go.xm pos 4 chn 20).
+			 */
+			reset_envelopes(ctx, xc);
+		}
+
+		/* Tremor count resets with fadeout (ft2_tremor_reset.xm). */
+		xc->tremor.count = TREMOR_SUPPRESS;
+	}
+
+	/* TODO: this function needs checking, probably split. */
 	set_effect_defaults(ctx, note, sub, xc, is_toneporta);
 
-	if (ins && sub != NULL && !k00) {
-		/* Reset envelopes on new instrument, see olympic.xm pos 10
-		 * But make sure we have an instrument set, see Letting go
-		 * pos 4 chn 20
+	if (ev.ins) {
+		/* Any ins.#: use active sample for defaults. Invalid samples
+		 * have volume 0 panning 0x80 (ft2_invalid_ins_defaults.xm).
+		 * Works on lines with K00 (ft2_k00_defaults.xm).
 		 */
-		reset_envelopes(ctx, xc);
+		set_channel_volume(xc, sub ? sub->vol : 0);
+		set_channel_pan(xc, sub ? sub->pan : 0x80);
 	}
 
 	/* Process new volume */
-	if (ev.vol) {
-		xc->volume = ev.vol - 1;
-		SET(NEW_VOL);
-		if (TEST_NOTE(NOTE_END)) {	/* m5v-nine.xm */
-			xc->fadeout = 0x10000;	/* OpenMPT NoteOff.xm */
-			RESET_NOTE(NOTE_RELEASE|NOTE_FADEOUT);
-		}
-	}
+	set_channel_volume(xc, ev.vol - 1);
 
 	/* FT2: always reset sample offset */
 	xc->offset.val = 0;
@@ -758,44 +699,42 @@ static int read_event_ft2(struct context_data *ctx, struct xmp_event *e, int chn
 	/* Secondary effect handled first */
 	libxmp_process_fx(ctx, xc, chn, &ev, 1);
 	libxmp_process_fx(ctx, xc, chn, &ev, 0);
-	set_period_ft2(ctx, note, sub, xc, is_toneporta);
+	set_period_ft2(ctx, key, note, sub, xc, is_toneporta);
+	/* TODO: Modplug, MT2, rstST process some FX every tick (affects toneporta memory). */
 
-	if (sub == NULL) {
-		return 0;
+	if (TEST(NEW_VOL)) {
+		/* Tremor is reset by ins# without keyoff or by delay rows.
+		 * Other events that set volume (volume column/Cxx, keyoff+ins#)
+		 * also temporarily override tremor, but don't reset it.
+		 * (Tremor likely just overwrites the channel volume in FT2.)
+		 * (ft2_tremor_reset.xm, OpenMPT TremorRecover.xm)
+		 */
+		xc->tremor.count |= TREMOR_SUPPRESS;
 	}
 
 	if (note >= 0) {
-		xc->note = note;
-
-		/* From the OpenMPT test cases (3xx-no-old-samp.xm):
-		 * "An offset effect that points beyond the sample end should
-		 *  stop playback on this channel."
-		 *
-		 * ... except in Skale Tracker (and possibly others), so make this a
-		 *  FastTracker2 quirk. See Armada Tanks game.it (actually an XM).
-		 *  Reported by Vladislav Suschikh.
+		/* Sample offset requires valid note + 9xx + !toneporta
+		 * (Decibelter/Cosmic 'Wegian Mamas.xm pattern 4 channel 8).
+		 * In FT2, memory is set ONLY in these cases, and offsets past
+		 * the end of the sample cut. (Skale Tracker is different, so
+		 * limit this to QUIRK_FT2BUGS; reported by Vladislav Suschikh.)
+		 * (ft2_offset_memory.xm, OpenMPT 3xx-no-old-samp.xm/porta-offset.xm)
 		 */
-		if (HAS_QUIRK(QUIRK_FT2BUGS) && xc->offset.val >= mod->xxs[sub->sid].len) {
-			libxmp_virt_resetchannel(ctx, chn);
-		} else {
+		if (HAS_QUIRK(QUIRK_FT2BUGS) && TEST(OFFSET)) {
+			xc->offset.memory = (xc->offset.val & 0xff00) >> 8;
 
-			/* (From Decibelter - Cosmic 'Wegian Mamas.xm p04 ch7)
-			 * We retrigger the sample only if we have a new note
-			 * without tone portamento, otherwise we won't play
-			 * sweeps and loops correctly.
-			 */
-			libxmp_virt_voicepos(ctx, chn, xc->offset.val);
+			if (!IS_VALID_SAMPLE(xc->smp) ||
+			    xc->offset.val >= mod->xxs[xc->smp].len) {
+				libxmp_virt_resetchannel(ctx, chn);
+			}
 		}
-	}
-
-	if (use_ins_vol && !TEST(NEW_VOL)) {
-		xc->volume = sub->vol;
+		libxmp_virt_voicepos(ctx, chn, xc->offset.val);
 	}
 
 	return 0;
 }
 
-static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_st3(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
@@ -805,13 +744,11 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 	struct xmp_subinstrument *sub;
 	int not_same_ins;
 	int is_toneporta;
-	int use_ins_vol;
 
 	xc->flags = 0;
 	note = -1;
 	not_same_ins = 0;
 	is_toneporta = 0;
-	use_ins_vol = 0;
 
 	if (IS_TONEPORTA(e->fxt) || IS_TONEPORTA(e->f2t)) {
 		is_toneporta = 1;
@@ -823,37 +760,35 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 
 	/* Check instrument */
 
+	if (IS_VALID_NOTE(e->note - 1) && !is_toneporta) {
+		xc->key = e->note - 1;
+	}
 	if (e->ins) {
 		int ins = e->ins - 1;
 		SET(NEW_INS);
-		use_ins_vol = 1;
 		xc->fadeout = 0x10000;
 		xc->per_flags = 0;
 		xc->offset.val = 0;
 		RESET_NOTE(NOTE_RELEASE|NOTE_FADEOUT);
 
 		if (IS_VALID_INSTRUMENT(ins)) {
-			/* valid ins */
 			if (xc->ins != ins) {
 				not_same_ins = 1;
 				if (!is_toneporta) {
 					xc->ins = ins;
 					xc->ins_fade = mod->xxi[ins].rls;
-				} else {
-					/* Get new instrument volume */
-					sub = get_subinstrument(ctx, ins, e->note - 1);
-					if (sub != NULL) {
-						xc->volume = sub->vol;
-						use_ins_vol = 0;
-					}
 				}
 			}
-		} else {
-			/* invalid ins */
 
+			/* Get new instrument volume */
+			sub = get_subinstrument(ctx, ins, xc->key);
+			if (sub != NULL && e->note != XMP_KEY_OFF) {
+				set_channel_volume(xc, sub->vol);
+				set_channel_pan(xc, sub->pan);
+			}
+		} else {
 			/* Ignore invalid instruments */
 			xc->flags = 0;
-			use_ins_vol = 0;
 		}
 	}
 
@@ -864,7 +799,6 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 
 		if (e->note == XMP_KEY_OFF) {
 			SET_NOTE(NOTE_RELEASE);
-			use_ins_vol = 0;
 		} else if (is_toneporta) {
 			/* Always retrig in tone portamento: Fix portamento in
 			 * 7spirits.s3m, mod.Biomechanoid
@@ -873,7 +807,6 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 				xc->offset.val = 0;
 			}
 		} else if (IS_VALID_NOTE(e->note - 1)) {
-			xc->key = e->note - 1;
 			RESET_NOTE(NOTE_END);
 
 			sub = get_subinstrument(ctx, xc->ins, xc->key);
@@ -895,11 +828,12 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 				}
 			} else {
 				xc->flags = 0;
-				use_ins_vol = 0;
 			}
 		}
 	}
 
+	/* sub is now the currently playing subinstrument, which may not be
+	 * related to e->ins if there is active toneporta! */
 	sub = get_subinstrument(ctx, xc->ins, xc->key);
 
 	set_effect_defaults(ctx, note, sub, xc, is_toneporta);
@@ -908,15 +842,15 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 	}
 
 	/* Process new volume */
-	if (e->vol) {
-		xc->volume = e->vol - 1;
-		SET(NEW_VOL);
-	}
+	set_channel_volume(xc, e->vol - 1);
 
 	/* Secondary effect handled first */
 	libxmp_process_fx(ctx, xc, chn, e, 1);
 	libxmp_process_fx(ctx, xc, chn, e, 0);
 	set_period(ctx, note, sub, xc, is_toneporta);
+	/* TODO: Orpheus processes some FX every tick (affects toneporta memory);
+	 * toneporta is additive only if both values are the same (otherwise,
+	 * use the value from slot 2). */
 
 	if (sub == NULL) {
 		return 0;
@@ -925,10 +859,6 @@ static int read_event_st3(struct context_data *ctx, struct xmp_event *e, int chn
 	if (note >= 0) {
 		xc->note = note;
 		libxmp_virt_voicepos(ctx, chn, xc->offset.val);
-	}
-
-	if (use_ins_vol && !TEST(NEW_VOL)) {
-		xc->volume = sub->vol;
 	}
 
 	if (HAS_QUIRK(QUIRK_ST3BUGS) && TEST(NEW_VOL)) {
@@ -946,11 +876,6 @@ static inline void copy_channel(struct player_data *p, int to, int from)
 		memcpy(&p->xc_data[to], &p->xc_data[from],
 					sizeof (struct channel_data));
 	}
-}
-
-static inline int has_note_event(struct xmp_event *e)
-{
-	return (e->note && e->note <= XMP_MAX_KEYS);
 }
 
 static int check_fadeout(struct context_data *ctx, struct channel_data *xc, int ins)
@@ -1006,7 +931,7 @@ static int is_same_sid(struct context_data *ctx, int chn, int ins, int key)
 	return (s1 && s2 && s1->sid == s2->sid);
 }
 
-static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_it(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
@@ -1061,7 +986,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 
 	/* Notes with unmapped instruments are ignored */
 	if (ev.ins) {
-		if (ev.ins <= mod->ins && has_note_event(&ev)) {
+		if (ev.ins <= mod->ins && IS_VALID_NOTE(ev.note - 1)) {
 			int ins = ev.ins - 1;
 			if (check_invalid_sample(ctx, ins, ev.note - 1)) {
 				candidate_ins = ins;
@@ -1069,7 +994,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 			}
 		}
 	} else {
-		if (has_note_event(&ev)) {
+		if (IS_VALID_NOTE(ev.note - 1)) {
 			int ins = xc->old_ins - 1;
 			if (!IS_VALID_INSTRUMENT(ins)) {
 				new_invalid_ins = 1;
@@ -1380,10 +1305,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 	if (sub != NULL) {
 		if (note >= 0) {
 			/* Reset pan, see OpenMPT PanReset.it */
-			if (sub->pan >= 0) {
-				xc->pan.val = sub->pan;
-				xc->pan.surround = 0;
-			}
+			set_channel_pan(xc, sub->pan);
 
 			if (TEST_NOTE(NOTE_CUT)) {
 				reset_envelopes(ctx, xc);
@@ -1397,8 +1319,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 	/* Process new volume */
 	if (ev.vol && (!TEST_NOTE(NOTE_CUT) || ev.ins != 0)) {
 		/* Do this even for XMP_KEY_OFF (see OpenMPT NoteOffInstr.it row 4). */
-		xc->volume = ev.vol - 1;
-		SET(NEW_VOL);
+		set_channel_volume(xc, ev.vol - 1);
 	}
 
 	/* IT: always reset sample offset */
@@ -1406,6 +1327,9 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 
 	/* According to Storlek test 25, Impulse Tracker handles the volume
 	 * column effects after the standard effects.
+	 * TODO: IT updates toneporta memory on first tick but reloads memory
+	 * to use for the rate for both channels every tick afterward.
+	 * TODO: Modplug processes some FX every tick (affects toneporta memory).
 	 */
 	libxmp_process_fx(ctx, xc, chn, &ev, 0);
 	libxmp_process_fx(ctx, xc, chn, &ev, 1);
@@ -1419,7 +1343,15 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 		xc->note = note;
 	}
 	if (note >= 0 || toneporta_offset) {
-		libxmp_virt_voicepos(ctx, chn, xc->offset.val);
+		int off = 0;
+		/* Offset >length starts at 0 (it_high_offset_memory.it) or at
+		 * sample end for old FX (it_high_offset_memory_oldfx.it). */
+		if (TEST(OFFSET) && (HAS_QUIRK(QUIRK_ITOLDFX) ||
+		    (IS_VALID_SAMPLE(xc->smp) &&
+		     xc->offset.val < mod->xxs[xc->smp].len))) {
+			off = xc->offset.val;
+		}
+		libxmp_virt_voicepos(ctx, chn, off);
 	}
 
 	if (use_ins_vol && !TEST(NEW_VOL)) {
@@ -1433,24 +1365,29 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 
 #ifndef LIBXMP_CORE_PLAYER
 
-static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_med(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
 	struct xmp_module *mod = &m->mod;
 	struct channel_data *xc = &p->xc_data[chn];
 	int note;
+	struct xmp_instrument *xxi;
 	struct xmp_subinstrument *sub;
 	int new_invalid_ins = 0;
 	int is_toneporta;
-	int use_ins_vol;
 	int finetune;
+	int tracker_version = MED_MODULE_EXTRAS(*m)->tracker_version;
 
 	xc->flags = 0;
 	note = -1;
 	is_toneporta = 0;
-	use_ins_vol = 0;
 
+	/* TODO: 5xy (FX_TONE_VSLIDE) can't initiate toneporta,
+	 * only continue an active one. It does not set the target
+	 * even on an active toneporta? Instrument sets hold/decay
+	 * if 5xy is present. For all intents and purposes, 5xy
+	 * should not be setting this, it seems? */
 	if (e->fxt == FX_TONEPORTA || e->fxt == FX_TONE_VSLIDE) {
 		is_toneporta = 1;
 	}
@@ -1459,23 +1396,22 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 
 	if (e->ins && e->note) {
 		int ins = e->ins - 1;
-		use_ins_vol = 1;
 		SET(NEW_INS);
 		xc->fadeout = 0x10000;
 		xc->offset.val = 0;
 		RESET_NOTE(NOTE_RELEASE|NOTE_FADEOUT);
 
 		if (IS_VALID_INSTRUMENT(ins)) {
-			if (is_toneporta) {
-				/* Get new instrument volume */
-				sub = get_subinstrument(ctx, ins, e->note - 1);
-				if (sub != NULL) {
-					xc->volume = sub->vol;
-					use_ins_vol = 0;
-				}
-			} else {
+			if (!is_toneporta) {
+				xxi = &mod->xxi[ins];
 				xc->ins = ins;
-				xc->ins_fade = mod->xxi[ins].rls;
+				xc->ins_fade = xxi->rls;
+
+				if (HAS_MED_INSTRUMENT_EXTRAS(*xxi)) {
+					libxmp_med_set_hold_decay(ctx, xc,
+						MED_INSTRUMENT_EXTRAS(*xxi)->hold,
+						MED_INSTRUMENT_EXTRAS(*xxi)->decay);
+				}
 			}
 		} else {
 			new_invalid_ins = 1;
@@ -1484,10 +1420,19 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 
 		MED_CHANNEL_EXTRAS(*xc)->arp = 0;
 		MED_CHANNEL_EXTRAS(*xc)->aidx = 0;
-	} else {
-		/* Hold */
-		if (e->ins && !e->note) {
-			use_ins_vol = 1;
+	}
+	if (e->ins) {
+		/* Hold symbols apply default volume from OctaMED 3.00 onward,
+		 * but they do not in older trackers. All events with a note
+		 * and an instrument apply default volume.
+		 */
+		if (IS_VALID_NOTE(e->note - 1) ||
+		    tracker_version >= MED_VER_OCTAMED_300) {
+			/* Get new instrument volume */
+			sub = get_subinstrument(ctx, e->ins - 1, e->note - 1);
+			if (sub != NULL) {
+				set_channel_volume(xc, sub->vol);
+			}
 		}
 	}
 
@@ -1498,13 +1443,13 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 
 		if (e->note == XMP_KEY_OFF) {
 			SET_NOTE(NOTE_RELEASE);
-			use_ins_vol = 0;
 		} else if (e->note == XMP_KEY_CUT) {
 			SET_NOTE(NOTE_END);
 			xc->period = 0;
 			libxmp_virt_resetchannel(ctx, chn);
-		} else if (!is_toneporta && IS_VALID_INSTRUMENT(xc->ins) && IS_VALID_NOTE(e->note - 1)) {
-			struct xmp_instrument *xxi = &mod->xxi[xc->ins];
+		} else if (!is_toneporta && IS_VALID_INSTRUMENT(xc->ins) &&
+			   IS_VALID_NOTE(e->note - 1)) {
+			xxi = &mod->xxi[xc->ins];
 
 			xc->key = e->note - 1;
 			RESET_NOTE(NOTE_END);
@@ -1538,11 +1483,12 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 				}
 			} else {
 				xc->flags = 0;
-				use_ins_vol = 0;
 			}
 		}
 	}
 
+	/* sub is now the currently playing subinstrument, which may not be
+	 * related to e->ins if there is active toneporta! */
 	sub = get_subinstrument(ctx, xc->ins, xc->key);
 
 	/* Keep effect-set finetune if no instrument set */
@@ -1557,15 +1503,16 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 	}
 
 	/* Process new volume */
-	if (e->vol) {
-		xc->volume = e->vol - 1;
-		SET(NEW_VOL);
-	}
+	set_channel_volume(xc, e->vol - 1);
 
 	/* Secondary effect handled first */
 	libxmp_process_fx(ctx, xc, chn, e, 1);
 	libxmp_process_fx(ctx, xc, chn, e, 0);
 	set_period(ctx, note, sub, xc, is_toneporta);
+
+	/* Test next line for a hold symbol. Hold is set either by the
+	 * instrument or by command 08 Hold/Decay, so test after effects. */
+	libxmp_med_check_hold_symbol(ctx, xc, chn);
 
 	if (sub == NULL) {
 		return 0;
@@ -1576,16 +1523,12 @@ static int read_event_med(struct context_data *ctx, struct xmp_event *e, int chn
 		libxmp_virt_voicepos(ctx, chn, xc->offset.val);
 	}
 
-	if (use_ins_vol && !TEST(NEW_VOL)) {
-		xc->volume = sub->vol;
-	}
-
 	return 0;
 }
 
 #endif
 
-static int read_event_smix(struct context_data *ctx, struct xmp_event *e, int chn)
+static int read_event_smix(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct smix_data *smix = &ctx->smix;
@@ -1633,10 +1576,10 @@ static int read_event_smix(struct context_data *ctx, struct xmp_event *e, int ch
 	RESET_NOTE(NOTE_END);
 
 	if (ins >= mod->ins && ins < mod->ins + smix->ins) {
-		sub = &xxi->sub[0];
-		if (sub == NULL) {
+		if (xxi->sub == NULL) {
 			return 0;
 		}
+		sub = &xxi->sub[0];
 
 		note = xc->key + sub->xpo;
 		smp = sub->sid;
@@ -1671,7 +1614,7 @@ static int read_event_smix(struct context_data *ctx, struct xmp_event *e, int ch
 		reset_envelopes(ctx, xc);
 	}
 
-	xc->volume = e->vol - 1;
+	set_channel_volume(xc, e->vol - 1);
 
 	xc->note = note;
 	libxmp_virt_voicepos(ctx, chn, xc->offset.val);
@@ -1679,7 +1622,7 @@ static int read_event_smix(struct context_data *ctx, struct xmp_event *e, int ch
 	return 0;
 }
 
-int libxmp_read_event(struct context_data *ctx, struct xmp_event *e, int chn)
+int libxmp_read_event(struct context_data *ctx, const struct xmp_event *e, int chn)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;

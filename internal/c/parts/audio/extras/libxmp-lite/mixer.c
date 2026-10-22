@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
 #include "common.h"
 #include "virtual.h"
 #include "mixer.h"
+#include "mix_all.h"
 #include "period.h"
 #include "player.h"	/* for set_sample_end() */
 
@@ -37,6 +38,8 @@
 #define LIM8_LO		-128
 #define LIM16_HI	 32767
 #define LIM16_LO	-32768
+#define LIM32_HI	2147483647
+#define LIM32_LO	(-2147483647 - 1)
 
 #define ANTICLICK_FPSHIFT	24
 
@@ -56,14 +59,7 @@ struct loop_data
 	uint8 epilogue[LOOP_EPILOGUE * 2 /* 16-bit */ * 2 /* stereo */];
 };
 
-/* Mixers array index:
- *
- * bit 0: 0=8 bit sample, 1=16 bit sample
- * bit 1: 0=mono sample, 1=stereo sample
- * bit 2: 0=mono output, 1=stereo output
- * bit 3: 0=unfiltered, 1=filtered
- */
-
+/* See mix_all.h for a full explanation of these flags. */
 #define FLAG_16_BITS	0x01
 #define FLAG_STEREO	0x02
 #define FLAG_STEREOOUT	0x04
@@ -72,90 +68,10 @@ struct loop_data
 /* #define FLAG_SYNTH	0x20 */
 #define FIDX_FLAGMASK	(FLAG_16_BITS | FLAG_STEREO | FLAG_STEREOOUT | FLAG_FILTER)
 
-#define MIX_FN(x) void libxmp_mix_##x(struct mixer_voice * LIBXMP_RESTRICT, \
-	int32 * LIBXMP_RESTRICT, int, int, int, int, int, int, int)
-
-#define DECLARE_MIX_FUNCTIONS(type) \
-	MIX_FN(monoout_mono_8bit_ ## type); \
-	MIX_FN(monoout_mono_16bit_ ## type); \
-	MIX_FN(monoout_stereo_8bit_ ## type); \
-	MIX_FN(monoout_stereo_16bit_ ## type); \
-	MIX_FN(stereoout_mono_8bit_ ## type); \
-	MIX_FN(stereoout_mono_16bit_ ## type); \
-	MIX_FN(stereoout_stereo_8bit_ ## type); \
-	MIX_FN(stereoout_stereo_16bit_ ## type)
-
-#define LIST_MIX_FUNCTIONS(type) \
-	libxmp_mix_monoout_mono_8bit_ ## type, \
-	libxmp_mix_monoout_mono_16bit_ ## type, \
-	libxmp_mix_monoout_stereo_8bit_ ## type, \
-	libxmp_mix_monoout_stereo_16bit_ ## type, \
-	libxmp_mix_stereoout_mono_8bit_ ## type, \
-	libxmp_mix_stereoout_mono_16bit_ ## type, \
-	libxmp_mix_stereoout_stereo_8bit_ ## type, \
-	libxmp_mix_stereoout_stereo_16bit_ ## type
-
-DECLARE_MIX_FUNCTIONS(nearest);
-DECLARE_MIX_FUNCTIONS(linear);
-DECLARE_MIX_FUNCTIONS(spline);
-
-#ifndef LIBXMP_CORE_DISABLE_IT
-DECLARE_MIX_FUNCTIONS(linear_filter);
-DECLARE_MIX_FUNCTIONS(spline_filter);
-#endif
-
-#ifdef LIBXMP_PAULA_SIMULATOR
-MIX_FN(monoout_mono_a500);
-MIX_FN(monoout_mono_a500_filter);
-MIX_FN(stereoout_mono_a500);
-MIX_FN(stereoout_mono_a500_filter);
-#endif
-
-typedef void (*MIX_FP) (struct mixer_voice* LIBXMP_RESTRICT, int32* LIBXMP_RESTRICT, int, int, int, int, int, int, int);
-
-static const MIX_FP nearest_mixers[] = {
-	LIST_MIX_FUNCTIONS(nearest),
-
-#ifndef LIBXMP_CORE_DISABLE_IT
-	LIST_MIX_FUNCTIONS(nearest)
-#endif
-};
-
-static const MIX_FP linear_mixers[] = {
-	LIST_MIX_FUNCTIONS(linear),
-
-#ifndef LIBXMP_CORE_DISABLE_IT
-	LIST_MIX_FUNCTIONS(linear_filter)
-#endif
-};
-
-static const MIX_FP spline_mixers[] = {
-	LIST_MIX_FUNCTIONS(spline),
-
-#ifndef LIBXMP_CORE_DISABLE_IT
-	LIST_MIX_FUNCTIONS(spline_filter)
-#endif
-};
-
-#ifdef LIBXMP_PAULA_SIMULATOR
-#define LIST_MIX_FUNCTIONS_PAULA(type) \
-	libxmp_mix_monoout_mono_ ## type, NULL, NULL, NULL, \
-	libxmp_mix_stereoout_mono_ ## type, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL
-
-static const MIX_FP a500_mixers[] = {
-	LIST_MIX_FUNCTIONS_PAULA(a500)
-};
-
-static const MIX_FP a500led_mixers[] = {
-	LIST_MIX_FUNCTIONS_PAULA(a500_filter)
-};
-#endif
-
 
 /* Downmix 32bit samples to 8bit, signed or unsigned, mono or stereo output */
-static void downmix_int_8bit(char *dest, int32 *src, int num, int amp, int offs)
+static void downmix_int_8bit(int8 *LIBXMP_RESTRICT dest,
+			     const int32 *src, int num, int amp, unsigned offs)
 {
 	int smp;
 	int shift = DOWNMIX_SHIFT + 8 - amp;
@@ -170,13 +86,14 @@ static void downmix_int_8bit(char *dest, int32 *src, int num, int amp, int offs)
 			*dest = smp;
 		}
 
-		if (offs) *dest += offs;
+		if (offs) *dest = (int8)((uint8)*dest + offs);
 	}
 }
 
 
 /* Downmix 32bit samples to 16bit, signed or unsigned, mono or stereo output */
-static void downmix_int_16bit(int16 *dest, int32 *src, int num, int amp, int offs)
+static void downmix_int_16bit(int16 *LIBXMP_RESTRICT dest,
+			      const int32 *src, int num, int amp, unsigned offs)
 {
 	int smp;
 	int shift = DOWNMIX_SHIFT - amp;
@@ -191,7 +108,32 @@ static void downmix_int_16bit(int16 *dest, int32 *src, int num, int amp, int off
 			*dest = smp;
 		}
 
-		if (offs) *dest += offs;
+		if (offs) *dest = (int16)((uint16)*dest + offs);
+	}
+}
+
+/* Saturate 32bit samples, signed or unsigned, mono or stereo output */
+static void downmix_int_32bit(int32 *LIBXMP_RESTRICT dest,
+			      const int32 *src, int num, int amp, unsigned offs)
+{
+	int32 smp;
+	int shift = (16 - DOWNMIX_SHIFT) + amp;
+
+	/* Signed left shift overflow is UB; clamp with pre-shifted bounds. */
+	int max_value = LIM32_HI >> shift;
+	int min_value = LIM32_LO >> shift;
+
+	for (; num--; src++, dest++) {
+		smp = *src;
+		if (smp >= max_value) {
+			*dest = LIM32_HI;
+		} else if (smp <= min_value) {
+			*dest = LIM32_LO;
+		} else {
+			*dest = XMP_ASL(smp, shift);
+		}
+
+		if (offs) *dest = (int32)((uint32)*dest + offs);
 	}
 }
 
@@ -504,18 +446,19 @@ int libxmp_mixer_get_ticksize(int freq, double time_factor, double rrate, int bp
 }
 
 /* Prepare the mixer for the next tick */
-void libxmp_mixer_prepare(struct context_data *ctx)
+static void libxmp_mixer_prepare(struct context_data *ctx)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
 	struct mixer_data *s = &ctx->s;
 	int bytelen;
 
-	s->ticksize = libxmp_mixer_get_ticksize(s->freq, m->time_factor, m->rrate, p->bpm);
+	s->ticksize = libxmp_mixer_get_ticksize(s->freq,
+		m->time_factor * p->time_factor_relative, m->rrate, p->bpm);
 
 	/* Protect the mixer from broken values caused by xmp_set_tempo_factor. */
-	if (s->ticksize < 0 || s->ticksize > (XMP_MAX_FRAMESIZE / 2)) {
-		s->ticksize = XMP_MAX_FRAMESIZE / 2;
+	if (s->ticksize < 0 || s->ticksize > (s->total_size / 2)) {
+		s->ticksize = s->total_size / 2;
 	}
 
 	bytelen = s->ticksize * sizeof(int32);
@@ -543,30 +486,30 @@ void libxmp_mixer_softmixer(struct context_data *ctx)
 	int vol, vol_l, vol_r, voc, usmp;
 	int prev_l, prev_r = 0;
 	int32 *buf_pos;
-	MIX_FP  mix_fn;
-	const MIX_FP *mixerset;
+	MIXER_FP  mix_fn;
+	const MIXER_FP *mixerset;
 
 	switch (s->interp) {
 	case XMP_INTERP_NEAREST:
-		mixerset = nearest_mixers;
+		mixerset = libxmp_nearest_mixers;
 		break;
 	case XMP_INTERP_LINEAR:
-		mixerset = linear_mixers;
+		mixerset = libxmp_linear_mixers;
 		break;
 	case XMP_INTERP_SPLINE:
-		mixerset = spline_mixers;
+		mixerset = libxmp_spline_mixers;
 		break;
 	default:
-		mixerset = linear_mixers;
+		mixerset = libxmp_linear_mixers;
 	}
 
 #ifdef LIBXMP_PAULA_SIMULATOR
 	if (p->flags & XMP_FLAGS_A500) {
 		if (IS_AMIGA_MOD()) {
 			if (p->filter) {
-				mixerset = a500led_mixers;
+				mixerset = libxmp_a500led_mixers;
 			} else {
-				mixerset = a500_mixers;
+				mixerset = libxmp_a500_mixers;
 			}
 		}
 	}
@@ -825,16 +768,19 @@ void libxmp_mixer_softmixer(struct context_data *ctx)
 		size *= 2;
 	}
 
-	if (size > XMP_MAX_FRAMESIZE) {
-		size = XMP_MAX_FRAMESIZE;
+	if (size > s->total_size) {
+		size = s->total_size;
 	}
 
-	if (s->format & XMP_FORMAT_8BIT) {
-		downmix_int_8bit(s->buffer, s->buf32, size, s->amplify,
-				s->format & XMP_FORMAT_UNSIGNED ? 0x80 : 0);
-	} else {
+	if (s->format & XMP_FORMAT_32BIT) {
+		downmix_int_32bit((int32 *)s->buffer, s->buf32, size, s->amplify,
+				s->format & XMP_FORMAT_UNSIGNED ? 0x80000000u : 0u);
+	} else if (~s->format & XMP_FORMAT_8BIT) {
 		downmix_int_16bit((int16 *)s->buffer, s->buf32, size, s->amplify,
-				s->format & XMP_FORMAT_UNSIGNED ? 0x8000 : 0);
+				s->format & XMP_FORMAT_UNSIGNED ? 0x8000u : 0u);
+	} else {
+		downmix_int_8bit((int8 *)s->buffer, s->buf32, size, s->amplify,
+				s->format & XMP_FORMAT_UNSIGNED ? 0x80u : 0u);
 	}
 
 	s->dtright = s->dtleft = 0;
@@ -1099,15 +1045,45 @@ int libxmp_mixer_numvoices(struct context_data *ctx, int num)
 int libxmp_mixer_on(struct context_data *ctx, int rate, int format, int c4rate)
 {
 	struct mixer_data *s = &ctx->s;
+	int total_size;
+	int sample_size;
+	int output_chn;
 
-	s->buffer = (char *) calloc(XMP_MAX_FRAMESIZE, sizeof(int16));
+	if (format & XMP_FORMAT_32BIT) {
+		sample_size = 4;
+	} else if (~format & XMP_FORMAT_8BIT) {
+		sample_size = 2;
+	} else {
+		sample_size = 1;
+	}
+
+	if (format & XMP_FORMAT_MONO) {
+		output_chn = 1;
+	} else {
+		output_chn = 2;
+	}
+
+	/* This should be equivalent to the XMP_MAX_FRAMESIZE calculation. */
+	total_size = output_chn * libxmp_mixer_get_ticksize(rate,
+				DEFAULT_TIME_FACTOR * 2, PAL_RATE, XMP_MIN_BPM);
+	if (total_size < 0)
+		goto err;
+
+	/* These allocations were made with a fixed framesize based on the rate
+	 * 49170 for a long time, so make that the minimum size for now. */
+	CLAMP(total_size, 5 * 49170 * 2 / 20, XMP_MAX_FRAMESIZE);
+
+	s->buffer = (char *) calloc(total_size, sample_size);
 	if (s->buffer == NULL)
 		goto err;
 
-	s->buf32 = (int32 *) calloc(XMP_MAX_FRAMESIZE, sizeof(int32));
+	s->buf32 = (int32 *) calloc(total_size, sizeof(int32));
 	if (s->buf32 == NULL)
 		goto err1;
 
+	s->total_size = total_size;
+	s->sample_size = sample_size;
+	s->output_chn = output_chn;
 	s->freq = rate;
 	s->format = format;
 	s->amplify = DEFAULT_AMPLIFY;
