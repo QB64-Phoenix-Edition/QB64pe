@@ -29,6 +29,7 @@
 #include <cstring>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <stack>
 #include <string_view>
 #include <unordered_map>

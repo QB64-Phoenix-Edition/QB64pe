@@ -29,7 +29,12 @@ class AudioEngine {
     /// @brief A class that can manage a list of buffers using unique keys.
     class BufferMap {
       public:
-        BufferMap() = default;
+        BufferMap() : m(libqb_mutex_new()) {}
+
+        ~BufferMap() {
+            libqb_mutex_free(m);
+        }
+
         BufferMap(const BufferMap &) = delete;
         BufferMap &operator=(const BufferMap &) = delete;
         BufferMap(BufferMap &&) = delete;
@@ -42,6 +47,8 @@ class AudioEngine {
         /// @param key The unique key that should be used.
         /// @return True if successful.
         bool AddBuffer(const void *data, size_t size, uint64_t key) {
+            libqb_mutex_guard lock(m);
+
             if (data && size) {
                 auto it = buffers.find(key);
 
@@ -63,6 +70,8 @@ class AudioEngine {
         /// @param key The unique key that should be used.
         /// @return True if successful.
         bool AddBuffer(std::vector<uint8_t> &&buffer, uint64_t key) {
+            libqb_mutex_guard lock(m);
+
             if (!buffer.empty()) {
                 auto it = buffers.find(key);
 
@@ -81,6 +90,8 @@ class AudioEngine {
         /// @brief Decrements the buffer reference count and frees the buffer if the reference count reaches zero.
         /// @param key The unique key for the buffer.
         void ReleaseBuffer(uint64_t key) {
+            libqb_mutex_guard lock(m);
+
             auto it = buffers.find(key);
 
             if (it != buffers.end()) {
@@ -94,37 +105,40 @@ class AudioEngine {
             }
         }
 
-        /// @brief Gets the raw pointer and size of the buffer with the given key.
+        /// @brief Gets a shared pointer to the buffer with the given key.
         /// @param key The unique key for the buffer.
-        /// @return An std::pair of the buffer raw pointer and size.
-        std::pair<const void *, size_t> GetBuffer(uint64_t key) const {
+        /// @return A shared pointer to the buffer, or an empty pointer if it is not found.
+        std::shared_ptr<const std::vector<uint8_t>> GetBuffer(uint64_t key) const {
+            libqb_mutex_guard lock(m);
+
             auto it = buffers.find(key);
 
             if (it != buffers.end()) {
-                return {it->second.data.data(), it->second.data.size()};
+                return it->second.data;
             }
 
             audio_log_warn("Buffer not found");
 
-            return {nullptr, 0};
+            return {};
         }
 
       private:
         /// @brief A buffer that is made up of std::vector of bytes and reference count.
         struct ManagedBuffer {
-            std::vector<uint8_t> data;
+            std::shared_ptr<std::vector<uint8_t>> data;
             size_t refCount;
 
             ManagedBuffer() : refCount(0) {}
 
-            ManagedBuffer(const void *src, size_t size) : data(size), refCount(1) {
-                std::memcpy(data.data(), src, size);
+            ManagedBuffer(const void *src, size_t size) : data(std::make_shared<std::vector<uint8_t>>(size)), refCount(1) {
+                std::memcpy(data->data(), src, size);
             }
 
-            ManagedBuffer(std::vector<uint8_t> &&src) : data(std::move(src)), refCount(1) {}
+            ManagedBuffer(std::vector<uint8_t> &&src) : data(std::make_shared<std::vector<uint8_t>>(std::move(src))), refCount(1) {}
         };
 
         std::unordered_map<uint64_t, ManagedBuffer> buffers;
+        libqb_mutex *m;
     };
 
     /// @brief miniaudio virtual file system class
@@ -135,22 +149,27 @@ class AudioEngine {
         uint64_t nextFd;
 
         struct FileState {
-            uint64_t key;        // for memory buffers
-            ma_int64 offset;     // for memory buffers
-            FILE *realFile;      // for real files
-            size_t realFileSize; // for real files
+            std::shared_ptr<const std::vector<uint8_t>> memoryBuffer; // for memory buffers
+            ma_int64 offset;                                          // for memory buffers
+            FILE *realFile;                                           // for real files
+            size_t realFileSize;                                      // for real files
 
-            FileState() : key(0), offset(0), realFile(nullptr), realFileSize(0) {}
+            FileState() : offset(0), realFile(nullptr), realFileSize(0) {}
         };
 
         std::unordered_map<uint64_t, FileState> fileMap;
 
         BufferMap *bufferMap;
+        libqb_mutex *m;
 
         /// @brief Constructs a new VFS object with empty callbacks and no associated buffer map.
-        VFS() : nextFd(0), bufferMap(nullptr) {
+        VFS() : nextFd(0), bufferMap(nullptr), m(libqb_mutex_new()) {
             cb = {};
             allocCb = {};
+        }
+
+        ~VFS() {
+            libqb_mutex_free(m);
         }
 
         /// @brief Creates a new virtual file system (VFS) object with callbacks and associates it with the given buffer map.
@@ -185,14 +204,18 @@ class AudioEngine {
             (void)openMode;
 
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto key = std::strtoull(pFilePath, NULL, 10); // transform pFilePath, look-up in BufferMap
 
-            if (vfs->bufferMap->GetBuffer(key).first) {
+            auto buffer = vfs->bufferMap->GetBuffer(key);
+
+            if (buffer) {
                 vfs->nextFd++;
-                vfs->fileMap[vfs->nextFd].key = key;
-                vfs->fileMap[vfs->nextFd].offset = 0;
-                vfs->fileMap[vfs->nextFd].realFile = nullptr;
-                vfs->fileMap[vfs->nextFd].realFileSize = 0;
+                auto &state = vfs->fileMap[vfs->nextFd];
+                state.memoryBuffer = std::move(buffer);
+                state.offset = 0;
+                state.realFile = nullptr;
+                state.realFileSize = 0;
             } else {
                 auto file = std::fopen(pFilePath, "rb");
                 if (!file) {
@@ -221,10 +244,11 @@ class AudioEngine {
                 std::rewind(file);
 
                 vfs->nextFd++;
-                vfs->fileMap[vfs->nextFd].key = 0;
-                vfs->fileMap[vfs->nextFd].offset = 0;
-                vfs->fileMap[vfs->nextFd].realFile = file;
-                vfs->fileMap[vfs->nextFd].realFileSize = fileSize;
+                auto &state = vfs->fileMap[vfs->nextFd];
+                state.memoryBuffer.reset();
+                state.offset = 0;
+                state.realFile = file;
+                state.realFileSize = fileSize;
             }
 
             *pFile = reinterpret_cast<ma_vfs_file>(vfs->nextFd);
@@ -238,14 +262,18 @@ class AudioEngine {
         /// @return Returns MA_SUCCESS upon successful closing of the file.
         static ma_result OnClose(ma_vfs *pVFS, ma_vfs_file file) {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto fd = uint64_t(file);
-            auto state = &vfs->fileMap[fd];
-
-            if (state->realFile) {
-                std::fclose(state->realFile);
+            auto it = vfs->fileMap.find(fd);
+            if (it == vfs->fileMap.end()) {
+                return MA_DOES_NOT_EXIST;
             }
 
-            vfs->fileMap.erase(fd);
+            if (it->second.realFile) {
+                std::fclose(it->second.realFile);
+            }
+
+            vfs->fileMap.erase(it);
 
             return MA_SUCCESS;
         }
@@ -259,23 +287,44 @@ class AudioEngine {
         /// @return Returns MA_SUCCESS upon successful read.
         static ma_result OnRead(ma_vfs *pVFS, ma_vfs_file file, void *pDst, size_t sizeInBytes, size_t *pBytesRead) {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto fd = uint64_t(file);
-            auto state = &vfs->fileMap[fd];
+            auto it = vfs->fileMap.find(fd);
+            if (it == vfs->fileMap.end()) {
+                if (pBytesRead) {
+                    *pBytesRead = 0;
+                }
+                return MA_DOES_NOT_EXIST;
+            }
+            auto &state = it->second;
 
-            if (state->realFile) {
-                *pBytesRead = std::fread(pDst, sizeof(uint8_t), sizeInBytes, state->realFile);
+            if (state.realFile) {
+                auto bytesRead = std::fread(pDst, sizeof(uint8_t), sizeInBytes, state.realFile);
+                if (pBytesRead) {
+                    *pBytesRead = bytesRead;
+                }
 
-                if (std::ferror(state->realFile)) {
+                if (std::ferror(state.realFile)) {
                     audio_log_warn("Error reading file, fd: %llu", fd);
                     return MA_IO_ERROR;
                 }
-            } else {
-                auto [buffer, bufferSize] = vfs->bufferMap->GetBuffer(state->key);
-                auto readSize = std::min<ma_uint64>(sizeInBytes, bufferSize - state->offset);
+            } else if (state.memoryBuffer) {
+                auto bufferSize = state.memoryBuffer->size();
+                auto offset = state.offset >= 0 ? static_cast<size_t>(state.offset) : bufferSize;
+                auto readSize = offset < bufferSize ? std::min(sizeInBytes, bufferSize - offset) : 0;
 
-                std::memcpy(pDst, reinterpret_cast<const uint8_t *>(buffer) + state->offset, readSize);
-                *pBytesRead = readSize;
-                state->offset += readSize;
+                if (readSize) {
+                    std::memcpy(pDst, state.memoryBuffer->data() + offset, readSize);
+                }
+                if (pBytesRead) {
+                    *pBytesRead = readSize;
+                }
+                state.offset += readSize;
+            } else {
+                if (pBytesRead) {
+                    *pBytesRead = 0;
+                }
+                return MA_DOES_NOT_EXIST;
             }
 
             return MA_SUCCESS;
@@ -289,10 +338,15 @@ class AudioEngine {
         /// @return Returns MA_SUCCESS upon successful seeking.
         static ma_result OnSeek(ma_vfs *pVFS, ma_vfs_file file, ma_int64 offset, ma_seek_origin origin) {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto fd = uint64_t(file);
-            auto state = &vfs->fileMap[fd];
+            auto it = vfs->fileMap.find(fd);
+            if (it == vfs->fileMap.end()) {
+                return MA_DOES_NOT_EXIST;
+            }
+            auto &state = it->second;
 
-            if (state->realFile) {
+            if (state.realFile) {
                 int whence;
                 switch (origin) {
                 case ma_seek_origin::ma_seek_origin_start:
@@ -312,26 +366,26 @@ class AudioEngine {
                     return MA_BAD_SEEK;
                 }
 
-                if (std::fseek(state->realFile, offset, whence) == 0) {
+                if (std::fseek(state.realFile, offset, whence) == 0) {
                     return MA_SUCCESS;
                 }
 
                 audio_log_warn("Failed to seek file %llu to offset %lld", fd, offset);
                 return MA_BAD_SEEK;
-            } else {
-                auto bufferSize = vfs->bufferMap->GetBuffer(state->key).second;
+            } else if (state.memoryBuffer) {
+                auto bufferSize = state.memoryBuffer->size();
 
                 switch (origin) {
                 case ma_seek_origin::ma_seek_origin_start:
-                    state->offset = offset;
+                    state.offset = offset;
                     break;
 
                 case ma_seek_origin::ma_seek_origin_current:
-                    state->offset = state->offset + offset;
+                    state.offset = state.offset + offset;
                     break;
 
                 case ma_seek_origin::ma_seek_origin_end:
-                    state->offset = bufferSize + offset;
+                    state.offset = static_cast<ma_int64>(bufferSize) + offset;
                     break;
 
                 default:
@@ -339,7 +393,9 @@ class AudioEngine {
                     return MA_BAD_SEEK;
                 }
 
-                state->offset = std::clamp<ma_int64>(state->offset, 0, bufferSize);
+                state.offset = std::clamp<ma_int64>(state.offset, 0, bufferSize);
+            } else {
+                return MA_DOES_NOT_EXIST;
             }
 
             return MA_SUCCESS;
@@ -352,13 +408,20 @@ class AudioEngine {
         /// @return Returns MA_SUCCESS upon successful retrieval of the cursor position.
         static ma_result OnTell(ma_vfs *pVFS, ma_vfs_file file, ma_int64 *pCursor) {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto fd = uint64_t(file);
-            auto state = &vfs->fileMap[fd];
+            auto it = vfs->fileMap.find(fd);
+            if (it == vfs->fileMap.end()) {
+                return MA_DOES_NOT_EXIST;
+            }
+            auto &state = it->second;
 
-            if (state->realFile) {
-                *pCursor = std::ftell(state->realFile);
+            if (state.realFile) {
+                *pCursor = std::ftell(state.realFile);
+            } else if (state.memoryBuffer) {
+                *pCursor = state.offset;
             } else {
-                *pCursor = state->offset;
+                return MA_DOES_NOT_EXIST;
             }
 
             return MA_SUCCESS;
@@ -371,13 +434,20 @@ class AudioEngine {
         /// @return Returns MA_SUCCESS upon successful retrieval of file information.
         static ma_result OnInfo(ma_vfs *pVFS, ma_vfs_file file, ma_file_info *pInfo) {
             auto vfs = reinterpret_cast<VFS *>(pVFS);
+            libqb_mutex_guard lock(vfs->m);
             auto fd = uint64_t(file);
-            auto state = &vfs->fileMap[fd];
+            auto it = vfs->fileMap.find(fd);
+            if (it == vfs->fileMap.end()) {
+                return MA_DOES_NOT_EXIST;
+            }
+            auto &state = it->second;
 
-            if (state->realFile) {
-                pInfo->sizeInBytes = state->realFileSize;
+            if (state.realFile) {
+                pInfo->sizeInBytes = state.realFileSize;
+            } else if (state.memoryBuffer) {
+                pInfo->sizeInBytes = state.memoryBuffer->size();
             } else {
-                pInfo->sizeInBytes = vfs->bufferMap->GetBuffer(state->key).second;
+                return MA_DOES_NOT_EXIST;
             }
 
             return MA_SUCCESS;
@@ -2205,6 +2275,7 @@ class AudioEngine {
     std::array<int32_t, PSG_VOICES> psgVoices;          // internal sound handles that we will use for Play() and Sound()
     int32_t internalSndRaw;                             // internal sound handle that we will use for the QB64 'handle-less' raw stream
     std::vector<SoundHandle *> soundHandles;            // this is the audio handle list used by the engine and by everything else
+    libqb_mutex *soundHandlesMutex;                     // protects the handle list from concurrent updates
     int32_t lowestFreeHandle;                           // this is the lowest handle then was recently freed. We'll start checking for free handles from here
     BufferMap bufferMap;                                // this is used to keep track of and manage memory used by 'in-memory' sound files
     ma_vfs *vfs;                                        // this is an ma_vfs backed by the BufferMap
@@ -2217,6 +2288,7 @@ class AudioEngine {
 
     /// @brief Initializes some important members.
     AudioEngine() {
+        soundHandlesMutex = libqb_mutex_new();
         isInitialized = false;
         maResourceManagerConfig = {};
         maResourceManager = {};
@@ -2234,6 +2306,7 @@ class AudioEngine {
     /// @brief Safely shuts down the audio engine and releases all allocated resources.
     ~AudioEngine() {
         ShutDown();
+        libqb_mutex_free(soundHandlesMutex);
     }
 
     /// @brief Allocates a sound handle. It will return -1 on error. Handle 0 is used internally for Sound and Play and thus cannot be used by the user.
@@ -2243,6 +2316,7 @@ class AudioEngine {
     /// false. Note that this means the vector will keep growing until the largest handle (index) and never shrink.
     /// @return Returns a non-negative handle if successful.
     int32_t CreateHandle() {
+        libqb_mutex_guard lock(soundHandlesMutex);
         if (!isInitialized) {
             return INVALID_SOUND_HANDLE_INTERNAL; // We cannot return 0 here. Since 0 is a valid internal handle
         }
@@ -2313,7 +2387,7 @@ class AudioEngine {
     /// stopped and freed. Finally the handle is invalidated and put-up for recycling. If the handle being freed is lower than 'lowestFreeHandle' then this
     /// saves the handle to 'lowestFreeHandle'.
     /// @param handle A sound handle.
-    void ReleaseHandle(int32_t handle) {
+    void ReleaseHandleInternal(int32_t handle) {
         if (isInitialized && handle >= 0 && handle < soundHandles.size() && soundHandles[handle]->isUsed) {
             // Free any initialized miniaudio sound
             if (soundHandles[handle]->type == SoundHandle::Type::STATIC) {
@@ -2358,10 +2432,26 @@ class AudioEngine {
         }
     }
 
+    void ReleaseHandle(int32_t handle) {
+        libqb_mutex_guard lock(soundHandlesMutex);
+        ReleaseHandleInternal(handle);
+    }
+
+    void MarkHandleUnused(int32_t handle) {
+        libqb_mutex_guard lock(soundHandlesMutex);
+        soundHandles[handle]->isUsed = false;
+    }
+
+    void MarkHandleForAutoKill(int32_t handle) {
+        libqb_mutex_guard lock(soundHandlesMutex);
+        soundHandles[handle]->autoKill = true;
+    }
+
     /// @brief Checks if a user sound handle is valid.
     /// @param handle A sound handle.
     /// @return Returns true if the handle is valid.
     bool IsHandleValid(int32_t handle) {
+        libqb_mutex_guard lock(soundHandlesMutex);
         return handle > 0 && handle < int32_t(soundHandles.size()) && soundHandles[handle]->isUsed && !soundHandles[handle]->autoKill;
     }
 
@@ -2548,7 +2638,10 @@ class AudioEngine {
         maResourceManager.config.decodedSampleRate = ma_engine_get_sample_rate(&maEngine);
 
         // Set the initialized flag as true
-        isInitialized = true;
+        {
+            libqb_mutex_guard lock(soundHandlesMutex);
+            isInitialized = true;
+        }
 
         audio_log_info("Audio engine initialized @ %uHz", ma_engine_get_sample_rate(&maEngine));
 
@@ -2565,10 +2658,12 @@ class AudioEngine {
             // Shut down all PSGs
             ShutDownPSGs();
 
+            libqb_mutex_guard lock(soundHandlesMutex);
+
             // Free all sound handles here
             for (size_t handle = 0; handle < soundHandles.size(); handle++) {
-                ReleaseHandle(handle);       // let ReleaseHandle do its thing
-                delete soundHandles[handle]; // now free the object created by CreateHandle()
+                ReleaseHandleInternal(handle); // let ReleaseHandleInternal do its thing
+                delete soundHandles[handle];   // now free the object created by CreateHandle()
             }
 
             // Now that all sounds are closed and SoundHandle objects are freed, clear the vector
@@ -2943,7 +3038,7 @@ class AudioEngine {
         return handle;
 
     handle_cleanup:
-        soundHandles[handle]->isUsed = false;
+        MarkHandleUnused(handle);
 
         return AudioEngine::INVALID_SOUND_HANDLE;
     }
@@ -2960,7 +3055,7 @@ class AudioEngine {
             }
 
             // Simply set the autokill flag to true and let the sound loop handle disposing the sound
-            soundHandles[handle]->autoKill = true;
+            MarkHandleForAutoKill(handle);
         }
     }
 
@@ -3007,7 +3102,7 @@ class AudioEngine {
 
             // If the sound failed to copy, then free the handle and return INVALID_SOUND_HANDLE
             if (maResult != MA_SUCCESS) {
-                soundHandles[dst_handle]->isUsed = false;
+                MarkHandleUnused(dst_handle);
                 audio_log_warn("Error %i: failed to copy sound", maResult);
 
                 return AudioEngine::INVALID_SOUND_HANDLE;
@@ -3071,8 +3166,8 @@ class AudioEngine {
                 ma_sound_set_pan(&soundHandles[dst_handle]->maSound, x);                           // Just use stereo panning
             }
 
-            PlaySound(dst_handle);                     // play the sound
-            soundHandles[dst_handle]->autoKill = true; // must be set after PlaySound
+            PlaySound(dst_handle);             // play the sound
+            MarkHandleForAutoKill(dst_handle); // must be set after PlaySound
         }
     }
 
@@ -3101,8 +3196,8 @@ class AudioEngine {
             if (passed & 2)
                 ma_sound_set_volume(&soundHandles[handle]->maSound, volume);
 
-            PlaySound(handle);                     // play the sound
-            soundHandles[handle]->autoKill = true; // must be set after PlaySound
+            PlaySound(handle);             // play the sound
+            MarkHandleForAutoKill(handle); // must be set after PlaySound
         }
     }
 
@@ -3510,7 +3605,7 @@ class AudioEngine {
         maResult = ma_audio_buffer_alloc_and_init(&soundHandles[handle]->maAudioBufferConfig, &soundHandles[handle]->maAudioBuffer);
         if (maResult != MA_SUCCESS) {
             audio_log_warn("Error %i: failed to initialize audio buffer", maResult);
-            soundHandles[handle]->isUsed = false;
+            MarkHandleUnused(handle);
             return AudioEngine::INVALID_SOUND_HANDLE;
         }
 
@@ -3521,7 +3616,7 @@ class AudioEngine {
             audio_log_warn("Error %i: failed to initialize data source", maResult);
             ma_audio_buffer_uninit_and_free(soundHandles[handle]->maAudioBuffer);
             soundHandles[handle]->maAudioBuffer = nullptr;
-            soundHandles[handle]->isUsed = false;
+            MarkHandleUnused(handle);
             return AudioEngine::INVALID_SOUND_HANDLE;
         }
 
@@ -3733,6 +3828,8 @@ class AudioEngine {
 
     /// @brief Used for housekeeping and other stuff. Called by the QB64-PE internally at ~60Hz.
     void Update() {
+        libqb_mutex_guard lock(soundHandlesMutex);
+
         if (isInitialized) {
             // Scan through the whole handle vector to find anything we need to update or close
             for (size_t handle = 0; handle < soundHandles.size(); handle++) {
@@ -3747,7 +3844,7 @@ class AudioEngine {
                             // Note that this means that temporary looping sounds will never close
                             // Well that's on the programmer. Probably they want it that way
                             if (!ma_sound_is_playing(&soundHandles[handle]->maSound))
-                                ReleaseHandle(handle);
+                                ReleaseHandleInternal(handle);
 
                             break;
 
