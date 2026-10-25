@@ -27,11 +27,11 @@ void Sleep(uint32_t milliseconds) {
 }
 #endif
 
-static uint64_t millis_since_midnight() {
+static uint64_t micros_since_midnight() {
     const auto current_time = std::chrono::system_clock::now();
 
-    // Gives us the number of milliseconds past the current second
-    const auto millis_only = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()).count() % 1000;
+    // Gives us the number of microseconds past the current second
+    const auto micros_only = std::chrono::duration_cast<std::chrono::microseconds>(current_time.time_since_epoch()).count() % 1000000;
 
     // Convert to time_t and then hour/min/sec. localtime() takes the current timezone into account for us.
     const auto cur_ttime = std::chrono::system_clock::to_time_t(current_time);
@@ -40,23 +40,28 @@ static uint64_t millis_since_midnight() {
     // Compute current time as number of seconds past midnight
     const auto seconds = local->tm_hour * 3600 + local->tm_min * 60 + local->tm_sec;
 
-    return static_cast<uint64_t>(seconds * 1000) + static_cast<uint64_t>(millis_only);
+    return static_cast<uint64_t>(seconds) * 1000000 + static_cast<uint64_t>(micros_only);
 }
 
 double func_timer(double accuracy, int32_t passed) {
     if (new_error)
         return 0;
 
-    auto result = millis_since_midnight() / 1000.0;
+    if (passed && accuracy <= 0.0) {
+        error(5);
+        return 0;
+    }
+
+    const auto micros = micros_since_midnight();
+
+    // An accuracy finer than 1 ms (e.g. TIMER(.000001)) gets the microsecond count.
+    // Otherwise TIMER keeps using whole milliseconds, exactly as before.
+    auto result = (passed && accuracy < 0.001) ? micros / 1000000.0 : (micros / 1000) / 1000.0;
 
     // Default accuracy = 18.2 Hz
     if (!passed) {
         accuracy = 18.2;
     } else {
-        if (accuracy <= 0.0) {
-            error(5);
-            return 0;
-        }
         accuracy = 1.0 / accuracy;
     }
 
