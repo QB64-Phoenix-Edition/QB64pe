@@ -82,6 +82,7 @@ SUB ExportCodeAs (docFormat$)
         UpdateIdeInfo
         '----------
         curr% = ASC(sTxt$, sPos&) '=> current char's ASCII value
+        reParse:
         SELECT CASE curr% '       '=> general parsing and handling
             CASE 10, 13 'line feed
                 IF NOT lb% THEN
@@ -138,6 +139,7 @@ SUB ExportCodeAs (docFormat$)
                 nt% = -1
             CASE 34 '"
                 IF NOT (co% OR qu%) THEN
+                    IF me% OR kw% THEN curr% = 32: sPos& = sPos& - 1: GOTO reParse
                     qu% = -1: what$ = "qu": GOSUB OpenText
                 ELSEIF qu% THEN
                     post% = -1: what$ = "qu": GOSUB CloseText: qu% = 0
