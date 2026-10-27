@@ -169,6 +169,13 @@ class AudioEngine {
         }
 
         ~VFS() {
+            for (auto &pair : fileMap) {
+                if (pair.second.realFile) {
+                    std::fclose(pair.second.realFile);
+                }
+            }
+            fileMap.clear();
+
             libqb_mutex_free(m);
         }
 
@@ -2440,6 +2447,11 @@ class AudioEngine {
     void MarkHandleUnused(int32_t handle) {
         libqb_mutex_guard lock(soundHandlesMutex);
         soundHandles[handle]->isUsed = false;
+        soundHandles[handle]->type = SoundHandle::Type::NONE;
+
+        if (handle < lowestFreeHandle) {
+            lowestFreeHandle = handle;
+        }
     }
 
     void MarkHandleForAutoKill(int32_t handle) {
@@ -2971,15 +2983,16 @@ class AudioEngine {
         // Load the file from file or memory based on the requirements string
         if (fromMemory) {
             // Make a unique key and save it
-            soundHandles[handle]->bufferKey =
-                std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));
+            auto key = std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(qbsFileName->chr), qbsFileName->len));
 
             // Make a copy of the buffer
-            if (!bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, soundHandles[handle]->bufferKey)) {
+            if (!bufferMap.AddBuffer(qbsFileName->chr, qbsFileName->len, key)) {
                 audio_log_warn("Failed to add buffer to buffer map");
 
                 goto handle_cleanup;
             }
+
+            soundHandles[handle]->bufferKey = key;
 
             // Convert the buffer key to a string
             auto fname = std::to_string(soundHandles[handle]->bufferKey);
@@ -3008,15 +3021,16 @@ class AudioEngine {
                 audio_log_trace("Sound length: %zu", contents.size());
 
                 // Make a unique key and save it
-                soundHandles[handle]->bufferKey =
-                    std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));
+                auto key = std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(contents.data()), contents.size()));
 
                 // Make a copy of the buffer
-                if (!bufferMap.AddBuffer(std::move(contents), soundHandles[handle]->bufferKey)) {
+                if (!bufferMap.AddBuffer(std::move(contents), key)) {
                     audio_log_warn("Failed to add buffer to buffer map");
 
                     goto handle_cleanup;
                 }
+
+                soundHandles[handle]->bufferKey = key;
 
                 // Convert the buffer key to a string
                 auto fname = std::to_string(soundHandles[handle]->bufferKey);
@@ -3038,6 +3052,11 @@ class AudioEngine {
         return handle;
 
     handle_cleanup:
+        if (soundHandles[handle]->bufferKey) {
+            bufferMap.ReleaseBuffer(soundHandles[handle]->bufferKey);
+            soundHandles[handle]->bufferKey = 0;
+        }
+
         MarkHandleUnused(handle);
 
         return AudioEngine::INVALID_SOUND_HANDLE;
