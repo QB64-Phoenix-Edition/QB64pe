@@ -34,7 +34,7 @@ int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
 static int32_t display_x = Window_DefaultWidth;
 static int32_t display_y = Window_DefaultHeight;
-static bool resize_pending = true;
+static bool resize_pending = false;
 static int32_t resize_snapback_x = Window_DefaultWidth;
 static int32_t resize_snapback_y = Window_DefaultHeight;
 static bool resize_event = false;
@@ -94,13 +94,14 @@ static void sync_resize_auto_aspect_constraint() {
 }
 
 void GLUT_RESIZE_FUNC(int width, int height) {
+    resize_pending = false;
+
     if ((display_x != width) || (display_y != height)) {
         resize_event_x = width;
         resize_event_y = height;
         resize_event = true;
         display_x = width;
         display_y = height;
-        resize_pending = false;
         os_resize_event = 1;
         sync_resize_auto_aspect_constraint();
         set_view(VIEW_MODE__UNKNOWN);
@@ -148,19 +149,12 @@ void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
             full_screen = 0;
             full_screen_set = -1;
         } else {
-            if (resize_pending && full_screen == 0) {
-                if (display_x == target_window_width && display_y == target_window_height) {
-                    resize_pending = false;
-                }
+            if (full_screen == 0) {
+                GLUTEmu_WindowFullScreen(true);
             }
-
-            if (!resize_pending) {
-                if (full_screen == 0) {
-                    GLUTEmu_WindowFullScreen(true);
-                }
-                full_screen = full_screen_set;
-                full_screen_set = -1;
-            }
+            full_screen = full_screen_set;
+            full_screen_set = -1;
+            resize_pending = false;
         }
     }
 }
