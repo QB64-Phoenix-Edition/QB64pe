@@ -505,7 +505,9 @@ $(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
 # Clean all files out of ./internal/temp except for temp.bin
 # Only glob temp for an actual clean; the := below expanded it on every build (see the qbx.o note).
 # On Windows mingw32-make also crashes expanding a temp dir that large inside clean, so there
-# the temp files are deleted by one del /Q in the recipe instead of being listed here.
+# the temp files are deleted by one del /Q in the recipe instead of being listed here. temp.bin
+# stays in place (other instances use it as the in-use marker): it is made read-only for the
+# del, which skips read-only files, then made writable again.
 ifneq ($(filter clean,$(MAKECMDGOALS)),)
 ifneq ($(OS),win)
 CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
@@ -516,9 +518,9 @@ endif
 clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
 ifeq ($(OS),win)
-	@if exist $(PATH_INTERNAL_TEMP)\temp.bin move /Y $(PATH_INTERNAL_TEMP)\temp.bin $(PATH_INTERNAL)\temp$(TEMP_ID).bin.keep >NUL
-	-@del /Q $(PATH_INTERNAL_TEMP)\*
-	@if exist $(PATH_INTERNAL)\temp$(TEMP_ID).bin.keep move /Y $(PATH_INTERNAL)\temp$(TEMP_ID).bin.keep $(PATH_INTERNAL_TEMP)\temp.bin >NUL
+	-@attrib +R $(PATH_INTERNAL_TEMP)\temp.bin >NUL 2>&1
+	-@del /Q $(PATH_INTERNAL_TEMP)\* >NUL 2>&1
+	-@attrib -R $(PATH_INTERNAL_TEMP)\temp.bin >NUL 2>&1
 endif
 
 ifeq ($(GENERATE_LICENSE),y)
