@@ -29,7 +29,7 @@ int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
 static int32_t display_x = Window_DefaultWidth;
 static int32_t display_y = Window_DefaultHeight;
-static bool resize_pending = true;
+static bool resize_pending = false;
 static int32_t resize_snapback_x = Window_DefaultWidth;
 static int32_t resize_snapback_y = Window_DefaultHeight;
 static bool resize_event = false;
@@ -40,13 +40,14 @@ static int32_t display_required_y = Window_DefaultHeight;
 static bool acceptFileDrop = false;
 
 void GLUT_RESIZE_FUNC(int width, int height) {
+    resize_pending = false;
+
     if ((display_x != width) || (display_y != height)) {
         resize_event_x = width;
         resize_event_y = height;
         resize_event = true;
         display_x = width;
         display_y = height;
-        resize_pending = false;
         os_resize_event = 1;
     }
 }
