@@ -473,11 +473,11 @@ class AudioEngine {
             size_t cursor;                    // the read cursor (in frames) in the stream
         } buffer[2];                          // we need two of these to do a proper ping-pong
 
-        Buffer *consumer;        // this is what the miniaudio thread will use to pull data from
-        Buffer *producer;        // this is what the main thread will use to push data to
-        libqb_mutex *m;          // we'll use a mutex to give exclusive access to resources used by both threads
-        bool stop;               // set this to true to stop supply of samples completely (including silent samples)
-        std::atomic_bool pause_; // set this to true to pause the stream (only silence samples will be sent to miniaudio)
+        Buffer *consumer;               // this is what the miniaudio thread will use to pull data from
+        Buffer *producer;               // this is what the main thread will use to push data to
+        libqb_mutex *m;                 // we'll use a mutex to give exclusive access to resources used by both threads
+        std::atomic_bool stop{false};   // set this to true to stop supply of samples completely (including silent samples)
+        std::atomic_bool pause_{false}; // set this to true to pause the stream (only silence samples will be sent to miniaudio)
 
         // Delete default, copy and move constructors and assignments.
         RawStream() = delete;
@@ -493,7 +493,7 @@ class AudioEngine {
             buffer[0].cursor = buffer[1].cursor = 0; // reset the cursors
             consumer = &buffer[0];                   // set default consumer
             producer = &buffer[1];                   // set default producer
-            stop = false;                            // we will send silent samples to keep the playback going by default
+            Stop(false);                             // we will send silent samples to keep the playback going by default
             Pause(false);                            // the steam will not be paused by default
             m = libqb_mutex_new();
         }
@@ -507,6 +507,18 @@ class AudioEngine {
         /// @param state true to pause, false to resume.
         void Pause(bool state) {
             pause_.store(state, std::memory_order_relaxed);
+        }
+
+        /// @brief Signals the stream to stop supply of samples.
+        /// @param state true to stop, false to resume.
+        void Stop(bool state = true) {
+            stop.store(state, std::memory_order_relaxed);
+        }
+
+        /// @brief Checks if the stream was signalled to stop.
+        /// @return true if stopped, false otherwise.
+        bool IsStopped() const {
+            return stop.load(std::memory_order_relaxed);
         }
 
         /// @brief Pushes a sample frame at the end of the queue. This is mutex protected and called by the main thread.
@@ -595,6 +607,8 @@ class AudioEngine {
                 std::fill(maBuffer, maBuffer + frameCount, SampleFrameF32{SILENCE_SAMPLE_F32, SILENCE_SAMPLE_F32});
                 sampleFramesRead = frameCount;
             } else {
+                libqb_mutex_guard lock(pRawStream->m);
+
                 sampleFramesRead = pRawStream->consumer->data.size() - pRawStream->consumer->cursor; // total amount of samples we need to send to miniaudio
 
                 // Swap buffers if we do not have anything left to play
@@ -614,7 +628,7 @@ class AudioEngine {
 
                     pRawStream->consumer->cursor += sampleFramesRead; // increment the read cursor
                 } else {
-                    if (pRawStream->stop) {
+                    if (pRawStream->IsStopped()) {
                         // End of stream was signalled
                         result = MA_AT_END;
                     } else {
@@ -2556,7 +2570,7 @@ class AudioEngine {
         if (soundHandles[psgVoices[0]]->psg) {
             soundHandles[psgVoices[0]]->psg->Pause(false);       // unpause the PSG
             soundHandles[psgVoices[0]]->rawStream->Pause(false); // unpause the RawStream
-            soundHandles[psgVoices[0]]->rawStream->stop = true;  // signal miniaudio thread that we are going to end playback
+            soundHandles[psgVoices[0]]->rawStream->Stop(true);   // signal miniaudio thread that we are going to end playback
         }
 
         // Release the sound handles
@@ -3070,7 +3084,7 @@ class AudioEngine {
         if (isInitialized && IsHandleValid(handle)) {
             if (soundHandles[handle]->rawStream) {
                 soundHandles[handle]->rawStream->Pause(false); // unpause the stream
-                soundHandles[handle]->rawStream->stop = true;  // signal miniaudio thread that we are going to end playback
+                soundHandles[handle]->rawStream->Stop(true);   // signal miniaudio thread that we are going to end playback
             }
 
             // Simply set the autokill flag to true and let the sound loop handle disposing the sound
