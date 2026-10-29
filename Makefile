@@ -283,7 +283,11 @@ endif
 QB_QBX_SRC := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).cpp
 QB_QBX_OBJ := $(patsubst %.cpp,%.o,$(QB_QBX_SRC))
 
-$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/*.txt)
+# Depend on main.txt only. 4.7.0 writes ~4 temp files per SUB/FUNCTION, so expanding
+# temp/*.txt here put ~80k paths on one line for a 20k-routine program and crashed
+# mingw32-make before it ran anything. qb64pe deletes qbx.o before every build anyway, and
+# main.txt is the assembled file that changes whenever any generated part does.
+$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/main.txt)
 
 EXE_OBJS += $(QB_QBX_OBJ)
 
@@ -499,11 +503,25 @@ $(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 # Clean all files out of ./internal/temp except for temp.bin
+# Only glob temp for an actual clean; the := below expanded it on every build (see the qbx.o note).
+# On Windows mingw32-make also crashes expanding a temp dir that large inside clean, so there
+# the temp files are deleted by one del /Q in the recipe instead of being listed here. temp.bin
+# stays in place (other instances use it as the in-use marker): it is made read-only for the
+# del, which skips read-only files, then made writable again.
+ifneq ($(filter clean,$(MAKECMDGOALS)),)
+ifneq ($(OS),win)
 CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
 CLEAN_LIST := $(filter-out $(PATH_INTERNAL_TEMP)/temp.bin,$(CLEAN_LIST))
+endif
+endif
 
 clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
+ifeq ($(OS),win)
+	-@attrib +R $(PATH_INTERNAL_TEMP)\temp.bin >NUL 2>&1
+	-@del /Q $(PATH_INTERNAL_TEMP)\* >NUL 2>&1
+	-@attrib -R $(PATH_INTERNAL_TEMP)\temp.bin >NUL 2>&1
+endif
 
 ifeq ($(GENERATE_LICENSE),y)
 LICENSE_FILES := $(patsubst %,licenses/license_%.txt,$(LICENSE_IN_USE))
