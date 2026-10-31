@@ -609,6 +609,21 @@ class GLUTEmu {
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::CapsLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, instance->keyboardModifiers);
+
+#ifdef QB64_MACOSX
+                            // GLFW_HACK: macOS only reports cursor enter/leave while the window is focused. If the cursor came back over the
+                            // window while another window had focus, no enter event arrives and mouse movement is ignored. Re-sync the hover
+                            // state here.
+                            if (instance->mouseNotifyFunction) {
+                                double x, y;
+                                glfwGetCursorPos(win, &x, &y);
+                                auto isHovered = (glfwGetWindowAttrib(win, GLFW_HOVERED) == GLFW_TRUE) ||
+                                                 (x >= 0.0 && x < instance->windowWidth && y >= 0.0 && y < instance->windowHeight);
+                                libqb_log_trace("Firing mouse notify function on focus with current cursor position (%f, %f) and hover state %s", x, y,
+                                                isHovered ? "true" : "false");
+                                instance->mouseNotifyFunction(x, y, isHovered);
+                            }
+#endif
                         }
 
                         if (instance->windowFocusedFunction) {
@@ -1450,15 +1465,13 @@ class GLUTEmu {
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
 
 #ifdef QB64_MACOSX
-                // GLFW_HACK: The position check is needed on macOS because macOS does not report the hover state on startup
-                static bool isFirstMousePositionEvent = true;
-                if (isFirstMousePositionEvent) {
-                    if (instance->mouseNotifyFunction && xPos >= 0.0 && xPos < instance->windowWidth && yPos >= 0.0 && yPos < instance->windowHeight) {
-                        libqb_log_trace("Firing mouse notify function on first mouse position event with current cursor position (%f, %f) and hover state true",
-                                        xPos, yPos);
-                        instance->mouseNotifyFunction(xPos, yPos, true);
-                        isFirstMousePositionEvent = false;
-                    }
+                // GLFW_HACK: macOS misses "cursor entered" events: on startup, when the cursor moved in while another
+                // window had focus, and when the window grows or moves under a cursor that had left it (for example,
+                // a program resizing its own window). Without that event, mouse movement inside the window is ignored.
+                // So whenever the cursor moves inside the window, report it as inside.
+                if (instance->mouseNotifyFunction && xPos >= 0.0 && xPos < instance->windowWidth && yPos >= 0.0 && yPos < instance->windowHeight &&
+                    glfwGetWindowAttrib(win, GLFW_HOVERED) == GLFW_TRUE) {
+                    instance->mouseNotifyFunction(xPos, yPos, true);
                 }
 #endif
 
