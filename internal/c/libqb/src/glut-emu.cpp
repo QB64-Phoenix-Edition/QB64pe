@@ -609,6 +609,21 @@ class GLUTEmu {
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::CapsLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, instance->keyboardModifiers);
+
+#ifdef QB64_MACOSX
+                            // GLFW_HACK: macOS only reports cursor enter/leave while the window is focused. If the cursor came back over the
+                            // window while another window had focus, no enter event arrives and mouse movement is ignored. Re-sync the hover
+                            // state here.
+                            if (instance->mouseNotifyFunction) {
+                                double x, y;
+                                glfwGetCursorPos(win, &x, &y);
+                                auto isHovered = (glfwGetWindowAttrib(win, GLFW_HOVERED) == GLFW_TRUE) ||
+                                                 (x >= 0.0 && x < instance->windowWidth && y >= 0.0 && y < instance->windowHeight);
+                                libqb_log_trace("Firing mouse notify function on focus with current cursor position (%f, %f) and hover state %s", x, y,
+                                                isHovered ? "true" : "false");
+                                instance->mouseNotifyFunction(x, y, isHovered);
+                            }
+#endif
                         }
 
                         if (instance->windowFocusedFunction) {
