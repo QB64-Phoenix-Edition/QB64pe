@@ -19290,7 +19290,11 @@ FUNCTION iderecentbox$
         f$ = ReadBufLine$(bh&)
         IF LEN(f$) + 6 > dialogWidth THEN dialogWidth = LEN(f$) + 6
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
-        l$ = l$ + sep + f$
+        IF _FILEEXISTS(f$) THEN
+            l$ = l$ + sep + f$
+        ELSE
+            l$ = l$ + sep + CHR$(16) + CHR$(2) + f$ 'grey out missing files
+        END IF
     WEND
     DisposeBuf bh&
     REDIM _PRESERVE tempList$(1 TO numFiles%)
@@ -19441,6 +19445,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             menu$(m, i) = f$
             IF r% <= maxFiles% THEN
                 IdeRecentLink(r%, 1) = f$
+                IF NOT _FILEEXISTS(IdeRecentLink(r%, 2)) THEN menu$(m, i) = "~" + f$ 'grey out (and disable) missing files
                 cut% = LEN(IdeRecentLink(r%, 2)): f$ = "Open '"
                 '2 = left&right margin / 7 = Open '' / 3 = dots (char 250)
                 IF cut% > idewx - 2 - 7 THEN cut% = idewx - 2 - 7 - 3: f$ = f$ + STRING$(3, 250)
