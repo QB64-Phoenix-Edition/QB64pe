@@ -629,6 +629,113 @@ int32_t func__getattr(qbs *path) {
     return attributes;
 }
 
+/// @brief Returns the date and time when a file was last modified.
+/// @param path The file path to get the modification date/time for.
+/// @return A qbs containing the date/time in format "mm-dd-yyyy hh:mm:ss", or empty string on error.
+qbs *func__filedatetime(qbs *path) {
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return qbs_new(0, 1);
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto ftime = std::filesystem::last_write_time(fsPath, ec);
+
+    if (ec) {
+        if (ec == std::errc::no_such_file_or_directory) {
+            error(QB_ERROR_FILE_NOT_FOUND);
+        } else if (ec == std::errc::permission_denied) {
+            error(QB_ERROR_PERMISSION_DENIED);
+        } else if (ec == std::errc::not_a_directory) {
+            error(QB_ERROR_PATH_NOT_FOUND);
+        } else {
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        }
+
+        return qbs_new(0, 1);
+    }
+
+    auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - std::filesystem::file_time_type::clock::now() +
+                                                                                  std::chrono::system_clock::now());
+
+    auto cftime = std::chrono::system_clock::to_time_t(sctp);
+
+    struct tm localTime{};
+
+#ifdef QB64_WINDOWS
+    if (localtime_s(&localTime, &cftime) != 0) {
+        error(QB_ERROR_INTERNAL_ERROR);
+        return qbs_new(0, 1);
+    }
+#else
+    if (localtime_r(&cftime, &localTime) == nullptr) {
+        error(QB_ERROR_INTERNAL_ERROR);
+        return qbs_new(0, 1);
+    }
+#endif
+
+    // "mm-dd-yyyy hh:mm:ss"
+    auto str = qbs_new(19, 1);
+
+    str->chr[2] = '-';
+    str->chr[5] = '-';
+    str->chr[10] = ' ';
+    str->chr[13] = ':';
+    str->chr[16] = ':';
+
+    int32_t x;
+    int32_t i;
+
+    // Month
+    x = localTime.tm_mon + 1;
+    i = 0;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Day
+    x = localTime.tm_mday;
+    i = 3;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Year
+    x = localTime.tm_year + 1900;
+    i = 6;
+    str->chr[i] = (x / 1000) + '0';
+    str->chr[i + 1] = ((x / 100) % 10) + '0';
+    str->chr[i + 2] = ((x / 10) % 10) + '0';
+    str->chr[i + 3] = (x % 10) + '0';
+
+    // Hour
+    x = localTime.tm_hour;
+    i = 11;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Minute
+    x = localTime.tm_min;
+    i = 14;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Second
+    x = localTime.tm_sec;
+    i = 17;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    return str;
+}
+
 /// @brief Saves the current directory as the startup directory.
 void FS_SaveStartDirectory() {
     if (!g_startDir) {

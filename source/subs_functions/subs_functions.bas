@@ -415,6 +415,17 @@ SUB reginternal
     id.hr_syntax = "_GETATTR(pathName$)"
     regid
 
+    clearid
+    id.n = "_FileDateTime"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__filedatetime"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_FILEDATETIME$(fileName$)"
+    regid
+
     'QB64 DEVICE interface
 
     clearid
