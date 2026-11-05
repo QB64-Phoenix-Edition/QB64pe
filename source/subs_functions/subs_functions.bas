@@ -395,6 +395,16 @@ SUB reginternal
     id.hr_syntax = "_DIREXISTS(path$)"
     regid
 
+    clearid
+    id.n = "_FileLen"
+    id.subfunc = 1
+    id.callname = "func__filelen"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = UINTEGER64TYPE - ISPOINTER
+    id.hr_syntax = "_FILELEN(fileName$)"
+    regid
+
     'QB64 DEVICE interface
 
     clearid

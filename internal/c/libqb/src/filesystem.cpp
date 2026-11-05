@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <cstring>
 #include <dirent.h>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <sys/stat.h>
@@ -465,6 +466,57 @@ int32_t func__fileexists(qbs *path) {
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_FileExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
+}
+
+/// @brief Returns the size of a file in bytes.
+/// @param path The file path to get the size of.
+/// @return The file size in bytes, or 0 on error.
+uint64_t func__filelen(qbs *path) {
+    if (is_error_pending()) {
+        return 0;
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return 0;
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto size = std::filesystem::file_size(fsPath, ec);
+
+    if (!ec) {
+        return static_cast<uint64_t>(size);
+    }
+
+    switch (static_cast<std::errc>(ec.value())) {
+    case std::errc::no_such_file_or_directory:
+        error(QB_ERROR_FILE_NOT_FOUND);
+        break;
+
+    case std::errc::permission_denied:
+        error(QB_ERROR_PERMISSION_DENIED);
+        break;
+
+    case std::errc::not_a_directory:
+        error(QB_ERROR_PATH_NOT_FOUND);
+        break;
+
+    case std::errc::too_many_files_open:
+    case std::errc::too_many_files_open_in_system:
+        error(QB_ERROR_TOO_MANY_FILES);
+        break;
+
+    default:
+        error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        break;
+    }
+
+    return 0;
 }
 
 /// @brief Saves the current directory as the startup directory.
