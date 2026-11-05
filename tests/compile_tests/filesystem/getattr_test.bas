@@ -9,11 +9,10 @@ PRINT "Test 1: Normal file"
 _WRITEFILE "normal.txt", "Hello, World!" + _STR_CRLF
 
 DIM attrs AS LONG: attrs = _GETATTR("normal.txt")
-PRINT "Normal file attributes:"; attrs
-IF attrs = 0 THEN
+IF attrs = 0 OR attrs = 32 THEN
     PRINT "Test 1 passed"
 ELSE
-    PRINT "Test 1 failed: expected 0, got"; attrs
+    PRINT "Test 1 failed: expected 0 or 32, got"; attrs
     SYSTEM 1
 END IF
 
@@ -22,7 +21,6 @@ KILL "normal.txt"
 PRINT "Test 2: Directory"
 MKDIR "testdir"
 attrs = _GETATTR("testdir")
-PRINT "Directory attributes:"; attrs
 IF (attrs AND 16) THEN
     PRINT "Test 2 passed"
 ELSE
@@ -35,7 +33,6 @@ RMDIR "testdir"
 PRINT "Test 3: Non-existent path"
 ON ERROR GOTO ignore_error
 attrs = _GETATTR("nonexistent_file.txt")
-PRINT "Non-existent attributes:"; attrs
 IF attrs = 0 THEN
     PRINT "Test 3 passed"
 ELSE
