@@ -405,6 +405,16 @@ SUB reginternal
     id.hr_syntax = "_FILELEN(fileName$)"
     regid
 
+    clearid
+    id.n = "_GetAttr"
+    id.subfunc = 1
+    id.callname = "func__getattr"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_GETATTR(pathName$)"
+    regid
+
     'QB64 DEVICE interface
 
     clearid

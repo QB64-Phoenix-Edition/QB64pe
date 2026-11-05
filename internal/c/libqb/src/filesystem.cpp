@@ -519,6 +519,116 @@ uint64_t func__filelen(qbs *path) {
     return 0;
 }
 
+/// @brief Returns the attributes of a file or directory as a bitmask.
+/// @param path The file/directory path to get attributes for.
+/// @return Attribute bitmask (sum of attribute values), or 0 on error.
+/// Attribute values (VBA-compatible):
+/// 0  = Normal
+/// 1  = Read-only
+/// 2  = Hidden
+/// 4  = System
+/// 16 = Directory
+/// 32 = Archive
+/// 64 = Symlink / Junction
+int32_t func__getattr(qbs *path) {
+    if (is_error_pending()) {
+        return 0;
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return 0;
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto status = std::filesystem::status(fsPath, ec);
+
+    if (ec) {
+        if (ec == std::errc::no_such_file_or_directory) {
+            error(QB_ERROR_FILE_NOT_FOUND);
+        } else if (ec == std::errc::permission_denied) {
+            error(QB_ERROR_PERMISSION_DENIED);
+        } else if (ec == std::errc::not_a_directory) {
+            error(QB_ERROR_PATH_NOT_FOUND);
+        } else {
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        }
+
+        return 0;
+    }
+
+    int32_t attributes = 0;
+
+#ifdef QB64_WINDOWS
+
+    DWORD winAttrs = GetFileAttributesA(pathName.c_str());
+
+    if (winAttrs == INVALID_FILE_ATTRIBUTES) {
+        error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        return 0;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_READONLY) {
+        attributes |= 1;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_HIDDEN) {
+        attributes |= 2;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_SYSTEM) {
+        attributes |= 4;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_DIRECTORY) {
+        attributes |= 16;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_ARCHIVE) {
+        attributes |= 32;
+    }
+
+    // Symlink, junction, mount point, etc.
+    if (winAttrs & FILE_ATTRIBUTE_REPARSE_POINT) {
+        attributes |= 64;
+    }
+
+#else
+
+    if (std::filesystem::is_directory(status)) {
+        attributes |= 16;
+    }
+
+    auto perms = status.permissions();
+
+    if ((perms & std::filesystem::perms::owner_write) == std::filesystem::perms::none) {
+        attributes |= 1;
+    }
+
+    // Unix hidden-file convention
+    std::string filename = fsPath.filename().string();
+
+    if (!filename.empty() && filename[0] == '.') {
+        attributes |= 2;
+    }
+
+    // Symbolic link detection
+    auto symlinkStatus = std::filesystem::symlink_status(fsPath, ec);
+
+    if (!ec && std::filesystem::is_symlink(symlinkStatus)) {
+        attributes |= 64;
+    }
+
+#endif
+
+    return attributes;
+}
+
 /// @brief Saves the current directory as the startup directory.
 void FS_SaveStartDirectory() {
     if (!g_startDir) {

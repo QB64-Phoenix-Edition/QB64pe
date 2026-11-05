@@ -16,6 +16,7 @@ qbs *func__dir(qbs *qbsContext);
 int32_t func__direxists(qbs *path);
 int32_t func__fileexists(qbs *path);
 uint64_t func__filelen(qbs *path);
+int32_t func__getattr(qbs *path);
 qbs *func__startdir();
 void sub_chdir(qbs *str);
 qbs *func__files(qbs *qbsFileSpec, int32_t passed);

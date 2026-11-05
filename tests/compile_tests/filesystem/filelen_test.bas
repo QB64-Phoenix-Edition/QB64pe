@@ -6,11 +6,9 @@ ON ERROR GOTO test_failed
 CHDIR _STARTDIR$
 
 PRINT "Test 1: Basic file size"
-OPEN "testfile.txt" FOR OUTPUT AS #1
-PRINT #1, "Hello, World!"
-CLOSE #1
+_WRITEFILE "testfile.txt", "Hello, World!" + _STR_CRLF
 
-DIM fileSize AS _INTEGER64: fileSize = _FILELEN("testfile.txt")
+DIM fileSize AS _UNSIGNED _INTEGER64: fileSize = _FILELEN("testfile.txt")
 PRINT "File size:"; fileSize; "bytes"
 IF fileSize = 15 THEN
     PRINT "Test 1 passed"
@@ -23,7 +21,7 @@ KILL "testfile.txt"
 
 PRINT "Test 2: Non-existent file"
 ON ERROR GOTO ignore_error
-DIM missingSize AS _INTEGER64: missingSize = _FILELEN("nonexistent_file.txt")
+DIM missingSize AS _UNSIGNED _INTEGER64: missingSize = _FILELEN("nonexistent_file.txt")
 PRINT "Non-existent file size:"; missingSize
 IF missingSize = 0 THEN
     PRINT "Test 2 passed"
@@ -40,10 +38,9 @@ RESUME NEXT
 continue_test:
 
 PRINT "Test 3: Empty file"
-OPEN "empty.txt" FOR OUTPUT AS #1
-CLOSE #1
+_WRITEFILE "empty.txt", ""
 
-DIM emptySize AS _INTEGER64: emptySize = _FILELEN("empty.txt")
+DIM emptySize AS _UNSIGNED _INTEGER64: emptySize = _FILELEN("empty.txt")
 PRINT "Empty file size:"; emptySize; "bytes"
 IF emptySize = 0 THEN
     PRINT "Test 3 passed"
@@ -55,13 +52,13 @@ END IF
 KILL "empty.txt"
 
 PRINT "Test 4: Large file"
-OPEN "large.txt" FOR OUTPUT AS #1
+DIM largeContent AS STRING: largeContent = ""
 DIM i AS LONG: FOR i = 1 TO 1000
-    PRINT #1, "This is a test line with some data"
+    largeContent = largeContent + "This is a test line with some data" + _STR_CRLF
 NEXT i
-CLOSE #1
+_WRITEFILE "large.txt", largeContent
 
-DIM largeSize AS _INTEGER64: largeSize = _FILELEN("large.txt")
+DIM largeSize AS _UNSIGNED _INTEGER64: largeSize = _FILELEN("large.txt")
 PRINT "Large file size:"; largeSize; "bytes"
 IF largeSize > 0 THEN
     PRINT "Test 4 passed"
