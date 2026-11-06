@@ -395,6 +395,37 @@ SUB reginternal
     id.hr_syntax = "_DIREXISTS(path$)"
     regid
 
+    clearid
+    id.n = "_FileLen"
+    id.subfunc = 1
+    id.callname = "func__filelen"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = UINTEGER64TYPE - ISPOINTER
+    id.hr_syntax = "_FILELEN(fileName$)"
+    regid
+
+    clearid
+    id.n = "_GetAttr"
+    id.subfunc = 1
+    id.callname = "func__getattr"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = LONGTYPE - ISPOINTER
+    id.hr_syntax = "_GETATTR(pathName$)"
+    regid
+
+    clearid
+    id.n = "_FileDateTime"
+    id.musthave = "$"
+    id.subfunc = 1
+    id.callname = "func__filedatetime"
+    id.args = 1
+    id.arg = MKL$(STRINGTYPE - ISPOINTER)
+    id.ret = STRINGTYPE - ISPOINTER
+    id.hr_syntax = "_FILEDATETIME$(fileName$)"
+    regid
+
     'QB64 DEVICE interface
 
     clearid
