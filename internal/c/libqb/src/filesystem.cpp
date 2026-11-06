@@ -493,27 +493,16 @@ uint64_t func__filelen(qbs *path) {
         return static_cast<uint64_t>(size);
     }
 
-    switch (static_cast<std::errc>(ec.value())) {
-    case std::errc::no_such_file_or_directory:
+    if (ec == std::errc::no_such_file_or_directory) {
         error(QB_ERROR_FILE_NOT_FOUND);
-        break;
-
-    case std::errc::permission_denied:
+    } else if (ec == std::errc::permission_denied) {
         error(QB_ERROR_PERMISSION_DENIED);
-        break;
-
-    case std::errc::not_a_directory:
+    } else if (ec == std::errc::not_a_directory) {
         error(QB_ERROR_PATH_NOT_FOUND);
-        break;
-
-    case std::errc::too_many_files_open:
-    case std::errc::too_many_files_open_in_system:
+    } else if (ec == std::errc::too_many_files_open || ec == std::errc::too_many_files_open_in_system) {
         error(QB_ERROR_TOO_MANY_FILES);
-        break;
-
-    default:
+    } else {
         error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
-        break;
     }
 
     return 0;
