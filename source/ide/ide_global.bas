@@ -60,7 +60,9 @@ DIM SHARED K$ 'INKEY$ equivalent of _KEYHIT's return (or "")
 DIM SHARED KSTATECHANGED
 DIM SHARED KSHIFT
 DIM SHARED KCTRL 'the control key
-DIM SHARED KCONTROL 'PC-CTRL or MAC-APPLE KEY
+DIM SHARED KCMD 'the Command key (macOS only)
+DIM SHARED KCONTROL 'shortcut modifier: Ctrl, or Ctrl/Cmd on macOS
+CONST IDE_KEY_LCMD = 100311, IDE_KEY_RCMD = 100312 'macOS Command keys (reported as the Super keys)
 DIM SHARED KALT, KOALT, KALTPRESS, KALTRELEASE
 
 DIM SHARED block_chr(255) AS INTEGER

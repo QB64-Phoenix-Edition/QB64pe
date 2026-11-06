@@ -898,7 +898,7 @@ FUNCTION ide2 (ignore)
                     COLOR 11, 1
                     msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
                     IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-                    msg$ = msg$ + " - click here or Ctrl+W to view)"
+                    msg$ = msg$ + ShortcutLabel$(" - click here or Ctrl+W to view)")
                     _PRINTSTRING (4, idewy - 3), msg$
                     statusarealink = 4
                 END IF
@@ -1102,7 +1102,7 @@ FUNCTION ide2 (ignore)
                     printWrapStatus x, y, x, a$
 
                     IF l <> 0 AND idecy <> l THEN
-                        a$ = " on line" + STR$(l) + " (click here or Ctrl+Shift+G to jump there)"
+                        a$ = " on line" + STR$(l) + ShortcutLabel$(" (click here or Ctrl+Shift+G to jump there)")
                         COLOR 11, 1
                         printWrapStatus POS(0), CSRLIN, 2, a$
                         statusarealink = 2
@@ -1576,7 +1576,7 @@ FUNCTION ide2 (ignore)
 
         IF KALT THEN 'alt held
 
-            IF NOT idealthighlight AND KALTPRESS = -1 AND NOT KCTRL THEN
+            IF NOT idealthighlight AND KALTPRESS = -1 AND NOT KCONTROL THEN
                 'highlist first letter of each menu item
                 idealthighlight = _TRUE
                 LOCATE , , 0: COLOR 15, 7: x = 4
@@ -1711,7 +1711,7 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF KB = _KEY_F10 THEN 'clear all breakpoints
-            IF KCTRL THEN
+            IF KCONTROL THEN
                 GOTO unskipAllLines
             ELSE
                 GOTO clearAllBreakpoints
@@ -1937,20 +1937,20 @@ FUNCTION ide2 (ignore)
             END IF
         NEXT
 
-        IF KCTRL AND UCASE$(K$) = "F" THEN
+        IF KCONTROL AND UCASE$(K$) = "F" THEN
             K$ = ""
             IdeSystem = 2
             IF LEN(idefindtext) THEN idesystem2.issel = -1: idesystem2.sx1 = 0: idesystem2.v1 = LEN(idefindtext)
             GOTO specialchar
         END IF
 
-        IF KCTRL AND UCASE$(K$) = "K" THEN
+        IF KCONTROL AND UCASE$(K$) = "K" THEN
             K$ = ""
             GOTO ideQuickKeycode
         END IF
 
 
-        IF KCTRL AND KB = _KEY_F3 THEN
+        IF KCONTROL AND KB = _KEY_F3 THEN
             IF IdeSystem = 3 THEN IdeSystem = 1
             GOTO idefindjmp
         END IF
@@ -2254,7 +2254,7 @@ FUNCTION ide2 (ignore)
                     k = 255
                 END IF
 
-                IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) THEN 'copy to clipboard
+                IF ((KCONTROL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) THEN 'copy to clipboard
                     copysearchterm2clip:
                     IF idesystem2.issel THEN
                         sx1 = idesystem2.sx1: sx2 = idesystem2.v1
@@ -2476,7 +2476,7 @@ FUNCTION ide2 (ignore)
                 END IF
             END IF
 
-            IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND Help_Select = 2 THEN 'copy to clipboard
+            IF ((KCONTROL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND Help_Select = 2 THEN 'copy to clipboard
                 copyhelp2clip:
                 ideerror = -1 'if it fails, just carry on
                 clip$ = ""
@@ -3178,7 +3178,7 @@ FUNCTION ide2 (ignore)
                                         COLOR 11, 1
                                         msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
                                         IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-                                        msg$ = msg$ + " - click here or Ctrl+W to view)"
+                                        msg$ = msg$ + ShortcutLabel$(" - click here or Ctrl+W to view)")
                                         _PRINTSTRING (4, idewy - 3), msg$
                                         statusarealink = 4
                                     END IF
@@ -3780,7 +3780,7 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-        IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND ideselect = 1 THEN 'copy to clipboard
+        IF ((KCONTROL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "C")) AND ideselect = 1 THEN 'copy to clipboard
             copy2clip:
             clip$ = getSelectedText$(-1)
             IF clip$ <> "" THEN _CLIPBOARD$ = clip$
@@ -4375,8 +4375,8 @@ FUNCTION ide2 (ignore)
 
         'alt and ctrl combos have already been processed, so skip inserting
         'K$ if these are still held down:
-        IF KCTRL AND NOT KALT THEN GOTO specialchar
-        IF KALT AND NOT KCTRL AND NOT AltSpecial THEN GOTO specialchar
+        IF KCONTROL AND NOT KALT THEN GOTO specialchar
+        IF KALT AND NOT KCONTROL AND NOT AltSpecial THEN GOTO specialchar
 
         'standard character
         IF ideselect THEN delselect
@@ -4600,7 +4600,7 @@ FUNCTION ide2 (ignore)
         LOOP UNTIL KB
 
         K$ = UCASE$(K$)
-        IF LEN(K$) > 0 AND KCTRL THEN
+        IF LEN(K$) > 0 AND KCONTROL THEN
             'ctrl+key combos are not valid while a menu is active
             COLOR 0, 7: _PRINTSTRING (1, 1), menubar$
             SCREEN , , 3, 0: PCOPY 3, 0
@@ -4712,7 +4712,7 @@ FUNCTION ide2 (ignore)
         'calculate menu width
         w = 0
         FOR i = 1 TO menusize(m)
-            m$ = menu$(m, i)
+            m$ = ShortcutLabel$(menu$(m, i))
             l = LEN(m$)
             IF INSTR(m$, "#") THEN l = l - 1
             IF LEFT$(m$, 1) = "~" THEN l = l - 1
@@ -4740,7 +4740,7 @@ FUNCTION ide2 (ignore)
 
         'draw menu items
         FOR i = 1 TO menusize(m)
-            m$ = menu$(m, i)
+            m$ = ShortcutLabel$(menu$(m, i))
             IF m$ = "-" THEN
                 COLOR 0, 7: _PRINTSTRING (xx - 2, i + yy), CHR$(195) + STRING$(w + 2, CHR$(196)) + CHR$(180)
             ELSEIF LEFT$(m$, 1) = "~" THEN
@@ -5017,7 +5017,7 @@ FUNCTION ide2 (ignore)
 
         'with hotkey
         K$ = UCASE$(K$)
-        IF LEN(K$) > 0 AND NOT KCTRL THEN
+        IF LEN(K$) > 0 AND NOT KCONTROL THEN
             FOR r2 = 1 TO menusize(m)
                 x = INSTR(menu$(m, r2), "#")
                 IF x THEN
@@ -5597,7 +5597,7 @@ FUNCTION ide2 (ignore)
                 dummy = DarkenFGBG(0)
                 PCOPY 3, 0: SCREEN , , 3, 0
                 retval = 1
-                KCTRL = 0: KCONTROL = 0
+                KCTRL = 0: KCMD = 0: KCONTROL = 0
                 GOSUB redrawItAll
                 GOTO ideloop
             END IF
@@ -6900,7 +6900,7 @@ FUNCTION ide2 (ignore)
             COLOR 11, 1
             msg$ = " (" + _TOSTR$(totalWarnings) + " warning"
             IF totalWarnings > 1 THEN msg$ = msg$ + "s"
-            msg$ = msg$ + " - click here or Ctrl+W to view)"
+            msg$ = msg$ + ShortcutLabel$(" - click here or Ctrl+W to view)")
             _PRINTSTRING (4, idewy - 3), msg$
             statusarealink = 4
         END IF
@@ -7660,7 +7660,7 @@ SUB DebugMode
             CASE 18432 'Up arrow
                 keyUp:
                 bkpidecy = idecy: bkpidesy = idesy
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN 'scroll the window, instead of moving the cursor
+                IF CtrlOrCmdDown THEN 'scroll the window, instead of moving the cursor
                     idesy = idesy - 1
                     IF idesy < 1 THEN idesy = 1
                     IF idecy > idesy + (idewy - 9) THEN idecy = idesy + (idewy - 9)
@@ -7672,7 +7672,7 @@ SUB DebugMode
             CASE 20480 'Down arrow
                 keyDown:
                 bkpidecy = idecy: bkpidesy = idesy
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN 'scroll the window, instead of moving the cursor
+                IF CtrlOrCmdDown THEN 'scroll the window, instead of moving the cursor
                     idesy = idesy + 1
                     IF idesy > iden THEN idesy = iden
                     IF idecy < idesy THEN idecy = idesy
@@ -7695,11 +7695,11 @@ SUB DebugMode
                 IF bkpidecy <> idecy OR bkpidesy <> idesy THEN ideselect = 0: GOSUB UpdateDisplay
             CASE 18176 'Home
                 bkpidecy = idecy: bkpidesy = idesy
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN idecy = 1
+                IF CtrlOrCmdDown THEN idecy = 1
                 IF bkpidecy <> idecy OR bkpidesy <> idesy THEN ideselect = 0: GOSUB UpdateDisplay
             CASE 20224 'End
                 bkpidecy = idecy: bkpidesy = idesy
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN idecy = iden
+                IF CtrlOrCmdDown THEN idecy = iden
                 IF bkpidecy <> idecy OR bkpidesy <> idesy THEN ideselect = 0: GOSUB UpdateDisplay
             CASE 27
                 requestQuit:
@@ -7721,9 +7721,9 @@ SUB DebugMode
                 GOSUB UpdateDisplay
                 WHILE _MOUSEINPUT: WEND
             CASE 102, 70 'f, F
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN GOTO findjmp
+                IF CtrlOrCmdDown THEN GOTO findjmp
             CASE 15616 'F3
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN GOTO findjmp
+                IF CtrlOrCmdDown THEN GOTO findjmp
                 IF idefindtext <> "" THEN
 
                     'UpdateSearchBar:
@@ -8061,7 +8061,7 @@ SUB DebugMode
                 END IF
             CASE 17408 'F10
                 F10:
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN
+                IF CtrlOrCmdDown THEN
                     requestUnskipAllLines:
                     REDIM IdeSkipLines(iden) AS _BYTE
                     cmd$ = "clear all skips"
@@ -8119,7 +8119,7 @@ SUB DebugMode
                     noFocusMessage = NOT noFocusMessage
                 END IF
             CASE 103, 71 'g, G
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN
+                IF CtrlOrCmdDown THEN
                     IF _KEYDOWN(100304) OR _KEYDOWN(100303) THEN
                         result = idegetlinenumberbox("Run To Line", idecy)
                         PCOPY 3, 0: SCREEN , , 3, 0
@@ -8147,7 +8147,7 @@ SUB DebugMode
                     END IF
                 END IF
             CASE 112, 80 'p, P
-                IF _KEYDOWN(100306) OR _KEYDOWN(100305) THEN
+                IF CtrlOrCmdDown THEN
                     result = idegetlinenumberbox("Skip Line", idecy)
                     PCOPY 3, 0: SCREEN , , 3, 0
                     WHILE _MOUSEINPUT: WEND
@@ -9769,7 +9769,7 @@ FUNCTION idevariablewatchbox$ (currentScope$, filter$, selectVar, returnAction)
             _CONTINUE
         END IF
 
-        IF focus = 2 AND (UCASE$(K$) = "C" AND KCTRL <> 0) THEN
+        IF focus = 2 AND (UCASE$(K$) = "C" AND KCONTROL <> 0) THEN
             GOSUB copyList
             _CONTINUE
         END IF
@@ -10833,7 +10833,7 @@ FUNCTION idecallstackbox
             EXIT FUNCTION
         END IF
 
-        IF K$ = CHR$(13) OR (focus = 4 AND info <> 0) OR (UCASE$(K$) = "C" AND KCTRL <> 0) THEN
+        IF K$ = CHR$(13) OR (focus = 4 AND info <> 0) OR (UCASE$(K$) = "C" AND KCONTROL <> 0) THEN
             _CLIPBOARD$ = StrReplace$(callstacklist$, sep, CHR$(10))
         END IF
 
@@ -14998,7 +14998,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                     k = 255
                 END IF
 
-                IF ((KCTRL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "C")) THEN 'copy to clipboard
+                IF ((KCONTROL AND KB = _KEY_INSERT) OR (KCONTROL AND UCASE$(kk$) = "C")) THEN 'copy to clipboard
                     IF o.issel THEN
                         sx1 = o.sx1: sx2 = o.v1
                         IF sx1 > sx2 THEN SWAP sx1, sx2
@@ -15045,7 +15045,7 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                         o.issel = 0
                     END IF
                 END IF
-                IF k <> 8 AND k <> 9 AND k <> 0 AND k <> 10 AND k <> 13 AND k <> 26 AND k <> 255 AND ((KALT = 0 AND KCTRL = 0) OR (KALT = -1 AND KCTRL = -1)) THEN
+                IF k <> 8 AND k <> 9 AND k <> 0 AND k <> 10 AND k <> 13 AND k <> 26 AND k <> 255 AND ((KALT = 0 AND KCONTROL = 0) OR (KALT = -1 AND KCTRL = -1)) THEN
                     IF o.issel THEN
                         sx1 = o.sx1: sx2 = o.v1
                         IF sx1 > sx2 THEN SWAP sx1, sx2
@@ -17783,7 +17783,7 @@ FUNCTION idechoosecolorsbox
                 _PRINTSTRING (p.x + 39, p.y + 13), CHR$(218) + STRING$(24, 196) + CHR$(191)
                 _PRINTSTRING (p.x + 39, p.y + 14), CHR$(179) + SPACE$(24) + CHR$(179)
                 _PRINTSTRING (p.x + 39, p.y + 15), CHR$(192) + STRING$(24, 196) + CHR$(217)
-                SampleText$ = " Open...         Ctrl+O "
+                IF MacOSX THEN SampleText$ = " Open...          Cmd+O " ELSE SampleText$ = " Open...         Ctrl+O "
         END SELECT
 
         _PRINTSTRING (p.x + 40, p.y + 14), SampleText$
@@ -18039,7 +18039,7 @@ FUNCTION idechoosecolorsbox
         IF mB AND mY = p.y + 5 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
             idetxt(o(2).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(3).txt) = _TOSTR$(newValue)
                 idetxt(o(4).txt) = _TOSTR$(newValue)
             END IF
@@ -18053,7 +18053,7 @@ FUNCTION idechoosecolorsbox
         IF mB AND mY = p.y + 8 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
             idetxt(o(3).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(2).txt) = _TOSTR$(newValue)
                 idetxt(o(4).txt) = _TOSTR$(newValue)
             END IF
@@ -18067,7 +18067,7 @@ FUNCTION idechoosecolorsbox
         IF mB AND mY = p.y + 11 AND mX >= p.x + 39 AND mX <= p.x + 39 + 26 THEN
             newValue = (mX - p.x - 39) * (255 / 26)
             idetxt(o(4).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(2).txt) = _TOSTR$(newValue)
                 idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
@@ -18653,7 +18653,7 @@ FUNCTION idergbmixer$ (editing)
         IF mB AND mY = p.y + 2 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
             idetxt(o(1).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(2).txt) = _TOSTR$(newValue)
                 idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
@@ -18666,7 +18666,7 @@ FUNCTION idergbmixer$ (editing)
         IF mB AND mY = p.y + 5 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
             idetxt(o(2).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(1).txt) = _TOSTR$(newValue)
                 idetxt(o(3).txt) = _TOSTR$(newValue)
             END IF
@@ -18679,7 +18679,7 @@ FUNCTION idergbmixer$ (editing)
         IF mB AND mY = p.y + 8 AND mX >= p.x + 15 AND mX <= p.x + 15 + 46 THEN
             newValue = (mX - p.x - 15) * (255 / 46)
             idetxt(o(3).txt) = _TOSTR$(newValue)
-            IF _KEYDOWN(100305) OR _KEYDOWN(100306) THEN
+            IF CtrlOrCmdDown THEN
                 idetxt(o(1).txt) = _TOSTR$(newValue)
                 idetxt(o(2).txt) = _TOSTR$(newValue)
             END IF
@@ -18828,11 +18828,17 @@ END SUB
 
 
 
-FUNCTION CTRL2
+'Returns true while the shortcut modifier is held: Ctrl, or Ctrl/Cmd on macOS
+FUNCTION CtrlOrCmdDown%%
+    CtrlOrCmdDown%% = _KEYDOWN(_KEY_LCTRL) OR _KEYDOWN(_KEY_RCTRL)
     IF MacOSX THEN
-        IF _KEYDOWN(100309) THEN CTRL2 = 1
-        IF _KEYDOWN(100310) THEN CTRL2 = 1
+        IF _KEYDOWN(IDE_KEY_LCMD) OR _KEYDOWN(IDE_KEY_RCMD) THEN CtrlOrCmdDown%% = _TRUE
     END IF
+END FUNCTION
+
+'Shows "Cmd+" instead of "Ctrl+" in shortcut hints on macOS (display only)
+FUNCTION ShortcutLabel$ (a$)
+    IF MacOSX THEN ShortcutLabel$ = StrReplace$(a$, "Ctrl+", "Cmd+") ELSE ShortcutLabel$ = a$
 END FUNCTION
 
 
@@ -18889,11 +18895,13 @@ SUB GetInput
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
         IF k = _KEY_LCTRL OR k = _KEY_RCTRL THEN
-            IF release = 1 THEN KCTRL = 0: KCONTROL = 0 ELSE KCTRL = -1: KCONTROL = -1
+            IF release = 1 THEN KCTRL = 0 ELSE KCTRL = -1
+            KCONTROL = KCTRL OR KCMD
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
-        IF k = _KEY_LAPPLE OR k = _KEY_RAPPLE THEN
-            IF release = 1 THEN KCONTROL = 0 ELSE KCONTROL = -1
+        IF MacOSX AND (k = IDE_KEY_LCMD OR k = IDE_KEY_RCMD OR k = _KEY_LAPPLE OR k = _KEY_RAPPLE) THEN
+            IF release = 1 THEN KCMD = 0 ELSE KCMD = -1
+            KCONTROL = KCTRL OR KCMD
             iCHANGED = -1: KSTATECHANGED = -1
         END IF
         'presses
@@ -20441,12 +20449,12 @@ FUNCTION ideASCIIbox$ (relaunch)
         IF K$ = CHR$(27) THEN EXIT FUNCTION
 
         IF focus = 1 THEN 'chart control (keyboard)
-            KCTRL = _KEYDOWN(100305) OR _KEYDOWN(100306)
+            ctrlHeld = CtrlOrCmdDown
             SELECT CASE KB
                 CASE 18176: Selected = 1 'Home
                 CASE 20224: Selected = 255 'End
                 CASE 19712 'Right
-                    IF KCTRL AND Selected > 0 THEN
+                    IF ctrlHeld AND Selected > 0 THEN
                         DO UNTIL Selected MOD 16 = 0 OR Selected = 255
                             Selected = Selected + 1
                         LOOP
@@ -20455,7 +20463,7 @@ FUNCTION ideASCIIbox$ (relaunch)
                     END IF
                     IF Selected > 255 THEN Selected = 1
                 CASE 19200 'Left
-                    IF KCTRL AND Selected > 0 THEN
+                    IF ctrlHeld AND Selected > 0 THEN
                         DO UNTIL Selected MOD 16 = 1
                             Selected = Selected - 1
                         LOOP
@@ -20464,7 +20472,7 @@ FUNCTION ideASCIIbox$ (relaunch)
                     END IF
                     IF Selected < 1 THEN Selected = 255
                 CASE 20480 'Down
-                    IF KCTRL AND Selected > 0 THEN
+                    IF ctrlHeld AND Selected > 0 THEN
                         IF Selected = 240 THEN
                             Selected = 255
                         ELSE
@@ -20484,7 +20492,7 @@ FUNCTION ideASCIIbox$ (relaunch)
                         END IF
                     END IF
                 CASE 18432 'Up
-                    IF KCTRL AND Selected > 0 THEN
+                    IF ctrlHeld AND Selected > 0 THEN
                         DO UNTIL Selected <= 16
                             Selected = Selected - 16
                         LOOP
