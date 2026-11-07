@@ -1690,6 +1690,7 @@ IF idemode = 0 THEN
     qberrorhappened = 0
 END IF
 
+IdeUserSyntaxBegin 'user SUB/FUNCTION hints are collected again during the prepass
 reginternal
 
 DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer&("O", tmpdir$ + "global.txt")
@@ -3023,6 +3024,7 @@ DO
                                     id.hr_syntax = pwl$
                                 END IF
 
+                                IF UCASE$(LEFT$(n$, 5)) <> "_IKW_" THEN IdeUserSyntaxRegister 1, cwholeline$
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN
                                     reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "FUNC_" + UCASE$(MID$(n$, 5))
                                     id.hr_syntax = UCASE$(MID$(n$, 5)) + _IIF(symbol$ = "$", "$", "") + MID$(id.hr_syntax, LEN(n$) + LEN(symbol$) + 1)
@@ -3062,6 +3064,7 @@ DO
                                     id.hr_syntax = pwl$
                                 END IF
 
+                                IF UCASE$(LEFT$(n$, 5)) <> "_IKW_" THEN IdeUserSyntaxRegister 2, cwholeline$
                                 IF UCASE$(LEFT$(n$, 5)) = "_IKW_" THEN reginternalsubfunc = 1: id.n = MID$(n$, 5): id.callname = "SUB_" + UCASE$(MID$(n$, 5)): id.hr_syntax = UCASE$(MID$(n$, 5)) + MID$(id.hr_syntax, LEN(n$) + 1)
                                 IF UCASE$(n$) = "_GL" AND params = 0 AND UseGL = 0 THEN reginternalsubfunc = 1: UseGL = 1: id.n = "_GL": SetDependency DEPENDENCY_GL
                                 regid
@@ -3243,6 +3246,7 @@ lineinput3index = 1 'reset input line
 
 'ide specific
 ide3:
+IdeUserSyntaxCommit 'prepass complete: user SUB/FUNCTION hints are up to date
 
 addmetainclude$ = "" 'reset stray meta-includes
 IncOneBuf = OpenBuffer&("O", tmpdir$ + "incone.txt") 'and $INCLUDEONCE buffer
@@ -25877,6 +25881,9 @@ SUB regid
 
     currentid = idn
 
+    'internal keywords' syntax references feed the IDE's inline hints
+    IF reginternalsubfunc = 1 AND id.subfunc > 0 AND LEN(id.hr_syntax) > 0 THEN IdeSyntaxRegister id.subfunc, id.hr_syntax
+
     'prepare hash flags and check for conflicts
     hashflags = 1
 
@@ -28832,4 +28839,5 @@ DEFLNG A-Z
 '-------- Optional IDE Component (2/2) --------
 '$INCLUDE:'ide\config\cfg_methods.bas'
 '$INCLUDE:'ide\ide_methods.bas'
+'$INCLUDE:'ide\ide_hints.bas'
 

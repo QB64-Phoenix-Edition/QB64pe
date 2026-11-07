@@ -397,11 +397,11 @@ FUNCTION ide2 (ignore)
         IF PasteCursorAtEnd THEN
             menu$(OptionsMenuID, OptionsMenuPasteCursor) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuPasteCursor)
         END IF
-        OptionsMenuAutoCloseBrackets = i
-        menu$(m, i) = "Auto-Close #Brackets": i = i + 1
-        menuDesc$(m, i - 1) = "Toggles auto-closing of brackets and quotes while typing"
-        IF AutoCloseBrackets THEN
-            menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets)
+        OptionsMenuInlineHints = i
+        menu$(m, i) = "#Inline Hints": i = i + 1
+        menuDesc$(m, i - 1) = "Toggles inline syntax hints and closing brackets/quotes suggestions (TAB accepts)"
+        IF InlineHints THEN
+            menu$(OptionsMenuID, OptionsMenuInlineHints) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuInlineHints)
         END IF
         OptionsMenuShowErrorsImmediately = i
         menu$(m, i) = "Auto-Ch#eck Syntax": i = i + 1
@@ -4361,7 +4361,14 @@ FUNCTION ide2 (ignore)
                 END IF
             ELSE
                 SkipBlockIndent:
-                IF KSHIFT = 0 THEN
+                ghostClosers$ = ""
+                IF KSHIFT = 0 AND InlineHints AND ideselect = 0 THEN
+                    a$ = idegetline(idecy)
+                    IF idecx > LEN(a$) THEN IdeInlineHint a$ + SPACE$(idecx - 1 - LEN(a$)), ghostHint$, ghostClosers$
+                END IF
+                IF LEN(ghostClosers$) THEN
+                    K$ = ghostClosers$ 'accept the suggested closing brackets/quote
+                ELSEIF KSHIFT = 0 THEN
                     x = 4
                     IF IDEAutoIndentSize <> 0 THEN x = IDEAutoIndentSize
                     K$ = SPACE$(x - ((idecx - 1) MOD x))
@@ -4402,58 +4409,15 @@ FUNCTION ide2 (ignore)
         IF LEN(a$) < idecx - 1 THEN a$ = a$ + SPACE$(idecx - 1 - LEN(a$))
 
 
-        IF AutoCloseBrackets THEN 'enable new behavior if autoclosebrackets is in use
-            skipInsert = 0
-            IF ideinsert = 0 THEN 'Insert mode
-                nextChar$ = MID$(a$, idecx, 1)
-                IF (K$ = ")" AND nextChar$ = ")") OR _
-                   (K$ = "]" AND nextChar$ = "]") OR _
-                   (K$ = "}" AND nextChar$ = "}") OR _
-                   (K$ = CHR$(34) AND nextChar$ = CHR$(34)) THEN
-                    skipInsert = 1
-                END IF
-            END IF
-
-            IF skipInsert = 0 THEN
-                IF ideinsert THEN
-                    a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
-                    IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
-                    a$ = LEFT$(a$, idecx - 1) + K$ + a2$
-                ELSE
-                    extraChar$ = ""
-                    IF AutoCloseBrackets THEN
-                        IF K$ = "(" THEN extraChar$ = ")"
-                        IF K$ = "[" THEN extraChar$ = "]"
-                        IF K$ = "{" THEN extraChar$ = "}"
-                        IF K$ = CHR$(34) THEN
-                            'Check if we are inside a string (odd number of quotes before cursor)
-                            quoteCount = 0
-                            tempStr$ = LEFT$(a$, idecx - 1)
-                            FOR i = 1 TO LEN(tempStr$)
-                                IF MID$(tempStr$, i, 1) = CHR$(34) THEN quoteCount = quoteCount + 1
-                            NEXT
-                            IF (quoteCount MOD 2) = 0 THEN extraChar$ = CHR$(34)
-                        END IF
-                    END IF
-
-                    a$ = LEFT$(a$, idecx - 1) + K$ + extraChar$ + RIGHT$(a$, LEN(a$) - idecx + 1)
-                END IF
-                idesetline idecy, a$
-            END IF
-        ELSE 'otherwise go back to the old behavior
-            'Replace old code back
-
-            IF ideinsert THEN
-                a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
-                IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
-                a$ = LEFT$(a$, idecx - 1) + K$ + a2$
-            ELSE
-                a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
-            END IF
-
-            idesetline idecy, a$
-            'end of old code
+        IF ideinsert THEN
+            a2$ = RIGHT$(a$, LEN(a$) - idecx + 1)
+            IF LEN(a2$) THEN a2$ = RIGHT$(a$, LEN(a$) - idecx)
+            a$ = LEFT$(a$, idecx - 1) + K$ + a2$
+        ELSE
+            a$ = LEFT$(a$, idecx - 1) + K$ + RIGHT$(a$, LEN(a$) - idecx + 1)
         END IF
+
+        idesetline idecy, a$
 
         idecx = idecx + LEN(K$)
         specialchar:
@@ -5274,15 +5238,15 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF RIGHT$(menu$(m, s), 20) = "Auto-Close #Brackets" THEN
+            IF RIGHT$(menu$(m, s), 13) = "#Inline Hints" THEN
                 PCOPY 2, 0
-                AutoCloseBrackets = NOT AutoCloseBrackets
-                IF AutoCloseBrackets THEN
-                    WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "True"
-                    menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = CHR$(7) + "Auto-Close #Brackets"
+                InlineHints = NOT InlineHints
+                IF InlineHints THEN
+                    WriteConfigSetting generalSettingsSection$, "InlineHints", "True"
+                    menu$(OptionsMenuID, OptionsMenuInlineHints) = CHR$(7) + "#Inline Hints"
                 ELSE
-                    WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "False"
-                    menu$(OptionsMenuID, OptionsMenuAutoCloseBrackets) = "Auto-Close #Brackets"
+                    WriteConfigSetting generalSettingsSection$, "InlineHints", "False"
+                    menu$(OptionsMenuID, OptionsMenuInlineHints) = "#Inline Hints"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -13208,6 +13172,7 @@ SUB ideshowtext
                 a$ = idegetline(l)
                 link_idecx = 0
                 shiftEnter_idecx = 0
+                ghost_idecx = 0: ghost_idecx2 = 0
                 IF l = idecy THEN
                     IF idecx <= LEN(a$) AND idecx >= 1 THEN
                         cc = ASC(a$, idecx)
@@ -13278,14 +13243,13 @@ SUB ideshowtext
                     'an _RGB(, _RGB32(, _RGBA( or _RGBA32(, we'll offer the RGB
                     'color mixer.
                     a2$ = UCASE$(a$)
-                    'IF IdeAutoComplete AND idecx = LEN(a$) + 1 AND idecx_comment + idecx_quote = 0 THEN
+                    rgbMixerHint = 0
                     IF idecx = LEN(a$) + 1 AND idecx_comment + idecx_quote = 0 THEN
                         IF (RIGHT$(a2$, 5) = "_RGB(" OR _
                            RIGHT$(a2$, 7) = "_RGB32(" OR _
                            RIGHT$(a2$, 6) = "_RGBA(" OR _
                            RIGHT$(a2$, 8) = "_RGBA32(") THEN
-                            shiftEnter_idecx = LEN(a$)
-                            a$ = a$ + " --> Shift+ENTER to open the RGB mixer"
+                            rgbMixerHint = -1
                             EnteringRGB = -1
                         END IF
                     ELSEIF idecx_comment + idecx_quote = 0 THEN
@@ -13295,6 +13259,26 @@ SUB ideshowtext
                            MID$(a2$, idecx - 8, 8) = "_RGBA32(") THEN
                             IF INSTR("0123456789", MID$(a2$, idecx, 1)) = 0 THEN EnteringRGB = -1
                         END IF
+                    END IF
+
+                    'Inline hints: dimmed syntax hint + missing closing brackets/quote after the cursor
+                    IF InlineHints AND IdeSystem = 1 AND ideselect = 0 AND idecx > LEN(a$) AND idecx_comment = 0 THEN
+                        IdeInlineHint a$ + SPACE$(idecx - 1 - LEN(a$)), ghostHint$, ghostClosers$
+                        IF LEN(ghostHint$ + ghostClosers$) THEN
+                            a$ = a$ + SPACE$(idecx - 1 - LEN(a$))
+                            ghost_idecx = LEN(a$)
+                            a$ = a$ + ghostHint$ + ghostClosers$
+                            ghost_idecx2 = LEN(a$)
+                            IF LEN(ghostClosers$) THEN
+                                shiftEnter_idecx = LEN(a$)
+                                a$ = a$ + " <-- TAB to close"
+                            END IF
+                        END IF
+                    END IF
+
+                    IF rgbMixerHint THEN
+                        IF shiftEnter_idecx = 0 THEN shiftEnter_idecx = LEN(a$)
+                        a$ = a$ + " --> Shift+ENTER to open the RGB mixer"
                     END IF
 
                     FindInclude = _INSTRREV(a2$, "$INCLUDE")
@@ -13479,6 +13463,7 @@ SUB ideshowtext
 
                 IF l = idecy AND (link_idecx > 0 AND m > link_idecx) THEN COLOR 10
                 IF (shiftEnter_idecx > 0 AND m > shiftEnter_idecx) THEN COLOR 10
+                IF l = idecy AND ghost_idecx > 0 AND m > ghost_idecx AND m <= ghost_idecx2 THEN COLOR 11 'inline hints use the comment color
 
                 IF l = idecy AND (m = bracket1 OR m = bracket2) THEN
                     COLOR , 5
