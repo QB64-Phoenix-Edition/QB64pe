@@ -6621,6 +6621,13 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
+            IF menu$(m, s) = "Remove #Broken Links" THEN
+                PCOPY 2, 0
+                GOSUB CleanUpRecentList
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
             IF menu$(m, s) = "#Clear Recent..." THEN
                 PCOPY 2, 0
                 r$ = AskClearHistory$("RECENT")
@@ -19298,7 +19305,11 @@ FUNCTION iderecentbox$
         f$ = ReadBufLine$(bh&)
         IF LEN(f$) + 6 > dialogWidth THEN dialogWidth = LEN(f$) + 6
         numFiles% = numFiles% + 1: tempList$(numFiles%) = f$
-        l$ = l$ + sep + f$
+        IF _FILEEXISTS(f$) THEN
+            l$ = l$ + sep + f$
+        ELSE
+            l$ = l$ + sep + CHR$(16) + CHR$(2) + f$ 'grey out missing files
+        END IF
     WEND
     DisposeBuf bh&
     REDIM _PRESERVE tempList$(1 TO numFiles%)
@@ -19449,6 +19460,7 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
             menu$(m, i) = f$
             IF r% <= maxFiles% THEN
                 IdeRecentLink(r%, 1) = f$
+                IF NOT _FILEEXISTS(IdeRecentLink(r%, 2)) THEN menu$(m, i) = "~" + f$: missingFiles% = _TRUE 'grey out (and disable) missing files
                 cut% = LEN(IdeRecentLink(r%, 2)): f$ = "Open '"
                 '2 = left&right margin / 7 = Open '' / 3 = dots (char 250)
                 IF cut% > idewx - 2 - 7 THEN cut% = idewx - 2 - 7 - 3: f$ = f$ + STRING$(3, 250)
@@ -19461,6 +19473,11 @@ SUB IdeMakeFileMenu (eaa%) 'ExportAs activation (boolean)
     NEXT r%
     DisposeBuf bh&
     IF LEFT$(menuDesc$(m, i - 1), 4) = "Open" THEN
+        'all recent files are listed (no "Recent..." dialog), so offer the cleanup here
+        IF missingFiles% THEN
+            menu$(m, i) = "Remove #Broken Links": i = i + 1
+            menuDesc$(m, i - 1) = "Removes files that no longer exist from the list of recently loaded files"
+        END IF
         menu$(m, i) = "#Clear Recent...": i = i + 1
         menuDesc$(m, i - 1) = "Clears list of recently loaded files"
     END IF
