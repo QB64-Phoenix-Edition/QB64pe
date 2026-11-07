@@ -2706,9 +2706,9 @@ SUB reginternal
     id.callname = "sub_circle"
     id.args = 7
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
-    id.specialformat = "[{Step}](?,?),?[,[?][,[?][,[?][,?]]]]"
-    'CIRCLE [STEP] (x!,y!),radius![,[color&] [,[start!] [,[end!] [,aspect!]]]]
-    id.hr_syntax = "CIRCLE [STEP] (x!, y!), radius![, [color&] [, [start!] [, [end!] [, aspect!]]]]"
+    id.specialformat = "[{Step}](?,?),?[,[?][,[?][,[?][,[?][,{_Seamless}]]]]]"
+    'CIRCLE [STEP] (x!,y!),radius![,[color&] [,[start!] [,[end!] [,[aspect!] [,_SEAMLESS]]]]]
+    id.hr_syntax = "CIRCLE [STEP] (x!, y!), radius![, [color&] [, [start!] [, [end!] [, [aspect!] [, _SEAMLESS]]]]]"
     regid
 
     clearid
@@ -3241,8 +3241,8 @@ SUB reginternal
     id.callname = "sub_line"
     id.args = 7
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF}][,?]]]"
-    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF}], style%]"
+    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF}][,[?][,{_Seamless}]]]]"
+    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF}][, [style%][, _SEAMLESS]]]"
     regid
 
     clearid
