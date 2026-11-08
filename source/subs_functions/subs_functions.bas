@@ -3241,8 +3241,8 @@ SUB reginternal
     id.callname = "sub_line"
     id.args = 7
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF}][,[?][,{_Seamless}]]]]"
-    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF}][, [style%][, _SEAMLESS]]]"
+    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF|_Seamless}][,?]]]"
+    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF|_SEAMLESS}], style%]"
     regid
 
     clearid

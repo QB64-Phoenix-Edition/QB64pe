@@ -8631,7 +8631,7 @@ void fast_line(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col) {
 // through, so consecutive pixels always share an edge (no diagonal-only steps). Lines drawn next to
 // each other (e.g. a fan of rotating lines) then leave no pinholes between them.
 static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style, int32 seamless) {
-    static int32 x1, y1, x2, y2, l, l2, mi, cur, nxt;
+    static int32 x1, y1, x2, y2, l, l2, mi, nxt;
     static float m;
 
     // resolve coordinates
@@ -8683,7 +8683,8 @@ static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col,
 
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
-                    if (seamless && l) {
+                    if (seamless && l > 0) {
+                        // l = pixels still to draw after this one, so there's no corner after the last pixel
                         // will the next pixel be on another row? if so, fill the corner
                         nxt = qbr_float_to_long(y1f + m);
                         if (nxt != lineclip_y1) {
@@ -8719,7 +8720,8 @@ static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col,
                     lineclip_x1 = x1f + 0.5f;
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
-                    if (seamless && l2) {
+                    if (seamless && l2 > 0) {
+                        // l2 = pixels still to draw after this one, so there's no corner after the last pixel
                         // will the next pixel be on another column? if so, fill the corner
                         nxt = qbr_float_to_long(x1f + m);
                         if (nxt != lineclip_x1) {
@@ -8740,7 +8742,9 @@ static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col,
     return;
 }
 
-void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) { qb32_line_ex(x1f, y1f, x2f, y2f, col, style, 0); }
+void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) {
+    qb32_line_ex(x1f, y1f, x2f, y2f, col, style, 0);
+}
 
 void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint32 style, int32 passed) {
     if (is_error_pending())
@@ -8750,8 +8754,9 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
         return;
     }
     /*
-        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF}][,[?][,{_SEAMLESS}]]]]"
-        color: 8, style: 16, _SEAMLESS: 32
+        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF|_SEAMLESS}][,?]]]"
+        color: 8, style: 16
+        bf: 0 = line, 1 = B, 2 = BF, 3 = _SEAMLESS line
         LINE -(10, 10) 'flags: 0
         LINE (0, 0)-(10, 10) 'flags: 1
         LINE -STEP(10, 10) 'flags: 2
@@ -8777,13 +8782,13 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
     write_page->x = x2;
     write_page->y = y2;
 
-    if (bf == 0) { // line
+    if (bf == 0 || bf == 3) { // line (3 = _SEAMLESS)
         if ((passed & 16) == 0)
             style = 0xFFFF;
         if ((passed & 8) == 0)
             col = write_page->color;
         write_page->draw_color = col;
-        qb32_line_ex(x1, y1, x2, y2, col, style, passed & 32);
+        qb32_line_ex(x1, y1, x2, y2, col, style, bf == 3);
         return;
     }
 
