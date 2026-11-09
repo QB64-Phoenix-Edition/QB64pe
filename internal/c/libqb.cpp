@@ -6529,6 +6529,20 @@ error:
     return;
 }
 
+// SCREEN 0 attribute byte: bit 7 is blink with _BLINK ON, but the fourth
+// background-color bit with _BLINK OFF. Preserve the QB45-style COLOR
+// foreground bit 4 in either mode; when blinking is off, also accept
+// background bit 3 directly (the two encodings are combined with OR).
+extern int32 H3C0_blink_enable;
+
+static inline uint8 screen0_color_attribute(uint32 foreground, uint32 background) {
+    uint32 attribute = (foreground & 0x0F) | ((background & 0x07) << 4);
+    attribute |= (foreground & 0x10) << 3; // Legacy blink / bright background.
+    if (!H3C0_blink_enable)
+        attribute |= (background & 0x08) << 4; // New direct bright background.
+    return (uint8)attribute;
+}
+
 void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 passed) {
     if (is_error_pending())
         return;
@@ -6758,6 +6772,9 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
         goto done;
     }
     if (write_page->compatible_mode == 0) {
+        // Preserve QB45 foreground values 0..31 in either blink mode.
+        // When blinking is off, background values 8..15 are also direct
+        // bright backgrounds; foreground bit 4 remains supported.
         if (passed & 1)
             if (col1 > 31)
                 goto error;
@@ -6767,7 +6784,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
         if (passed & 1)
             write_page->color = col1;
         if (passed & 2)
-            write_page->background_color = col2 & 7;
+            write_page->background_color = H3C0_blink_enable ? (col2 & 7) : col2;
         goto done;
     }
 error:
@@ -10137,7 +10154,7 @@ void printchr(int32 character) {
 
     if (im->text) {
         im->offset[(((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1] = character;
-        im->offset[((((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1) + 1] = (color & 0xF) + background_color * 16 + (color & 16) * 8;
+        im->offset[((((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1) + 1] = screen0_color_attribute(color, background_color);
         return;
     }
 
@@ -10392,7 +10409,7 @@ void newline() {
             memmove(write_page->offset + (write_page->top_row - 1) * 2 * write_page->width, write_page->offset + write_page->top_row * 2 * write_page->width,
                     (write_page->bottom_row - write_page->top_row) * 2 * write_page->width);
             // erase bottom line
-            z2 = (write_page->color & 0xF) + (write_page->background_color & 7) * 16 + (write_page->color & 16) * 8;
+            z2 = screen0_color_attribute(write_page->color, write_page->background_color);
             z2 <<= 8;
             z2 += 32;
             sp = ((uint16 *)(write_page->offset + (write_page->bottom_row - 1) * 2 * write_page->width));
@@ -11319,7 +11336,7 @@ void sub_cls(int32_t method, uint32_t use_color, int32_t passed) {
 
     if (write_page->text) {
         // precalculate a (int16) value which can be used to clear the screen
-        clearvalue = (write_page->color & 0xF) + (use_color & 7) * 16 + (write_page->color & 16) * 8;
+        clearvalue = screen0_color_attribute(write_page->color, use_color);
         clearvalue <<= 8;
         clearvalue += 32;
     }
