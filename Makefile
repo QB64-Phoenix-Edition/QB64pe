@@ -577,8 +577,8 @@ else
                         $(PATH_INTERNAL_TEMP)/*.rsp $(PATH_INTERNAL_TEMP)/*.sym \
                         $(PATH_INTERNAL_TEMP)/*.rc $(PATH_INTERNAL_TEMP)/*.sh \
                         $(PATH_INTERNAL_TEMP)/*.command $(PATH_INTERNAL_TEMP)/*.out \
-                        $(PATH_INTERNAL_TEMP)/data.bin $(PATH_INTERNAL_TEMP)/embed.bin \
-                        $(PATH_INTERNAL_TEMP)/*.manifest
+                        $(PATH_INTERNAL_TEMP)/*.bat $(PATH_INTERNAL_TEMP)/*.manifest \
+                        $(PATH_INTERNAL_TEMP)/data.bin $(PATH_INTERNAL_TEMP)/embed.bin
 
     CLEAN_TEMP_CMD = $(RM) $(call FIXPATH,$(CLEAN_TEMP_GLOBS))
 endif
