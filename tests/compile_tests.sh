@@ -105,9 +105,17 @@ do
         EXE="$EXE.exe"
     fi
 
-    # If a .err file exists, then this test is actually testing a compilation error
+    # If a testName.err file exists, then this test is actually testing for a
+    # general compilation error happening on all platforms
     testType="success"
     if test -f "./tests/compile_tests/$category/$testName.err"; then
+        testType="error"
+    fi
+    # If the compilation may only fail on specific platforms, then .err is
+    # prefixed with the respective OS string e.g. testName.lnx.err for a
+    # compilation failure on Linux only. For the platforms w/o a personalized
+    # .err file success is expected and a .output file may be given for check
+    if test -f "./tests/compile_tests/$category/$testName.$OS.err"; then
         testType="error"
     fi
 
