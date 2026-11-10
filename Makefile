@@ -348,9 +348,10 @@ $(QB_SPLIT_PCH): $(PATH_INTERNAL_TEMP)/qbx_gen.h $(PATH_INTERNAL_C)/qbx.h \
 	$(CXX) $(CXXFLAGS) $(QB_GEN_INCLUDE) -MMD -MP -MT $@ -MF $(QB_SPLIT_PCH_DEP) -x c++-header $< -o $@
 
 $(QB_SPLIT_OBJS): $(QB_SPLIT_PCH)
-# `private` keeps the prerequisite above from inheriting these, which would
-# -include the header into its own precompiled build.
-$(QB_SPLIT_OBJS): private CXXFLAGS += $(QB_GEN_INCLUDE) -Winvalid-pch -include $(PATH_INTERNAL_TEMP)/qbx_gen.h
+# The split units get their own recipe to include the qbx_gen.h header (which
+# has a coresponding precompiled version created by the recipe above).
+$(QB_SPLIT_OBJS): %.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(QB_GEN_INCLUDE) -Winvalid-pch -include $(PATH_INTERNAL_TEMP)/qbx_gen.h $< -c -o $@
 
 $(QB_SPLIT_OBJS) $(QB_SPLIT_PCH): $(QB_BUILD_FLAGS)
 
