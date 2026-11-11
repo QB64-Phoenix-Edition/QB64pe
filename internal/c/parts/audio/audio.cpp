@@ -2468,6 +2468,18 @@ class AudioEngine {
         }
     }
 
+    /// @brief Frees the mem lock that _MEMSOUND created for a sound, if any. This invalidates every _MEM block that points to the sound.
+    /// Must be called on the program thread, as new_mem_lock() / free_mem_lock() are not thread-safe.
+    /// @param handle A sound handle.
+    void InvalidateSoundMem(int32_t handle) {
+        libqb_mutex_guard lock(soundHandlesMutex);
+        if (soundHandles[handle]->memLockOffset) {
+            free_mem_lock((mem_lock *)soundHandles[handle]->memLockOffset);
+            soundHandles[handle]->memLockId = INVALID_MEM_LOCK;
+            soundHandles[handle]->memLockOffset = nullptr;
+        }
+    }
+
     void MarkHandleForAutoKill(int32_t handle) {
         libqb_mutex_guard lock(soundHandlesMutex);
         soundHandles[handle]->autoKill = true;
@@ -3079,6 +3091,7 @@ class AudioEngine {
     /// @brief Frees and unloads an open sound.
     /// If the sound is playing, it'll let it finish. Looping sounds will loop until the program is closed.
     /// If the sound is a stream of raw samples then any remaining samples pending for playback will be sent to miniaudio and then the handle will be freed.
+    /// Any _MEMSOUND blocks for the sound become invalid right away, even if the sound keeps playing.
     /// @param handle A valid sound handle.
     void CloseSound(int32_t handle) {
         if (isInitialized && IsHandleValid(handle)) {
@@ -3086,6 +3099,10 @@ class AudioEngine {
                 soundHandles[handle]->rawStream->Pause(false); // unpause the stream
                 soundHandles[handle]->rawStream->Stop(true);   // signal miniaudio thread that we are going to end playback
             }
+
+            // Invalidate any memsound stuff now, on the program thread. The mem lock pool is not thread-safe, so the lock must not be freed later by
+            // Update() on the main loop thread. Also, a _MEM must not stay valid while its buffer is about to be freed on another thread
+            InvalidateSoundMem(handle);
 
             // Simply set the autokill flag to true and let the sound loop handle disposing the sound
             MarkHandleForAutoKill(handle);
