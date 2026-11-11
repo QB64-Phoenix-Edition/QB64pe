@@ -1248,7 +1248,7 @@ SUB reginternal
     id.args = 3
     id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(STRINGTYPE - ISPOINTER)
     id.specialformat = "?[,[?][,?]]"
-    id.hr_syntax = "_SAVEIMAGE fileName$[, imageHandle&][, requirements$])"
+    id.hr_syntax = "_SAVEIMAGE fileName$[, imageHandle&][, requirements$]"
     regid
 
     'IMAGE SELECTION
@@ -1338,7 +1338,7 @@ SUB reginternal
     id.args = 10
     id.arg = MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER) + MKL$(DOUBLETYPE - ISPOINTER)
     id.specialformat = "[[{Step}](?,?)[-[{Step}](?,?)]][,[?][,[?][,[[{Step}](?,?)[-[{Step}](?,?)]][,{_Smooth}]]]]"
-    id.hr_syntax = "_PUTIMAGE [STEP] [(dx1, dy1)-[STEP][(dx2, dy2)]][, sourceHandle&][, destHandle&][, ][STEP][(sx1, sy1)[-STEP][(sx2, sy2)]][_SMOOTH]"
+    id.hr_syntax = "_PUTIMAGE [[STEP](dx1, dy1)[-[STEP](dx2, dy2)]][, [sourceHandle&][, [destHandle&][, [[STEP](sx1, sy1)[-[STEP](sx2, sy2)]][, _SMOOTH]]]]"
     regid
 
     clearid
@@ -1348,7 +1348,7 @@ SUB reginternal
     id.args = 19
     id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[{_Clockwise|_AntiClockwise}][{_Seamless}](?,?)-(?,?)-(?,?)[,?]{To}(?,?[,?])-(?,?[,?])-(?,?[,?])[,[?][,{_Smooth|_SmoothShrunk|_SmoothStretched}]]"
-    id.hr_syntax = "_MAPTRIANGLE [{_SEAMLESS}] (sx1, sy1)-(sx2, sy2)-(sx3, sy3), source& TO (dx1, dy1)-(dx2, dy2)-(dx3, dy3)[, destination&][{_SMOOTH|_SMOOTHSHRUNK|_SMOOTHSTRETCHED}]]"
+    id.hr_syntax = "_MAPTRIANGLE [{_CLOCKWISE|_ANTICLOCKWISE}] [_SEAMLESS] (sx1, sy1)-(sx2, sy2)-(sx3, sy3)[, source&] TO (dx1, dy1[, dz1])-(dx2, dy2[, dz2])-(dx3, dy3[, dz3])[, [destination&][, {_SMOOTH|_SMOOTHSHRUNK|_SMOOTHSTRETCHED}]]"
     regid
 
     clearid
@@ -1447,7 +1447,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "[?]"
     id.ret = ULONGTYPE - ISPOINTER
-    id.hr_syntax = "_BACKGROUNDCOLOR(imageHandle&)]"
+    id.hr_syntax = "_BACKGROUNDCOLOR[(imageHandle&)]"
     regid
 
     '256 COLOR PALETTES
@@ -2737,9 +2737,9 @@ SUB reginternal
     id.callname = "sub_circle"
     id.args = 7
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(ULONGTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER)
-    id.specialformat = "[{Step}](?,?),?[,[?][,[?][,[?][,?]]]]"
-    'CIRCLE [STEP] (x!,y!),radius![,[color&] [,[start!] [,[end!] [,aspect!]]]]
-    id.hr_syntax = "CIRCLE [STEP] (x!, y!), radius![, [color&] [, [start!] [, [end!] [, aspect!]]]]"
+    id.specialformat = "[{Step}](?,?),?[,[?][,[?][,[?][,[?][,{_Seamless}]]]]]"
+    'CIRCLE [STEP] (x!,y!),radius![,[color&] [,[start!] [,[end!] [,[aspect!] [,_SEAMLESS]]]]]
+    id.hr_syntax = "CIRCLE [STEP] (x!, y!), radius![, [color&] [, [start!] [, [end!] [, [aspect!] [, _SEAMLESS]]]]]"
     regid
 
     clearid
@@ -2795,7 +2795,7 @@ SUB reginternal
     'PUT [STEP] (x!,y!),arrayname# [(indexes%)] [,actionverb]
     'PUT (10, 10), myimage, _CLIP, 0
     id.secondargmustbe = "Step"
-    id.hr_syntax = "PUT [STEP](column, row), Array([index])[,] [_CLIP]  [{PSET|PRESET|AND|OR|XOR}]][, omitcolor]"
+    id.hr_syntax = "PUT [STEP](column, row), Array([index])[,] [_CLIP] [{PSET|PRESET|AND|OR|XOR}][, omitcolor]"
     regid
 
     clearid
@@ -2808,7 +2808,7 @@ SUB reginternal
     'PUT [STEP] (x!,y!),arrayname# [(indexes%)] [,actionverb]
     'PUT (10, 10), myimage, _CLIP, 0
     id.secondargmustbe = "("
-    id.hr_syntax = "PUT [STEP](column, row), Array([index])[,] [_CLIP]  [{PSET|PRESET|AND|OR|XOR}]][, omitcolor]"
+    id.hr_syntax = "PUT [STEP](column, row), Array([index])[,] [_CLIP] [{PSET|PRESET|AND|OR|XOR}][, omitcolor]"
     regid
 
     clearid
@@ -2819,7 +2819,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(-4)
     'id.specialformat = "[#]?,[?],?" 'non field compliant definition
     id.specialformat = "[#]?[,[?][,?]]" 'field compliant definition
-    id.hr_syntax = "GET #fileNumber&, [position][, targetVariable|targetArray()}]"
+    id.hr_syntax = "GET #fileNumber&, [position][, {targetVariable|targetArray()}]"
     regid
 
     clearid
@@ -2840,7 +2840,7 @@ SUB reginternal
     id.args = 6
     id.arg = MKL$(STRINGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "?[{For Random|For Binary|For Input|For Output|For Append}][{Access Read Write|Access Read|Access Write}][{Shared|Lock Read Write|Lock Read|Lock Write}]{As}[#]?[{Len =}?]"
-    id.hr_syntax = "OPEN fileName$ [FOR mode] [ACCESS|LOCK|SHARED [{READ|WRITE}] AS [#]fileNumber& [LEN = recordLength]"
+    id.hr_syntax = "OPEN fileName$ [FOR mode] [ACCESS {READ|WRITE|READ WRITE}] [{SHARED|LOCK READ|LOCK WRITE|LOCK READ WRITE}] AS [#]fileNumber& [LEN = recordLength]"
     regid
 
     clearid
@@ -3176,7 +3176,7 @@ SUB reginternal
     id.arg = MKL$(LONGTYPE - ISPOINTER)
     id.specialformat = "{Seg}[=?]" 'checked!
     id.secondargmustbe = "Seg"
-    id.hr_syntax = "DEF SEG [=][{segment|VARSEG(variable}]"
+    id.hr_syntax = "DEF SEG [=][{segment|VARSEG(variable)}]"
     regid
 
     clearid
@@ -3272,8 +3272,8 @@ SUB reginternal
     id.callname = "sub_line"
     id.args = 7
     id.arg = MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(FLOATTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
-    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF}][,?]]]"
-    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF}], style%]"
+    id.specialformat = "[[{Step}](?,?)]-[{Step}](?,?)[,[?][,[{B|BF|_Seamless}][,?]]]"
+    id.hr_syntax = "LINE [STEP] [(column1, row1)]-[STEP] (column2, row2), color[, [{B|BF|_SEAMLESS}], style%]"
     regid
 
     clearid
@@ -3575,7 +3575,7 @@ SUB reginternal
     id.callname = "qbs_print" 'not called directly
     id.args = 1
     id.arg = MKL$(STRINGTYPE - ISPOINTER)
-    id.hr_syntax = "PRINT [expression] [{;|,] [expression...]"
+    id.hr_syntax = "PRINT [expression] [{;|,}] [expression...]"
     regid
 
     clearid
