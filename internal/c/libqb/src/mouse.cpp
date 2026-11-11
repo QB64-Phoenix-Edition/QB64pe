@@ -60,10 +60,8 @@ static GLUTEnum_MouseCursorMode g_lastRawMouseMode = GLUTEnum_MouseCursorMode::N
 static bool g_mouseWarpPending = false;
 static double g_mouseWarpX = 0.0;
 static double g_mouseWarpY = 0.0;
-
-// Tracks whether the OS cursor is inside the GLFW client area. Used to ignore
-// stray motion/scroll events when the cursor is outside the window.
-static bool g_mouseInsideWindow = false;
+// Tracks whether the OS cursor is inside the GLFW client area. Used to ignore stray motion events when the cursor is outside the window.
+static bool g_mouseInsideWindow = true;
 
 static int32_t MouseCanonicalToDeviceButtonIndex(int32_t buttonNumber) {
     // _BUTTON mouse numbering: 1=left, 2=right, 3=middle.
@@ -174,24 +172,29 @@ int32_t func__mousedisabled() {
 }
 
 double func__mousemovementx() {
-    if (Image_IsSourceConsolePage())
+    if (Image_IsSourceConsolePage()) {
         return (double)func__console_mouse_movementx();
-    return (double)current_gui_state.movementx;
+    }
+
+    return current_gui_state.movementx;
 }
 
 double func__mousemovementy() {
-    if (Image_IsSourceConsolePage())
+    if (Image_IsSourceConsolePage()) {
         return (double)func__console_mouse_movementy();
-    return (double)current_gui_state.movementy;
+    }
+
+    return current_gui_state.movementy;
 }
 
 void sub__mousemove(double x, double y) {
     OPTIONAL_GLUT();
 
-    int32_t x2, y2, sx, sy;
-    int32_t logicalX = 0;
-    int32_t logicalY = 0;
-    if (display_page->text) {
+    int32_t sx, sy;
+    double x2, y2;
+    auto textMode = display_page->text;
+    if (textMode) {
+        int32_t pixelX, pixelY;
         sx = fontwidth[display_page->font] * display_page->width;
         sy = fontheight[display_page->font] * display_page->height;
         if (x < 0.5)
@@ -206,49 +209,48 @@ void sub__mousemove(double x, double y) {
         y -= 0.5;
         x = x * (double)fontwidth[display_page->font];
         y = y * (double)fontheight[display_page->font];
-        x2 = qbr_double_to_long(x);
-        y2 = qbr_double_to_long(y);
-        if (x2 < 0)
-            x2 = 0;
-        if (y2 < 0)
-            y2 = 0;
-        if (x2 > sx - 1)
-            x2 = sx - 1;
-        if (y2 > sy - 1)
-            y2 = sy - 1;
+        pixelX = qbr_double_to_long(x);
+        pixelY = qbr_double_to_long(y);
+        if (pixelX < 0)
+            pixelX = 0;
+        if (pixelY < 0)
+            pixelY = 0;
+        if (pixelX > sx - 1)
+            pixelX = sx - 1;
+        if (pixelY > sy - 1)
+            pixelY = sy - 1;
+        x2 = pixelX;
+        y2 = pixelY;
     } else {
         sx = display_page->width;
         sy = display_page->height;
-        x2 = qbr_double_to_long(x);
-        y2 = qbr_double_to_long(y);
-        if (x2 < 0)
+        if (x < 0.0 || y < 0.0 || x > sx - 1.0 || y > sy - 1.0) {
             goto error;
-        if (y2 < 0)
-            goto error;
-        if (x2 > sx - 1)
-            goto error;
-        if (y2 > sy - 1)
-            goto error;
-    }
+        }
 
-    // x2,y2 are logical pixel co-ordinates
-    logicalX = x2;
-    logicalY = y2;
+        x2 = x;
+        y2 = y;
+    }
 
     if (GLUTEmu_MouseGetCursorMode() == GLUTEnum_MouseCursorMode::Disabled) {
         // In disabled mode there is no visible cursor.
-        GLUTEmu_MouseMove(logicalX, logicalY);
+        GLUTEmu_MouseMove(x2, y2);
 
         g_mouseWarpPending = true;
-        g_mouseWarpX = logicalX;
-        g_mouseWarpY = logicalY;
+        g_mouseWarpX = x2;
+        g_mouseWarpY = y2;
 
         return;
     }
 
     // adjust for fullscreen position as necessary:
-    x2 *= environment_2d__screen_x_scale;
-    y2 *= environment_2d__screen_y_scale;
+    if (textMode) {
+        x2 = static_cast<int32_t>(static_cast<float>(x2) * environment_2d__screen_x_scale);
+        y2 = static_cast<int32_t>(static_cast<float>(y2) * environment_2d__screen_y_scale);
+    } else {
+        x2 *= static_cast<double>(environment_2d__screen_x_scale);
+        y2 *= static_cast<double>(environment_2d__screen_y_scale);
+    }
     x2 += environment_2d__screen_x1;
     y2 += environment_2d__screen_y1;
 
@@ -266,84 +268,78 @@ error:
 }
 
 double func__mousex() {
-    int32_t x, x2;
-    double f;
-
     if (Image_IsSourceConsolePage()) {
         return func__console_mouse_x();
     }
 
-    x = (int32_t)current_gui_state.x;
-
-    // calculate pixel offset of mouse within SCREEN using environment variables
-    x -= environment_2d__screen_x1;
-    x = qbr_double_to_long((((double)x + 0.5) / environment_2d__screen_x_scale) - 0.5);
-    if (x < 0)
-        x = 0;
-    if (x >= environment_2d__screen_width)
-        x = environment_2d__screen_width - 1;
-
-    // restrict range to the current display page's range to avoid causing errors
-    x2 = display_page->width;
     if (display_page->text) {
-        x2 *= fontwidth[display_page->font];
-    }
-    if (x >= x2)
-        x = x2 - 1;
+        int32_t pixelX = (int32_t)current_gui_state.x;
 
-    if (display_page->text) {
-        f = x;
+        // Text-mode mouse coordinates are character cells, so preserve their pixel rounding.
+        pixelX -= environment_2d__screen_x1;
+        pixelX = qbr_double_to_long((((double)pixelX + 0.5) / environment_2d__screen_x_scale) - 0.5);
+        if (pixelX < 0)
+            pixelX = 0;
+        if (pixelX >= environment_2d__screen_width)
+            pixelX = environment_2d__screen_width - 1;
+
+        // restrict range to the current display page's range to avoid causing errors
+        int32_t x2 = display_page->width * fontwidth[display_page->font];
+        if (pixelX >= x2)
+            pixelX = x2 - 1;
+
+        double f = pixelX;
         x2 = fontwidth[display_page->font];
         f = f / (double)x2 + 0.5;
         x2 = qbr_double_to_long(f);
-        if (x2 > x)
+        if (x2 > pixelX)
             f -= 0.001;
-        if (x2 < x)
+        if (x2 < pixelX)
             f += 0.001;
         return std::floor(f + 0.5);
     }
 
+    double x = (((current_gui_state.x - environment_2d__screen_x1) + 0.5) / environment_2d__screen_x_scale) - 0.5;
+    x = std::clamp(x, 0.0, static_cast<double>(environment_2d__screen_width - 1));
+    x = std::min(x, static_cast<double>(display_page->width - 1));
     return x;
 }
 
 double func__mousey() {
-    int32_t y, y2;
-    double f;
-
     if (Image_IsSourceConsolePage()) {
         return func__console_mouse_y();
     }
 
-    y = (int32_t)current_gui_state.y;
-
-    // calculate pixel offset of mouse within SCREEN using environment variables
-    y -= environment_2d__screen_y1;
-    y = qbr_double_to_long((((double)y + 0.5) / environment_2d__screen_y_scale) - 0.5);
-    if (y < 0)
-        y = 0;
-    if (y >= environment_2d__screen_height)
-        y = environment_2d__screen_height - 1;
-
-    // restrict range to the current display page's range to avoid causing errors
-    y2 = display_page->height;
     if (display_page->text) {
-        y2 *= fontheight[display_page->font];
-    }
-    if (y >= y2)
-        y = y2 - 1;
+        int32_t pixelY = (int32_t)current_gui_state.y;
 
-    if (display_page->text) {
-        f = y;
+        // Text-mode mouse coordinates are character cells, so preserve their pixel rounding.
+        pixelY -= environment_2d__screen_y1;
+        pixelY = qbr_double_to_long((((double)pixelY + 0.5) / environment_2d__screen_y_scale) - 0.5);
+        if (pixelY < 0)
+            pixelY = 0;
+        if (pixelY >= environment_2d__screen_height)
+            pixelY = environment_2d__screen_height - 1;
+
+        // restrict range to the current display page's range to avoid causing errors
+        int32_t y2 = display_page->height * fontheight[display_page->font];
+        if (pixelY >= y2)
+            pixelY = y2 - 1;
+
+        double f = pixelY;
         y2 = fontheight[display_page->font];
         f = f / (double)y2 + 0.5;
         y2 = qbr_double_to_long(f);
-        if (y2 > y)
+        if (y2 > pixelY)
             f -= 0.001;
-        if (y2 < y)
+        if (y2 < pixelY)
             f += 0.001;
         return std::floor(f + 0.5);
     }
 
+    double y = (((current_gui_state.y - environment_2d__screen_y1) + 0.5) / environment_2d__screen_y_scale) - 0.5;
+    y = std::clamp(y, 0.0, static_cast<double>(environment_2d__screen_height - 1));
+    y = std::min(y, static_cast<double>(display_page->height - 1));
     return y;
 }
 
@@ -514,7 +510,7 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
     if (device_last) {
         device_struct *d = &devices[2]; // mouse
 
-        // Report position on the axes and movement on wheels 0/1.
+        // Report cursor position on axes, and relative movement on wheels only when disabled.
         int32_t eventIndex = createDeviceEvent(d);
         if (mode != GLUTEnum_MouseCursorMode::Disabled) {
             double fx = x;
@@ -541,16 +537,19 @@ void Mouse_QueuePositionEvent(double x, double y, GLUTEnum_MouseCursorMode mode)
 
             setDeviceEventAxisValue(d, eventIndex, 0, fx);
             setDeviceEventAxisValue(d, eventIndex, 1, fy);
+        } else {
+            setDeviceEventWheelValue(d, eventIndex, 0, movementx);
+            setDeviceEventWheelValue(d, eventIndex, 1, movementy);
         }
-        setDeviceEventWheelValue(d, eventIndex, 0, movementx);
-        setDeviceEventWheelValue(d, eventIndex, 1, movementy);
         commitDeviceEvent(d);
 
-        // Reset event: keep the position/axis values, but clear the movement wheels.
-        eventIndex = createDeviceEvent(d);
-        setDeviceEventWheelValue(d, eventIndex, 0, 0.0);
-        setDeviceEventWheelValue(d, eventIndex, 1, 0.0);
-        commitDeviceEvent(d);
+        if (mode == GLUTEnum_MouseCursorMode::Disabled) {
+            // Reset event: keep the movement event visible once, then clear its wheels.
+            eventIndex = createDeviceEvent(d);
+            setDeviceEventWheelValue(d, eventIndex, 0, 0.0);
+            setDeviceEventWheelValue(d, eventIndex, 1, 0.0);
+            commitDeviceEvent(d);
+        }
     }
 }
 
@@ -588,10 +587,7 @@ void Mouse_QueueScrollEvent(double x, double y, double xOffset, double yOffset) 
     }
 }
 
-void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers) {
-    (void)mode;
-    (void)modifiers;
-
+void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action) {
     Mouse_Button mouseButton;
     switch (button) {
     case GLUTEmu_MouseButton::Left:
@@ -637,37 +633,17 @@ void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUT
     }
 }
 
-void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode) {
-    (void)mode;
-
-    // Ignore scroll events from an unfocused window or when the cursor is
-    // outside the client area; otherwise stray wheel events can affect the QB
-    // program while the user is interacting with another window.
-    if (!func__hasfocus())
-        return;
-    if (mode != GLUTEnum_MouseCursorMode::Disabled && !g_mouseInsideWindow)
-        return;
-
+void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset) {
     Mouse_QueueScrollEvent(x, y, xOffset, yOffset);
 }
 
 void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode) {
-    // Ignore mouse movement while the window is not focused. For normal/hidden
-    // cursor modes also ignore movement when the cursor has left the window so
-    // the QB cursor stays inside while the user is working in another window.
-    if (!func__hasfocus())
-        return;
-    if (mode != GLUTEnum_MouseCursorMode::Disabled && !g_mouseInsideWindow)
-        return;
-
-    Mouse_QueuePositionEvent(x, y, mode);
+    if (g_mouseInsideWindow || mode == GLUTEnum_MouseCursorMode::Disabled) {
+        Mouse_QueuePositionEvent(x, y, mode);
+    }
 }
 
-void GLUT_MOUSE_NOTIFY_FUNC(double x, double y, bool entered, GLUTEnum_MouseCursorMode mode) {
-    (void)x;
-    (void)y;
-    (void)mode;
-
+void GLUT_MOUSE_NOTIFY_FUNC([[maybe_unused]] double x, [[maybe_unused]] double y, bool entered) {
     g_mouseInsideWindow = entered;
 }
 

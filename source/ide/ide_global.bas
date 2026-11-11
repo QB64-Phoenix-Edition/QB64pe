@@ -60,7 +60,9 @@ DIM SHARED K$ 'INKEY$ equivalent of _KEYHIT's return (or "")
 DIM SHARED KSTATECHANGED
 DIM SHARED KSHIFT
 DIM SHARED KCTRL 'the control key
-DIM SHARED KCONTROL 'PC-CTRL or MAC-APPLE KEY
+DIM SHARED KCMD 'the Command key (macOS only)
+DIM SHARED KCONTROL 'shortcut modifier: Ctrl, or Ctrl/Cmd on macOS
+CONST IDE_KEY_LCMD = 100311, IDE_KEY_RCMD = 100312 'macOS Command keys (reported as the Super keys)
 DIM SHARED KALT, KOALT, KALTPRESS, KALTRELEASE
 
 DIM SHARED block_chr(255) AS INTEGER
@@ -221,7 +223,7 @@ DIM SHARED menus AS INTEGER, idecontextualmenuID AS INTEGER
 DIM SHARED ideeditmenuID AS INTEGER, SearchMenuID AS INTEGER
 DIM SHARED OptionsMenuID AS INTEGER, OptionsMenuSwapMouse AS INTEGER, OptionsMenuPasteCursor AS INTEGER
 DIM SHARED OptionsMenuShowErrorsImmediately AS INTEGER, OptionsMenuIgnoreWarnings AS INTEGER
-DIM SHARED OptionsMenuDisableSyntax AS INTEGER, OptionsMenuAutoCloseBrackets AS INTEGER ', OptionsMenuAutoComplete
+DIM SHARED OptionsMenuDisableSyntax AS INTEGER, OptionsMenuInlineHints AS INTEGER ', OptionsMenuAutoComplete
 DIM SHARED ViewMenuID AS INTEGER, ViewMenuShowLineNumbersSubMenuID AS INTEGER
 DIM SHARED ViewMenuShowSeparatorID AS INTEGER, ViewMenuShowBGID AS INTEGER
 DIM SHARED FileMenuExportAs AS INTEGER, FileMenuExportAsSubMenuID AS INTEGER
@@ -240,3 +242,19 @@ DIM SHARED idebackupsize, ideMaxRecent, ideMaxSearch
 DIM SHARED idewx, idewy, iderunmode
 'IDE MODULE SECTION END: shared data & definitions
 
+
+'Inline syntax hints (see ide_hints.bas)
+CONST HINT_LIT = 1, HINT_KW = 2, HINT_PARAM = 3, HINT_CHOICE = 4, HINT_OPEN = 5, HINT_CLOSE = 6
+CONST HINT_MODE_LIT = 1, HINT_MODE_WORD = 2, HINT_MODE_PARAM = 3
+DIM SHARED IdeSyntaxCount AS LONG, IdeSyntaxIndex AS STRING
+REDIM SHARED IdeSyntaxKey(1 TO 1) AS STRING
+REDIM SHARED IdeSyntaxKind(1 TO 1) AS _BYTE
+REDIM SHARED IdeSyntaxTemplate(1 TO 1) AS STRING
+'user SUBs/FUNCTIONs (and DECLARE LIBRARY ones): the live list and the one being collected
+DIM SHARED IdeUserSyntaxCount AS LONG, IdeUserStageCount AS LONG
+REDIM SHARED IdeUserSyntaxKey(1 TO 1) AS STRING, IdeUserSyntaxKind(1 TO 1) AS _BYTE, IdeUserSyntaxTemplate(1 TO 1) AS STRING
+REDIM SHARED IdeUserStageKey(1 TO 1) AS STRING, IdeUserStageKind(1 TO 1) AS _BYTE, IdeUserStageTemplate(1 TO 1) AS STRING
+DIM SHARED IdeHintTokCount AS LONG, IdeHintPreferSkip AS _BYTE, IdeHintShowAll AS _BYTE
+REDIM SHARED IdeHintTokType(0 TO 100) AS _BYTE
+REDIM SHARED IdeHintTokText(0 TO 100) AS STRING
+REDIM SHARED IdeHintTokMatch(0 TO 100) AS LONG

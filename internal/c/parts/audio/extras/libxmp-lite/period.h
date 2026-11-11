@@ -1,6 +1,8 @@
 #ifndef LIBXMP_PERIOD_H
 #define LIBXMP_PERIOD_H
 
+#include "common.h"
+
 #define PERIOD_BASE	13696.0		/* C0 period */
 
 /* Macros for period conversion */
@@ -14,6 +16,11 @@
 #define MAX_PERIOD_L	0x1e00
 #define MIN_NOTE_MOD	48
 #define MAX_NOTE_MOD	83
+#define FT2_NOTE_BN1	11		/* FT2 B-(-1) */
+#define FT2_NOTE_C0	12		/* FT2 C-0 */
+#define FT2_NOTE_AS9	130		/* FT2 A#9 */
+
+LIBXMP_BEGIN_DECLS
 
 double	libxmp_note_to_period	(struct context_data *, int, int, double);
 double	libxmp_note_to_period_mix (int, int);
@@ -23,5 +30,7 @@ void	libxmp_c2spd_to_note	(int, int *, int *);
 #ifndef LIBXMP_CORE_PLAYER
 double	libxmp_gus_frequency_steps (int, int);
 #endif
+
+LIBXMP_END_DECLS
 
 #endif /* LIBXMP_PERIOD_H */

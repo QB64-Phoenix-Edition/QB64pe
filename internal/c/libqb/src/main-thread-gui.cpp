@@ -38,7 +38,7 @@ static void initialize_glut() {
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::macOSCocoaGraphicsSwitching, true);
     GLUTEmu_WindowSetHint(GLUTEmu_WindowHint::WindowResizable, ScreenResize != 0);
 
-    if (!GLUTEmu_WindowCreate(640, 400)) {
+    if (!GLUTEmu_WindowCreate(Window_DefaultWidth, Window_DefaultHeight)) {
         gui_alert("Failed to initialize window");
         exit(EXIT_FAILURE);
     }
@@ -56,7 +56,7 @@ static void initialize_glut() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     GLUTEmu_WindowSetCloseFunction(GLUT_EXIT_FUNC);
-    GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_RESIZE_FUNC);
+    GLUTEmu_WindowSetFramebufferResizedFunction(GLUT_FRAMEBUFFER_RESIZE_FUNC);
     GLUTEmu_WindowSetResizedFunction(GLUT_RESIZE_FUNC);
     //   GLFW_TODO: Maximize/Minimize handling
     GLUTEmu_WindowSetFocusedFunction(GLUT_WINDOW_FOCUS_FUNC);

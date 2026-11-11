@@ -333,7 +333,7 @@ static bool noprompt_on_fatal_error() {
     return noprompt_setting() != NOPROMPT_UNSET;
 }
 
-// Report a fatal error and waits for the user to acknowledge it. 
+// Report a fatal error and waits for the user to acknowledge it.
 // Respects the QB64PE_NOPROMPT setting if set.
 static void fatal_error_alert(const char *message, const char *title) {
     if (!noprompt_on_fatal_error()) {

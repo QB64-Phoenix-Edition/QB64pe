@@ -69,9 +69,6 @@ void requestKeyboardOverlayImage(int32 handle) {
 
 // extern functions
 
-extern int32 func__scaledwidth();
-extern int32 func__scaledheight();
-
 extern void sub__fps(double fps, int32 passed);
 
 extern qbs *func__readfile(qbs *filespec);

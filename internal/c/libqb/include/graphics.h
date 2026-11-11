@@ -532,3 +532,33 @@ static inline bool Image_IsDestinationConsolePage() {
 static inline bool Image_IsSourceConsolePage() {
     return Image_IsConsolePage(read_page);
 }
+
+/// @brief Checks if an image is a text page. This function is used to determine if the image is a text surface, which may have different rendering and
+/// input/output behavior compared to graphical surfaces.
+/// @param image The image to check. This cannot be NULL.
+/// @return true if the image handle corresponds to a text page, false otherwise.
+static inline bool Image_IsTextPage(const img_struct *image) {
+    return image && image->text;
+}
+
+/// @brief Checks if an image is a text page. This function is used to determine if the image is a text surface, which may have different rendering and
+/// input/output behavior compared to graphical surfaces.
+/// @param imageHandle The image handle to check.
+/// @return true if the image handle corresponds to a text page, false otherwise.
+static inline bool Image_IsTextPage(int32_t imageHandle) {
+    return Image_IsTextPage(Image_GetDescriptor(imageHandle));
+}
+
+/// @brief Checks if the currently active destination page is a text page. This function is used to determine if the currently active destination page is a text
+/// surface, which may have different rendering and input/output behavior compared to graphical surfaces.
+/// @return true if the currently active destination page is a text page, false otherwise.
+static inline bool Image_IsDestinationTextPage() {
+    return Image_IsTextPage(write_page);
+}
+
+/// @brief Checks if the currently active source page is a text page. This function is used to determine if the currently active source page is a text surface,
+/// which may have different rendering and input/output behavior compared to graphical surfaces.
+/// @return true if the currently active source page is a text page, false otherwise.
+static inline bool Image_IsSourceTextPage() {
+    return Image_IsTextPage(read_page);
+}

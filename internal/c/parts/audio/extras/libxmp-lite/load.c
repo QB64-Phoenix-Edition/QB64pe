@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,6 @@
 #include <errno.h>
 
 #include "format.h"
-#include "list.h"
 #include "hio.h"
 #include "loader.h"
 
@@ -37,10 +36,6 @@
 #include "extras.h"
 #endif
 
-
-void libxmp_load_prologue(struct context_data *);
-void libxmp_load_epilogue(struct context_data *);
-int  libxmp_prepare_scan(struct context_data *);
 
 #ifndef LIBXMP_CORE_PLAYER
 #define BUFLEN 16384

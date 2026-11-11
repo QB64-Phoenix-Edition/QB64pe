@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -190,13 +190,7 @@ static int load_xm_pattern(struct module_data *m, int num, int version,
 			}
 
 			if (event->note == 0x61) {
-				/* See OpenMPT keyoff+instr.xm test case */
-				if (event->fxt == 0x0e && MSN(event->fxp) == 0x0d) {
-					event->note = XMP_KEY_OFF;
-				} else {
-					event->note =
-					event->ins ? XMP_KEY_FADE : XMP_KEY_OFF;
-				}
+				event->note = XMP_KEY_OFF;
 			} else if (event->note > 0) {
 				event->note += 12;
 			}
@@ -281,38 +275,6 @@ static int load_xm_pattern(struct module_data *m, int num, int version,
 			case 0x0f:	/* Tone portamento */
 				event->f2t = FX_TONEPORTA;
 				event->f2p = (event->vol - 0xf0) << 4;
-
-				/* From OpenMPT TonePortamentoMemory.xm:
-				* "Another nice bug (...) is the combination of both
-				*  portamento commands (Mx and 3xx) in the same cell:
-				*  The 3xx parameter is ignored completely, and the Mx
-				*  parameter is doubled. (M2 3FF is the same as M4 000)
-				*/
-				if (event->fxt == FX_TONEPORTA
-				|| event->fxt == FX_TONE_VSLIDE) {
-					if (event->fxt == FX_TONEPORTA) {
-						event->fxt = 0;
-					} else {
-						event->fxt = FX_VOLSLIDE;
-					}
-					event->fxp = 0;
-
-					if (event->f2p < 0x80) {
-						event->f2p <<= 1;
-					} else {
-						event->f2p = 0xff;
-					}
-				}
-
-				/* From OpenMPT porta-offset.xm:
-				* "If there is a portamento command next to an offset
-				*  command, the offset command is ignored completely. In
-				*  particular, the offset parameter is not memorized."
-				*/
-				if (event->fxt == FX_OFFSET
-				&& event->f2t == FX_TONEPORTA) {
-					event->fxt = event->fxp = 0;
-				}
 				break;
 			}
 			event->vol = 0;
@@ -464,7 +426,8 @@ static int oggdec(struct module_data *m, HIO_HANDLE *f, struct xmp_sample *xxs, 
 }
 #endif
 
-static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
+static int load_instruments(struct module_data *m, int version,
+			    int *mpt_ins_headers, HIO_HANDLE *f)
 {
 	struct xmp_module *mod = &m->mod;
 	struct xm_instrument_header xih;
@@ -474,6 +437,8 @@ static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
 	long total_sample_size;
 	int i, j;
 	uint8 buf[208];
+
+	(void)mpt_ins_headers; /* unused in LIBXMP_CORE_PLAYER */
 
 	D_(D_INFO "Instruments: %d", mod->ins);
 
@@ -518,6 +483,14 @@ static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
 			D_(D_CRIT "instrument %d: samples:%d sample header size:%d", i + 1, xih.samples, xih.sh_size);
 			return -1;
 		}
+
+#ifndef LIBXMP_CORE_PLAYER
+		/* Yet another Modplug Tracker tell: it saves huge zero-filled
+		 * instrument headers for unused instruments. */
+		if (xih.size == 0x107 && xih.samples == 0 && xih.sh_size == 0) {
+			*mpt_ins_headers = 1;
+		}
+#endif
 
 		libxmp_instrument_name(mod, i, xih.name, 22);
 
@@ -784,10 +757,14 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 	char tracker_name[21];
 #ifndef LIBXMP_CORE_PLAYER
 	int claims_ft2 = 0;
+	int is_mpt_old = 0;
 	int is_mpt_116 = 0;
 #endif
+	int mpt_ins_headers = 0;
 	int len;
 	uint8 buf[80];
+
+	(void)mpt_ins_headers; /* unused in LIBXMP_CORE_PLAYER */
 
 	LOAD_INIT();
 
@@ -875,13 +852,15 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 			break;
 	}
 
-	/* OpenMPT accurately emulates weird FT2 bugs */
 	if (!strncmp(tracker_name, "FastTracker v2.00", 17)) {
 		m->quirk |= QUIRK_FT2BUGS;
 #ifndef LIBXMP_CORE_PLAYER
 		claims_ft2 = 1;
 #endif
+	} else if (!strncmp(tracker_name, "Fasttracker II clone", 20)) {
+		m->quirk |= QUIRK_FT2BUGS;
 	} else if (!strncmp(tracker_name, "OpenMPT ", 8)) {
+		/* OpenMPT accurately emulates weird FT2 bugs */
 		m->quirk |= QUIRK_FT2BUGS;
 	}
 #ifndef LIBXMP_CORE_PLAYER
@@ -904,7 +883,13 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 	if (!strncmp(tracker_name, "FastTracker v 2.00", 18)) {
 		strcpy(tracker_name, "old ModPlug Tracker");
 		m->quirk &= ~QUIRK_FT2BUGS;
-		is_mpt_116 = 1;
+		is_mpt_old = 1;
+	}
+
+	if (!strcmp(tracker_name, "Skale Tracker") ||
+	    !strcmp(tracker_name, "Sk@le Tracker")) {
+		/* Skale Tracker allows Dxx Byy to jump to row X. */
+		m->flow_mode |= FLOW_JUMP_NO_ROW_SET;
 	}
 
 	libxmp_set_type(m, "%s XM %d.%02d", tracker_name, xfh.version >> 8, xfh.version & 0xff);
@@ -921,7 +906,7 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 
 	/* XM 1.02/1.03 has a different patterns and instruments order */
 	if (xfh.version <= 0x0103) {
-		if (load_instruments(m, xfh.version, f) < 0) {
+		if (load_instruments(m, xfh.version, &mpt_ins_headers, f) < 0) {
 			return -1;
 		}
 		if (load_patterns(m, xfh.version, f) < 0) {
@@ -931,7 +916,7 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		if (load_patterns(m, xfh.version, f) < 0) {
 			return -1;
 		}
-		if (load_instruments(m, xfh.version, f) < 0) {
+		if (load_instruments(m, xfh.version, &mpt_ins_headers, f) < 0) {
 			return -1;
 		}
 	}
@@ -965,6 +950,8 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 			known = 1;
 			if (m->comment != NULL)
 				break;
+			if ((int64)sz > hio_size(f))
+				break;
 
 			if ((m->comment = (char *)malloc(sz + 1)) == NULL)
 				break;
@@ -981,6 +968,7 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 					m->comment[i] = '.';
 				}
 			}
+			sz = 0;
 			break;
 
 		case MAGIC4('M','I','D','I'):		/* MIDI config */
@@ -996,21 +984,27 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 			if ((ext & MAGIC4('F','X', 0, 0)) == MAGIC4('F','X', 0, 0))
 				known = 1;
 
-			if (sz) hio_seek(f, sz, SEEK_CUR);
 			break;
 		}
 
 		if(known && claims_ft2)
 			is_mpt_116 = 1;
 
+		if (sz && hio_seek(f, sz, SEEK_CUR) < 0)
+			break;
 		if (ext == MAGIC4('X','T','P','M'))
 			break;
+	}
+
+	if (claims_ft2 && mpt_ins_headers) {
+		is_mpt_116 = 1;
 	}
 
 	if (is_mpt_116) {
 		libxmp_set_type(m, "ModPlug Tracker 1.16 XM %d.%02d",
 				xfh.version >> 8, xfh.version & 0xff);
-
+	}
+	if (is_mpt_116 || is_mpt_old) {
 		m->quirk &= ~QUIRK_FT2BUGS;
 		m->flow_mode = FLOW_MODE_MPT_116;
 		m->mvolbase = 48;

@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +53,14 @@
 	} \
 } while (0)
 
+#define EFFECT_MEMORY_GET(p, m) do { \
+	if (HAS_QUIRK(QUIRK_ST3BUGS)) { \
+		(p) = xc->vol.memory; \
+	} else { \
+		(p) = (m); \
+	} \
+} while(0)
+
 #define EFFECT_MEMORY_SETONLY(p, m) do { \
 	EFFECT_MEMORY__((p), (m)); \
 	if (HAS_QUIRK(QUIRK_ST3BUGS)) { \
@@ -98,7 +106,7 @@ static void do_toneporta(struct context_data *ctx,
 }
 
 void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int chn,
-		struct xmp_event *e, int fnum)
+		const struct xmp_event *e, int fnum)
 {
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
@@ -217,7 +225,7 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 		if (fxp != 0) {
 			if (HAS_QUIRK(QUIRK_UNISLD)) /* IT compatible Gxx off */
 				xc->freq.memory = fxp;
-			xc->porta.slide = fxp;
+			xc->porta.slide += fxp;
 		}
 
 		if (HAS_QUIRK(QUIRK_IGSTPOR)) {
@@ -247,6 +255,8 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 		break;
 
 	case FX_TONE_VSLIDE:	/* Toneporta + vol slide */
+		EFFECT_MEMORY_GET(l, xc->porta.memory);
+		xc->porta.slide += l;
 		if (!IS_VALID_INSTRUMENT(xc->ins))
 			break;
 		do_toneporta(ctx, xc, note);
@@ -267,23 +277,18 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 			break;
 		}
 	    fx_setpan:
-		/* From OpenMPT PanOff.xm:
-		 * "Another chapter of weird FT2 bugs: Note-Off + Note Delay
-		 *  + Volume Column Panning = Panning effect is ignored."
-		 */
-		if (!HAS_QUIRK(QUIRK_FT2BUGS)		/* If not FT2 */
-		    || fnum == 0			/* or not vol column */
-		    || e->note != XMP_KEY_OFF		/* or not keyoff */
-		    || e->fxt != FX_EXTENDED		/* or not delay */
-		    || MSN(e->fxp) != EX_DELAY) {
-			xc->pan.val = fxp;
-			xc->pan.surround = 0;
-		}
-		xc->rpv = 0;	/* storlek_20: set pan overrides random pan */
+		xc->pan.val = fxp;
 		xc->pan.surround = 0;
+		xc->rpv = 0;	/* storlek_20: set pan overrides random pan */
 		break;
 	case FX_OFFSET:		/* Set sample offset */
-		EFFECT_MEMORY(fxp, xc->offset.memory);
+		if (HAS_QUIRK(QUIRK_FT2BUGS)) {
+			/* FT2: only set memory when offset activates, see
+			 * read_event_ft2 (ft2_offset_memory.xm). */
+			fxp = fxp ? fxp : xc->offset.memory;
+		} else {
+			EFFECT_MEMORY(fxp, xc->offset.memory);
+		}
 		SET(OFFSET);
 		if (note) {
 			xc->offset.val &= xc->offset.val & ~0xffff;
@@ -322,8 +327,6 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 				goto fx_volslide;
 		}
 
-		SET(VOL_SLIDE);
-
 		/* Skaven's 2nd reality (S3M) has volslide parameter D7 => pri
 		 * down. Other trackers only compute volumes if the other
 		 * parameter is 0, Fall from sky.xm has 2C => do nothing.
@@ -331,11 +334,18 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 		 * of Sounds.xm
 		 */
 		if (fxp) {
+			SET(VOL_SLIDE);
 			xc->vol.memory = fxp;
 			h = MSN(fxp);
 			l = LSN(fxp);
 			if (fxp) {
-				if (HAS_QUIRK(QUIRK_VOLPDN)) {
+				/* Imago Orpheus uses (x - y).
+				 * TODO: a less hacky way of detecting this
+				 * (READ_EVENT_ORPHEUS or quirk) would be nice.
+				 * (test_effect_finefx_imf) */
+				if (m->flow_mode == FLOW_MODE_ORPHEUS) {
+					xc->vol.slide = h - l;
+				} else if (HAS_QUIRK(QUIRK_VOLPDN)) {
 					xc->vol.slide = l ? -l : h;
 				} else {
 					xc->vol.slide = h ? h : -l;
@@ -355,9 +365,9 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 			}
 		}
 		break;
-	case FX_VOLSLIDE_2:	/* Secondary volume slide */
-		SET(VOL_SLIDE_2);
+	case FX_VOLSLIDE_2:	/* Secondary volume slide (no memory) */
 		if (fxp) {
+			SET(VOL_SLIDE_2);
 			h = MSN(fxp);
 			l = LSN(fxp);
 			xc->vol.slide2 = h ? h : -l;
@@ -677,9 +687,7 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 		EFFECT_MEMORY(fxp, xc->tremor.memory);
 		xc->tremor.up = MSN(fxp);
 		xc->tremor.down = LSN(fxp);
-		if (IS_PLAYER_MODE_FT2()) {
-			xc->tremor.count |= 0x80;
-		} else {
+		if (!IS_PLAYER_MODE_FT2()) {
 			if (xc->tremor.up == 0) {
 				xc->tremor.up++;
 			}
@@ -931,6 +939,20 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 			xc->vol.fslide = h ? h : -l;
 		}
 		break;
+	case FX_IMF_FPORTA_DN:	/* IMF 1/16th precision fine slide down */
+		EFFECT_MEMORY(fxp, xc->freq.memory);
+		if (fxp != 0) {
+			SET(FINE_BEND);
+			xc->freq.fslide = 0.0625 * fxp;
+		}
+		break;
+	case FX_IMF_FPORTA_UP:	/* IMF 1/16th precision fine slide up */
+		EFFECT_MEMORY(fxp, xc->freq.memory);
+		if (fxp != 0) {
+			SET(FINE_BEND);
+			xc->freq.fslide = -0.0625 * fxp;
+		}
+		break;
 	case FX_NSLIDE_DN:
 	case FX_NSLIDE_UP:
 	case FX_NSLIDE_R_DN:
@@ -1120,7 +1142,7 @@ void libxmp_process_fx(struct context_data *ctx, struct channel_data *xc, int ch
 
 	default:
 #ifndef LIBXMP_CORE_PLAYER
-		libxmp_extras_process_fx(ctx, xc, chn, note, fxt, fxp, fnum);
+		libxmp_extras_process_fx(ctx, xc, chn, note, e->ins, fxt, fxp, fnum);
 #endif
 		break;
 	}

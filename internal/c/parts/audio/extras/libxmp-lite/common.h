@@ -4,7 +4,7 @@
 /* band-aid for autotools: we aren't using autoheader.
  * See: https://github.com/libxmp/libxmp/issues/373 . */
 #ifdef AC_APPLE_UNIVERSAL_BUILD
-# #undef WORDS_BIGENDIAN
+# undef  WORDS_BIGENDIAN
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
 # endif
@@ -54,14 +54,6 @@
 #define LIBXMP_RESTRICT __restrict
 #else
 #define LIBXMP_RESTRICT
-#endif
-
-#if defined(_MSC_VER) ||  defined(__WATCOMC__) || defined(__EMX__)
-#define XMP_MAXPATH _MAX_PATH
-#elif defined(PATH_MAX)
-#define XMP_MAXPATH  PATH_MAX
-#else
-#define XMP_MAXPATH  1024
 #endif
 
 #if defined(__MORPHOS__) || defined(__AROS__) || defined(__AMIGA__) \
@@ -170,6 +162,11 @@ typedef int tst_uint64[2 * (8 == sizeof(uint64)) - 1];
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+/* Standards-compliant sign-extending arithmetic left shift.
+ * This is required for potentially negative input values. */
+#define XMP_ASL(x,e)	((int)((unsigned)(int)(x) << (e)))
+#define XMP_ASL64(x,e)	((int64)((uint64)(int64)(x) << (e)))
+
 #define TRACK_NUM(a,c)	m->mod.xxp[a]->index[c]
 #define EVENT(a,c,r)	m->mod.xxt[TRACK_NUM((a),(c))]->event[r]
 
@@ -178,9 +175,9 @@ typedef int tst_uint64[2 * (8 == sizeof(uint64)) - 1];
 #define D_CRIT "  Error: "
 #define D_WARN "Warning: "
 #define D_INFO "   Info: "
+void libxmp_msvc_dbgprint(const char *text, ...);
 #ifdef DEBUG
 #define D_ libxmp_msvc_dbgprint  /* in win32.c */
-void libxmp_msvc_dbgprint(const char *text, ...);
 #else
 /* VS prior to VC7.1 does not support variadic macros.
  * VC8.0 does not optimize unused parameters passing. */
@@ -241,6 +238,12 @@ static void __inline D_(const char *text, ...) {
 
 #endif	/* !_MSC_VER */
 
+#if defined(__GNUC__) || defined(__clang__)
+#define LIBXMP_ATTRIB_PRINTF(x,y) __attribute__((__format__(__printf__,x,y)))
+#else
+#define LIBXMP_ATTRIB_PRINTF(x,y)
+#endif
+
 #if defined(_WIN32) || defined(__WATCOMC__) /* in win32.c */
 #define USE_LIBXMP_SNPRINTF
 /* MSVC 2015+ has C99 compliant snprintf and vsnprintf implementations.
@@ -257,11 +260,6 @@ static void __inline D_(const char *text, ...) {
 #undef USE_LIBXMP_SNPRINTF
 #endif
 #ifdef USE_LIBXMP_SNPRINTF
-#if defined(__GNUC__) || defined(__clang__)
-#define LIBXMP_ATTRIB_PRINTF(x,y) __attribute__((__format__(__printf__,x,y)))
-#else
-#define LIBXMP_ATTRIB_PRINTF(x,y)
-#endif
 int libxmp_vsnprintf(char *, size_t, const char *, va_list) LIBXMP_ATTRIB_PRINTF(3,0);
 int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4);
 #define snprintf  libxmp_snprintf
@@ -297,7 +295,7 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 #define QUIRK_VOLPDN	(1 << 9)	/* Set priority to volume slide down */
 #define QUIRK_UNISLD	(1 << 10)	/* Unified pitch slide/portamento */
 #define QUIRK_ITVPOR	(1 << 11)	/* Disable fine bends in IT vol fx */
-#define QUIRK_FTMOD	(1 << 12)	/* Flag for multichannel mods */
+/*#define QUIRK_FTMOD	(1 << 12)*/	/* Flag for multichannel mods */
 #define QUIRK_INVLOOP	(1 << 13)	/* Enable invert loop */
 /*#define QUIRK_MODRNG	(1 << 13)*/	/* Limit periods to MOD range */
 #define QUIRK_INSVOL	(1 << 14)	/* Use instrument volume */
@@ -311,13 +309,12 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 #define QUIRK_PRENV	(1 << 22)	/* Portamento resets envelope & fade */
 #define QUIRK_ITOLDFX	(1 << 23)	/* IT old effects mode */
 #define QUIRK_S3MRTG	(1 << 24)	/* S3M-style retrig when count == 0 */
-#define QUIRK_RTDELAY	(1 << 25)	/* Delay effect retrigs instrument */
+#define QUIRK_FT2ENV	(1 << 25)	/* Use FT2-style envelope handling */
 #define QUIRK_FT2BUGS	(1 << 26)	/* FT2 bug compatibility */
 #define QUIRK_MARKER	(1 << 27)	/* Patterns 0xfe and 0xff reserved */
 #define QUIRK_NOBPM	(1 << 28)	/* Adjust speed only, no BPM */
 #define QUIRK_ARPMEM	(1 << 29)	/* Arpeggio has memory (S3M_ARPEGGIO) */
 #define QUIRK_RSTCHN	(1 << 30)	/* Reset channel on sample end */
-#define QUIRK_FT2ENV	(1 << 31)	/* Use FT2-style envelope handling */
 
 #define HAS_QUIRK(x)	(m->quirk & (x))
 
@@ -325,7 +322,7 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 /* Format quirks */
 #define QUIRKS_ST3		(QUIRK_S3MLOOP | QUIRK_VOLPDN | QUIRK_FINEFX | \
 				 QUIRK_S3MRTG  | QUIRK_MARKER | QUIRK_RSTCHN )
-#define QUIRKS_FT2		(QUIRK_RTDELAY | QUIRK_FINEFX )
+#define QUIRKS_FT2		(0)
 #define QUIRKS_IT		(QUIRK_S3MLOOP | QUIRK_FINEFX | QUIRK_VIBALL | \
 				 QUIRK_ENVFADE | QUIRK_ITVPOR | QUIRK_KEYOFF | \
 				 QUIRK_VIRTUAL | QUIRK_FILTER | QUIRK_RSTCHN | \
@@ -347,6 +344,9 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 #define FLOW_LOOP_UNSET_JUMP	(1 << 12) /* E6x jump cancels prior Bxx on same row (S3M) */
 #define FLOW_LOOP_SHARED_BREAK	(1 << 13) /* E6x overrides prior Dxx dest on same row (LIQ) */
 /*#define FLOW_LOOP_TICK_0_JUMP */	  /* Loop jump shortens row to one tick (DTM) */
+#define FLOW_JUMP_THEN_BREAK	(1 << 28) /* TODO: Bxx Dxx jumps, then breaks (IMF, TT) */
+#define FLOW_JUMP_QUEUED	(1 << 29) /* TODO: Jump queues next position (ST2) */
+#define FLOW_JUMP_NO_ROW_SET	(1 << 30) /* Jump doesn't set break row to 0 (ST3/IT) */
 
 #define HAS_FLOW_MODE(x)	(m->flow_mode & (x))
 
@@ -360,11 +360,17 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
  * 3.01b has a bug where the end advancement sets the target to the same line
  * instead of the next line; there's no way to make use of this without getting
  * stuck, so it's not simulated.
+ * ST2 has an entirely different behavior for pattern jump where, instead of
+ * immediately jumping, it queues the next position to be loaded after a break
+ * or the end of the current pattern.
  */
+#define FLOW_MODE_ST2		(FLOW_JUMP_QUEUED)
 #define FLOW_MODE_ST3_301	(FLOW_LOOP_GLOBAL | FLOW_LOOP_PATTERN_RESET | \
-				 FLOW_LOOP_END_ADVANCES | FLOW_LOOP_INIT_SAMEROW)
+				 FLOW_LOOP_END_ADVANCES | FLOW_LOOP_INIT_SAMEROW | \
+				 FLOW_JUMP_NO_ROW_SET)
 #define FLOW_MODE_ST3_321	(FLOW_LOOP_GLOBAL | FLOW_LOOP_PATTERN_RESET | \
-				 FLOW_LOOP_END_ADVANCES | FLOW_LOOP_NO_BREAK_JUMP)
+				 FLOW_LOOP_END_ADVANCES | FLOW_LOOP_NO_BREAK_JUMP | \
+				 FLOW_JUMP_NO_ROW_SET)
 
 /* Impulse Tracker. Not clear if anything relies on the old behavior types.
  * IT loops were global pre-1.04, and loop jumps override any prior break/jump.
@@ -372,21 +378,27 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
  * IT 2.10+ reintroduced ST3's loop target advancement.
  */
 #define FLOW_MODE_IT_100	(FLOW_LOOP_GLOBAL | \
-				 FLOW_LOOP_UNSET_BREAK | FLOW_LOOP_UNSET_JUMP)
-#define FLOW_MODE_IT_104	(FLOW_LOOP_UNSET_BREAK | FLOW_LOOP_UNSET_JUMP)
+				 FLOW_LOOP_UNSET_BREAK | FLOW_LOOP_UNSET_JUMP | \
+				 FLOW_JUMP_NO_ROW_SET)
+#define FLOW_MODE_IT_104	(FLOW_LOOP_UNSET_BREAK | FLOW_LOOP_UNSET_JUMP | \
+				 FLOW_JUMP_NO_ROW_SET)
 #define FLOW_MODE_IT_200	(FLOW_MODE_IT_104 | FLOW_LOOP_DELAY_BREAK)
 #define FLOW_MODE_IT_210	(FLOW_MODE_IT_200 | FLOW_LOOP_END_ADVANCES)
 
 /* Modplug Tracker/early OpenMPT */
-#define FLOW_MODE_MPT_116	(FLOW_LOOP_ONE_AT_A_TIME | FLOW_LOOP_NO_BREAK_JUMP)
+#define FLOW_MODE_MPT_116	(FLOW_LOOP_ONE_AT_A_TIME | FLOW_LOOP_NO_BREAK_JUMP | \
+				 FLOW_JUMP_NO_ROW_SET)
 
 /* Imago Orpheus. Pattern Jump actually does not reset target/count, but all
  * other forms of pattern change do. Unclear if anything relies on it.
  * An XAx jump will set the destination row of a prior Txx jump.
  * An XAx jump will cancel a prior Uxx break on the same row.
+ * Txx unsets a prior Uxx (normal); Txx followed by Uyy jumps and then
+ * breaks to the next pattern after position X.
  */
 #define FLOW_MODE_ORPHEUS	(FLOW_LOOP_PATTERN_RESET | \
-				 FLOW_LOOP_SHARED_BREAK | FLOW_LOOP_UNSET_BREAK)
+				 FLOW_LOOP_SHARED_BREAK | FLOW_LOOP_UNSET_BREAK | \
+				 FLOW_JUMP_THEN_BREAK)
 
 /* Liquid Tracker uses generic MOD loops with an added behavior where
  * the end of a loop will cancel any other jump in the row that preceded it.
@@ -450,9 +462,6 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 #define MAX_INSTRUMENTS		255
 #define MAX_PATTERNS		256
 
-#define XMP_MARK_SKIP		0xfe /* S3M/IT (QUIRK_MARKER) skip position */
-#define XMP_MARK_END		0xff /* S3M/IT (QUIRK_MARKER) end position */
-
 #define IS_PLAYER_MODE_MOD()	(m->read_event_type == READ_EVENT_MOD)
 #define IS_PLAYER_MODE_FT2()	(m->read_event_type == READ_EVENT_FT2)
 #define IS_PLAYER_MODE_ST3()	(m->read_event_type == READ_EVENT_ST3)
@@ -465,10 +474,10 @@ int libxmp_snprintf (char *, size_t, const char *, ...) LIBXMP_ATTRIB_PRINTF(3,4
 #define IS_AMIGA_MOD()	(IS_PLAYER_MODE_MOD() && IS_PERIOD_MODRNG())
 
 struct ord_data {
+	double time;			/* replay time (ms) at start of ord */
 	int speed;
 	int bpm;
 	int gvl;
-	int time; /* TODO: double */
 	int start_row;
 #ifndef LIBXMP_CORE_PLAYER
 	int st26_speed;
@@ -561,9 +570,6 @@ struct flow_control {
 	int loop_start;		/* Global loop target for S3M et al. */
 	int loop_count;		/* Global loop count for S3M et al. */
 	int loop_active_num;	/* Number of active loops for scan */
-#ifndef LIBXMP_CORE_PLAYER
-	int jump_in_pat;
-#endif
 
 	struct pattern_loop *loop;
 
@@ -573,6 +579,7 @@ struct flow_control {
 #define ROWDELAY_FIRST_FRAME	(1 << 1)
 	int rowdelay;		/* For IT pattern row delay */
 	int rowdelay_set;
+	int force_reposition;
 };
 
 struct virt_channel {
@@ -581,7 +588,7 @@ struct virt_channel {
 };
 
 struct scan_data {
-	int time;			/* replay time in ms */ /* TODO: double */
+	double time;			/* replay time in ms */
 	int row;
 	int ord;
 	int num;
@@ -598,11 +605,13 @@ struct player_data {
 	int player_flags;
 	int flags;
 
+	double time_factor_relative;	/* User time factor adjustment */
 	double scan_time_factor;	/* m->time_factor for most recent scan */
 	double current_time;		/* current time based on scan time factor */
 
 	int loop_count;
 	int sequence;
+	int bad_sequence;		/* 1 = can't find next order, need reposition */
 	unsigned char sequence_control[XMP_MAX_MOD_LENGTH];
 
 	int smix_vol;			/* SFX volume */
@@ -652,6 +661,9 @@ struct mixer_data {
 	int dsp;		/* dsp effect flags */
 	char *buffer;		/* output buffer */
 	int32 *buf32;		/* temporary buffer for 32 bit samples */
+	int total_size;		/* allocated samples (not frames) in buffers */
+	int sample_size;	/* individual output sample (not frame) size */
+	int output_chn;		/* output channels (1 or 2) */
 	int numvoc;		/* default softmixer voices number */
 	int ticksize;
 	int dtright;		/* anticlick control, right channel */
@@ -676,12 +688,17 @@ struct context_data {
 
 /* Prototypes */
 
+LIBXMP_BEGIN_DECLS
+
 char	*libxmp_adjust_string	(char *);
+void	libxmp_load_prologue	(struct context_data *); /* use in load only */
+void	libxmp_load_epilogue	(struct context_data *); /* use in load only */
 int	libxmp_prepare_scan	(struct context_data *);
 void	libxmp_free_scan	(struct context_data *);
 int	libxmp_scan_sequences	(struct context_data *);
 int	libxmp_get_sequence	(struct context_data *, int);
 int	libxmp_set_player_mode	(struct context_data *);
+double	libxmp_get_frame_time	(struct context_data *);
 void	libxmp_reset_flow	(struct context_data *);
 
 int8	read8s			(FILE *, int *err);
@@ -712,5 +729,7 @@ struct xmp_sample *libxmp_get_sample(struct context_data *, int);
 
 char *libxmp_strdup(const char *);
 int libxmp_get_filetype (const char *);
+
+LIBXMP_END_DECLS
 
 #endif /* LIBXMP_COMMON_H */

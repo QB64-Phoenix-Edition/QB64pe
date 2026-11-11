@@ -3,6 +3,9 @@
 #include "qbs.h"
 #include <cstdint>
 
+inline constexpr auto Window_DefaultWidth = 640;
+inline constexpr auto Window_DefaultHeight = 400;
+
 extern int32_t environment__window_width;
 extern int32_t environment__window_height;
 extern int32_t os_resize_event;
@@ -20,6 +23,7 @@ extern int32_t screen_hide;
 void window_update_for_frame(int32_t frame_width, int32_t frame_height);
 void window_update_environment_size();
 void GLUT_RESIZE_FUNC(int width, int height);
+void GLUT_FRAMEBUFFER_RESIZE_FUNC(int width, int height);
 void GLUT_DROPFILES_FUNC(int count, const char *paths[]);
 
 void sub__fullscreen(int32_t method, int32_t passed);
@@ -31,6 +35,8 @@ void sub__resize(int32_t on_off, int32_t stretch_smooth);
 int32_t func__resize();
 int32_t func__resizewidth();
 int32_t func__resizeheight();
+int32_t func__scaledwidth();
+int32_t func__scaledheight();
 
 int32_t func__desktopwidth();
 int32_t func__desktopheight();

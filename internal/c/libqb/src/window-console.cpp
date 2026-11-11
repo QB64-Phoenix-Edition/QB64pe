@@ -11,6 +11,8 @@
 extern void sub__consoletitle(qbs *);
 
 extern int32_t force_display_update;
+extern int32_t environment_2d__screen_scaled_width;
+extern int32_t environment_2d__screen_scaled_height;
 
 int32_t environment__window_width = 0;
 int32_t environment__window_height = 0;
@@ -25,30 +27,32 @@ int32_t ScreenResize = 0;
 int32_t full_screen = 0;      // 0,1(stretched/closest),2(1:1)
 int32_t full_screen_set = -1; // 0(windowed),1(stretched/closest),2(1:1)
 
-static int32_t display_x = 640;
-static int32_t display_y = 400;
-static bool resize_pending = true;
-static int32_t resize_snapback_x = 640;
-static int32_t resize_snapback_y = 400;
+static int32_t display_x = Window_DefaultWidth;
+static int32_t display_y = Window_DefaultHeight;
+static bool resize_pending = false;
+static int32_t resize_snapback_x = Window_DefaultWidth;
+static int32_t resize_snapback_y = Window_DefaultHeight;
 static bool resize_event = false;
 static int32_t resize_event_x = 0;
 static int32_t resize_event_y = 0;
-static int32_t display_required_x = 640;
-static int32_t display_required_y = 400;
-static int32_t acceptFileDrop = 0;
-static int32_t droppedFileIndex = -1;
+static int32_t display_required_x = Window_DefaultWidth;
+static int32_t display_required_y = Window_DefaultHeight;
+static bool acceptFileDrop = false;
 
 void GLUT_RESIZE_FUNC(int width, int height) {
+    resize_pending = false;
+
     if ((display_x != width) || (display_y != height)) {
         resize_event_x = width;
         resize_event_y = height;
         resize_event = true;
         display_x = width;
         display_y = height;
-        resize_pending = false;
         os_resize_event = 1;
     }
 }
+
+void GLUT_FRAMEBUFFER_RESIZE_FUNC([[maybe_unused]] int width, [[maybe_unused]] int height) {}
 
 void window_update_for_frame(int32_t frame_width, int32_t frame_height) {
     os_resize_event = 0;
@@ -146,6 +150,14 @@ int32_t func__resizeheight() {
     return resize_event_y;
 }
 
+int32_t func__scaledwidth() {
+    return environment_2d__screen_scaled_width;
+}
+
+int32_t func__scaledheight() {
+    return environment_2d__screen_scaled_height;
+}
+
 int32_t func__desktopwidth() {
     return 0;
 }
@@ -220,30 +232,27 @@ void GLUT_DROPFILES_FUNC([[maybe_unused]] int count, [[maybe_unused]] const char
 
 void sub__filedrop(int32_t on_off) {
     if (on_off == 2) {
-        acceptFileDrop = 0;
+        acceptFileDrop = false;
         sub__finishdrop();
         return;
     }
 
     if ((on_off == 0) || (on_off == 1)) {
-        acceptFileDrop = -1;
+        acceptFileDrop = true;
     }
 }
 
 int32_t func__filedrop() {
-    return acceptFileDrop;
+    return QB_BOOL(acceptFileDrop);
 }
 
-void sub__finishdrop() {
-    droppedFileIndex = -1;
-}
+void sub__finishdrop() {}
 
 int32_t func__totaldroppedfiles() {
     return 0;
 }
 
 qbs *func__droppedfile([[maybe_unused]] int32_t fileIndex, [[maybe_unused]] int32_t passed) {
-    droppedFileIndex = -1;
     return qbs_new_txt("");
 }
 

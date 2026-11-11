@@ -1,127 +1,39 @@
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 void SUB_CMDLINESETTINGSHELP(){
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 qbs *tqbs;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 ptrszint tmp_long;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 int32 tmp_fileno;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 #include "data4.txt"
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 mem_lock *sf_mem_lock;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 new_mem_lock();
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 sf_mem_lock->type=3;
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 libqb_check_stack();
-#line 14637 "qb64pe.bas"
+#line 14641 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 14638 "qb64pe.bas"
+#line 14642 "qb64pe.bas"
 do{
-#line 14638 "qb64pe.bas"
+#line 14642 "qb64pe.bas"
 tqbs=qbs_new(0,0);
-#line 14638 "qb64pe.bas"
+#line 14642 "qb64pe.bas"
 qbs_set(tqbs,qbs_new_txt_len("Supported (-s) Compiler settings:",33));
-#line 14638 "qb64pe.bas"
-if (is_error_pending()) goto skip1944;
-#line 14638 "qb64pe.bas"
-makefit(tqbs);
-#line 14638 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14638 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14638 "qb64pe.bas"
-skip1944:
-#line 14638 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14638 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14638 "qb64pe.bas"
-if(!qbevent)break;evnt(14638);}while(r);
-#line 14639 "qb64pe.bas"
-do{
-#line 14639 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14639 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -s                              Show the current state of all settings",72));
-#line 14639 "qb64pe.bas"
-if (is_error_pending()) goto skip1945;
-#line 14639 "qb64pe.bas"
-makefit(tqbs);
-#line 14639 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14639 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14639 "qb64pe.bas"
-skip1945:
-#line 14639 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14639 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14639 "qb64pe.bas"
-if(!qbevent)break;evnt(14639);}while(r);
-#line 14640 "qb64pe.bas"
-do{
-#line 14640 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14640 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -s:DebugInfo=[true|false]       Embed C++ debug info into executable",70));
-#line 14640 "qb64pe.bas"
-if (is_error_pending()) goto skip1946;
-#line 14640 "qb64pe.bas"
-makefit(tqbs);
-#line 14640 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14640 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14640 "qb64pe.bas"
-skip1946:
-#line 14640 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14640 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14640 "qb64pe.bas"
-if(!qbevent)break;evnt(14640);}while(r);
-#line 14641 "qb64pe.bas"
-do{
-#line 14641 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14641 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -s:ExeWithSource=[true|false]   Save executable in the source folder",70));
-#line 14641 "qb64pe.bas"
-if (is_error_pending()) goto skip1947;
-#line 14641 "qb64pe.bas"
-makefit(tqbs);
-#line 14641 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14641 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14641 "qb64pe.bas"
-skip1947:
-#line 14641 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14641 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14641 "qb64pe.bas"
-if(!qbevent)break;evnt(14641);}while(r);
 #line 14642 "qb64pe.bas"
-do{
-#line 14642 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14642 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -s:ExeDefaultDir=[string]       Save executables here per default,",68));
-#line 14642 "qb64pe.bas"
-if (is_error_pending()) goto skip1948;
+if (is_error_pending()) goto skip1701;
 #line 14642 "qb64pe.bas"
 makefit(tqbs);
 #line 14642 "qb64pe.bas"
@@ -129,7 +41,7 @@ qbs_print(tqbs,0);
 #line 14642 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14642 "qb64pe.bas"
-skip1948:
+skip1701:
 #line 14642 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14642 "qb64pe.bas"
@@ -141,9 +53,9 @@ do{
 #line 14643 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14643 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                                  if not saving with source",59));
+qbs_set(tqbs,qbs_new_txt_len("  -s                              Show the current state of all settings",72));
 #line 14643 "qb64pe.bas"
-if (is_error_pending()) goto skip1949;
+if (is_error_pending()) goto skip1702;
 #line 14643 "qb64pe.bas"
 makefit(tqbs);
 #line 14643 "qb64pe.bas"
@@ -151,7 +63,7 @@ qbs_print(tqbs,0);
 #line 14643 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14643 "qb64pe.bas"
-skip1949:
+skip1702:
 #line 14643 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14643 "qb64pe.bas"
@@ -163,9 +75,9 @@ do{
 #line 14644 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14644 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("      You may specify a setting without equal sign and value to",63));
+qbs_set(tqbs,qbs_new_txt_len("  -s:DebugInfo=[true|false]       Embed C++ debug info into executable",70));
 #line 14644 "qb64pe.bas"
-if (is_error_pending()) goto skip1950;
+if (is_error_pending()) goto skip1703;
 #line 14644 "qb64pe.bas"
 makefit(tqbs);
 #line 14644 "qb64pe.bas"
@@ -173,7 +85,7 @@ qbs_print(tqbs,0);
 #line 14644 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14644 "qb64pe.bas"
-skip1950:
+skip1703:
 #line 14644 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14644 "qb64pe.bas"
@@ -185,9 +97,9 @@ do{
 #line 14645 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14645 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("      show the current state of that specific setting only.",59));
+qbs_set(tqbs,qbs_new_txt_len("  -s:ExeWithSource=[true|false]   Save executable in the source folder",70));
 #line 14645 "qb64pe.bas"
-if (is_error_pending()) goto skip1951;
+if (is_error_pending()) goto skip1704;
 #line 14645 "qb64pe.bas"
 makefit(tqbs);
 #line 14645 "qb64pe.bas"
@@ -195,7 +107,7 @@ qbs_print(tqbs,0);
 #line 14645 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14645 "qb64pe.bas"
-skip1951:
+skip1704:
 #line 14645 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14645 "qb64pe.bas"
@@ -203,14 +115,102 @@ qbs_cleanup(qbs_tmp_base,0);
 #line 14645 "qb64pe.bas"
 if(!qbevent)break;evnt(14645);}while(r);
 #line 14646 "qb64pe.bas"
+do{
+#line 14646 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14646 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -s:ExeDefaultDir=[string]       Save executables here per default,",68));
+#line 14646 "qb64pe.bas"
+if (is_error_pending()) goto skip1705;
+#line 14646 "qb64pe.bas"
+makefit(tqbs);
+#line 14646 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14646 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14646 "qb64pe.bas"
+skip1705:
+#line 14646 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14646 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14646 "qb64pe.bas"
+if(!qbevent)break;evnt(14646);}while(r);
+#line 14647 "qb64pe.bas"
+do{
+#line 14647 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14647 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("                                  if not saving with source",59));
+#line 14647 "qb64pe.bas"
+if (is_error_pending()) goto skip1706;
+#line 14647 "qb64pe.bas"
+makefit(tqbs);
+#line 14647 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14647 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14647 "qb64pe.bas"
+skip1706:
+#line 14647 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14647 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14647 "qb64pe.bas"
+if(!qbevent)break;evnt(14647);}while(r);
+#line 14648 "qb64pe.bas"
+do{
+#line 14648 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14648 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("      You may specify a setting without equal sign and value to",63));
+#line 14648 "qb64pe.bas"
+if (is_error_pending()) goto skip1707;
+#line 14648 "qb64pe.bas"
+makefit(tqbs);
+#line 14648 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14648 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14648 "qb64pe.bas"
+skip1707:
+#line 14648 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14648 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14648 "qb64pe.bas"
+if(!qbevent)break;evnt(14648);}while(r);
+#line 14649 "qb64pe.bas"
+do{
+#line 14649 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14649 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("      show the current state of that specific setting only.",59));
+#line 14649 "qb64pe.bas"
+if (is_error_pending()) goto skip1708;
+#line 14649 "qb64pe.bas"
+makefit(tqbs);
+#line 14649 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14649 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14649 "qb64pe.bas"
+skip1708:
+#line 14649 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14649 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14649 "qb64pe.bas"
+if(!qbevent)break;evnt(14649);}while(r);
+#line 14650 "qb64pe.bas"
 exit_subfunc:;
-#line 14646 "qb64pe.bas"
+#line 14650 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
-#line 14646 "qb64pe.bas"
+#line 14650 "qb64pe.bas"
 #include "free4.txt"
-#line 14646 "qb64pe.bas"
+#line 14650 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 14646 "qb64pe.bas"
+#line 14650 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-#line 14646 "qb64pe.bas"
+#line 14650 "qb64pe.bas"
 }

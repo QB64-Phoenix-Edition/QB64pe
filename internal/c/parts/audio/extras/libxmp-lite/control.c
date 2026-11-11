@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +53,8 @@ void xmp_free_context(xmp_context opaque)
 
 	if (ctx->state > XMP_STATE_UNLOADED)
 		xmp_release_module(opaque);
+
+	xmp_end_smix(opaque);
 
 	free(m->instrument_path);
 	free(opaque);
@@ -206,6 +208,7 @@ int xmp_set_row(xmp_context opaque, int row)
 	p->ord = p->pos;
 	p->row = row;
 	p->frame = -1;
+	p->bad_sequence = 0;
 	f->num_rows = mod->xxp[mod->xxo[p->ord]]->rows;
 
 	return row;
@@ -220,6 +223,7 @@ void xmp_stop_module(xmp_context opaque)
 		return;
 
 	p->pos = -2;
+	libxmp_reset_flow(ctx);
 }
 
 void xmp_restart_module(xmp_context opaque)
@@ -232,6 +236,7 @@ void xmp_restart_module(xmp_context opaque)
 
 	p->loop_count = 0;
 	p->pos = -1;
+	libxmp_reset_flow(ctx);
 }
 
 int xmp_seek_time(xmp_context opaque, int time)
@@ -239,7 +244,10 @@ int xmp_seek_time(xmp_context opaque, int time)
 	struct context_data *ctx = (struct context_data *)opaque;
 	struct player_data *p = &ctx->p;
 	struct module_data *m = &ctx->m;
-	int i, t;
+	struct ord_data *oinfo;
+	double t;
+	int pos;
+	int i;
 
 	if (ctx->state < XMP_STATE_PLAYING)
 		return -XMP_ERROR_STATE;
@@ -252,8 +260,12 @@ int xmp_seek_time(xmp_context opaque, int time)
 		if (libxmp_get_sequence(ctx, i) != p->sequence) {
 			continue;
 		}
+		/* TODO: using rounding to preserve compatibility with
+		 * the old (bad) int conversion here until this API
+		 * function can be fixed or replaced. */
 		t = m->xxo_info[i].time;
-		if (time >= t) {
+		CLAMP(t, 0.0, (double)INT_MAX);
+		if (time >= (int)t) {
 			set_position(ctx, i, 1);
 			break;
 		}
@@ -261,6 +273,72 @@ int xmp_seek_time(xmp_context opaque, int time)
 	if (i < 0) {
 		xmp_set_position(opaque, 0);
 	}
+
+	/* Get the correct start row + force the next xmp_play_frame call to
+	 * do a reposition, which updates properties such as BPM and global
+	 * volume and normally doesn't happen within the same position: */
+	pos = p->pos >= 0 ? p->pos : m->seq_data[p->sequence].entry_point;
+
+	oinfo = &m->xxo_info[pos];
+	p->flow.jumpline = oinfo->start_row;
+	p->flow.force_reposition = 1;
+
+	/* For the first p->current_time + libxmp_get_frame_time check
+	 * in xmp_seek_time_frame: */
+	p->current_time = oinfo->time;
+	p->bpm = oinfo->bpm;
+
+	return p->pos < 0 ? 0 : p->pos;
+}
+
+int xmp_seek_time_frame(xmp_context opaque, int time)
+{
+	struct context_data *ctx = (struct context_data *)opaque;
+	struct player_data *p = &ctx->p;
+	struct module_data *m = &ctx->m;
+	double max_time, t;
+	int ret, i;
+
+	if ((ret = xmp_seek_time(opaque, time)) < 0) {
+		return ret;
+	}
+
+	/* set_position/xmp_set_position doesn't actually complete the seek;
+	 * may need to play frames from the start of the new position until
+	 * the player is at the closest frame to the requested time.
+	 * TODO: it may be possible to get closer times for xmp_play_buffer
+	 * users.
+	 */
+#if 0
+	D_(D_INFO "%d %d init: %.06f, %.06f >=? %.06f", p->pos, p->flow.jumpline,
+		p->current_time, p->current_time + libxmp_get_frame_time(ctx),
+		(double)time);
+#endif
+
+	max_time = m->seq_data[p->sequence].duration - 0.1;
+	t = MIN((double)time, max_time);
+
+	/* Try to find the correct frame (this may take a while).
+	 * TODO: temporarily put the mixer in a lower rate? */
+	for (i = 0; i < (1 << 13); i++) {
+		double prev = p->current_time;
+
+		/* TODO: the actual BPM isn't known until mid-frame. */
+		if (p->current_time + libxmp_get_frame_time(ctx) > t) {
+			break;
+		}
+		if (xmp_play_frame(opaque) < 0 || p->current_time < prev) {
+			break;
+		}
+#if 0
+		D_(D_INFO "%d %d %d: %.06f >=? %.06f", p->pos, p->row, p->frame,
+			p->current_time + libxmp_get_frame_time(ctx), t);
+#endif
+	}
+
+	/* Force an xmp_play_buffer refresh so the new (wrong) frame data
+	 * doesn't confuse the caller: */
+	xmp_play_buffer(opaque, NULL, 0, 0);
 
 	return p->pos < 0 ? 0 : p->pos;
 }
@@ -600,13 +678,66 @@ int xmp_set_tempo_factor(xmp_context opaque, double val)
 
 	/* s->freq can change between xmp_start_player calls and p->bpm can
 	 * change during playback, so repeat these checks in the mixer. */
-	ticksize = libxmp_mixer_get_ticksize(s->freq, val, m->rrate, p->bpm);
+	ticksize = libxmp_mixer_get_ticksize(s->freq,
+		val * p->time_factor_relative, m->rrate, p->bpm);
 
-	/* ticksize is in frames, XMP_MAX_FRAMESIZE is in frames * 2. */
-	if (ticksize < 0 || ticksize > (XMP_MAX_FRAMESIZE / 2)) {
+	/* ticksize is in frames, s->total_size is in frames * 2. */
+	if (ticksize < 0 || ticksize > (s->total_size / 2)) {
 		return -1;
 	}
 	m->time_factor = val;
 
 	return 0;
+}
+
+int xmp_set_tempo_factor_relative(xmp_context opaque, double val)
+{
+	struct context_data *ctx = (struct context_data *)opaque;
+	struct player_data *p = &ctx->p;
+	struct module_data *m = &ctx->m;
+	struct mixer_data *s = &ctx->s;
+	int ticksize;
+
+	/* This function relies on values initialized by xmp_start_player
+	 * and will behave in an undefined manner if called prior. */
+	if (ctx->state < XMP_STATE_PLAYING) {
+		return -XMP_ERROR_STATE;
+	}
+
+	if (val <= 0.0 || val != val /* NaN */) {
+		return -1;
+	}
+
+	ticksize = libxmp_mixer_get_ticksize(s->freq,
+		m->time_factor * val, m->rrate, p->bpm);
+
+	/* ticksize is in frames, s->total_size is in frames * 2. */
+	if (ticksize < 0 || ticksize > (s->total_size / 2)) {
+		return -1;
+	}
+	p->time_factor_relative = val;
+
+	return 0;
+}
+
+double xmp_get_tempo_factor(xmp_context opaque)
+{
+	struct context_data *ctx = (struct context_data *)opaque;
+
+	if (ctx->state < XMP_STATE_LOADED) {
+		return -1.0 * XMP_ERROR_STATE;
+	}
+
+	return ctx->m.time_factor * 0.1;
+}
+
+double xmp_get_tempo_factor_relative(xmp_context opaque)
+{
+	struct context_data *ctx = (struct context_data *)opaque;
+
+	if (ctx->state < XMP_STATE_PLAYING) {
+		return -1.0 * XMP_ERROR_STATE;
+	}
+
+	return ctx->p.time_factor_relative;
 }

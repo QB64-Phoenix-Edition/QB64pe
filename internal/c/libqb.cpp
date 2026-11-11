@@ -84,8 +84,8 @@ int32 environment_2d__screen_x1 = 0; // offsets of 'screen' within the window
 int32 environment_2d__screen_y1 = 0;
 int32 environment_2d__screen_x2 = 0;
 int32 environment_2d__screen_y2 = 0;
-int32 environment_2d__screen_scaled_width = 640; // initial values prevent _SCALEDWIDTH/_SCALEDHEIGHT returning 0
-int32 environment_2d__screen_scaled_height = 400;
+int32_t environment_2d__screen_scaled_width = Window_DefaultWidth; // initial values prevent _SCALEDWIDTH/_SCALEDHEIGHT returning 0
+int32_t environment_2d__screen_scaled_height = Window_DefaultHeight;
 float environment_2d__screen_x_scale = 1.0f;
 float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; // 1(LINEAR) or 0(NEAREST)
@@ -6529,6 +6529,20 @@ error:
     return;
 }
 
+// SCREEN 0 attribute byte: bit 7 is blink with _BLINK ON, but the fourth
+// background-color bit with _BLINK OFF. Preserve the QB45-style COLOR
+// foreground bit 4 in either mode; when blinking is off, also accept
+// background bit 3 directly (the two encodings are combined with OR).
+extern int32 H3C0_blink_enable;
+
+static inline uint8 screen0_color_attribute(uint32 foreground, uint32 background) {
+    uint32 attribute = (foreground & 0x0F) | ((background & 0x07) << 4);
+    attribute |= (foreground & 0x10) << 3; // Legacy blink / bright background.
+    if (!H3C0_blink_enable)
+        attribute |= (background & 0x08) << 4; // New direct bright background.
+    return (uint8)attribute;
+}
+
 void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 passed) {
     if (is_error_pending())
         return;
@@ -6758,6 +6772,9 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
         goto done;
     }
     if (write_page->compatible_mode == 0) {
+        // Preserve QB45 foreground values 0..31 in either blink mode.
+        // When blinking is off, background values 8..15 are also direct
+        // bright backgrounds; foreground bit 4 remains supported.
         if (passed & 1)
             if (col1 > 31)
                 goto error;
@@ -6767,7 +6784,7 @@ void qbg_sub_color(uint32 col1, uint32 col2, uint32 bordercolor, int32 i, int32 
         if (passed & 1)
             write_page->color = col1;
         if (passed & 2)
-            write_page->background_color = col2 & 7;
+            write_page->background_color = H3C0_blink_enable ? (col2 & 7) : col2;
         goto done;
     }
 error:
@@ -8610,8 +8627,11 @@ void fast_line(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col) {
     return;
 }
 
-void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) {
-    static int32 x1, y1, x2, y2, l, l2, mi;
+// seamless != 0: wherever the line steps diagonally, also plot the corner pixel the ideal line passes
+// through, so consecutive pixels always share an edge (no diagonal-only steps). Lines drawn next to
+// each other (e.g. a fan of rotating lines) then leave no pinholes between them.
+static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style, int32 seamless) {
+    static int32 x1, y1, x2, y2, l, l2, mi, nxt;
     static float m;
 
     // resolve coordinates
@@ -8663,6 +8683,18 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
 
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
+                    if (seamless && l > 0) {
+                        // l = pixels still to draw after this one, so there's no corner after the last pixel
+                        // will the next pixel be on another row? if so, fill the corner
+                        nxt = qbr_float_to_long(y1f + m);
+                        if (nxt != lineclip_y1) {
+                            // where is the line half-way to the next column?
+                            if (qbr_float_to_long(y1f + m * 0.5f) == lineclip_y1)
+                                pset(lineclip_x1 + mi, lineclip_y1, col);
+                            else
+                                pset(lineclip_x1, nxt, col);
+                        }
+                    }
                 }
 
                 lineclip_x1 += mi;
@@ -8688,6 +8720,18 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
                     lineclip_x1 = x1f + 0.5f;
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
+                    if (seamless && l2 > 0) {
+                        // l2 = pixels still to draw after this one, so there's no corner after the last pixel
+                        // will the next pixel be on another column? if so, fill the corner
+                        nxt = qbr_float_to_long(x1f + m);
+                        if (nxt != lineclip_x1) {
+                            // where is the line half-way to the next row?
+                            if (qbr_float_to_long(x1f + m * 0.5f) == lineclip_x1)
+                                pset(lineclip_x1, lineclip_y1 + mi, col);
+                            else
+                                pset(nxt, lineclip_y1, col);
+                        }
+                    }
                 }
                 lineclip_y1 += mi;
                 x1f += m;
@@ -8698,6 +8742,10 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
     return;
 }
 
+void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) {
+    qb32_line_ex(x1f, y1f, x2f, y2f, col, style, 0);
+}
+
 void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint32 style, int32 passed) {
     if (is_error_pending())
         return;
@@ -8706,7 +8754,9 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
         return;
     }
     /*
-        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF}][,?]]]"
+        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF|_SEAMLESS}][,?]]]"
+        color: 8, style: 16
+        bf: 0 = line, 1 = B, 2 = BF, 3 = _SEAMLESS line
         LINE -(10, 10) 'flags: 0
         LINE (0, 0)-(10, 10) 'flags: 1
         LINE -STEP(10, 10) 'flags: 2
@@ -8732,13 +8782,13 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
     write_page->x = x2;
     write_page->y = y2;
 
-    if (bf == 0) { // line
+    if (bf == 0 || bf == 3) { // line (3 = _SEAMLESS)
         if ((passed & 16) == 0)
             style = 0xFFFF;
         if ((passed & 8) == 0)
             col = write_page->color;
         write_page->draw_color = col;
-        qb32_line(x1, y1, x2, y2, col, style);
+        qb32_line_ex(x1, y1, x2, y2, col, style, bf == 3);
         return;
     }
 
@@ -9725,8 +9775,8 @@ void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *background
 }
 
 void sub_circle(double x, double y, double r, uint32 col, double start, double end, double aspect, int32 passed) {
-    //                                                &2         &4           &8         &16
-    //[{STEP}](?,?),?[,[?][,[?][,[?][,?]]]]
+    //                                                &2         &4           &8         &16       &32
+    //[{STEP}](?,?),?[,[?][,[?][,[?][,[?][,{_SEAMLESS}]]]]]
     if (is_error_pending())
         return;
 
@@ -9901,6 +9951,75 @@ void sub_circle(double x, double y, double r, uint32 col, double start, double e
         x2 = px * xspan + 0.5;
         y2 = py * yspan - 0.5;
         fast_line(ix, iy, ix + x2, iy - y2, col);
+    }
+
+    // _SEAMLESS: plot every pixel whose (aspect-corrected) distance from the centre rounds to the radius
+    // i.e. r - 0.5 <= d < r + 0.5. Unlike the default thin outline, circles drawn with consecutive
+    // radii tile exactly, leaving no gaps between them.
+    if ((passed & 32) && xspan > 0 && yspan > 0) {
+        // scale factors that map the ellipse back to a circle of radius r (derived from aspect so they
+        // are identical for every radius, keeping neighbouring rings exactly complementary)
+        double kx = 1, ky = 1;
+        if (aspect >= 0) {
+            if (aspect < 1)
+                ky = 1 / aspect;
+            if (aspect > 1)
+                kx = aspect;
+        } else if (aspect > -1) {
+            ky = 1 / (1 + aspect);
+        }
+
+        double r_outer = r + 0.5;
+        double r_inner = r - 0.5;
+        if (r_inner < 0)
+            r_inner = 0;
+        double r_outer2 = r_outer * r_outer;
+        double r_inner2 = r_inner * r_inner;
+        bool full_circle = !exclusive && start == 0 && end == pi2;
+
+        int32 dy_max = r_outer / ky + 1;
+        for (int32 dy = -dy_max; dy <= dy_max; dy++) {
+            double ey = (double)dy * ky;
+            ey *= ey;
+            if (ey >= r_outer2)
+                continue;
+
+            // first candidate column for this row; exact membership is decided by the distance test below
+            int32 dx = 0;
+            if (r_inner2 > ey)
+                dx = (int32)(std::sqrt(r_inner2 - ey) / kx) - 1;
+            if (dx < 0)
+                dx = 0;
+
+            for (;; dx++) {
+                double ex = (double)dx * kx;
+                double d2 = ex * ex + ey;
+                if (d2 >= r_outer2)
+                    break;
+                if (d2 < r_inner2)
+                    continue;
+
+                for (int32 side = 0; side < 2; side++) {
+                    int32 sdx = side ? -dx : dx;
+                    if (side && dx == 0)
+                        break;
+                    if (!full_circle) {
+                        double a = std::atan2(-(double)dy * ky, (double)sdx * kx);
+                        if (a < 0)
+                            a += pi2;
+                        if (exclusive) {
+                            if ((a > start) && (a < end))
+                                continue;
+                        } else {
+                            if ((a < start) || (a > end))
+                                continue;
+                        }
+                    }
+                    pset_and_clip(ix + sdx, iy + dy, col);
+                }
+            }
+        }
+        goto allplotted;
     }
 
     px = 1;
@@ -10137,7 +10256,7 @@ void printchr(int32 character) {
 
     if (im->text) {
         im->offset[(((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1] = character;
-        im->offset[((((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1) + 1] = (color & 0xF) + background_color * 16 + (color & 16) * 8;
+        im->offset[((((im->cursor_y - 1) * im->width + im->cursor_x - 1)) << 1) + 1] = screen0_color_attribute(color, background_color);
         return;
     }
 
@@ -10392,7 +10511,7 @@ void newline() {
             memmove(write_page->offset + (write_page->top_row - 1) * 2 * write_page->width, write_page->offset + write_page->top_row * 2 * write_page->width,
                     (write_page->bottom_row - write_page->top_row) * 2 * write_page->width);
             // erase bottom line
-            z2 = (write_page->color & 0xF) + (write_page->background_color & 7) * 16 + (write_page->color & 16) * 8;
+            z2 = screen0_color_attribute(write_page->color, write_page->background_color);
             z2 <<= 8;
             z2 += 32;
             sp = ((uint16 *)(write_page->offset + (write_page->bottom_row - 1) * 2 * write_page->width));
@@ -11319,7 +11438,7 @@ void sub_cls(int32_t method, uint32_t use_color, int32_t passed) {
 
     if (write_page->text) {
         // precalculate a (int16) value which can be used to clear the screen
-        clearvalue = (write_page->color & 0xF) + (use_color & 7) * 16 + (write_page->color & 16) * 8;
+        clearvalue = screen0_color_attribute(write_page->color, use_color);
         clearvalue <<= 8;
         clearvalue += 32;
     }
@@ -25760,14 +25879,6 @@ void sub__writefile(qbs *filespec, qbs *contents) {
     }
 }
 
-int32 func__scaledwidth() {
-    return environment_2d__screen_scaled_width;
-}
-
-int32 func__scaledheight() {
-    return environment_2d__screen_scaled_height;
-}
-
 extern void set_dynamic_info();
 
 #ifdef QB64_WINDOWS
@@ -27040,78 +27151,6 @@ void display() {
     display_called = 1;
     return;
 }
-
-/*
-    int message_loop(
-    SDL_Event event,
-    SDL_Surface *screen,
-    SDL_Surface *back,
-    int *inputedWidth,
-    Uint16 *inputedString,
-    TTF_Font *font)
-    {
-    SDL_Color fg = {0x66, 0x66, 0xFF};
-    SDL_Color bg = {0x00, 0x00, 0x00};
-    SDL_Rect rect;
-    SDL_Surface *surface;
-    SDL_Event eventExpose;
-
-    switch(event.type){
-    case SDL_QUIT:
-    return 1;
-    case SDL_VIDEOEXPOSE:
-    SDL_BlitSurface(back, NULL, screen, NULL);
-    SDL_UpdateRect(screen, 0, 0, 0, 0);
-    break;
-    case SDL_KEYDOWN:
-
-
-
-
-
-    if (event.key.keysym.sym == QBVK_F1) {
-    InputMethod_Reset();
-    }
-    if (event.key.keysym.sym == QBVK_F2) {
-    *inputedWidth = 0;
-    inputedString[0] = 0x0000;
-    InputMethod_Reset();
-    }
-    if (event.key.keysym.sym == QBVK_F3) {
-    InputMethod_Validate();
-    rect.x = 0;
-    rect.y = 200;
-    rect.w = 640;
-    rect.h = 100;
-    SDL_FillRect(back, &rect, 0x00000000);
-    surface = TTF_RenderUTF8_Shaded(
-    font, "Valid", fg, bg);
-    SDL_BlitSurface(surface, NULL, back, &rect);
-    SDL_FreeSurface(surface);
-    eventExpose.type = SDL_VIDEOEXPOSE;
-    SDL_PushEvent(&eventExpose);
-    }
-    if (event.key.keysym.sym == QBVK_F4) {
-    InputMethod_Invalidate();
-    rect.x = 0;
-    rect.y = 200;
-    rect.w = 640;
-    rect.h = 100;
-    SDL_FillRect(back, &rect, 0x00000000);
-    surface = TTF_RenderUTF8_Shaded(
-    font, "Invalid", fg, bg);
-    SDL_BlitSurface(surface, NULL, back, &rect);
-    SDL_FreeSurface(surface);
-    eventExpose.type = SDL_VIDEOEXPOSE;
-    SDL_PushEvent(&eventExpose);
-    }
-    break;
-    default:
-    break;
-    }
-    return 0;
-    }
-*/
 
 void GLUT_EXIT_FUNC() {
     GLUTEmu_WindowSetShouldClose(false);

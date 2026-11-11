@@ -59,7 +59,7 @@ SUB ExportCodeAs (docFormat$)
     op% = 0 '=> simply link to OPEN page
     ma$ = "@_ARCCOT@_ARCCSC@_ARCSEC@_COT@_COTH@_COSH@_CSC@_CSCH@_SEC@_SECH@_SINH@_TANH@" 'derived math functions
     fu% = 0 '=> Wiki page +(function) check required
-    fu$ = "@_AUTODISPLAY@_BLEND@_BLINK@_CAPSLOCK@_CLEARCOLOR@_CLIPBOARD$@_CLIPBOARDIMAGE@_CONTROLCHR@_DEST@_DISPLAY@_EXIT@_FONT@_FULLSCREEN@_MAPUNICODE@_MEM@_MEMGET@_MESSAGEBOX@_NUMLOCK@_OFFSET@_PALETTECOLOR@_PRINTMODE@_RESIZE@_SCREENICON@_SCROLLLOCK@_SMOOTH@_SOURCE@_WIDTH@ASC@MID$@PLAY@SCREEN@SEEK@SHELL@TIMER@"
+    fu$ = "@_ACCEPTFILEDROP@_AUTODISPLAY@_BLEND@_BLINK@_CAPSLOCK@_CLEARCOLOR@_CLIPBOARD$@_CLIPBOARDIMAGE@_CONTROLCHR@_DEST@_DISPLAY@_EXIT@_FONT@_FULLSCREEN@_MAPUNICODE@_MEM@_MEMGET@_MESSAGEBOX@_NUMLOCK@_OFFSET@_PALETTECOLOR@_PRINTMODE@_RESIZE@_SCREENICON@_SCROLLLOCK@_SMOOTH@_SOURCE@_WIDTH@ASC@MID$@PLAY@SCREEN@SEEK@SHELL@TIMER@"
     bo% = 0 '=> Wiki page +(boolean) check required
     bo$ = "@AND@OR@XOR@"
     '----------
@@ -82,6 +82,7 @@ SUB ExportCodeAs (docFormat$)
         UpdateIdeInfo
         '----------
         curr% = ASC(sTxt$, sPos&) '=> current char's ASCII value
+        reParse:
         SELECT CASE curr% '       '=> general parsing and handling
             CASE 10, 13 'line feed
                 IF NOT lb% THEN
@@ -138,6 +139,7 @@ SUB ExportCodeAs (docFormat$)
                 nt% = -1
             CASE 34 '"
                 IF NOT (co% OR qu%) THEN
+                    IF me% OR kw% THEN curr% = 32: sPos& = sPos& - 1: GOTO reParse
                     qu% = -1: what$ = "qu": GOSUB OpenText
                 ELSEIF qu% THEN
                     post% = -1: what$ = "qu": GOSUB CloseText: qu% = 0

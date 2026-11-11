@@ -107,7 +107,7 @@ class GLUTEmu {
         int32_t smallImageHandle;
 
         MessageWindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle)
-            : Message(false), largeImageHandle(largeImageHandle), smallImageHandle(smallImageHandle) {}
+            : Message(true), largeImageHandle(largeImageHandle), smallImageHandle(smallImageHandle) {}
 
         void Execute() override {
             GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
@@ -487,7 +487,6 @@ class GLUTEmu {
             libqb_log_error("Window already created, cannot create another window");
         } else {
             if (std::this_thread::get_id() == mainThreadId) {
-                // GLFW creates the window using screen coordinates, so we need to fix it below
                 window = glfwCreateWindow(width, height, windowTitle.empty() ? "Untitled" : windowTitle.c_str(), nullptr, nullptr);
                 if (window != nullptr) {
                     glfwSetWindowUserPointer(window, this);
@@ -510,55 +509,33 @@ class GLUTEmu {
 
                     glfwSwapInterval(1);
 
-                    // Get the current window content scale and set a callback to track changes
-                    glfwGetWindowContentScale(window, &windowScaleX, &windowScaleY);
+                    // Track the current monitor when the window crosses onto another display.
+                    float xScale, yScale;
+                    glfwGetWindowContentScale(window, &xScale, &yScale);
+                    windowContentScaleX.store(xScale);
+                    windowContentScaleY.store(yScale);
+                    libqb_log_trace("Window content scale is (%f x %f)", xScale, yScale);
                     glfwSetWindowContentScaleCallback(window, [](GLFWwindow *win, float xScale, float yScale) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->windowScaleX = xScale;
-                        instance->windowScaleY = yScale;
                         instance->monitor = instance->WindowGetCurrentMonitorInfo();
+                        instance->windowContentScaleX.store(xScale);
+                        instance->windowContentScaleY.store(yScale);
 
-                        libqb_log_trace("Window content scale changed to (%fx%f)", xScale, yScale);
+                        libqb_log_trace("Window content scale changed to (%f x %f)", xScale, yScale);
                     });
 
-                    // Get the window size and scale to actual pixel size and set a callback to track changes
+                    // QB64 window dimensions use GLFW screen coordinates; the framebuffer is tracked separately in pixels.
                     glfwGetWindowSize(window, &windowWidth, &windowHeight);
-                    windowWidth = ToPixelCoordsX(windowWidth);
-                    windowHeight = ToPixelCoordsY(windowHeight);
                     glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->windowWidth = instance->ToPixelCoordsX(width);
-                        instance->windowHeight = instance->ToPixelCoordsY(height);
+                        instance->windowWidth = width;
+                        instance->windowHeight = height;
 
-                        libqb_log_trace("Window resized to (%d x %d)", instance->windowWidth, instance->windowHeight);
+                        libqb_log_trace("Window resized to (%d x %d)", width, height);
 
                         if (instance->windowResizedFunction) {
-                            instance->windowResizedFunction(instance->windowWidth, instance->windowHeight);
+                            instance->windowResizedFunction(width, height);
                         }
-                    });
-
-                    // If the window size is not the same as requested, we are likely on a high-DPI display, so we need to adjust our size using the scale
-                    // factor
-                    if (windowWidth != width || windowHeight != height) {
-                        libqb_log_trace("Window size (%dx%d) does not match requested size (%dx%d) due to %fx%f content scale, adjusting", windowWidth,
-                                        windowHeight, width, height, windowScaleX, windowScaleY);
-                        windowWidth = width;
-                        windowHeight = height;
-                        glfwSetWindowSize(window, ToScreenCoordsX(width), ToScreenCoordsY(height));
-                    }
-
-                    // Get the window position and the current monitor the window is on and set a callback to track changes
-                    glfwGetWindowPos(window, &windowX, &windowY);
-                    monitor = WindowGetCurrentMonitorInfo();
-                    windowX = ToPixelDesktopCoordsX(windowX);
-                    windowY = ToPixelDesktopCoordsY(windowY);
-                    glfwSetWindowPosCallback(window, [](GLFWwindow *win, int x, int y) {
-                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
-                        instance->windowX = instance->ToPixelDesktopCoordsX(x);
-                        instance->windowY = instance->ToPixelDesktopCoordsY(y);
-                        instance->monitor = instance->WindowGetCurrentMonitorInfo();
-
-                        libqb_log_trace("Window moved to (%d, %d)", instance->windowX, instance->windowY);
                     });
 
                     // Get the framebuffer size (already in pixels) and set a callback to track changes
@@ -573,14 +550,27 @@ class GLUTEmu {
                         if (instance->windowFramebufferResizedFunction) {
                             instance->windowFramebufferResizedFunction(instance->framebufferWidth, instance->framebufferHeight);
                         }
+
+                        // GLFW_TODO: Check if we should be doing it here rather than libqb.
+                        instance->WindowRefresh();
+                    });
+
+                    // Get the window position and the current monitor the window is on and set a callback to track changes
+                    glfwGetWindowPos(window, &windowX, &windowY);
+                    monitor = WindowGetCurrentMonitorInfo();
+                    glfwSetWindowPosCallback(window, [](GLFWwindow *win, int x, int y) {
+                        auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+                        instance->monitor = instance->WindowGetCurrentMonitorInfo();
+                        instance->windowX = x;
+                        instance->windowY = y;
+
+                        libqb_log_trace("Window moved to (%d, %d)", instance->windowX, instance->windowY);
                     });
 
                     // Set a hook into the maximization callback to track restore events
                     glfwSetWindowMaximizeCallback(window, [](GLFWwindow *win, int maximized) {
                         auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                         glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
-                        instance->windowWidth = instance->ToPixelCoordsX(instance->windowWidth);
-                        instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
                         instance->isWindowMaximized = (maximized == GLFW_TRUE);
 
                         libqb_log_trace("Window %s", maximized ? "maximized" : "restored");
@@ -602,8 +592,6 @@ class GLUTEmu {
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, true);
                             } else {
                                 glfwGetWindowSize(instance->window, &instance->windowWidth, &instance->windowHeight);
-                                instance->windowWidth = instance->ToPixelCoordsX(instance->windowWidth);
-                                instance->windowHeight = instance->ToPixelCoordsY(instance->windowHeight);
                                 instance->windowMinimizedFunction(instance->windowWidth, instance->windowHeight, false);
                             }
                         }
@@ -621,6 +609,21 @@ class GLUTEmu {
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::CapsLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::NumLock, instance->keyboardModifiers);
                             instance->keyboardModifiers = instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, instance->keyboardModifiers);
+
+#ifdef QB64_MACOSX
+                            // GLFW_HACK: macOS only reports cursor enter/leave while the window is focused. If the cursor came back over the
+                            // window while another window had focus, no enter event arrives and mouse movement is ignored. Re-sync the hover
+                            // state here.
+                            if (instance->mouseNotifyFunction) {
+                                double x, y;
+                                glfwGetCursorPos(win, &x, &y);
+                                auto isHovered = (glfwGetWindowAttrib(win, GLFW_HOVERED) == GLFW_TRUE) ||
+                                                 (x >= 0.0 && x < instance->windowWidth && y >= 0.0 && y < instance->windowHeight);
+                                libqb_log_trace("Firing mouse notify function on focus with current cursor position (%f, %f) and hover state %s", x, y,
+                                                isHovered ? "true" : "false");
+                                instance->mouseNotifyFunction(x, y, isHovered);
+                            }
+#endif
                         }
 
                         if (instance->windowFocusedFunction) {
@@ -670,6 +673,11 @@ class GLUTEmu {
                     isWindowMousePassthrough = (glfwGetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH) == GLFW_TRUE);
                     windowOpacity = glfwGetWindowOpacity(window);
 
+                    if (pendingResourceIcon) {
+                        pendingResourceIcon = false;
+                        WindowSetIcon(0, 0);
+                    }
+
                     WindowSetSizeLimits(windowMinWidth, windowMinHeight, windowMaxWidth, windowMaxHeight);
 
                     switch (std::get<0>(cachedWindowPosition)) {
@@ -685,7 +693,7 @@ class GLUTEmu {
 
                     return true;
                 } else {
-                    libqb_log_error("Failed to create window (%dx%d)", width, height);
+                    libqb_log_error("Failed to create window (%d x %d)", width, height);
                 }
             } else {
                 libqb_log_error("Window must be created from the main thread");
@@ -773,7 +781,12 @@ class GLUTEmu {
                 glfwSetWindowIcon(window, 2, images);
             }
         } else {
-            libqb_log_error("Window not created, cannot set icon");
+            if (!Image_IsHandleValid(largeImageHandle) && !Image_IsHandleValid(smallImageHandle)) {
+                pendingResourceIcon = true;
+                libqb_log_trace("Deferring resource icons until window creation");
+            } else {
+                libqb_log_error("Window not created, cannot set image icons");
+            }
         }
     }
 
@@ -976,7 +989,7 @@ class GLUTEmu {
 
     void WindowResize(int width, int height) {
         if (window != nullptr) {
-            glfwSetWindowSize(window, ToScreenCoordsX(width), ToScreenCoordsY(height));
+            glfwSetWindowSize(window, width, height);
 
             libqb_log_trace("Window resized to (%d x %d)", width, height);
         } else {
@@ -988,13 +1001,17 @@ class GLUTEmu {
         return {windowWidth, windowHeight};
     }
 
+    [[nodiscard]] std::pair<float, float> WindowGetContentScale() const {
+        return {windowContentScaleX.load(), windowContentScaleY.load()};
+    }
+
     [[nodiscard]] std::pair<int, int> WindowGetFramebufferSize() const {
         return {framebufferWidth, framebufferHeight};
     }
 
     void WindowMove(int x, int y) {
         if (window != nullptr) {
-            glfwSetWindowPos(window, ToScreenDesktopCoordsX(x), ToScreenDesktopCoordsY(y));
+            glfwSetWindowPos(window, x, y);
 
             libqb_log_trace("Window moved to (%d, %d)", x, y);
         } else {
@@ -1048,14 +1065,14 @@ class GLUTEmu {
         windowMaxHeight = maxHeight;
 
         if (window != nullptr) {
-            const auto minWidthPixels = (windowMinWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMinWidth));
-            const auto minHeightPixels = (windowMinHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMinHeight));
-            const auto maxWidthPixels = (windowMaxWidth < 0 ? GLFW_DONT_CARE : ToScreenCoordsX(windowMaxWidth));
-            const auto maxHeightPixels = (windowMaxHeight < 0 ? GLFW_DONT_CARE : ToScreenCoordsY(windowMaxHeight));
+            const auto minWidthScreen = (windowMinWidth < 0 ? GLFW_DONT_CARE : windowMinWidth);
+            const auto minHeightScreen = (windowMinHeight < 0 ? GLFW_DONT_CARE : windowMinHeight);
+            const auto maxWidthScreen = (windowMaxWidth < 0 ? GLFW_DONT_CARE : windowMaxWidth);
+            const auto maxHeightScreen = (windowMaxHeight < 0 ? GLFW_DONT_CARE : windowMaxHeight);
 
-            glfwSetWindowSizeLimits(window, minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
+            glfwSetWindowSizeLimits(window, minWidthScreen, minHeightScreen, maxWidthScreen, maxHeightScreen);
 
-            libqb_log_trace("Window size limits set to (%d, %d) to (%d, %d)", minWidthPixels, minHeightPixels, maxWidthPixels, maxHeightPixels);
+            libqb_log_trace("Window size limits set to (%d, %d) to (%d, %d)", minWidthScreen, minHeightScreen, maxWidthScreen, maxHeightScreen);
         } else {
             libqb_log_trace("Window not created; cached size limits (%d, %d) to (%d, %d)", windowMinWidth, windowMinHeight, windowMaxWidth, windowMaxHeight);
         }
@@ -1432,12 +1449,7 @@ class GLUTEmu {
 
     void MouseMove(double x, double y) {
         if (window != nullptr) {
-            cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(window, GLFW_CURSOR));
-            if (cursorMode == GLUTEnum_MouseCursorMode::Disabled) {
-                glfwSetCursorPos(window, x, y);
-            } else {
-                glfwSetCursorPos(window, ToScreenCoordsX(x), ToScreenCoordsY(y));
-            }
+            glfwSetCursorPos(window, x, y);
 
             libqb_log_trace("Mouse moved to (%f, %f)", x, y);
         } else {
@@ -1451,12 +1463,20 @@ class GLUTEmu {
 
             glfwSetCursorPosCallback(window, [](GLFWwindow *win, double xPos, double yPos) {
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
+
+#ifdef QB64_MACOSX
+                // GLFW_HACK: macOS misses "cursor entered" events: on startup, when the cursor moved in while another
+                // window had focus, and when the window grows or moves under a cursor that had left it (for example,
+                // a program resizing its own window). Without that event, mouse movement inside the window is ignored.
+                // So whenever the cursor moves inside the window, report it as inside.
+                if (instance->mouseNotifyFunction && xPos >= 0.0 && xPos < instance->windowWidth && yPos >= 0.0 && yPos < instance->windowHeight &&
+                    glfwGetWindowAttrib(win, GLFW_HOVERED) == GLFW_TRUE) {
+                    instance->mouseNotifyFunction(xPos, yPos, true);
+                }
+#endif
+
                 if (instance->mousePositionFunction) {
                     instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
-                    if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
-                        xPos = instance->ToPixelCoordsX(xPos);
-                        yPos = instance->ToPixelCoordsY(yPos);
-                    }
                     instance->mousePositionFunction(xPos, yPos, instance->cursorMode);
                 }
             });
@@ -1471,19 +1491,13 @@ class GLUTEmu {
         if (window != nullptr) {
             mouseButtonFunction = function;
 
-            glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int mods) {
+            glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, [[maybe_unused]] int mods) {
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mouseButtonFunction) {
                     double xPos;
                     double yPos;
                     glfwGetCursorPos(win, &xPos, &yPos);
-                    instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
-                    if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
-                        xPos = instance->ToPixelCoordsX(xPos);
-                        yPos = instance->ToPixelCoordsY(yPos);
-                    }
-                    instance->mouseButtonFunction(xPos, yPos, GLUTEmu_MouseButton(button), GLUTEmu_ButtonAction(action), instance->cursorMode,
-                                                  instance->KeyboardUpdateLockKeyModifier(GLUTEmu_KeyboardKey::ScrollLock, mods));
+                    instance->mouseButtonFunction(xPos, yPos, GLUTEmu_MouseButton(button), GLUTEmu_ButtonAction(action));
                 }
             });
 
@@ -1498,18 +1512,25 @@ class GLUTEmu {
             mouseNotifyFunction = function;
 
             glfwSetCursorEnterCallback(window, [](GLFWwindow *win, int entered) {
+                libqb_log_trace("Mouse notify callback triggered, entered: %d", entered);
                 auto *instance = reinterpret_cast<GLUTEmu *>(glfwGetWindowUserPointer(win));
                 if (instance->mouseNotifyFunction) {
                     double x, y;
                     glfwGetCursorPos(win, &x, &y);
-                    instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
-                    if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
-                        x = instance->ToPixelCoordsX(x);
-                        y = instance->ToPixelCoordsY(y);
-                    }
-                    instance->mouseNotifyFunction(x, y, bool(entered), instance->cursorMode);
+                    instance->mouseNotifyFunction(x, y, bool(entered));
                 }
             });
+
+            // Fire the notify function immediately with the current cursor position and hover state
+            if (mouseNotifyFunction) {
+                double x, y;
+                glfwGetCursorPos(window, &x, &y);
+                // GLFW_HACK: The position check is needed on macOS because macOS does not report the hover state on startup
+                auto isHovered = (glfwGetWindowAttrib(window, GLFW_HOVERED) == GLFW_TRUE) || (x >= 0.0 && x < windowWidth && y >= 0.0 && y < windowHeight);
+                libqb_log_trace("Firing mouse notify function immediately with current cursor position (%f, %f) and hover state %s", x, y,
+                                isHovered ? "true" : "false");
+                mouseNotifyFunction(x, y, isHovered);
+            }
 
             libqb_log_trace("Mouse notify function set: %p", function);
         } else {
@@ -1526,12 +1547,7 @@ class GLUTEmu {
                 if (instance->mouseScrollFunction) {
                     double x, y;
                     glfwGetCursorPos(win, &x, &y);
-                    instance->cursorMode = GLUTEnum_MouseCursorMode(glfwGetInputMode(win, GLFW_CURSOR));
-                    if (instance->cursorMode != GLUTEnum_MouseCursorMode::Disabled) {
-                        x = instance->ToPixelCoordsX(x);
-                        y = instance->ToPixelCoordsY(y);
-                    }
-                    instance->mouseScrollFunction(x, y, scrollX, scrollY, instance->cursorMode);
+                    instance->mouseScrollFunction(x, y, scrollX, scrollY);
                 }
             });
 
@@ -1698,86 +1714,8 @@ class GLUTEmu {
         }
     }
 
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToPixelCoordsX(T x) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(x * windowScaleX));
-        } else {
-            return x * windowScaleX;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToPixelCoordsY(T y) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(y * windowScaleY));
-        } else {
-            return y * windowScaleY;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToScreenCoordsX(T x) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(x / windowScaleX));
-        } else {
-            return x / windowScaleX;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToScreenCoordsY(T y) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(y / windowScaleY));
-        } else {
-            return y / windowScaleY;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToPixelDesktopCoordsX(T x) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(x * monitorScaleX));
-        } else {
-            return x * monitorScaleX;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToPixelDesktopCoordsY(T y) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(y * monitorScaleY));
-        } else {
-            return y * monitorScaleY;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToScreenDesktopCoordsX(T x) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(x / monitorScaleX));
-        } else {
-            return x / monitorScaleX;
-        }
-    }
-
-    template <typename T>
-    requires std::is_arithmetic_v<T>
-    T ToScreenDesktopCoordsY(T y) const {
-        if constexpr (std::integral<T>) {
-            return static_cast<T>(std::round(y / monitorScaleY));
-        } else {
-            return y / monitorScaleY;
-        }
-    }
-
+    /// @brief Get the monitor that the window is currently on, or the primary monitor if the window is not created or not on any monitor.
+    /// See the discussion at https://github.com/glfw/glfw/issues/1699
     GLFWmonitor *WindowGetCurrentMonitorInfo() {
         GLFWmonitor *best = nullptr;
 
@@ -1796,8 +1734,20 @@ class GLUTEmu {
                     int mx, my, mw, mh;
                     glfwGetMonitorPos(monitors[i], &mx, &my);
                     auto mode = glfwGetVideoMode(monitors[i]);
+                    if (mode == nullptr) {
+                        continue;
+                    }
                     mw = mode->width;
                     mh = mode->height;
+
+#if defined(QB64_MACOSX)
+                    float xScale, yScale;
+                    glfwGetMonitorContentScale(monitors[i], &xScale, &yScale);
+                    if (xScale > 0.0f && yScale > 0.0f) {
+                        mw = static_cast<int>(std::round(mw / xScale));
+                        mh = static_cast<int>(std::round(mh / yScale));
+                    }
+#endif
 
                     auto overlapW = std::max(0, std::min(wx + ww, mx + mw) - std::max(wx, mx));
                     auto overlapH = std::max(0, std::min(wy + wh, my + mh) - std::max(wy, my));
@@ -1820,9 +1770,7 @@ class GLUTEmu {
         if (best != nullptr) {
             const auto *mode = glfwGetVideoMode(best);
             if (mode != nullptr) {
-                glfwGetMonitorContentScale(best, &monitorScaleX, &monitorScaleY);
-                screenMode = {static_cast<int>(std::round(mode->width * monitorScaleX)), static_cast<int>(std::round(mode->height * monitorScaleY)),
-                              mode->refreshRate};
+                screenMode = {mode->width, mode->height, mode->refreshRate};
             }
         }
 
@@ -2178,33 +2126,31 @@ class GLUTEmu {
         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
 
     // GLFW_TODO: we will need to move all of these to an std::vector or similar if we want to support multiple windows in the future
-    GLFWmonitor *monitor = nullptr;                   // current monitor
-    float monitorScaleX = 1.0f, monitorScaleY = 1.0f; // current monitor content scale for DPI scaling
-    GLFWwindow *window = nullptr;                     // current window
-    std::string windowTitle;                          // current window title
-    int windowX = 0, windowY = 0;                     // current window position (in pixel coordinates)
-    int windowWidth = 0, windowHeight = 0;            // current window size (in pixel coordinates)
-    float windowScaleX = 1.0f, windowScaleY = 1.0f;   // window scaling factors
-    bool isWindowFullscreen = false;                  // whether the window is in fullscreen mode
-    bool isWindowMaximized = false;                   // whether the window is currently maximized
-    bool isWindowMinimized = false;                   // whether the window is currently minimized
-    bool isWindowFocused = false;                     // whether the window is currently focused
-    bool isWindowHidden = false;                      // whether the window is currently hidden
-    bool isWindowFloating = false;                    // whether the window is currently floating
-    float windowOpacity = 1.0f;                       // current window opacity
-    bool isWindowBordered = true;                     // whether the window is currently bordered
-    bool isWindowMousePassthrough = false;            // whether the window is currently allowing mouse passthrough
-    int windowedX = 0, windowedY = 0;                 // windowed mode position for restoring from fullscreen (in screen coordinates)
-    int windowedWidth = 0, windowedHeight = 0;        // windowed mode size for restoring from fullscreen (in screen coordinates)
-    int windowMinWidth = -1, windowMinHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
-    int windowMaxWidth = -1, windowMaxHeight = -1;    // current window size limits (in screen coordinates, -1 for no limit)
-
-    int framebufferWidth = 0, framebufferHeight = 0;            // current framebuffer size (in pixel coordinates)
-    std::tuple<int, int, int> screenMode = {0, 0, 0};           // current screen mode (width, height, refresh rate)
-    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0}; // window position in pixels, {0, 0, 0}: default, {1, x, y}: user, {-1, 0, 0}: centered
-    GLFWcursor *cursor = nullptr;                               // current mouse cursor
-    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal; // current mouse cursor mode (normal, hidden, disabled, captured)
-    int keyboardModifiers = 0;                                              // current keyboard modifiers
+    GLFWmonitor *monitor = nullptr;                                            // current monitor
+    GLFWwindow *window = nullptr;                                              // current window
+    std::string windowTitle;                                                   // current window title
+    int windowX = 0, windowY = 0;                                              // current window position (in GLFW screen coordinates)
+    int windowWidth = 0, windowHeight = 0;                                     // current window size (in GLFW screen coordinates)
+    bool isWindowFullscreen = false;                                           // whether the window is in fullscreen mode
+    bool isWindowMaximized = false;                                            // whether the window is currently maximized
+    bool isWindowMinimized = false;                                            // whether the window is currently minimized
+    bool isWindowFocused = false;                                              // whether the window is currently focused
+    bool isWindowHidden = false;                                               // whether the window is currently hidden
+    bool isWindowFloating = false;                                             // whether the window is currently floating
+    float windowOpacity = 1.0f;                                                // current window opacity
+    bool isWindowBordered = true;                                              // whether the window is currently bordered
+    bool isWindowMousePassthrough = false;                                     // whether the window is currently allowing mouse passthrough
+    int windowedX = 0, windowedY = 0;                                          // windowed mode position for restoring from fullscreen (in screen coordinates)
+    int windowedWidth = 0, windowedHeight = 0;                                 // windowed mode size for restoring from fullscreen (in screen coordinates)
+    int windowMinWidth = -1, windowMinHeight = -1;                             // current window size limits (in screen coordinates, -1 for no limit)
+    int windowMaxWidth = -1, windowMaxHeight = -1;                             // current window size limits (in screen coordinates, -1 for no limit)
+    int framebufferWidth = 0, framebufferHeight = 0;                           // current framebuffer size (in pixel coordinates)
+    std::atomic<float> windowContentScaleX = 1.0f, windowContentScaleY = 1.0f; // current window content scale (for high-DPI displays)
+    std::tuple<int, int, int> screenMode = {0, 0, 0};                          // current screen mode (width, height, refresh rate)
+    std::tuple<int, int, int> cachedWindowPosition = {0, 0, 0};                // GLFW screen coordinates, {0,0,0}: default, {1,x,y}: user, {-1,0,0}: centered
+    GLFWcursor *cursor = nullptr;                                              // current mouse cursor
+    GLUTEnum_MouseCursorMode cursorMode = GLUTEnum_MouseCursorMode::Normal;    // current mouse cursor mode (normal, hidden, disabled, captured)
+    int keyboardModifiers = 0;                                                 // current keyboard modifiers
 #if defined(QB64_MACOSX) || defined(QB64_LINUX)
     bool keyboardScrollLockState = false; // scroll Lock state for macOS and Linux
 #endif
@@ -2228,6 +2174,7 @@ class GLUTEmu {
     GLUTEmu_CallbackMouseScroll mouseScrollFunction = nullptr;
     GLUTEmu_CallbackDropFiles dropFilesFunction = nullptr;
     std::atomic_bool isMainLoopRunning = false;
+    bool pendingResourceIcon = false;
     std::thread::id mainThreadId;
     libqb_mutex *msgQueueMutex;
     std::queue<Message *> msgQueue;
@@ -2276,10 +2223,12 @@ std::string GLUTEmu_WindowGetTitle() {
 }
 
 void GLUTEmu_WindowSetIcon(int32_t largeImageHandle, int32_t smallImageHandle) {
-    if (GLUTEmu::Instance().MessageIsMainThread()) {
+    if (GLUTEmu::Instance().MessageIsMainThread() || (!GLUTEmu::Instance().WindowIsCreated() && !GLUTEmu::Instance().MainLoopIsRunning())) {
         GLUTEmu::Instance().WindowSetIcon(largeImageHandle, smallImageHandle);
     } else {
-        GLUTEmu::Instance().MessageQueue(new GLUTEmu::MessageWindowSetIcon(largeImageHandle, smallImageHandle));
+        GLUTEmu::MessageWindowSetIcon msg(largeImageHandle, smallImageHandle);
+        GLUTEmu::Instance().MessageQueue(&msg);
+        msg.WaitForResponse();
     }
 }
 
@@ -2413,6 +2362,10 @@ void GLUTEmu_WindowResize(int width, int height) {
 
 std::pair<int, int> GLUTEmu_WindowGetSize() {
     return GLUTEmu::Instance().WindowGetSize();
+}
+
+std::pair<float, float> GLUTEmu_WindowGetContentScale() {
+    return GLUTEmu::Instance().WindowGetContentScale();
 }
 
 std::pair<int, int> GLUTEmu_WindowGetFramebufferSize() {

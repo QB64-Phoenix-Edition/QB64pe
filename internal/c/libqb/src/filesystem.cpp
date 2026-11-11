@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <cstring>
 #include <dirent.h>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <sys/stat.h>
@@ -465,6 +466,263 @@ int32_t func__fileexists(qbs *path) {
     std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
 
     return FS_FileExists(filepath_fix_directory(pathName)) ? QB_TRUE : QB_FALSE;
+}
+
+/// @brief Returns the size of a file in bytes.
+/// @param path The file path to get the size of.
+/// @return The file size in bytes, or 0 on error.
+uint64_t func__filelen(qbs *path) {
+    if (is_error_pending()) {
+        return 0;
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return 0;
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto size = std::filesystem::file_size(fsPath, ec);
+
+    if (!ec) {
+        return static_cast<uint64_t>(size);
+    }
+
+    if (ec == std::errc::no_such_file_or_directory) {
+        error(QB_ERROR_FILE_NOT_FOUND);
+    } else if (ec == std::errc::permission_denied) {
+        error(QB_ERROR_PERMISSION_DENIED);
+    } else if (ec == std::errc::not_a_directory) {
+        error(QB_ERROR_PATH_NOT_FOUND);
+    } else if (ec == std::errc::too_many_files_open || ec == std::errc::too_many_files_open_in_system) {
+        error(QB_ERROR_TOO_MANY_FILES);
+    } else {
+        error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+    }
+
+    return 0;
+}
+
+/// @brief Returns the attributes of a file or directory as a bitmask.
+/// @param path The file/directory path to get attributes for.
+/// @return Attribute bitmask (sum of attribute values), or 0 on error.
+/// Attribute values (VBA-compatible):
+/// 0  = Normal
+/// 1  = Read-only
+/// 2  = Hidden
+/// 4  = System
+/// 16 = Directory
+/// 32 = Archive
+/// 64 = Symlink / Junction
+int32_t func__getattr(qbs *path) {
+    if (is_error_pending()) {
+        return 0;
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return 0;
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto status = std::filesystem::status(fsPath, ec);
+
+    if (ec) {
+        if (ec == std::errc::no_such_file_or_directory) {
+            error(QB_ERROR_FILE_NOT_FOUND);
+        } else if (ec == std::errc::permission_denied) {
+            error(QB_ERROR_PERMISSION_DENIED);
+        } else if (ec == std::errc::not_a_directory) {
+            error(QB_ERROR_PATH_NOT_FOUND);
+        } else {
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        }
+
+        return 0;
+    }
+
+    int32_t attributes = 0;
+
+#ifdef QB64_WINDOWS
+
+    DWORD winAttrs = GetFileAttributesA(pathName.c_str());
+
+    if (winAttrs == INVALID_FILE_ATTRIBUTES) {
+        error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        return 0;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_READONLY) {
+        attributes |= 1;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_HIDDEN) {
+        attributes |= 2;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_SYSTEM) {
+        attributes |= 4;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_DIRECTORY) {
+        attributes |= 16;
+    }
+
+    if (winAttrs & FILE_ATTRIBUTE_ARCHIVE) {
+        attributes |= 32;
+    }
+
+    // Symlink, junction, mount point, etc.
+    if (winAttrs & FILE_ATTRIBUTE_REPARSE_POINT) {
+        attributes |= 64;
+    }
+
+#else
+
+    if (std::filesystem::is_directory(status)) {
+        attributes |= 16;
+    }
+
+    auto perms = status.permissions();
+
+    if ((perms & std::filesystem::perms::owner_write) == std::filesystem::perms::none) {
+        attributes |= 1;
+    }
+
+    // Unix hidden-file convention
+    std::string filename = fsPath.filename().string();
+
+    if (!filename.empty() && filename[0] == '.') {
+        attributes |= 2;
+    }
+
+    // Symbolic link detection
+    auto symlinkStatus = std::filesystem::symlink_status(fsPath, ec);
+
+    if (!ec && std::filesystem::is_symlink(symlinkStatus)) {
+        attributes |= 64;
+    }
+
+#endif
+
+    return attributes;
+}
+
+/// @brief Returns the date and time when a file was last modified.
+/// @param path The file path to get the modification date/time for.
+/// @return A qbs containing the date/time in format "mm-dd-yyyy hh:mm:ss", or empty string on error.
+qbs *func__filedatetime(qbs *path) {
+    if (is_error_pending()) {
+        return qbs_new(0, 1);
+    }
+
+    if (path->len == 0) {
+        error(QB_ERROR_ILLEGAL_FUNCTION_CALL);
+        return qbs_new(0, 1);
+    }
+
+    std::string pathName(reinterpret_cast<char *>(path->chr), path->len);
+    filepath_fix_directory(pathName);
+
+    std::filesystem::path fsPath(pathName);
+
+    std::error_code ec;
+    auto ftime = std::filesystem::last_write_time(fsPath, ec);
+
+    if (ec) {
+        if (ec == std::errc::no_such_file_or_directory) {
+            error(QB_ERROR_FILE_NOT_FOUND);
+        } else if (ec == std::errc::permission_denied) {
+            error(QB_ERROR_PERMISSION_DENIED);
+        } else if (ec == std::errc::not_a_directory) {
+            error(QB_ERROR_PATH_NOT_FOUND);
+        } else {
+            error(QB_ERROR_PATH_FILE_ACCESS_ERROR);
+        }
+
+        return qbs_new(0, 1);
+    }
+
+    auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - std::filesystem::file_time_type::clock::now() +
+                                                                                  std::chrono::system_clock::now());
+
+    auto cftime = std::chrono::system_clock::to_time_t(sctp);
+
+    struct tm localTime{};
+
+#ifdef QB64_WINDOWS
+    if (localtime_s(&localTime, &cftime) != 0) {
+        error(QB_ERROR_INTERNAL_ERROR);
+        return qbs_new(0, 1);
+    }
+#else
+    if (localtime_r(&cftime, &localTime) == nullptr) {
+        error(QB_ERROR_INTERNAL_ERROR);
+        return qbs_new(0, 1);
+    }
+#endif
+
+    // "mm-dd-yyyy hh:mm:ss"
+    auto str = qbs_new(19, 1);
+
+    str->chr[2] = '-';
+    str->chr[5] = '-';
+    str->chr[10] = ' ';
+    str->chr[13] = ':';
+    str->chr[16] = ':';
+
+    int32_t x;
+    int32_t i;
+
+    // Month
+    x = localTime.tm_mon + 1;
+    i = 0;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Day
+    x = localTime.tm_mday;
+    i = 3;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Year
+    x = localTime.tm_year + 1900;
+    i = 6;
+    str->chr[i] = (x / 1000) + '0';
+    str->chr[i + 1] = ((x / 100) % 10) + '0';
+    str->chr[i + 2] = ((x / 10) % 10) + '0';
+    str->chr[i + 3] = (x % 10) + '0';
+
+    // Hour
+    x = localTime.tm_hour;
+    i = 11;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Minute
+    x = localTime.tm_min;
+    i = 14;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    // Second
+    x = localTime.tm_sec;
+    i = 17;
+    str->chr[i] = x / 10 + '0';
+    str->chr[i + 1] = x % 10 + '0';
+
+    return str;
 }
 
 /// @brief Saves the current directory as the startup directory.

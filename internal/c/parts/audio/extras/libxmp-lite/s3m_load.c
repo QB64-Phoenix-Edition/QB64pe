@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -208,7 +208,7 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 {
 	struct xmp_module *mod = &m->mod;
 	int c, r, i;
-	struct xmp_event *event = 0, dummy;
+	struct xmp_event *event = NULL, dummy;
 	struct s3m_file_header sfh;
 	struct s3m_instrument_header sih;
 #ifndef LIBXMP_CORE_PLAYER
@@ -564,7 +564,7 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		sub = &xxi->sub[0];
 
 		hio_seek(f, start + pp_ins[i] * 16, SEEK_SET);
-		sub->pan = 0x80;
+		sub->pan = XMP_INST_NO_DEFAULT_PAN;
 		sub->sid = i;
 
 		if (hio_read(buf, 1, 80, f) != 80) {

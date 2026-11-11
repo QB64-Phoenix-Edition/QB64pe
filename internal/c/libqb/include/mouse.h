@@ -8,9 +8,9 @@ inline constexpr auto Mouse_MaxSupportedButtons = 8;
 enum class Mouse_Button { None = 0, Left = 1, Right = 2, Middle = 3, Four = 4, Five = 5, Six = 6, Seven = 7, Eight = 8 };
 
 void GLUT_MOUSE_POSITION_FUNC(double x, double y, GLUTEnum_MouseCursorMode mode);
-void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode, int modifiers);
-void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode);
-void GLUT_MOUSE_NOTIFY_FUNC(double x, double y, bool entered, GLUTEnum_MouseCursorMode mode);
+void GLUT_MOUSE_BUTTON_FUNC(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action);
+void GLUT_MOUSE_SCROLL_FUNC(double x, double y, double xOffset, double yOffset);
+void GLUT_MOUSE_NOTIFY_FUNC(double x, double y, bool entered);
 void GLUT_MOUSE_FOCUS_FUNC(bool focused);
 
 void Mouse_QueueButtonDownEvent(int button, double x, double y);

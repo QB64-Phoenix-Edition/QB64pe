@@ -234,10 +234,9 @@ typedef void (*GLUTEmu_CallbackSystemPoll)();
 typedef void (*GLUTEmu_CallbackKeyboardButton)(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_ButtonAction action, int modifiers);
 typedef void (*GLUTEmu_CallbackKeyboardCharacter)(char32_t codepoint, int modifiers);
 typedef void (*GLUTEmu_CallbackMousePosition)(double x, double y, GLUTEnum_MouseCursorMode mode);
-typedef void (*GLUTEmu_CallbackMouseButton)(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action, GLUTEnum_MouseCursorMode mode,
-                                            int modifiers);
-typedef void (*GLUTEmu_CallbackMouseNotify)(double x, double y, bool entered, GLUTEnum_MouseCursorMode mode);
-typedef void (*GLUTEmu_CallbackMouseScroll)(double x, double y, double xOffset, double yOffset, GLUTEnum_MouseCursorMode mode);
+typedef void (*GLUTEmu_CallbackMouseButton)(double x, double y, GLUTEmu_MouseButton button, GLUTEmu_ButtonAction action);
+typedef void (*GLUTEmu_CallbackMouseNotify)(double x, double y, bool entered);
+typedef void (*GLUTEmu_CallbackMouseScroll)(double x, double y, double xOffset, double yOffset);
 typedef void (*GLUTEmu_CallbackDropFiles)(int count, const char *paths[]);
 
 std::tuple<int, int, int> GLUTEmu_ScreenGetMode();
@@ -269,6 +268,7 @@ void GLUTEmu_WindowSetMousePassthrough(bool passthrough);
 bool GLUTEmu_WindowAllowsMousePassthrough();
 void GLUTEmu_WindowResize(int width, int height);
 std::pair<int, int> GLUTEmu_WindowGetSize();
+std::pair<float, float> GLUTEmu_WindowGetContentScale();
 std::pair<int, int> GLUTEmu_WindowGetFramebufferSize();
 void GLUTEmu_WindowMove(int x, int y);
 std::pair<int, int> GLUTEmu_WindowGetPosition();

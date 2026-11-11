@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2026 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -229,7 +229,7 @@ static void xlat_volfx(struct xmp_event *event)
 		}
 		event->f2t = FX_SETPAN;
 	} else if (b >= 193 && b <= 202) {	/* G */
-		uint8 val[10] = {
+		static const uint8 val[10] = {
 			0x00, 0x01, 0x04, 0x08, 0x10,
 			0x20, 0x40, 0x60, 0x80, 0xff
 		};
@@ -446,7 +446,7 @@ static void identify_tracker(struct module_data *m, struct it_file_header *ifh,
 
 static int load_old_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 {
-	int inst_map[120], inst_rmap[XMP_MAX_KEYS];
+	uint8 inst_map[255], inst_rmap[XMP_MAX_KEYS];
 	struct it_instrument1_header i1h;
 	int c, k, j;
 	uint8 buf[64];
@@ -521,17 +521,16 @@ static int load_old_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 	}
 
 	/* See how many different instruments we have */
-	for (j = 0; j < 120; j++)
-		inst_map[j] = -1;
+	memset(inst_map, 0xff, sizeof(inst_map));
 
 	for (k = j = 0; j < XMP_MAX_KEYS; j++) {
 		c = j < 120 ? i1h.keys[j * 2 + 1] - 1 : -1;
-		if (c < 0 || c >= 120) {
+		if (c < 0) {
 			xxi->map[j].ins = 0;
 			xxi->map[j].xpo = 0;
 			continue;
 		}
-		if (inst_map[c] == -1) {
+		if (inst_map[c] == 0xff) {
 			inst_map[c] = k;
 			inst_rmap[k] = c;
 			k++;
@@ -557,7 +556,7 @@ static int load_old_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 			sub->dct =
 			    i1h.dnc ? XMP_INST_DCT_NOTE : XMP_INST_DCT_OFF;
 			sub->dca = XMP_INST_DCA_CUT;
-			sub->pan = -1;
+			sub->pan = XMP_INST_NO_DEFAULT_PAN;
 		}
 	}
 
@@ -576,7 +575,7 @@ static int load_old_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 
 static int load_new_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 {
-	int inst_map[120], inst_rmap[XMP_MAX_KEYS];
+	uint8 inst_map[255], inst_rmap[XMP_MAX_KEYS];
 	struct it_instrument2_header i2h;
 	struct it_envelope env;
 	int dca2nna[] = { 0, 2, 3, 3 /* Northern Sky (cj-north.it) has this... */ };
@@ -672,17 +671,16 @@ static int load_new_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 	}
 
 	/* See how many different instruments we have */
-	for (j = 0; j < 120; j++)
-		inst_map[j] = -1;
+	memset(inst_map, 0xff, sizeof(inst_map));
 
 	for (k = j = 0; j < 120; j++) {
 		c = i2h.keys[j * 2 + 1] - 1;
-		if (c < 0 || c >= 120) {
+		if (c < 0) {
 			xxi->map[j].ins = 0xff;	/* No sample */
 			xxi->map[j].xpo = 0;
 			continue;
 		}
-		if (inst_map[c] == -1) {
+		if (inst_map[c] == 0xff) {
 			inst_map[c] = k;
 			inst_rmap[k] = c;
 			k++;
@@ -706,7 +704,7 @@ static int load_new_it_instrument(struct xmp_instrument *xxi, HIO_HANDLE *f)
 			sub->nna = i2h.nna;
 			sub->dct = i2h.dct;
 			sub->dca = dca2nna[i2h.dca];
-			sub->pan = i2h.dfp & 0x80 ? -1 : i2h.dfp * 4;
+			sub->pan = i2h.dfp & 0x80 ? XMP_INST_NO_DEFAULT_PAN : i2h.dfp * 4;
 			sub->ifc = i2h.ifc;
 			sub->ifr = i2h.ifr;
 			sub->rvv = ((int)i2h.rp << 8) | i2h.rv;
@@ -764,7 +762,7 @@ static void *unpack_it_sample(struct xmp_sample *xxs,
 		channels = 2;
 	}
 
-	decbuf = calloc(1, bytes);
+	decbuf = calloc(bytes, 1);
 	if (decbuf == NULL)
 		return NULL;
 
@@ -869,7 +867,7 @@ static int load_it_sample(struct module_data *m, int i, int start,
 		/* Create an instrument for each sample */
 		mod->xxi[i].vol = 64;
 		mod->xxi[i].sub[0].vol = ish.vol;
-		mod->xxi[i].sub[0].pan = 0x80;
+		mod->xxi[i].sub[0].pan = XMP_INST_NO_DEFAULT_PAN;
 		mod->xxi[i].sub[0].sid = i;
 		mod->xxi[i].nsm = !!(xxs->len);
 		libxmp_instrument_name(mod, i, ish.name, 25);
@@ -913,7 +911,7 @@ static int load_it_sample(struct module_data *m, int i, int start,
 				if (ish.dfp & 0x80) {
 					sub->pan = (ish.dfp & 0x7f) * 4;
 				} else if (sample_mode) {
-					sub->pan = -1;
+					sub->pan = XMP_INST_NO_DEFAULT_PAN;
 				}
 			}
 		}
@@ -1008,6 +1006,7 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 	uint8 mask[L_CHANNELS];
 	uint8 last_fxp[64];
 	uint8 *pos;
+	uint8 *end;
 
 	int r, c, pat_len, num_rows;
 	uint8 b;
@@ -1034,8 +1033,9 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 		return -1;
 	}
 	pos = patbuf;
+	end = patbuf + pat_len;
 
-	while (r < num_rows && --pat_len >= 0) {
+	while (r < num_rows && pos < end) {
 		b = *(pos++);
 		if (!b) {
 			r++;
@@ -1044,9 +1044,8 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 		c = (b - 1) & 63;
 
 		if (b & 0x80) {
-			if (pat_len < 1) break;
+			if (pos >= end) break;
 			mask[c] = *(pos++);
-			pat_len--;
 		}
 		/*
 		 * WARNING: we IGNORE events in disabled channels. Disabled
@@ -1060,8 +1059,11 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 			event = &EVENT(i, c, r);
 		}
 
+		if ((mask[c] & 0x0f) == 0) {
+			goto skip_packed_event;
+		}
 		if (mask[c] & 0x01) {
-			if (pat_len < 1) break;
+			if (pos >= end) break;
 			b = *(pos++);
 
 			/* From ittech.txt:
@@ -1085,23 +1087,20 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 				}
 			}
 			lastevent[c].note = event->note = b;
-			pat_len--;
 		}
 		if (mask[c] & 0x02) {
-			if (pat_len < 1) break;
+			if (pos >= end) break;
 			b = *(pos++);
 			lastevent[c].ins = event->ins = b;
-			pat_len--;
 		}
 		if (mask[c] & 0x04) {
-			if (pat_len < 1) break;
+			if (pos >= end) break;
 			b = *(pos++);
 			lastevent[c].vol = event->vol = b;
 			xlat_volfx(event);
-			pat_len--;
 		}
 		if (mask[c] & 0x08) {
-			if (pat_len < 2) break;
+			if (pos >= end - 1) break;
 			b = *(pos++);
 			if (b >= ARRAY_SIZE(fx)) {
 				D_(D_WARN "invalid effect %#02x", b);
@@ -1115,7 +1114,11 @@ static int load_it_pattern(struct module_data *m, int i, int new_fx,
 				lastevent[c].fxt = event->fxt;
 				lastevent[c].fxp = event->fxp;
 			}
-			pat_len -= 2;
+		}
+
+skip_packed_event:
+		if ((mask[c] & 0xf0) == 0) {
+			continue;
 		}
 		if (mask[c] & 0x10) {
 			event->note = lastevent[c].note;
@@ -1147,6 +1150,7 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	uint32 *pp_pat;		/* Pointers to patterns */
 	uint8 *patbuf = NULL;
 	uint8 *pos;
+	uint8 *end;
 	int new_fx, sample_mode;
 	int pat_before_smp = 0;
 	int is_mpt_116 = 0;
@@ -1214,18 +1218,18 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	}
 
 	if (mod->ins) {
-		pp_ins = (uint32 *) calloc(4, mod->ins);
+		pp_ins = (uint32 *) calloc(mod->ins, sizeof(uint32));
 		if (pp_ins == NULL)
 			goto err;
 	} else {
 		pp_ins = NULL;
 	}
 
-	pp_smp = (uint32 *) calloc(4, mod->smp);
+	pp_smp = (uint32 *) calloc(mod->smp, sizeof(uint32));
 	if (pp_smp == NULL)
 		goto err2;
 
-	pp_pat = (uint32 *) calloc(4, mod->pat);
+	pp_pat = (uint32 *) calloc(mod->pat, sizeof(uint32));
 	if (pp_pat == NULL)
 		goto err3;
 
@@ -1240,8 +1244,9 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
 	for (i = 0; i < 64; i++) {
 		struct xmp_channel *xxc = &mod->xxc[i];
+		int pan = ifh.chpan[i] & 0x7f;
 
-		if (ifh.chpan[i] == 100) {	/* Surround -> center */
+		if (pan == 100) {		/* Surround -> center */
 			xxc->flg |= XMP_CHANNEL_SURROUND;
 		}
 
@@ -1250,7 +1255,7 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		}
 
 		if (ifh.flags & IT_STEREO) {
-			xxc->pan = (int)ifh.chpan[i] * 0x80 >> 5;
+			xxc->pan = pan * 0x80 >> 5;
 			if (xxc->pan > 0xff)
 				xxc->pan = 0xff;
 		} else {
@@ -1401,9 +1406,14 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 			goto err4;
 		}
 		pos = patbuf;
+		end = patbuf + pat_len;
 
 		row = 0;
-		while (row < num_rows && --pat_len >= 0) {
+		while (row < num_rows && pos < end) {
+			/* Bits 0, 1, 2 add 1 byte each. Bit 3 adds 2 bytes. */
+			static const int bytes_in_packed_event[16] = {
+				0, 1, 1, 2, 1, 2, 2, 3, 2, 3, 3, 4, 3, 4, 4, 5
+			};
 			int b = *(pos++);
 			if (b == 0) {
 				row++;
@@ -1416,27 +1426,13 @@ static int it_load(struct module_data *m, HIO_HANDLE *f, const int start)
 				max_ch = c;
 
 			if (b & 0x80) {
-				if (pat_len < 1) break;
-				mask[c] = *(pos++);
-				pat_len--;
+				if (pos >= end) break;
+				/* The high nibble is not required to
+				 * calculate the event size. */
+				mask[c] = *(pos++) & 0x0f;
 			}
-
-			if (mask[c] & 0x01) {
-				pos++;
-				pat_len--;
-			}
-			if (mask[c] & 0x02) {
-				pos++;
-				pat_len--;
-			}
-			if (mask[c] & 0x04) {
-				pos++;
-				pat_len--;
-			}
-			if (mask[c] & 0x08) {
-				pos += 2;
-				pat_len -= 2;
-			}
+			/* Skip packed event */
+			pos += bytes_in_packed_event[mask[c]];
 		}
 	}
 

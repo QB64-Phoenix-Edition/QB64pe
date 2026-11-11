@@ -2425,7 +2425,10 @@ void GLUT_KEYBOARD_BUTTON_FUNC(GLUTEmu_KeyboardKey key, int scancode, GLUTEmu_Bu
 
     const bool isNumLock = bool(modifiers & GLUTEmu_KeyboardKeyModifier::NumLock);
     const bool isShift = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Shift);
-    const bool isControl = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Control);
+    // Super (Command on macOS) is treated like Ctrl here: the OS does not produce a character
+    // for Super+key (macOS treats Cmd+key as a shortcut, not text), so waiting for a character
+    // callback would silently drop the key. Use the base key value instead, just like Ctrl+key.
+    const bool isControl = bool(modifiers & (GLUTEmu_KeyboardKeyModifier::Control | GLUTEmu_KeyboardKeyModifier::Super));
     const bool isAlt = bool(modifiers & GLUTEmu_KeyboardKeyModifier::Alt);
     const bool isCapsLock = bool(modifiers & GLUTEmu_KeyboardKeyModifier::CapsLock);
     const bool useKeypadNumber = isNumLock && !isShift;

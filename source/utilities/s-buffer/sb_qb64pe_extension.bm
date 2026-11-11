@@ -1,6 +1,6 @@
 '--- This function simulates the open behavior of real files depending
 '--- on the file OPEN mode. That way the file OPEN calls are easily
-'--- replaceable by OpenBuffer%() calls without worry about the internal
+'--- replaceable by OpenBuffer&() calls without worry about the internal
 '--- differences of the buffer system compared to real files.
 '--- Respective CLOSE calls can be simply removed as buffers remain
 '--- always accessible until cleared/disposed.
@@ -10,55 +10,59 @@
 '--- path as required.
 '--- Modes names can be short, only the first character is checked.
 '---------------------------------------------------------------------
-FUNCTION OpenBuffer% (sbMode$, sbName$)
+FUNCTION OpenBuffer& (sbMode$, sbName$)
     '--- option _explicit requirements ---
-    DIM buf%, nul&, known&, newUb&
+    DIM buf&, nul&, known&, newUb&
     '--- buffer already existing? ---
     IF LEN(sbName$) > 0 THEN
         known& = SBufNFind&(sbName$)
-        IF known& < 0 THEN buf% = UBOUND(SBufN) + 1 ELSE buf% = known&
+        IF known& < 0 THEN buf& = UBOUND(SBufN) + 1 ELSE buf& = known&
     ELSE
         ' An empty sbName$ means grab the first unnamed buffer
-        FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) = sbName$ THEN EXIT FOR
-        NEXT buf%
+        FOR buf& = 0 TO UBOUND(SBufN)
+            IF SBufN(buf&) = sbName$ THEN EXIT FOR
+        NEXT buf&
     END IF
     '--- simulate file modes ---
     SELECT CASE UCASE$(LEFT$(sbMode$, 1))
         CASE "A" 'append
-            IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
-            nul& = SeekBuf&(buf%, 0, SBM_BufEnd)
+            IF buf& > UBOUND(SBufN) THEN GOSUB newBuf
+            nul& = SeekBuf&(buf&, 0, SBM_BufEnd)
         CASE "B" 'binary
-            IF buf% > UBOUND(SBufN) THEN GOSUB newBuf
-            nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+            IF buf& > UBOUND(SBufN) THEN GOSUB newBuf
+            nul& = SeekBuf&(buf&, 0, SBM_BufStart)
         CASE "I" 'input (try to load from file, if yet unknown)
-            IF buf% > UBOUND(SBufN) THEN GOSUB loadBuf
-            nul& = SeekBuf&(buf%, 0, SBM_BufStart)
+            IF buf& > UBOUND(SBufN) THEN GOSUB loadBuf
+            nul& = SeekBuf&(buf&, 0, SBM_BufStart)
         CASE "O" 'output
-            IF buf% <= UBOUND(SBufN) THEN DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
+            IF buf& <= UBOUND(SBufN) THEN DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
             GOSUB newBuf
         CASE ELSE 'random or unknown mode
-            buf% = SBE_NoMoreBuffers 'not supported
+            buf& = SBE_NoMoreBuffers 'not supported
     END SELECT
-    OpenBuffer% = buf%
+    OpenBuffer& = buf&
     EXIT FUNCTION
     '----------
     newBuf:
-    buf% = CreateBuf%: ConvBufToNativeEol buf%
+    buf& = CreateBuf&: ConvBufToNativeEol buf&
     GOSUB growLists
-    SBufN(buf%) = sbName$: SBufNIndex buf%
+    SBufN(buf&) = sbName$: SBufNIndex buf&
     RETURN
     '----------
     loadBuf:
-    buf% = FileToBuf%(sbName$): ConvBufToNativeEol buf%
+    buf& = FileToBuf&(sbName$): ConvBufToNativeEol buf&
     GOSUB growLists
-    SBufN(buf%) = sbName$: SBufNIndex buf%
+    SBufN(buf&) = sbName$: SBufNIndex buf&
     RETURN
     '----------
     growLists:
-    IF buf% > UBOUND(SBufN) THEN
+    IF buf& > UBOUND(SBufN) THEN
         newUb& = UBOUND(SBufN) + (UBOUND(SBufN) + 1) \ 2
-        IF newUb& < buf% + 99 THEN newUb& = buf% + 99 'at least 100 more buffers
+        IF newUb& < buf& + 99 THEN newUb& = buf& + 99 'at least 100 more buffers
+        'Never grow the list past the buffer cap: CreateBuf& cannot hand out a handle above it,
+        'and this keeps UBOUND(SBufN) + 1 (the "not found" handle used above) and the 1.5x
+        'growth step well inside the LONG range.
+        IF newUb& > simplebuffer_maxBufs THEN newUb& = simplebuffer_maxBufs
         REDIM _PRESERVE SBufN(0 TO newUb&) AS STRING
         REDIM _PRESERVE SBufCppLineStatus(0 TO newUb&) AS _Byte
         REDIM _PRESERVE SBufNHashNext(0 TO newUb&) AS LONG
@@ -103,34 +107,34 @@ FUNCTION SBufNFind& (sbName$)
     WEND
 END FUNCTION
 
-'--- Adds the (already assigned) name of buffer buf% to the hash table.
+'--- Adds the (already assigned) name of buffer buf& to the hash table.
 '---------------------------------------------------------------------
-SUB SBufNIndex (buf%)
+SUB SBufNIndex (buf&)
     '--- option _explicit requirements ---
     DIM h&
-    IF LEN(SBufN(buf%)) = 0 THEN EXIT SUB
-    h& = SBufNHash&(SBufN(buf%))
-    SBufNHashNext(buf%) = SBufNHashTable(h&)
-    SBufNHashTable(h&) = buf% + 1
+    IF LEN(SBufN(buf&)) = 0 THEN EXIT SUB
+    h& = SBufNHash&(SBufN(buf&))
+    SBufNHashNext(buf&) = SBufNHashTable(h&)
+    SBufNHashTable(h&) = buf& + 1
 END SUB
 
-'--- Removes buffer buf% from the hash table, to be called while SBufN(buf%) still
+'--- Removes buffer buf& from the hash table, to be called while SBufN(buf&) still
 '--- holds the name it was inserted under.
 '---------------------------------------------------------------------
-SUB SBufNUnindex (buf%)
+SUB SBufNUnindex (buf&)
     '--- option _explicit requirements ---
     DIM h&, i&, prev&
-    IF LEN(SBufN(buf%)) = 0 THEN EXIT SUB
-    h& = SBufNHash&(SBufN(buf%))
+    IF LEN(SBufN(buf&)) = 0 THEN EXIT SUB
+    h& = SBufNHash&(SBufN(buf&))
     i& = SBufNHashTable(h&)
     WHILE i&
-        IF i& - 1 = buf% THEN
+        IF i& - 1 = buf& THEN
             IF prev& THEN
-                SBufNHashNext(prev& - 1) = SBufNHashNext(buf%)
+                SBufNHashNext(prev& - 1) = SBufNHashNext(buf&)
             ELSE
-                SBufNHashTable(h&) = SBufNHashNext(buf%)
+                SBufNHashTable(h&) = SBufNHashNext(buf&)
             END IF
-            SBufNHashNext(buf%) = 0
+            SBufNHashNext(buf&) = 0
             EXIT SUB
         END IF
         prev& = i&
@@ -143,52 +147,52 @@ END SUB
 '--- Clearing a buffer is the equivalent to KILLing a real file.
 '-----
 '--- To designate a single buffer to clear, use the same file name as
-'--- given at the respective OpenBuffer%() call.
+'--- given at the respective OpenBuffer&() call.
 '---------------------------------------------------------------------
 SUB ClearBuffers (sbName$)
     '--- option _explicit requirements ---
-    DIM buf%
+    DIM buf&
     '--- clear/dispose buffer(s) ---
     IF sbName$ <> "" THEN
-        FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
-        NEXT buf%
-        IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-        DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
-        SBufCppLineStatus(buf%) = 0
+        FOR buf& = 0 TO UBOUND(SBufN)
+            IF SBufN(buf&) = sbName$ THEN EXIT FOR 'buffer found
+        NEXT buf&
+        IF buf& > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+        DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
+        SBufCppLineStatus(buf&) = 0
     ELSE
-        FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) <> "" THEN DisposeBuf buf%: SBufNUnindex buf%: SBufN(buf%) = ""
-            SBufCppLineStatus(buf%) = 0
-        NEXT buf%
+        FOR buf& = 0 TO UBOUND(SBufN)
+            IF SBufN(buf&) <> "" THEN DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
+            SBufCppLineStatus(buf&) = 0
+        NEXT buf&
     END IF
 END SUB
 
 '--- This subroutine will write the current contents of the given buffer
 '--- or ALL buffers, if the name argument is empty, into the respective
-'--- files on disk (using names as given by the OpenBuffer%() function)
+'--- files on disk (using names as given by the OpenBuffer&() function)
 '--- The change state of the buffer(s) is checked first to avoid needless
 '--- disk writes.
 '-----
 '--- To designate a single buffer to write, use the same file name as
-'--- given at the respective OpenBuffer%() call.
+'--- given at the respective OpenBuffer&() call.
 '---------------------------------------------------------------------
 SUB WriteBuffers (sbName$)
     '--- option _explicit requirements ---
-    DIM buf%
+    DIM buf&
     '--- write buffer(s) ---
     IF sbName$ <> "" THEN
-        FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) = sbName$ THEN EXIT FOR 'buffer found
-        NEXT buf%
-        IF buf% > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-        IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+        FOR buf& = 0 TO UBOUND(SBufN)
+            IF SBufN(buf&) = sbName$ THEN EXIT FOR 'buffer found
+        NEXT buf&
+        IF buf& > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
+        IF IsBufChanged%(buf&) THEN BufToFile buf&, SBufN(buf&)
     ELSE
-        FOR buf% = 0 TO UBOUND(SBufN)
-            IF SBufN(buf%) <> "" THEN
-                IF IsBufChanged%(buf%) THEN BufToFile buf%, SBufN(buf%)
+        FOR buf& = 0 TO UBOUND(SBufN)
+            IF SBufN(buf&) <> "" THEN
+                IF IsBufChanged%(buf&) THEN BufToFile buf&, SBufN(buf&)
             END IF
-        NEXT buf%
+        NEXT buf&
     END IF
 END SUB
 
