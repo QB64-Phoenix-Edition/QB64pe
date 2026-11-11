@@ -99,16 +99,16 @@ SUB ReadInitialConfig
         WriteConfigSetting generalSettingsSection$, "PasteCursorAtEnd", "True"
     END IF
 
-    IF ReadConfigSetting(generalSettingsSection$, "AutoCloseBrackets", value$) THEN
+    IF ReadConfigSetting(generalSettingsSection$, "InlineHints", value$) THEN
         IF UCASE$(value$) = "TRUE" OR VAL(value$) <> 0 THEN
-            AutoCloseBrackets = _TRUE
+            InlineHints = _TRUE
         ELSE
-            AutoCloseBrackets = _FALSE
-            WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "False"
+            InlineHints = _FALSE
+            WriteConfigSetting generalSettingsSection$, "InlineHints", "False"
         END IF
     ELSE
-        AutoCloseBrackets = _TRUE
-        WriteConfigSetting generalSettingsSection$, "AutoCloseBrackets", "True"
+        InlineHints = _TRUE
+        WriteConfigSetting generalSettingsSection$, "InlineHints", "True"
     END IF
 
     IF ReadConfigSetting(generalSettingsSection$, "ExeToSourceFolderFirstTimeMsg", value$) THEN

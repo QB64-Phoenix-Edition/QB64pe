@@ -8627,8 +8627,11 @@ void fast_line(int32 x1, int32 y1, int32 x2, int32 y2, uint32 col) {
     return;
 }
 
-void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) {
-    static int32 x1, y1, x2, y2, l, l2, mi;
+// seamless != 0: wherever the line steps diagonally, also plot the corner pixel the ideal line passes
+// through, so consecutive pixels always share an edge (no diagonal-only steps). Lines drawn next to
+// each other (e.g. a fan of rotating lines) then leave no pinholes between them.
+static void qb32_line_ex(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style, int32 seamless) {
+    static int32 x1, y1, x2, y2, l, l2, mi, nxt;
     static float m;
 
     // resolve coordinates
@@ -8680,6 +8683,18 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
 
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
+                    if (seamless && l > 0) {
+                        // l = pixels still to draw after this one, so there's no corner after the last pixel
+                        // will the next pixel be on another row? if so, fill the corner
+                        nxt = qbr_float_to_long(y1f + m);
+                        if (nxt != lineclip_y1) {
+                            // where is the line half-way to the next column?
+                            if (qbr_float_to_long(y1f + m * 0.5f) == lineclip_y1)
+                                pset(lineclip_x1 + mi, lineclip_y1, col);
+                            else
+                                pset(lineclip_x1, nxt, col);
+                        }
+                    }
                 }
 
                 lineclip_x1 += mi;
@@ -8705,6 +8720,18 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
                     lineclip_x1 = x1f + 0.5f;
                 if ((style = rotateLeft(style, 1)) & 1) {
                     pset(lineclip_x1, lineclip_y1, col);
+                    if (seamless && l2 > 0) {
+                        // l2 = pixels still to draw after this one, so there's no corner after the last pixel
+                        // will the next pixel be on another column? if so, fill the corner
+                        nxt = qbr_float_to_long(x1f + m);
+                        if (nxt != lineclip_x1) {
+                            // where is the line half-way to the next row?
+                            if (qbr_float_to_long(x1f + m * 0.5f) == lineclip_x1)
+                                pset(lineclip_x1, lineclip_y1 + mi, col);
+                            else
+                                pset(nxt, lineclip_y1, col);
+                        }
+                    }
                 }
                 lineclip_y1 += mi;
                 x1f += m;
@@ -8715,6 +8742,10 @@ void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 st
     return;
 }
 
+void qb32_line(float x1f, float y1f, float x2f, float y2f, uint32 col, uint32 style) {
+    qb32_line_ex(x1f, y1f, x2f, y2f, col, style, 0);
+}
+
 void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint32 style, int32 passed) {
     if (is_error_pending())
         return;
@@ -8723,7 +8754,9 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
         return;
     }
     /*
-        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF}][,?]]]"
+        '"[[{STEP}](?,?)]-[{STEP}](?,?)[,[?][,[{B|BF|_SEAMLESS}][,?]]]"
+        color: 8, style: 16
+        bf: 0 = line, 1 = B, 2 = BF, 3 = _SEAMLESS line
         LINE -(10, 10) 'flags: 0
         LINE (0, 0)-(10, 10) 'flags: 1
         LINE -STEP(10, 10) 'flags: 2
@@ -8749,13 +8782,13 @@ void sub_line(float x1, float y1, float x2, float y2, uint32 col, int32 bf, uint
     write_page->x = x2;
     write_page->y = y2;
 
-    if (bf == 0) { // line
+    if (bf == 0 || bf == 3) { // line (3 = _SEAMLESS)
         if ((passed & 16) == 0)
             style = 0xFFFF;
         if ((passed & 8) == 0)
             col = write_page->color;
         write_page->draw_color = col;
-        qb32_line(x1, y1, x2, y2, col, style);
+        qb32_line_ex(x1, y1, x2, y2, col, style, bf == 3);
         return;
     }
 
@@ -9742,8 +9775,8 @@ void sub_paint(float x, float y, qbs *fillstr, uint32 bordercol, qbs *background
 }
 
 void sub_circle(double x, double y, double r, uint32 col, double start, double end, double aspect, int32 passed) {
-    //                                                &2         &4           &8         &16
-    //[{STEP}](?,?),?[,[?][,[?][,[?][,?]]]]
+    //                                                &2         &4           &8         &16       &32
+    //[{STEP}](?,?),?[,[?][,[?][,[?][,[?][,{_SEAMLESS}]]]]]
     if (is_error_pending())
         return;
 
@@ -9918,6 +9951,75 @@ void sub_circle(double x, double y, double r, uint32 col, double start, double e
         x2 = px * xspan + 0.5;
         y2 = py * yspan - 0.5;
         fast_line(ix, iy, ix + x2, iy - y2, col);
+    }
+
+    // _SEAMLESS: plot every pixel whose (aspect-corrected) distance from the centre rounds to the radius
+    // i.e. r - 0.5 <= d < r + 0.5. Unlike the default thin outline, circles drawn with consecutive
+    // radii tile exactly, leaving no gaps between them.
+    if ((passed & 32) && xspan > 0 && yspan > 0) {
+        // scale factors that map the ellipse back to a circle of radius r (derived from aspect so they
+        // are identical for every radius, keeping neighbouring rings exactly complementary)
+        double kx = 1, ky = 1;
+        if (aspect >= 0) {
+            if (aspect < 1)
+                ky = 1 / aspect;
+            if (aspect > 1)
+                kx = aspect;
+        } else if (aspect > -1) {
+            ky = 1 / (1 + aspect);
+        }
+
+        double r_outer = r + 0.5;
+        double r_inner = r - 0.5;
+        if (r_inner < 0)
+            r_inner = 0;
+        double r_outer2 = r_outer * r_outer;
+        double r_inner2 = r_inner * r_inner;
+        bool full_circle = !exclusive && start == 0 && end == pi2;
+
+        int32 dy_max = r_outer / ky + 1;
+        for (int32 dy = -dy_max; dy <= dy_max; dy++) {
+            double ey = (double)dy * ky;
+            ey *= ey;
+            if (ey >= r_outer2)
+                continue;
+
+            // first candidate column for this row; exact membership is decided by the distance test below
+            int32 dx = 0;
+            if (r_inner2 > ey)
+                dx = (int32)(std::sqrt(r_inner2 - ey) / kx) - 1;
+            if (dx < 0)
+                dx = 0;
+
+            for (;; dx++) {
+                double ex = (double)dx * kx;
+                double d2 = ex * ex + ey;
+                if (d2 >= r_outer2)
+                    break;
+                if (d2 < r_inner2)
+                    continue;
+
+                for (int32 side = 0; side < 2; side++) {
+                    int32 sdx = side ? -dx : dx;
+                    if (side && dx == 0)
+                        break;
+                    if (!full_circle) {
+                        double a = std::atan2(-(double)dy * ky, (double)sdx * kx);
+                        if (a < 0)
+                            a += pi2;
+                        if (exclusive) {
+                            if ((a > start) && (a < end))
+                                continue;
+                        } else {
+                            if ((a < start) || (a > end))
+                                continue;
+                        }
+                    }
+                    pset_and_clip(ix + sdx, iy + dy, col);
+                }
+            }
+        }
+        goto allplotted;
     }
 
     px = 1;
