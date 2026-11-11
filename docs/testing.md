@@ -15,7 +15,10 @@ category folders are `*.bas` files. Accompanying each `*.bas` file is either an
 file.  For test with an `*.output`, the `*.output` file contains the text that
 the program compiled from the `*.bas` file should produce. For `*.err` tests,
 the `*.err` file contains the text of the error the QB64-PE compiler should
-produce when attempting to compile that code.
+produce when attempting to compile that code. If test fails are expected on
+specific platforms only, but success on other platforms, then rather specify any
+of `*.win.err`, `*.lnx.err` or `*.mac.err` for the failing OS's and provide the
+`*.output` file along with it for the success check.
 
 To avoid unexpected test failures, you should write the `*.bas` in such a way
 that it at best does not produce lines with trailing spaces. If this is not

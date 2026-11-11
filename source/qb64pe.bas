@@ -3154,6 +3154,7 @@ DO
                             IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
                         END IF
                     END IF
+                    IF os$ = "WIN" OR MacOSX = 1 THEN f$ = LCASE$(f$) 'no-case for Win/Mac
                     IF incPOS& > 0 THEN
                         nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
                         WHILE NOT EndOfBuf%(IncOneBuf)
@@ -12570,6 +12571,7 @@ DO
                                 IF incPOS& = 0 THEN incPOS& = INSTR(incDAT$, CHR$(10) + "$INCLUDEONCE" + CHR$(10))
                             END IF
                         END IF
+                        IF os$ = "WIN" OR MacOSX = 1 THEN f$ = LCASE$(f$) 'no-case for Win/Mac
                         IF incPOS& > 0 THEN
                             nul& = SeekBuf&(IncOneBuf, 0, SBM_BufStart)
                             WHILE NOT EndOfBuf%(IncOneBuf)
