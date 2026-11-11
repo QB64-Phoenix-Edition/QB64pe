@@ -105,10 +105,20 @@ do
         EXE="$EXE.exe"
     fi
 
-    # If a .err file exists, then this test is actually testing a compilation error
+    # If a testName.err file exists, then this test is actually testing for a
+    # general compilation error happening on all platforms
     testType="success"
+    errorFile="$testName.err"
     if test -f "./tests/compile_tests/$category/$testName.err"; then
         testType="error"
+    fi
+    # If the compilation may only fail on specific platforms, then .err is
+    # prefixed with the respective OS string e.g. testName.lnx.err for a
+    # compilation failure on Linux only. For the platforms w/o a personalized
+    # .err file success is expected and a .output file may be given for check
+    if test -f "./tests/compile_tests/$category/$testName.$OS.err"; then
+        testType="error"
+        errorFile="$testName.$OS.err"
     fi
 
     # Clear out temp folder before next compile, avoids stale compilelog files
@@ -221,9 +231,9 @@ do
         ! test -f "$EXE"
         assert_success_named "Exe exists" "'$category-$testName - output' exists, it should not!" show_failure "$category" "$testName"
 
-        expectedErr="$(cat "./tests/compile_tests/$category/$testName.err")"
+        expectedErr="$(cat "./tests/compile_tests/$category/$errorFile")"
 
-        diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
+        diffResult=$(diff -y "./tests/compile_tests/$category/$errorFile" "$compileResultOutput")
         assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
     fi
 done < <(find "./tests/compile_tests$CATEGORY" -name "$TESTS_TO_RUN" -print)
