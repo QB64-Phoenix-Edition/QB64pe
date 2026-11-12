@@ -31,6 +31,8 @@ $VERSIONINFO:Comments='QB64 is a modern extended BASIC programming language that
 '$INCLUDE:'utilities\give_error.bi'
 '$INCLUDE:'utilities\statevars.bi'
 '$INCLUDE:'utilities\type.bi'
+'$INCLUDE:'emit\embed.bi'
+'$INCLUDE:'emit\split_units.bi'
 
 DEFLNG A-Z
 
@@ -154,10 +156,6 @@ DIM SHARED emptySCWarning AS _BYTE, maxLineNumber AS LONG
 DIM SHARED ExeIconSet AS LONG
 DIM SHARED VersionInfoSet AS _BYTE
 
-'Array to handle $EMBED metacommand:
-REDIM SHARED embedFileList$(3, 10)
-CONST eflLine = 0, eflUsed = 1, eflFile = 2, eflHand = 3 '1st index IDs
-
 'Array to handle $USELIBRARY metacommand:
 REDIM SHARED useLibList$(4, 10)
 CONST ullName = 0, ullNeedy = 1, ullTop = 2, ullMain = 3, ullBottom = 4 '1st index IDs
@@ -277,82 +275,26 @@ IF os$ = "LNX" THEN tmpdir$ = "./internal/temp/": tmpdir2$ = "../temp/"
 
 IF NOT _DIREXISTS(tmpdir$) THEN MKDIR tmpdir$
 
-DECLARE LIBRARY
-    FUNCTION getpid& ()
-END DECLARE
-
-thisinstancepid = getpid&
 DIM SHARED tempfolderindex
 
-IF INSTR(_OS$, "LINUX") THEN
-    fh = FREEFILE
-    OPEN ".\internal\temp\tempfoldersearch.bin" FOR RANDOM AS #fh LEN = LEN(tempfolderindex)
-    tempfolderrecords = LOF(fh) / LEN(tempfolderindex)
-    i = 1
-    IF tempfolderrecords = 0 THEN
-        'first run ever?
-        PUT #fh, 1, thisinstancepid
-    ELSE
-        FOR i = 1 TO tempfolderrecords
-            'check if any of the temp folders is being used = pid still active
-            GET #fh, i, tempfoldersearch
-
-            SHELL _HIDE "ps -p " + STR$(tempfoldersearch) + " > /dev/null 2>&1; echo $? > internal/temp/checkpid.bin"
-            fh2 = FREEFILE
-            OPEN "internal/temp/checkpid.bin" FOR BINARY AS #fh2
-            LINE INPUT #fh2, checkpid$
-            CLOSE #fh2
-            IF VAL(checkpid$) = 1 THEN
-                'This temp folder was locked by an instance that's no longer active, so
-                'this will be our temp folder
-                PUT #fh, i, thisinstancepid
-                EXIT FOR
-            END IF
-        NEXT
-        IF i > tempfolderrecords THEN
-            'All indexes were busy. Let's initiate a new one:
-            PUT #fh, i, thisinstancepid
-        END IF
-    END IF
-    CLOSE #fh
+'Claim a temp folder by taking an exclusive lock on its temp.bin and holding it
+'for the life of this process. The OS releases it when the program ends, so no
+'risk of two instances picking the same or the lock going stale.
+i = 1
+DO
     IF i > 1 THEN
-        tmpdir$ = "./internal/temp" + _TOSTR$(i) + "/": tmpdir2$ = "../temp" + _TOSTR$(i) + "/"
-        IF _DIREXISTS(tmpdir$) = 0 THEN
-            MKDIR tmpdir$
-        END IF
-    END IF
-    OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26
-ELSE
-    ON ERROR GOTO qberror_test
-    E = 0
-    i = 1
-    OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26
-    DO WHILE E
-        i = i + 1
-        IF i = 1000 THEN PRINT "Unable to locate the 'internal' folder": END 1
-        MKDIR ".\internal\temp" + _TOSTR$(i)
         IF os$ = "WIN" THEN tmpdir$ = ".\internal\temp" + _TOSTR$(i) + "\": tmpdir2$ = "..\\temp" + _TOSTR$(i) + "\\"
         IF os$ = "LNX" THEN tmpdir$ = "./internal/temp" + _TOSTR$(i) + "/": tmpdir2$ = "../temp" + _TOSTR$(i) + "/"
-        E = 0
-        OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26
-    LOOP
-END IF
+        IF NOT _DIREXISTS(tmpdir$) THEN MKDIR tmpdir$
+    END IF
+    IF ClaimInstanceLock%(tmpdir$ + "temp.bin") THEN EXIT DO
+    i = i + 1
+    IF i = 1000 THEN PRINT "Unable to claim a temp folder: 1000 of them are in use": END 1
+LOOP
 
 
 'temp folder established
 tempfolderindex = i
-IF i > 1 THEN
-    'create modified version of qbx.cpp
-    OPEN ".\internal\c\qbx" + _TOSTR$(i) + ".cpp" FOR OUTPUT AS #2
-    OPEN ".\internal\c\qbx.cpp" FOR BINARY AS #1
-    DO UNTIL EOF(1)
-        LINE INPUT #1, a$
-        x = INSTR(a$, "..\\temp\\"): IF x THEN a$ = LEFT$(a$, x - 1) + "..\\temp" + _TOSTR$(i) + "\\" + RIGHT$(a$, LEN(a$) - (x + 9))
-        x = INSTR(a$, "../temp/"): IF x THEN a$ = LEFT$(a$, x - 1) + "../temp" + _TOSTR$(i) + "/" + RIGHT$(a$, LEN(a$) - (x + 7))
-        PRINT #2, a$
-    LOOP
-    CLOSE #1, #2
-END IF
 
 IF Debug THEN OPEN tmpdir$ + "debug.txt" FOR OUTPUT AS #9
 
@@ -585,6 +527,12 @@ TYPE idstruct
 
     callname AS STRING * 256
     ccall AS INTEGER
+    'Set when QB64-PE emits no declaration of its own for a DECLARE LIBRARY
+    'routine, so calling it depends on something already being in place - either
+    'the user's C header or a declaration reached through some other library's
+    'header. Such calls only work in the translation unit that includes
+    'libheaders.txt, so the routines calling them are kept there.
+    libnodecl AS _BYTE
     overloaded AS _BYTE
     args AS INTEGER
     minargs AS INTEGER
@@ -720,7 +668,15 @@ DIM SHARED glinkarg AS INTEGER
 ' The value comes from the parameter TYPE declaration and is deterministic.
 DIM SHARED sf_udt_dynmode AS INTEGER
 DIM SHARED typname2typsize AS LONG
+'Numbers the generated names that live at file scope, where one routine's
+'name has to differ from every other routine's.
 DIM SHARED uniquenumbern AS LONG
+'Numbers the generated names that are local to one SUB/FUNCTION. Restarted for
+'each of them - see scopeunique$ - so that editing a routine does not rename
+'anything in the routines compiled after it.
+DIM SHARED scopeuniquen AS LONG
+'scopeuniquen belonging to the module-level code a SUB/FUNCTION interrupts
+DIM SHARED scopeuniqueouter AS LONG
 'When this flag is enabled, a TYPE member array may be referenced without an
 'explicit element index. This whole-array form carries enough metadata for later
 'code to distinguish an inline block (unmarked/_Static) from an explicit _Dynamic
@@ -760,7 +716,12 @@ DIM SHARED defineaz(1 TO 27) AS STRING '27 is an underscore
 
 
 
+'Numbers the S_ labels that an ON ERROR/event retry jumps back to. Restarted
+'for each SUB/FUNCTION - see statementlabel$ - so that editing one routine does
+'not renumber the labels of every routine compiled after it.
 DIM SHARED statementn AS LONG
+'statementn belonging to the module-level code a SUB/FUNCTION interrupts
+DIM SHARED statementnouter AS LONG
 DIM SHARED everycasenewcase AS LONG
 
 
@@ -785,7 +746,10 @@ DIM SHARED controltype(1000) AS INTEGER
 '18=CASE (awaiting END SELECT/CASE/CASE ELSE)
 '19=CASE ELSE (awaiting END SELECT)
 '32=SUB/FUNCTION (awaiting END SUB/FUNCTION)
-DIM controlid(1000) AS LONG
+'The generated name a control block's labels are built from, e.g. the 7_3 in
+'fornext_exit_7_3. Held as the name itself, not a number, because scopeunique$
+'carries the scope as well as the counter.
+DIM controlid(1000) AS STRING
 DIM controlvalue(1000) AS LONG
 DIM controlstate(1000) AS INTEGER
 DIM SHARED controlref(1000) AS LONG 'the line number the control was created on
@@ -1159,6 +1123,9 @@ file$ = f$
 
 fullrecompile:
 
+'This build's generated files are its own; see ForgetGeneratedFileBuffers.
+ForgetGeneratedFileBuffers
+
 IF idemode = 0 AND NOT QuietMode THEN
     PRINT
     PRINT "Beginning C++ output from QB64 code... "
@@ -1191,8 +1158,6 @@ FOR i = 1 TO UBOUND(DEPENDENCY): DEPENDENCY(i) = 0: NEXT
 Error_Happened = 0
 
 FOR closeall = 1 TO 300: CLOSE closeall: NEXT
-
-OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
 bh = OpenBuffer&("O", tmpdir$ + "dyninfo.txt")
 
@@ -1587,6 +1552,7 @@ REDIM SHARED warningIncLines(1000) AS LONG
 REDIM SHARED warningIncFiles(1000) AS STRING
 maxLineNumber = 0
 uniquenumbern = 0
+scopeuniquen = 0
 
 'import _MEM type
 ptrsz = TARGET_BITS \ 8
@@ -1672,7 +1638,6 @@ DIM SHARED FormatBuf: FormatBuf = OpenBuffer&("O", tmpdir$ + "format.out")
 
 'begin compilation
 FOR closeall = 1 TO 300: CLOSE closeall: NEXT
-OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
 bh = OpenBuffer&("O", tmpdir$ + "icon.rc")
 
@@ -1697,9 +1662,15 @@ IdeUserSyntaxBegin 'user SUB/FUNCTION hints are collected again during the prepa
 reginternal
 
 DIM SHARED GlobTxtBuf: GlobTxtBuf = OpenBuffer&("O", tmpdir$ + "global.txt")
+'globalx.txt mirrors global.txt as declarations, for the translation units that
+'need to see the program's globals without defining them. Anything written to
+'global.txt through DeclareGlobalData/Var/Func appears here as an extern.
+DIM SHARED GlobDeclBuf: GlobDeclBuf = OpenBuffer&("O", tmpdir$ + "globalx.txt")
 defdatahandle = GlobTxtBuf
-WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_idiv(QBL qb_l,QBR qb_r)->decltype(qb_l/qb_r){if (!qb_r){error(11);return (decltype(qb_l/qb_r))0;}return qb_l/qb_r;}"
-WriteBufLine GlobTxtBuf, "template <typename QBL, typename QBR> static inline auto qb_safe_mod(QBL qb_l,QBR qb_r)->decltype(qb_l%qb_r){if (!qb_r){error(11);return (decltype(qb_l%qb_r))0;}return qb_l%qb_r;}"
+'Both files get these verbatim: they are static inline templates, so each
+'translation unit needs its own definition rather than a declaration.
+DeclareGlobalVerbatim "template <typename QBL, typename QBR> static inline auto qb_safe_idiv(QBL qb_l,QBR qb_r)->decltype(qb_l/qb_r){if (!qb_r){error(11);return (decltype(qb_l/qb_r))0;}return qb_l/qb_r;}"
+DeclareGlobalVerbatim "template <typename QBL, typename QBR> static inline auto qb_safe_mod(QBL qb_l,QBR qb_r)->decltype(qb_l%qb_r){if (!qb_r){error(11);return (decltype(qb_l%qb_r))0;}return qb_l%qb_r;}"
 
 IF iderecompile THEN
     iderecompile = 0
@@ -2203,7 +2174,7 @@ DO
 
                                     'create global buffer for SWAP space
                                     siz$ = _TOSTR$(udtxsize(i) \ 8)
-                                    WriteBufLine GlobTxtBuf, "char *g_tmp_udt_" + RTRIM$(udtxname(i)) + "=(char*)malloc(" + siz$ + ");"
+                                    DeclareGlobalVar "char *g_tmp_udt_" + RTRIM$(udtxname(i)) + "=(char*)malloc(" + siz$ + ");"
                                     GOTO finishedlinepp
                                 END IF
                             END IF
@@ -3295,6 +3266,11 @@ DataOffset = 0
 inclevel = 0
 subfuncn = 0
 subfuncnlast = 0
+REDIM SubFuncSrcFile(SubFuncMetaGrow) AS STRING
+REDIM SubFuncCcallIds(SubFuncMetaGrow) AS STRING
+UsesCompileDate = 0
+UsesCompileTime = 0
+UsesCompilerVersion = 0
 lastLineReturn = 0
 lastLine = 0
 firstLine = 1
@@ -3317,7 +3293,17 @@ DIM SHARED DataTxtBuf: DataTxtBuf = OpenBuffer&("O", tmpdir$ + "maindata.txt")
 DIM SHARED VWatchMainDispatchBuf: VWatchMainDispatchBuf = OpenBuffer&("O", tmpdir$ + "vw_main_dispatch.txt")
 DIM SHARED VWatchMainSkipBuf: VWatchMainSkipBuf = OpenBuffer&("O", tmpdir$ + "vw_main_skip.txt")
 
+'regsf.txt holds a prototype for every SUB/FUNCTION in the program, so every
+'translation unit has to see it. Two things DECLARE LIBRARY would otherwise put
+'there are kept out so that stays true:
+'  libheaders.txt - the raw #include of the user's C header. Header-only
+'                   libraries define their routines, so the header can only be
+'                   included once, in the main translation unit.
+'  libdefs.txt    - the DLL_/CUSTOMCALL_/DLLCALL_ variables. regsf.txt gets an
+'                   extern for each of them instead.
 DIM SHARED RegTxtBuf: RegTxtBuf = OpenBuffer&("O", tmpdir$ + "regsf.txt")
+DIM SHARED LibHeadersBuf: LibHeadersBuf = OpenBuffer&("O", tmpdir$ + "libheaders.txt")
+DIM SHARED LibDefsBuf: LibDefsBuf = OpenBuffer&("O", tmpdir$ + "libdefs.txt")
 
 DIM SHARED FreeTxtBuf: FreeTxtBuf = OpenBuffer&("O", tmpdir$ + "mainfree.txt")
 DIM SHARED RunTxtBuf: RunTxtBuf = OpenBuffer&("O", tmpdir$ + "runline.txt")
@@ -3334,8 +3320,6 @@ DIM SHARED InpChainTxtBuf: InpChainTxtBuf = OpenBuffer&("O", tmpdir$ + "inpchain
 
 DIM SHARED TimeTxtBuf: TimeTxtBuf = OpenBuffer&("O", tmpdir$ + "ontimer.txt")
 DIM SHARED TimejTxtBuf: TimejTxtBuf = OpenBuffer&("O", tmpdir$ + "ontimerj.txt")
-
-'*****#26 used for locking qb64pe
 
 DIM SHARED KeyTxtBuf: KeyTxtBuf = OpenBuffer&("O", tmpdir$ + "onkey.txt")
 DIM SHARED KeyjTxtBuf: KeyjTxtBuf = OpenBuffer&("O", tmpdir$ + "onkeyj.txt")
@@ -5311,7 +5295,8 @@ DO
                                     END IF
 
                                     IF os$ = "WIN" THEN
-                                        WriteBufLine RegTxtBuf, "HINSTANCE DLL_" + x2$ + "=NULL;"
+                                        WriteBufLine LibDefsBuf, "HINSTANCE DLL_" + x2$ + "=NULL;"
+                                        WriteBufLine RegTxtBuf, "extern HINSTANCE DLL_" + x2$ + ";"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){"
                                         WriteBufLine f, "DLL_" + x2$ + "=LoadLibrary(" + CHR$(34) + inlinelibname$ + CHR$(34) + ");"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){" + errortrackcall$ + "error(259);}"
@@ -5319,7 +5304,8 @@ DO
                                     END IF
 
                                     IF os$ = "LNX" THEN
-                                        WriteBufLine RegTxtBuf, "void *DLL_" + x2$ + "=NULL;"
+                                        WriteBufLine LibDefsBuf, "void *DLL_" + x2$ + "=NULL;"
+                                        WriteBufLine RegTxtBuf, "extern void *DLL_" + x2$ + ";"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){"
                                         WriteBufLine f, "DLL_" + x2$ + "=dlopen(" + CHR$(34) + inlinelibname$ + CHR$(34) + ",RTLD_LAZY);"
                                         WriteBufLine f, "if (!DLL_" + x2$ + "){" + errortrackcall$ + "error(259);}"
@@ -5333,11 +5319,13 @@ DO
                         END IF 'dynamiclibrary
 
                         IF LEN(headername$) THEN
+                            'Into libheaders.txt rather than regsf.txt: a header-only library
+                            'defines its routines, so it can only be included once.
                             IF (os$ = "WIN" AND (MID$(headername$, 2, 1) = ":" OR LEFT$(headername$, 1) = "\")) _
                             OR (os$ = "LNX" AND (LEFT$(headername$, 1) = "/")) THEN
-                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
+                                WriteBufLine LibHeadersBuf, "#include " + CHR$(34) + headername$ + CHR$(34)
                             ELSE
-                                WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
+                                WriteBufLine LibHeadersBuf, "#include " + CHR$(34) + "../../" + headername$ + CHR$(34)
                             END IF
                             IF _FILEEXISTS(headername$) THEN WriteBufLine ExtDepBuf, "DECL: " + _FULLPATH$(headername$)
                         END IF
@@ -5493,6 +5481,27 @@ DO
             subfuncn = subfuncnlast
             subfuncid = targetid
 
+            IF subfuncn > UBOUND(SubFuncSrcFile) THEN
+                REDIM _PRESERVE SubFuncSrcFile(subfuncn + SubFuncMetaGrow) AS STRING
+                REDIM _PRESERVE SubFuncCcallIds(subfuncn + SubFuncMetaGrow) AS STRING
+            END IF
+
+            ' We trick which file the SUB/FUNCTION comes from to use for
+            ' creating the split translation units later.
+            IF inclinenumber(inclevel) THEN
+                SubFuncSrcFile(subfuncn) = incname$(inclevel)
+            ELSE
+                SubFuncSrcFile(subfuncn) = sourcefile$
+            END IF
+            SubFuncCcallIds(subfuncn) = ""
+            'Number this routine's labels from scratch, and remember where the
+            'module-level code it interrupts had got to. SUBs cannot nest, so one
+            'saved value is enough.
+            statementnouter = statementn
+            statementn = 0
+            scopeuniqueouter = scopeuniquen
+            scopeuniquen = 0
+
             subfuncret$ = ""
             IF GetRCStateVar(vWatchOn) = 1 AND firstLineNumberLabelvWatch > 0 THEN
                 vWatchAddLabel linenumber, -1
@@ -5516,11 +5525,17 @@ DO
 
             IF declaringlibrary THEN
                 IF sfdeclare = 0 AND indirectlibrary = 0 THEN
+                    'We are about to throw our own prototype away, because the
+                    'declaration has to come from the user's C header (or, with no
+                    'library named at all, from whatever else is already in scope).
+                    'Either way the call only compiles where libheaders.txt is.
+                    ids(targetid).libnodecl = 1
                     RegTxtBuf = OpenBuffer&("O", tmpdir$ + "regsf_ignore.txt")
                 END IF
                 IF sfdeclare = 1 AND customtypelibrary = 0 AND dynamiclibrary = 0 AND indirectlibrary = 0 THEN
                     WriteBufLine RegTxtBuf, "#include " + CHR$(34) + "externtype" + _TOSTR$(ResolveStaticFunctions + 1) + ".txt" + CHR$(34)
-                    fh = FREEFILE: OPEN tmpdir$ + "externtype" + _TOSTR$(ResolveStaticFunctions + 1) + ".txt" FOR OUTPUT AS #fh: CLOSE #fh
+                    'Created empty; the nm pass fills it in once the library has been read
+                    fh = OpenBuffer&("O", tmpdir$ + "externtype" + _TOSTR$(ResolveStaticFunctions + 1) + ".txt")
                 END IF
             END IF
 
@@ -5838,7 +5853,7 @@ DO
                             WriteBufRawData RegTxtBuf, t$ + "*" + r$
                             WriteBufRawDataCpp MainTxtBuf, t$ + "*" + r$
                             IF t$ = "qbs" THEN
-                                u$ = _TOSTR$(uniquenumber)
+                                u$ = scopeunique$
                                 WriteBufLineCpp DataTxtBuf, "qbs*oldstr" + u$ + "=NULL;"
                                 WriteBufLineCpp DataTxtBuf, "if(" + r$ + "->tmp||" + r$ + "->fixed||" + r$ + "->readonly){"
                                 WriteBufLineCpp DataTxtBuf, "oldstr" + u$ + "=" + r$ + ";"
@@ -5946,7 +5961,8 @@ DO
 
                     callname$ = removecast$(RTRIM$(id2.callname))
 
-                    WriteBufLine RegTxtBuf, "CUSTOMCALL_" + callname$ + " *" + callname$ + "=NULL;"
+                    WriteBufLine LibDefsBuf, "CUSTOMCALL_" + callname$ + " *" + callname$ + "=NULL;"
+                    WriteBufLine RegTxtBuf, "extern CUSTOMCALL_" + callname$ + " *" + callname$ + ";"
 
                     IF subfuncn THEN
                         f = OpenBuffer&("A", tmpdir$ + "maindata.txt")
@@ -5975,7 +5991,8 @@ DO
                 IF dynamiclibrary THEN
                     IF sfdeclare THEN
 
-                        WriteBufLine RegTxtBuf, "DLLCALL_" + removecast$(RTRIM$(id2.callname)) + " " + removecast$(RTRIM$(id2.callname)) + "=NULL;"
+                        WriteBufLine LibDefsBuf, "DLLCALL_" + removecast$(RTRIM$(id2.callname)) + " " + removecast$(RTRIM$(id2.callname)) + "=NULL;"
+                        WriteBufLine RegTxtBuf, "extern DLLCALL_" + removecast$(RTRIM$(id2.callname)) + " " + removecast$(RTRIM$(id2.callname)) + ";"
 
                         IF subfuncn THEN
                             f = OpenBuffer&("A", tmpdir$ + "maindata.txt")
@@ -6130,8 +6147,16 @@ DO
                 WriteBufLine RetTxtBuf, "}" 'end case
                 WriteBufLine RetTxtBuf, "}"
                 WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
+
+                'That was the last line of this routine's C++, so its files can go
+                'to disk and their memory can be handed back - see the comment on
+                'RetireSubFuncBuffers.
+                RetireSubFuncBuffers subfuncn
+
                 subfunc = ""
                 subfuncn = 0
+                statementn = statementnouter
+                scopeuniquen = scopeuniqueouter
                 MainTxtBuf = OpenBuffer&("A", tmpdir$ + "main0.txt")
                 DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
                 defdatahandle = GlobTxtBuf
@@ -6355,13 +6380,13 @@ DO
                     simplenext:
                     IF controltype(controllevel) <> 2 THEN a$ = "NEXT without FOR": GOTO errmes
                     IF n <> 1 AND controlvalue(controllevel) <> currentid THEN a$ = "Incorrect variable after NEXT": GOTO errmes
-                    WriteBufLineCpp MainTxtBuf, "fornext_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                    WriteBufLineCpp MainTxtBuf, "fornext_continue_" + controlid(controllevel) + ":;"
                     IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 AND CheckingOn = 1 THEN
                         vWatchAddLabel linenumber, 0
                         WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                     END IF
                     WriteBufLineCpp MainTxtBuf, "}"
-                    WriteBufLineCpp MainTxtBuf, "fornext_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+                    WriteBufLineCpp MainTxtBuf, "fornext_exit_" + controlid(controllevel) + ":;"
                     controllevel = controllevel - 1
                     IF n = 1 THEN EXIT FOR
                     v$ = ""
@@ -6384,7 +6409,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "WHILE" THEN
-            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -6394,7 +6419,7 @@ DO
             controllevel = controllevel + 1
             controlref(controllevel) = linenumber
             controltype(controllevel) = 5
-            controlid(controllevel) = uniquenumber
+            controlid(controllevel) = scopeunique$
             IF n >= 2 THEN
                 e$ = fixoperationorder(getelements$(ca$, 2, n))
                 IF Error_Happened THEN GOTO errmes
@@ -6424,9 +6449,9 @@ DO
 
 
             IF controltype(controllevel) <> 5 THEN a$ = "WEND without WHILE": GOTO errmes
-            WriteBufLineCpp MainTxtBuf, "ww_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "ww_continue_" + controlid(controllevel) + ":;"
             WriteBufLineCpp MainTxtBuf, "}"
-            WriteBufLineCpp MainTxtBuf, "ww_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "ww_exit_" + controlid(controllevel) + ":;"
             controllevel = controllevel - 1
             l$ = SCase$("Wend")
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
@@ -6440,7 +6465,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "DO" THEN
-            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
 
             'prevents code from being placed before 'CASE condition' in a SELECT CASE block
             IF SelectCaseCounter > 0 AND SelectCaseHasCaseBlock(SelectCaseCounter) = 0 THEN
@@ -6480,7 +6505,7 @@ DO
                     WriteBufLineCpp MainTxtBuf, "do{"
                 END IF
             END IF
-            controlid(controllevel) = uniquenumber
+            controlid(controllevel) = scopeunique$
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             GOTO finishedline
         END IF
@@ -6491,7 +6516,7 @@ DO
             l$ = SCase$("Loop")
             IF controltype(controllevel) <> 3 AND controltype(controllevel) <> 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
             IF n >= 2 THEN
-                IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
                 IF controltype(controllevel) = 4 THEN a$ = "PROGRAM FLOW ERROR!": GOTO errmes
                 whileuntil = 0
                 IF secondelement$ = "WHILE" THEN whileuntil = 1: l$ = l$ + sp + SCase$("While")
@@ -6507,14 +6532,14 @@ DO
                 IF Error_Happened THEN GOTO errmes
                 IF stringprocessinghappened THEN e$ = cleanupstringprocessingcall$ + e$ + ")"
                 IF (typ AND ISSTRING) THEN a$ = "LOOP ERROR! Cannot accept a STRING type.": GOTO errmes
-                WriteBufLineCpp MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                WriteBufLineCpp MainTxtBuf, "dl_continue_" + controlid(controllevel) + ":;"
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
                 END IF
                 IF whileuntil = 1 THEN WriteBufLineCpp MainTxtBuf, "}while((" + e$ + ")&&(!is_error_pending()));" ELSE WriteBufLineCpp MainTxtBuf, "}while((!(" + e$ + "))&&(!is_error_pending()));"
             ELSE
-                WriteBufLineCpp MainTxtBuf, "dl_continue_" + _TOSTR$(controlid(controllevel)) + ":;"
+                WriteBufLineCpp MainTxtBuf, "dl_continue_" + controlid(controllevel) + ":;"
 
                 IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
@@ -6527,7 +6552,7 @@ DO
                     WriteBufLineCpp MainTxtBuf, "}while(1);" 'infinite loop!
                 END IF
             END IF
-            WriteBufLineCpp MainTxtBuf, "dl_exit_" + _TOSTR$(controlid(controllevel)) + ":;"
+            WriteBufLineCpp MainTxtBuf, "dl_exit_" + controlid(controllevel) + ":;"
             controllevel = controllevel - 1
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             IF n = 1 THEN GOTO finishednonexec '***no error causing code, event checking done by DO***
@@ -6545,7 +6570,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "FOR" THEN
-            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+            IF CheckingOn THEN WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
 
             l$ = SCase$("For")
 
@@ -6557,7 +6582,7 @@ DO
             controllevel = controllevel + 1
             controlref(controllevel) = linenumber
             controltype(controllevel) = 2
-            controlid(controllevel) = uniquenumber
+            controlid(controllevel) = scopeunique$
 
             v$ = ""
             startvalue$ = ""
@@ -6633,7 +6658,7 @@ DO
                 IF bits = 64 THEN ctype$ = "int64": ctyp = 64&
             END IF
             IF ctype$ = "" THEN a$ = "Unsupported variable used in FOR statement": GOTO errmes
-            u$ = _TOSTR$(uniquenumber)
+            u$ = scopeunique$
 
             IF subfunc = "" THEN
                 WriteBufLineCpp DataTxtBuf, "static " + ctype$ + " fornext_value" + u$ + ";"
@@ -6755,7 +6780,7 @@ DO
     IF n >= 3 THEN
         IF firstelement$ = "ELSEIF" THEN
             IF CheckingOn THEN
-                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -6797,7 +6822,7 @@ DO
     IF n >= 3 THEN
         IF firstelement$ = "IF" THEN
             IF CheckingOn THEN
-                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -6901,7 +6926,7 @@ DO
     IF n >= 1 THEN
         IF firstelement$ = "SELECT" THEN
             IF CheckingOn THEN
-                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -6935,7 +6960,7 @@ DO
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
             e$ = evaluate(e$, typ)
             IF Error_Happened THEN GOTO errmes
-            u = uniquenumber
+            u$ = scopeunique$
 
             controllevel = controllevel + 1
             controlvalue(controllevel) = 0 'id
@@ -6948,8 +6973,8 @@ DO
                 ELSE
                     IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                     IF Error_Happened THEN GOTO errmes
-                    WriteBufLineCpp DataTxtBuf, "static qbs *sc_" + _TOSTR$(u) + "=qbs_new(0,0);"
-                    WriteBufLineCpp MainTxtBuf, "qbs_set(sc_" + _TOSTR$(u) + "," + e$ + ");"
+                    WriteBufLineCpp DataTxtBuf, "static qbs *sc_" + u$ + "=qbs_new(0,0);"
+                    WriteBufLineCpp MainTxtBuf, "qbs_set(sc_" + u$ + "," + e$ + ");"
                     IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                 END IF
 
@@ -6966,8 +6991,8 @@ DO
                         IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                         IF Error_Happened THEN GOTO errmes
 
-                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
-                        WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
+                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + u$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "sc_" + u$ + "=" + e$ + ";"
                         IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                     END IF
 
@@ -6987,8 +7012,8 @@ DO
                     ELSE
                         IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                         IF Error_Happened THEN GOTO errmes
-                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + _TOSTR$(u) + ";"
-                        WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(u) + "=" + e$ + ";"
+                        WriteBufLineCpp DataTxtBuf, "static " + t$ + " sc_" + u$ + ";"
+                        WriteBufLineCpp MainTxtBuf, "sc_" + u$ + "=" + e$ + ";"
                         IF stringprocessinghappened THEN WriteBufLineCpp MainTxtBuf, cleanupstringprocessingcall$ + "0);"
                     END IF
 
@@ -6999,9 +7024,9 @@ DO
 
             controlref(controllevel) = linenumber
             controltype(controllevel) = 10 + t
-            controlid(controllevel) = u
-            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp DataTxtBuf, "int32 sc_" + _TOSTR$(controlid(controllevel)) + "_var;"
-            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=0;"
+            controlid(controllevel) = u$
+            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp DataTxtBuf, "int32 sc_" + controlid(controllevel) + "_var;"
+            IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "sc_" + controlid(controllevel) + "_var=0;"
             GOTO finishedline
         END IF
     END IF
@@ -7017,7 +7042,7 @@ DO
                 everycasenewcase = everycasenewcase + 1
                 WriteBufLineCpp MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
                 controllevel = controllevel - 1
-                IF EveryCaseSet(SelectCaseCounter) = 0 THEN WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
+                IF EveryCaseSet(SelectCaseCounter) = 0 THEN WriteBufLineCpp MainTxtBuf, "goto sc_" + controlid(controllevel) + "_end;"
                 WriteBufLineCpp MainTxtBuf, "}"
             END IF
             IF controltype(controllevel) = 19 THEN
@@ -7025,7 +7050,7 @@ DO
                 IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "} /* End of SELECT EVERYCASE ELSE */"
             END IF
 
-            WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_end:;"
+            WriteBufLineCpp MainTxtBuf, "sc_" + controlid(controllevel) + "_end:;"
             IF controltype(controllevel) < 10 OR controltype(controllevel) > 17 THEN a$ = "END SELECT without SELECT CASE": GOTO errmes
 
             IF CheckingOn = 1 AND GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
@@ -7069,9 +7094,9 @@ DO
                 everycasenewcase = everycasenewcase + 1
                 WriteBufLineCpp MainTxtBuf, "sc_ec_" + _TOSTR$(everycasenewcase) + "_end:;"
                 IF EveryCaseSet(SelectCaseCounter) = 0 THEN
-                    WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(controllevel)) + "_end;"
+                    WriteBufLineCpp MainTxtBuf, "goto sc_" + controlid(controllevel) + "_end;"
                 ELSE
-                    WriteBufLineCpp MainTxtBuf, "sc_" + _TOSTR$(controlid(controllevel)) + "_var=-1;"
+                    WriteBufLineCpp MainTxtBuf, "sc_" + controlid(controllevel) + "_var=-1;"
                 END IF
                 WriteBufLineCpp MainTxtBuf, "}"
                 'following line fixes problem related to RESUME after error
@@ -7126,7 +7151,7 @@ DO
             IF t = 6 THEN tc$ = ""
             IF t = 7 THEN tc$ = ""
 
-            n$ = "sc_" + _TOSTR$(controlid(controllevel))
+            n$ = "sc_" + controlid(controllevel)
             cv = controlvalue(controllevel)
             IF cv THEN
                 n$ = refer$(_TOSTR$(cv), 0, 0)
@@ -7136,7 +7161,7 @@ DO
             'CASE ELSE
             IF n = 2 THEN
                 IF getelement$(a$, 2) = "C-EL" THEN
-                    IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "if (sc_" + _TOSTR$(controlid(controllevel)) + "_var==0) {"
+                    IF EveryCaseSet(SelectCaseCounter) THEN WriteBufLineCpp MainTxtBuf, "if (sc_" + controlid(controllevel) + "_var==0) {"
                     controllevel = controllevel + 1: controltype(controllevel) = 19
                     controlref(controllevel) = controlref(controllevel - 1)
                     l$ = l$ + sp + SCase$("Else")
@@ -7146,7 +7171,7 @@ DO
             END IF
 
             IF CheckingOn THEN
-                WriteBufLineCpp MainTxtBuf, "S_" + _TOSTR$(statementn) + ":;": dynscope = 1
+                WriteBufLineCpp MainTxtBuf, statementlabel$ + ":;": dynscope = 1
                 IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN
                     vWatchAddLabel linenumber, 0
                     WriteBufLineCpp MainTxtBuf, "*__LONG_VWATCH_LINENUMBER= " + _TOSTR$(linenumber) + "; SUB_VWATCH((ptrszint*)vwatch_global_vars,(ptrszint*)vwatch_local_vars); if (*__LONG_VWATCH_GOTO>0) goto VWATCH_SETNEXTLINE; if (*__LONG_VWATCH_GOTO<0) goto VWATCH_SKIPLINE;"
@@ -7564,7 +7589,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 3 OR t = 4 THEN
-                        WriteBufLineCpp MainTxtBuf, "goto dl_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto dl_exit_" + controlid(i) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7578,7 +7603,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 2 THEN
-                        WriteBufLineCpp MainTxtBuf, "goto fornext_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto fornext_exit_" + controlid(i) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7592,7 +7617,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 5 THEN
-                        WriteBufLineCpp MainTxtBuf, "goto ww_exit_" + _TOSTR$(controlid(i)) + ";"
+                        WriteBufLineCpp MainTxtBuf, "goto ww_exit_" + controlid(i) + ";"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7606,7 +7631,7 @@ DO
                 FOR i = controllevel TO 1 STEP -1
                     t = controltype(i)
                     IF t = 18 OR t = 19 THEN 'CASE/CASE ELSE
-                        WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
+                        WriteBufLineCpp MainTxtBuf, "goto sc_" + controlid(i - 1) + "_end;"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -7624,7 +7649,7 @@ DO
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     ELSEIF t = 19 THEN 'CASE ELSE
-                        WriteBufLineCpp MainTxtBuf, "goto sc_" + _TOSTR$(controlid(i - 1)) + "_end;"
+                        WriteBufLineCpp MainTxtBuf, "goto sc_" + controlid(i - 1) + "_end;"
                         layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                         GOTO finishedline
                     END IF
@@ -9079,7 +9104,7 @@ DO
                                 IF (udtetype(redimE) AND ISUDT) <> 0 THEN redimElemUDT = udtetype(redimE) AND UDTMASK
                                 redimSlot$ = "((char*)" + redimBase$ + "+(" + redimOffset$ + "))"
                                 redimAcc$ = ""
-                                redimDynPrefix$ = "dyn_mem_rt_" + _TOSTR$(uniquenumber)
+                                redimDynPrefix$ = "dyn_mem_rt_" + scopeunique$
                                 BuildDynMemberBoundsPrep redimBounds$, redimDynPrefix$, redimDynDims, redimAcc$
                                 IF Error_Happened THEN GOTO errmes
                                 AppendDynMemberRedim redimDynPrefix$, redimDynDims, redimSlot$, redimElementBytes, redimElemUDT, DynMemVarStr%(redimE), redimoption, redimAcc$, id.dynudtmode
@@ -9850,15 +9875,15 @@ DO
             FOR i = controllevel TO 1 STEP -1
                 t = controltype(i)
                 IF t = 2 THEN 'for...next
-                    WriteBufLineCpp MainTxtBuf, "goto fornext_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto fornext_continue_" + controlid(i) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 ELSEIF t = 3 OR t = 4 THEN 'do...loop
-                    WriteBufLineCpp MainTxtBuf, "goto dl_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto dl_continue_" + controlid(i) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 ELSEIF t = 5 THEN 'while...wend
-                    WriteBufLineCpp MainTxtBuf, "goto ww_continue_" + _TOSTR$(controlid(i)) + ";"
+                    WriteBufLineCpp MainTxtBuf, "goto ww_continue_" + controlid(i) + ";"
                     layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                     GOTO finishedline
                 END IF
@@ -10832,8 +10857,8 @@ DO
                                     IF (typ AND UDTMASK) = 32 THEN
                                         e$ = evaluatetotyp(e$, SINGLETYPE - ISPOINTER)
                                         IF Error_Happened THEN GOTO errmes
-                                        v$ = "pass" + _TOSTR$(uniquenumber)
-                                        WriteBufLine defdatahandle, "float *" + v$ + "=NULL;"
+                                        v$ = "pass" + scopeunique$
+                                        DeclareGlobalData "float *" + v$ + "=NULL;"
                                         WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
                                         WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
                                         WriteBufLineCpp DataTxtBuf, v$ + "=(float*)(dblock+cmem_sp);"
@@ -10843,8 +10868,8 @@ DO
                                     ELSE
                                         e$ = evaluatetotyp(e$, DOUBLETYPE - ISPOINTER)
                                         IF Error_Happened THEN GOTO errmes
-                                        v$ = "pass" + _TOSTR$(uniquenumber)
-                                        WriteBufLine defdatahandle, "double *" + v$ + "=NULL;"
+                                        v$ = "pass" + scopeunique$
+                                        DeclareGlobalData "double *" + v$ + "=NULL;"
                                         WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
                                         WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
                                         WriteBufLineCpp DataTxtBuf, v$ + "=(double*)(dblock+cmem_sp);"
@@ -10855,8 +10880,8 @@ DO
                                 ELSE
                                     e$ = evaluatetotyp(e$, INTEGER64TYPE - ISPOINTER)
                                     IF Error_Happened THEN GOTO errmes
-                                    v$ = "pass" + _TOSTR$(uniquenumber)
-                                    WriteBufLine defdatahandle, "int64 *" + v$ + "=NULL;"
+                                    v$ = "pass" + scopeunique$
+                                    DeclareGlobalData "int64 *" + v$ + "=NULL;"
                                     WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
                                     WriteBufLineCpp DataTxtBuf, "cmem_sp-=8;"
                                     WriteBufLineCpp DataTxtBuf, v$ + "=(int64*)(dblock+cmem_sp);"
@@ -11138,7 +11163,7 @@ DO
                         IF getelement$(a$, 2) = "#" THEN
                             l$ = SCase$("Input") + sp + "#": IF lineinput THEN l$ = SCase$("Line") + sp + l$
 
-                            u$ = _TOSTR$(uniquenumber)
+                            u$ = scopeunique$
                             'which file?
                             IF n = 2 THEN a$ = "Expected # ... , ...": GOTO errmes
                             a3$ = ""
@@ -11726,6 +11751,7 @@ DO
                     END IF
                 END IF
 
+                IF id.ccall AND subfuncn <> 0 THEN NoteCcallFromSubFunc targetid
                 subcall$ = RTRIM$(id.callname) + "("
                 subargprep$ = ""
                 addedlayout = 0
@@ -12373,11 +12399,11 @@ DO
                             IF (targettyp AND ISSTRING) THEN GOTO sete 'no changes required
                             t$ = typ2ctyp$(targettyp, "")
                             IF Error_Happened THEN GOTO errmes
-                            v$ = "pass" + _TOSTR$(uniquenumber)
+                            v$ = "pass" + scopeunique$
                             'assume numeric type
                             IF MID$(sfcmemargs(targetid), i, 1) = CHR$(1) THEN 'cmem required?
                                 bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
-                                WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
+                                DeclareGlobalData t$ + " *" + v$ + "=NULL;"
                                 WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
                                 WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
                                 WriteBufLineCpp DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
@@ -12594,7 +12620,7 @@ DO
         IF GetRCStateVar(vWatchOn) = 1 AND inclinenumber(inclevel) = 0 THEN temp$ = vWatchErrorCall$ ELSE temp$ = ""
         IF dynscope THEN
             dynscope = 0
-            WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");if(r)goto S_" + _TOSTR$(statementn) + ";}"
+            WriteBufLineCpp MainTxtBuf, "if(qbevent){" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");if(r)goto " + statementlabel$ + ";}"
         ELSE
             WriteBufLineCpp MainTxtBuf, "if(!qbevent)break;" + temp$ + "evnt(" + _TOSTR$(linenumber) + inclinenump$ + ");}while(r);"
         END IF
@@ -13116,7 +13142,6 @@ IF recompile THEN
     recompile = 0
     IF idemode THEN iderecompile = 1
     FOR closeall = 1 TO 300: CLOSE closeall: NEXT
-    OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
     GOTO recompile
 END IF
 
@@ -13166,7 +13191,7 @@ FOR r = 1 TO nLabels
         IF x <> 1 THEN linenumber = Labels(r).Error_Line: a$ = "Ambiguous DATA label": GOTO errmes
 
         'add global data offset variable
-        WriteBufLine GlobTxtBuf, "ptrszint data_at_LABEL_" + a$ + "=" + _TOSTR$(Labels(r).Data_Offset) + ";"
+        DeclareGlobalVar "ptrszint data_at_LABEL_" + a$ + "=" + _TOSTR$(Labels(r).Data_Offset) + ";"
 
     END IF 'data referenced
 
@@ -13187,27 +13212,27 @@ DataTxtBuf = OpenBuffer&("A", tmpdir$ + "maindata.txt")
 FreeTxtBuf = OpenBuffer&("A", tmpdir$ + "mainfree.txt")
 
 IF GetRCStateVar(ConsoleOn) THEN
-    WriteBufLine GlobTxtBuf, "int32 console=1;"
+    DeclareGlobalVar "int32 console=1;"
 ELSE
-    WriteBufLine GlobTxtBuf, "int32 console=0;"
+    DeclareGlobalVar "int32 console=0;"
 END IF
 
 IF ScreenHideOn THEN
-    WriteBufLine GlobTxtBuf, "int32 screen_hide_startup=1;"
+    DeclareGlobalVar "int32 screen_hide_startup=1;"
 ELSE
-    WriteBufLine GlobTxtBuf, "int32 screen_hide_startup=0;"
+    DeclareGlobalVar "int32 screen_hide_startup=0;"
 END IF
 
 IF GetRCStateVar(AssertsOn) THEN
-    WriteBufLine GlobTxtBuf, "int32 asserts=1;"
+    DeclareGlobalVar "int32 asserts=1;"
 ELSE
-    WriteBufLine GlobTxtBuf, "int32 asserts=0;"
+    DeclareGlobalVar "int32 asserts=0;"
 END IF
 
 IF GetRCStateVar(vWatchOn) THEN
-    WriteBufLine GlobTxtBuf, "int32 vwatch=-1;"
+    DeclareGlobalVar "int32 vwatch=-1;"
 ELSE
-    WriteBufLine GlobTxtBuf, "int32 vwatch=0;"
+    DeclareGlobalVar "int32 vwatch=0;"
 END IF
 
 bh = OpenBuffer&("A", tmpdir$ + "dyninfo.txt")
@@ -13224,10 +13249,10 @@ END IF
 
 
 'DATA_finalize
-WriteBufLine GlobTxtBuf, "ptrszint data_size=" + _TOSTR$(DataOffset) + ";"
+DeclareGlobalVar "ptrszint data_size=" + _TOSTR$(DataOffset) + ";"
 IF DataOffset = 0 THEN
 
-    WriteBufLine GlobTxtBuf, "uint8 *data=(uint8*)calloc(1,1);"
+    DeclareGlobalVar "uint8 *data=(uint8*)calloc(1,1);"
 
 ELSE
 
@@ -13246,14 +13271,21 @@ ELSE
         x2Ofs = x2Ofs + idsL
     NEXT
 
+    'The initializer spans many lines, so the extern is written by hand rather
+    'than through DeclareGlobalVar.
     WriteBufLine GlobTxtBuf, "uint8 inline_data[]={"
     WriteBufLine GlobTxtBuf, x2$
     WriteBufLine GlobTxtBuf, "0};"
-    WriteBufLine GlobTxtBuf, "uint8 *data=&inline_data[0];"
+    WriteBufLine GlobDeclBuf, "extern uint8 inline_data[];"
+    DeclareGlobalVar "uint8 *data=&inline_data[0];"
 
     x$ = "": x2$ = ""
 
 END IF
+
+'The global variables declared since the last check are written this late, well
+'past the per-line checks, so nothing else would report an error raised by one.
+IF Error_Happened THEN GOTO errmes
 
 IF Debug THEN PRINT #9, "Beginning generation of code for saving/sharing common array data..."
 use_global_byte_elements = 1
@@ -13561,7 +13593,6 @@ IF Debug THEN PRINT #9, "Finished generation of code for saving/sharing common a
 
 
 FOR closeall = 1 TO 300: CLOSE closeall: NEXT
-OPEN tmpdir$ + "temp.bin" FOR OUTPUT LOCK WRITE AS #26 'relock
 
 compilelog$ = tmpdir$ + "compilelog.txt"
 
@@ -13752,56 +13783,15 @@ IF VersionInfoSet OR ExeIconSet <> 0 THEN 'ExeIconSet is not boolean, but a line
     END IF
 END IF
 
-'Write out all buffered files, all remaining
-'actions are performed on the disk based files
-WriteBuffers ""
-
 IF FormatMode THEN
     'Move temp file to final location
+    WriteBuffers tmpdir$ + "format.out"
     fail = CopyFile&(tmpdir$ + "format.out", path.exe$ + file$)
     IF fail THEN a$ = "Error saving formatted output to " + path.exe$ + file$: GOTO errmes
     GOTO NoCCompile
 END IF
 
-'=== BEGIN: embedding files ===
-eflFF = FREEFILE
-OPEN "O", #eflFF, tmpdir$ + "embedded.cpp"
-'write required header stuff
-PRINT #eflFF, "#include <stdint.h>"
-PRINT #eflFF, "#include <string.h>"
-PRINT #eflFF, "#include "; AddQuotes$("../c/common.h")
-PRINT #eflFF, "#include "; AddQuotes$("../c/libqb/include/compression.h")
-PRINT #eflFF, ""
-CLOSE #eflFF
-'append files converted into arrays
-'> embed only those $EMBED files, which are referenced by at least
-'  one _EMBEDDED$() call to avoid unnecessary bloat
-'> adjust dependency settings according to the process
-eflUB = UBOUND(embedFileList$, 2)
-FOR i = 0 TO eflUB
-    IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
-        IF ConvertFileToCArray%(embedFileList$(eflFile, i), embedFileList$(eflHand, i)) THEN
-            SetDependency DEPENDENCY_ZLIB
-        END IF
-        SetDependency DEPENDENCY_EMBED
-    END IF
-NEXT i
-'-----
-eflFF = FREEFILE
-OPEN "A", #eflFF, tmpdir$ + "embedded.cpp"
-'append the internal retrieval function for _EMBEDDED$()
-PRINT #eflFF, "qbs *func__embedded(qbs *handle)"
-PRINT #eflFF, "{"
-FOR i = 0 TO eflUB
-    IF embedFileList$(eflFile, i) <> "" AND embedFileList$(eflUsed, i) = "yes" THEN
-        PRINT #eflFF, "    if (qbs_equal(handle, qbs_new_txt("; AddQuotes$(embedFileList$(eflHand, i)); "))) {return GetArrayData_"; embedFileList$(eflHand, i); "();}"
-    END IF
-NEXT i
-PRINT #eflFF, "    return qbs_new_txt("; MKI$(&H2222); ");"
-PRINT #eflFF, "}"
-PRINT #eflFF, ""
-CLOSE #eflFF
-'=== END: embedding files ===
+WriteEmbeddedCpp
 
 'Update dependencies
 
@@ -13886,6 +13876,10 @@ IF GenerateLicenseFile AND NOT NoExeSaved THEN
     makeline$ = makeline$ + " GENERATE_LICENSE=y"
 END IF
 
+IF SplitObjectFiles THEN makeline$ = makeline$ + " SPLIT_TUS=y"
+
+WriteBuildFlags makedeps$, CxxFlagsExtra$
+
 'Clear nm output from previous runs
 FOR x = 1 TO ResolveStaticFunctions
     IF LEN(ResolveStaticFunction_File(x)) THEN
@@ -13896,15 +13890,6 @@ FOR x = 1 TO ResolveStaticFunctions
         IF _FILEEXISTS(s$) THEN KILL s$: ClearBuffers s$
     END IF
 NEXT x
-
-' Delete existing qbx.o file, it ensures that it always gets rebuilt
-ON ERROR GOTO qberror_test
-IF tempfolderindex > 1 THEN
-    KILL "internal/c/qbx" + _TOSTR$(tempfolderindex) + ".o"
-ELSE
-    KILL "internal/c/qbx.o"
-END IF
-ON ERROR GOTO qberror
 
 IF os$ = "WIN" THEN
 
@@ -13935,10 +13920,7 @@ IF os$ = "WIN" THEN
                         IF ResolveStaticFunction_Method(x) = 1 THEN
                             x1 = x1 + 1
                             x2 = INSTR(x1, a$, ")")
-                            fh2 = FREEFILE
-                            OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                            PRINT #fh2, "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
-                            CLOSE #fh2
+                            AppendGlobalLine "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
                         END IF
                         n = n + 1
                     END IF 'x1
@@ -13962,17 +13944,14 @@ IF os$ = "WIN" THEN
                             x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
                         END IF
                         IF x1 THEN
-                            fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                                PRINT #fh2, "extern void " + s$ + "(void);"
-                                PRINT #fh2, "}"
+                                AppendGlobalLine "extern " + CHR$(34) + "C" + CHR$(34) + "{"
+                                AppendGlobalLine "extern void " + s$ + "(void);"
+                                AppendGlobalLine "}"
                             ELSE
-                                OPEN tmpdir$ + "externtype" + _TOSTR$(x) + ".txt" FOR OUTPUT AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
+                                fh2 = OpenBuffer&("O", tmpdir$ + "externtype" + _TOSTR$(x) + ".txt")
+                                WriteBufLine fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
                             END IF
-                            CLOSE #fh2
                             n = n + 1
                             EXIT DO
                         END IF 'x1
@@ -13995,10 +13974,7 @@ IF os$ = "WIN" THEN
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 x1 = x1 + 1
                                 x2 = INSTR(x1, a$, ")")
-                                fh2 = FREEFILE
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
-                                CLOSE #fh2
+                                AppendGlobalLine "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
                             END IF
                             n = n + 1
                         END IF 'x1
@@ -14023,17 +13999,14 @@ IF os$ = "WIN" THEN
                             x1 = (RIGHT$(a$, LEN(s$) + 1) = " " + s$)
                         END IF
                         IF x1 THEN
-                            fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                                PRINT #fh2, "extern void " + s$ + "(void);"
-                                PRINT #fh2, "}"
+                                AppendGlobalLine "extern " + CHR$(34) + "C" + CHR$(34) + "{"
+                                AppendGlobalLine "extern void " + s$ + "(void);"
+                                AppendGlobalLine "}"
                             ELSE
-                                OPEN tmpdir$ + "externtype" + _TOSTR$(x) + ".txt" FOR OUTPUT AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
+                                fh2 = OpenBuffer&("O", tmpdir$ + "externtype" + _TOSTR$(x) + ".txt")
+                                WriteBufLine fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
                             END IF
-                            CLOSE #fh2
                             n = n + 1
                             EXIT DO
                         END IF 'x1
@@ -14044,6 +14017,17 @@ IF os$ = "WIN" THEN
 
         END IF
     NEXT
+
+    'Write out all buffered files, all remaining actions are performed on the disk
+    'based files. This has to come after the nm pass, which adds to global.txt and
+    'writes externtype*.txt: flushing before it and again after would give those two
+    'a new mtime on every build, and make would rebuild everything that includes
+    'them - for externtype*.txt that is the precompiled header, so everything.
+    WriteBuffers ""
+
+    'Everything this build generates is on disk now, so whatever is left over
+    'belongs to an earlier one. Prune before make runs, so it never sees an orphan.
+    PruneStaleGeneratedFiles
 
     IF NOT NoCCompileMode THEN
         SHELL _HIDE "cmd /c " + makeline$ + " 1>> " + compilelog$ + " 2>&1"
@@ -14102,10 +14086,7 @@ IF os$ = "LNX" THEN
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 x1 = x1 + 1
                                 x2 = INSTR(x1, a$, ")")
-                                fh2 = FREEFILE
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
-                                CLOSE #fh2
+                                AppendGlobalLine "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
                             END IF
                             n = n + 1
                         END IF 'x1
@@ -14124,17 +14105,14 @@ IF os$ = "LNX" THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
                         IF RIGHT$(a$, LEN(s$)) = s$ THEN
-                            fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                                PRINT #fh2, "extern void " + s2$ + "(void);"
-                                PRINT #fh2, "}"
+                                AppendGlobalLine "extern " + CHR$(34) + "C" + CHR$(34) + "{"
+                                AppendGlobalLine "extern void " + s2$ + "(void);"
+                                AppendGlobalLine "}"
                             ELSE
-                                OPEN tmpdir$ + "externtype" + _TOSTR$(x) + ".txt" FOR OUTPUT AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
+                                fh2 = OpenBuffer&("O", tmpdir$ + "externtype" + _TOSTR$(x) + ".txt")
+                                WriteBufLine fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
                             END IF
-                            CLOSE #fh2
                             n = n + 1
                             EXIT DO
                         END IF 'x1
@@ -14158,10 +14136,7 @@ IF os$ = "LNX" THEN
                             IF ResolveStaticFunction_Method(x) = 1 THEN
                                 x1 = x1 + 1
                                 x2 = INSTR(x1, a$, ")")
-                                fh2 = FREEFILE
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
-                                CLOSE #fh2
+                                AppendGlobalLine "extern void " + MID$(a$, x1, x2 - x1 + 1) + ";"
                             END IF
                             n = n + 1
                         END IF 'x1
@@ -14179,17 +14154,14 @@ IF os$ = "LNX" THEN
                         'search for SPACE+functionname
                         x1 = INSTR(a$, s$)
                         IF RIGHT$(a$, LEN(s$)) = s$ THEN
-                            fh2 = FREEFILE
                             IF ResolveStaticFunction_Method(x) = 1 THEN
-                                OPEN tmpdir$ + "global.txt" FOR APPEND AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + "{"
-                                PRINT #fh2, "extern void " + s$ + "(void);"
-                                PRINT #fh2, "}"
+                                AppendGlobalLine "extern " + CHR$(34) + "C" + CHR$(34) + "{"
+                                AppendGlobalLine "extern void " + s$ + "(void);"
+                                AppendGlobalLine "}"
                             ELSE
-                                OPEN tmpdir$ + "externtype" + _TOSTR$(x) + ".txt" FOR OUTPUT AS #fh2
-                                PRINT #fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
+                                fh2 = OpenBuffer&("O", tmpdir$ + "externtype" + _TOSTR$(x) + ".txt")
+                                WriteBufLine fh2, "extern " + CHR$(34) + "C" + CHR$(34) + " "
                             END IF
-                            CLOSE #fh2
                             n = n + 1
                             EXIT DO
                         END IF 'x1
@@ -14201,6 +14173,10 @@ IF os$ = "LNX" THEN
 
         END IF
     NEXT
+
+    'See the note on the matching call in the Windows branch.
+    WriteBuffers ""
+    PruneStaleGeneratedFiles
 
     IF INSTR(_OS$, "[MACOSX]") THEN
 
@@ -14637,6 +14613,8 @@ FUNCTION ParseCMDLineArgs$ ()
                         IF NOT ParseBooleanSetting&(token$, OptimizeCppProgram) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":stripdebugsymbols"
                         IF NOT ParseBooleanSetting&(token$, StripDebugSymbols) THEN CMDLineSettingsError token$, 1, 1
+                    CASE ":splitobjectfiles"
+                        IF NOT ParseBooleanSetting&(token$, SplitObjectFiles) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":absolutedebugpaths"
                         IF NOT ParseBooleanSetting&(token$, AbsoluteDebugPaths) THEN CMDLineSettingsError token$, 1, 1
                     CASE ":extracppflags"
@@ -14767,6 +14745,8 @@ SUB CMDLineTemporarySettingsHelp
     PRINT "  -f                                    Show this list of supported settings"
     PRINT "  -f:OptimizeCppProgram=[true|false]    Compile with C++ Optimization flag"
     PRINT "  -f:StripDebugSymbols=[true|false]     Strip C++ Symbols from executable"
+    PRINT "  -f:SplitObjectFiles=[true|false]      Build the C++ as multiple object"
+    PRINT "                                        files instead of a single one"
     PRINT "  -f:AbsoluteDebugPaths=[true|false]    Name source files by absolute path in"
     PRINT "                                        the C++ debug info, instead of"
     PRINT "                                        relative to the main source file"
@@ -15374,7 +15354,7 @@ FUNCTION allocarray (n2$, elements$, elementsize, udt)
 
     'Begin creation of array descriptor (if array has not been defined yet)
     IF arraydesc = 0 THEN
-        WriteBufLine defdatahandle, "ptrszint *" + n$ + "=NULL;"
+        DeclareGlobalData "ptrszint *" + n$ + "=NULL;"
         WriteBufLineCpp DataTxtBuf, "if (!" + n$ + "){"
         WriteBufLineCpp DataTxtBuf, n$ + "=(ptrszint*)mem_static_malloc(" + _TOSTR$(4 * nume + 4 + 1) + "*ptrsz);" '+1 is for the lock
         'create _MEM lock
@@ -16497,7 +16477,7 @@ FUNCTION UDTRootDataGuard$ (desc_expr AS STRING, udt_index AS LONG, layout_mode 
     byte_count_text = LTRIM$(STR$(byte_count))
     dummy_expr = "(void*)qb_dummy"
 
-    WriteBufLine GlobTxtBuf, "static ptrszint " + helper_name + "(ptrszint *qb_arr){"
+    DeclareGlobalFunc "ptrszint " + helper_name + "(ptrszint *qb_arr){"
     WriteBufLine GlobTxtBuf, "static uint8 qb_dummy[" + byte_count_text + "];"
     WriteBufLine GlobTxtBuf, "static int qb_ready=0;"
     WriteBufLine GlobTxtBuf, "if (!qb_ready){"
@@ -16529,7 +16509,7 @@ FUNCTION UDTDynArrayDescGuard$ (desc_expr AS STRING, dimension_count AS LONG)
     helper_name = "udt_dyn_desc_" + _TOSTR$(uniquenumber)
     desc_slots = 4 * dimension_count + 4 + 1
 
-    WriteBufLine GlobTxtBuf, "static ptrszint *" + helper_name + "(ptrszint *qb_desc){"
+    DeclareGlobalFunc "ptrszint *" + helper_name + "(ptrszint *qb_desc){"
     WriteBufLine GlobTxtBuf, "static ptrszint qb_dummy[" + LTRIM$(STR$(desc_slots)) + "];"
     WriteBufLine GlobTxtBuf, "static uint8 qb_dummy_data[4096];"
     WriteBufLine GlobTxtBuf, "static qbs *qb_dummy_qbs=0;"
@@ -16724,7 +16704,7 @@ FUNCTION UDTArrayBoundExpr$ (descriptor$, dimension_count AS LONG, dimension_exp
 
     helper_name = "udt_array_bound_" + _TOSTR$(uniquenumber)
 
-    WriteBufLine GlobTxtBuf, "static int64 " + helper_name + "(int64 qb_dim){"
+    DeclareGlobalFunc "int64 " + helper_name + "(int64 qb_dim){"
     WriteBufLine GlobTxtBuf, "switch(qb_dim){"
 
     desc_pos = 1
@@ -16764,7 +16744,7 @@ FUNCTION UDTDynArrayBytesExpr$ (desc_expr AS STRING, elem_bytes AS LONG)
     helper_name = "udt_dyn_array_bytes_" + _TOSTR$(uniquenumber)
     elem_text = LTRIM$(STR$(elem_bytes))
 
-    WriteBufLine GlobTxtBuf, "static ptrszint " + helper_name + "(ptrszint *qb_desc){"
+    DeclareGlobalFunc "ptrszint " + helper_name + "(ptrszint *qb_desc){"
     WriteBufLine GlobTxtBuf, "ptrszint qb_i;"
     WriteBufLine GlobTxtBuf, "ptrszint qb_arg;"
     WriteBufLine GlobTxtBuf, "ptrszint qb_count;"
@@ -16795,7 +16775,7 @@ FUNCTION UDTDynArrayBoundExpr$ (desc_expr AS STRING, dimension_expr AS STRING, w
     '   desc[index + 1] = element count
     helper_name = "udt_dyn_array_bound_" + _TOSTR$(uniquenumber)
 
-    WriteBufLine GlobTxtBuf, "static int64 " + helper_name + "(ptrszint *qb_desc,int64 qb_dim){"
+    DeclareGlobalFunc "int64 " + helper_name + "(ptrszint *qb_desc,int64 qb_dim){"
     WriteBufLine GlobTxtBuf, "ptrszint qb_i;"
     WriteBufLine GlobTxtBuf, "if ((!qb_desc)||(qb_dim<1)||(qb_dim>qb_desc[3])){error(9); return 0;}"
     WriteBufLine GlobTxtBuf, "qb_i=(qb_desc[3]-qb_dim)*4+4;"
@@ -17372,7 +17352,7 @@ SUB BuildUDTMemberArg (ref_text AS STRING, arg_text AS STRING, prep_text AS STRI
         EXIT SUB
     END IF
 
-    temp_name = "udt_member_arg_" + _TOSTR$(uniquenumber)
+    temp_name = "udt_member_arg_" + scopeunique$
     slot_count = 4 * dim_count + 5
     lock_index = 4 * dim_count + 4
     flag_value = 1 + 2
@@ -17478,7 +17458,7 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
         IF (udtetype(elemnum) AND ISUDT) <> 0 THEN nested_udt = udtetype(elemnum) AND UDTMASK
 
         IF UDTMemberDynDesc%(elemnum) THEN
-            desc_name = "file_dyn_desc_" + _TOSTR$(uniquenumber)
+            desc_name = "file_dyn_desc_" + scopeunique$
             IF do_unpack THEN
                 acc = acc + cr + "ptrszint *" + desc_name + "=*((ptrszint**)(((uint8*)" + dst_expr + ")+" + _TOSTR$(dyn_off) + "));"
             ELSE
@@ -17491,7 +17471,7 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
                 elem_total = udtearrayelements(elemnum)
                 stat_elem_bytes = udtxsize(nested_udt) \ 8
                 dyn_elem_bytes = udt_dyn_array_elem_bytes(elemnum)
-                loop_name = "file_elem_i_" + _TOSTR$(uniquenumber)
+                loop_name = "file_elem_i_" + scopeunique$
                 acc = acc + cr + "for(ptrszint " + loop_name + "=0; " + loop_name + "<" + _TOSTR$(elem_total) + "; " + loop_name + "++){"
                 IF do_unpack THEN
                     dst_next = "((uint8*)" + desc_name + "[0]+" + loop_name + "*" + _TOSTR$(dyn_elem_bytes) + ")"
@@ -17517,7 +17497,7 @@ SUB AppendUDTFileConvCode (dst_expr AS STRING, src_expr AS STRING, udt_index AS 
             stat_elem_bytes = udtxsize(nested_udt) \ 8
             dyn_elem_bytes = UDTDynMemberSize&(elemnum) \ 8
             IF udtearrayelements(elemnum) THEN dyn_elem_bytes = dyn_elem_bytes \ elem_total
-            loop_name = "file_nest_i_" + _TOSTR$(uniquenumber)
+            loop_name = "file_nest_i_" + scopeunique$
             acc = acc + cr + "for(ptrszint " + loop_name + "=0; " + loop_name + "<" + _TOSTR$(elem_total) + "; " + loop_name + "++){"
             dst_next = "((uint8*)" + dst_expr + "+" + _TOSTR$(stat_off) + "+" + loop_name + "*" + _TOSTR$(stat_elem_bytes) + ")"
             src_next = "((uint8*)" + src_expr + "+" + _TOSTR$(dyn_off) + "+" + loop_name + "*" + _TOSTR$(dyn_elem_bytes) + ")"
@@ -17569,24 +17549,24 @@ FUNCTION UDTFileArrayBE$ (arr_expr AS STRING, udt_index AS LONG, layout_mode AS 
     stat_bytes = udtxsize(udt_index) \ 8
     dyn_bytes = UDTDynLayoutSize&(udt_index) \ 8
 
-    WriteBufLine GlobTxtBuf, "static uint8 *" + buf_name + "=NULL;"
-    WriteBufLine GlobTxtBuf, "static uint64 " + size_name + "=0;"
+    DeclareGlobalVar "uint8 *" + buf_name + "=NULL;"
+    DeclareGlobalVar "uint64 " + size_name + "=0;"
 
     acc = ""
     AppendUDTFileConvCode "qb_dst", "qb_src", udt_index, layout_mode, 0, acc
     IF Error_Happened THEN EXIT FUNCTION
-    WriteBufLine GlobTxtBuf, "static void " + pack_name + "(uint8 *qb_dst,uint8 *qb_src){"
+    DeclareGlobalFunc "void " + pack_name + "(uint8 *qb_dst,uint8 *qb_src){"
     WriteBufLine GlobTxtBuf, acc
     WriteBufLine GlobTxtBuf, "}"
 
     acc = ""
     AppendUDTFileConvCode "qb_dst", "qb_src", udt_index, layout_mode, -1, acc
     IF Error_Happened THEN EXIT FUNCTION
-    WriteBufLine GlobTxtBuf, "static void " + unpack_name + "(uint8 *qb_dst,uint8 *qb_src){"
+    DeclareGlobalFunc "void " + unpack_name + "(uint8 *qb_dst,uint8 *qb_src){"
     WriteBufLine GlobTxtBuf, acc
     WriteBufLine GlobTxtBuf, "}"
 
-    WriteBufLine GlobTxtBuf, "static uint64 " + helper_name + "_total(ptrszint *qb_arr){"
+    DeclareGlobalFunc "uint64 " + helper_name + "_total(ptrszint *qb_arr){"
     WriteBufLine GlobTxtBuf, "uint64 qb_total=1;"
     WriteBufLine GlobTxtBuf, "if ((!qb_arr)||(!(qb_arr[2]&1))) error(9);"
     FOR dim_i = 1 TO dim_count
@@ -17598,7 +17578,7 @@ FUNCTION UDTFileArrayBE$ (arr_expr AS STRING, udt_index AS LONG, layout_mode AS 
     WriteBufLine GlobTxtBuf, "return qb_total;"
     WriteBufLine GlobTxtBuf, "}"
 
-    WriteBufLine GlobTxtBuf, "static byte_element_struct *" + helper_name + "_be(ptrszint *qb_arr,byte_element_struct *qb_be,int32 qb_pack){"
+    DeclareGlobalFunc "byte_element_struct *" + helper_name + "_be(ptrszint *qb_arr,byte_element_struct *qb_be,int32 qb_pack){"
     WriteBufLine GlobTxtBuf, "uint64 qb_total=" + helper_name + "_total(qb_arr);"
     WriteBufLine GlobTxtBuf, "uint64 qb_need=qb_total*(uint64)" + _TOSTR$(stat_bytes) + ";"
     WriteBufLine GlobTxtBuf, "if (qb_total&&qb_need/(uint64)" + _TOSTR$(stat_bytes) + "!=qb_total) error(257);"
@@ -17614,7 +17594,7 @@ FUNCTION UDTFileArrayBE$ (arr_expr AS STRING, udt_index AS LONG, layout_mode AS 
     WriteBufLine GlobTxtBuf, "}"
 
     IF do_get THEN
-        WriteBufLine GlobTxtBuf, "static void " + helper_name + "_commit(ptrszint *qb_arr){"
+        DeclareGlobalFunc "void " + helper_name + "_commit(ptrszint *qb_arr){"
         WriteBufLine GlobTxtBuf, "uint64 qb_total=" + helper_name + "_total(qb_arr);"
         WriteBufLine GlobTxtBuf, "uint64 qb_need=qb_total*(uint64)" + _TOSTR$(stat_bytes) + ";"
         WriteBufLine GlobTxtBuf, "if ((!" + buf_name + ")||(" + size_name + "<qb_need)) error(257);"
@@ -17893,11 +17873,11 @@ SUB vWatchVariable (this$, action AS _BYTE)
             IF subfunc = "" THEN
                 IF totalMainModuleVariables > 0 THEN
                     WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
-                    WriteBufLine GlobTxtBuf, "void *vwatch_global_vars[" + STR$(totalMainModuleVariables) + "];"
+                    DeclareGlobalVar "void *vwatch_global_vars[" + STR$(totalMainModuleVariables) + "];"
                     WriteBufLineCpp DataTxtBuf, mainModuleVariablesList$
                 ELSE
                     WriteBufLineCpp DataTxtBuf, "void *vwatch_local_vars[0];"
-                    WriteBufLine GlobTxtBuf, "void *vwatch_global_vars[0];"
+                    DeclareGlobalVar "void *vwatch_global_vars[0];"
                 END IF
 
                 mainModuleVariablesList$ = ""
@@ -17995,19 +17975,19 @@ SUB closemain
     WriteBufLine RetTxtBuf, "}"
     WriteBufLine RetTxtBuf, "error(3);" 'no valid return possible
 
-    mainincbuf = OpenBuffer&("O", tmpdir$ + "main.txt")
-    FOR i = 0 TO subfuncnlast
-        WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
-    NEXT i
-    WriteBufLine mainincbuf, "qbs *func__compdate() {"
-    WriteBufLine mainincbuf, "return qbs_new_txt(__DATE__);"
-    WriteBufLine mainincbuf, "}"
-    WriteBufLine mainincbuf, "qbs *func__comptime() {"
-    WriteBufLine mainincbuf, "return qbs_new_txt(__TIME__);"
-    WriteBufLine mainincbuf, "}"
-    WriteBufLine mainincbuf, "qbs *func__compvers() {"
-    WriteBufLine mainincbuf, "return qbs_new_txt(" + CHR$(34) + "QB64-PE v" + Version$ + CHR$(34) + ");"
-    WriteBufLine mainincbuf, "}"
+    IF SplitObjectFiles THEN
+        'main_split.txt and the generated units replace main.txt entirely - qbx.cpp
+        'includes the former instead of the latter - so nothing would compile it.
+        WriteSplitTranslationUnits
+    ELSE
+        'main.txt is the whole program as one translation unit, which is what a
+        'build that is not splitting - including the bootstrap - compiles.
+        mainincbuf = OpenBuffer&("O", tmpdir$ + "main.txt")
+        FOR i = 0 TO subfuncnlast
+            WriteBufLine mainincbuf, "#include " + CHR$(34) + "main" + _TOSTR$(i) + ".txt" + CHR$(34)
+        NEXT i
+        WriteCompilationInfoFuncs mainincbuf
+    END IF
 
     firstLineNumberLabelvWatch = 0
 END SUB
@@ -18196,7 +18176,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 bytes = bytes + 1
             END IF
             n$ = scope2$ + n$
-            IF f THEN WriteBufLine defdatahandle, "void *" + n$ + "=NULL;"
+            IF f THEN DeclareGlobalData "void *" + n$ + "=NULL;"
             clearid
             id.n = cvarname$
             id.t = UDTTYPE + i
@@ -18411,7 +18391,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
             'standard fixed length string
             n$ = scope2$ + n$
-            IF f THEN WriteBufLine defdatahandle, "qbs *" + n$ + "=NULL;"
+            IF f THEN DeclareGlobalData "qbs *" + n$ + "=NULL;"
             IF f THEN WriteBufLine FreeTxtBuf, "qbs_free(" + n$ + ");" 'so descriptor can be freed
             clearid
             id.n = cvarname$
@@ -18519,11 +18499,11 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         id.n = cvarname$
         id.t = STRINGTYPE
         IF cmemlist(idn + 1) THEN
-            IF f THEN WriteBufLine defdatahandle, "qbs *" + n$ + "=NULL;"
+            IF f THEN DeclareGlobalData "qbs *" + n$ + "=NULL;"
             IF f THEN WriteBufLineCpp DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new_cmem(0,0);"
             id.t = id.t + ISINCONVENTIONALMEMORY
         ELSE
-            IF f THEN WriteBufLine defdatahandle, "qbs *" + n$ + "=NULL;"
+            IF f THEN DeclareGlobalData "qbs *" + n$ + "=NULL;"
             IF f THEN WriteBufLineCpp DataTxtBuf, "if (!" + n$ + ")" + n$ + "=qbs_new(0,0);"
         END IF
         IF f THEN WriteBufLine FreeTxtBuf, "qbs_free(" + n$ + ");"
@@ -18626,7 +18606,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
         n$ = scope2$ + n$
         'Register SUB/FUNCTION parameters without emitting a second C++ declaration.
         IF f THEN
-            WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF bits <= 32 THEN
                 WriteBufLineCpp DataTxtBuf, "cmem_sp-=4;"
@@ -18714,7 +18694,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = BYTETYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -18798,7 +18778,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = INTEGERTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -18887,7 +18867,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = OFFSETTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -18973,7 +18953,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = LONGTYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -19059,7 +19039,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = INTEGER64TYPE: IF unsgn THEN id.t = id.t + ISUNSIGNED
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -19145,7 +19125,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = SINGLETYPE
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -19229,7 +19209,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = DOUBLETYPE
-            IF f = 1 THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f = 1 THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f = 1 THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -19313,7 +19293,7 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             n$ = scope2$ + n$
             clearid
             id.t = FLOATTYPE
-            IF f THEN WriteBufLine defdatahandle, ct$ + " *" + n$ + "=NULL;"
+            IF f THEN DeclareGlobalData ct$ + " *" + n$ + "=NULL;"
             IF f THEN WriteBufLineCpp DataTxtBuf, "if(" + n$ + "==NULL){"
             IF cmemlist(idn + 1) THEN
                 id.t = id.t + ISINCONVENTIONALMEMORY
@@ -20900,6 +20880,15 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     SetDependency id2.Dependency
 
+    'Calling one of these is what makes closemain emit its definition, so note it
+    'here, alongside the other consequences a keyword has beyond its call site.
+    'All three are functions, so the SUB path never has to do this.
+    SELECT CASE RTRIM$(id2.callname)
+        CASE "func__compdate": UsesCompileDate = 1
+        CASE "func__comptime": UsesCompileTime = 1
+        CASE "func__compvers": UsesCompilerVersion = 1
+    END SELECT
+
     argCount = countFunctionElements(a$)
     REDIM providedArgs(argCount)
 
@@ -20962,6 +20951,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     skipargnumchk:
 
+    IF id2.ccall AND subfuncn <> 0 THEN NoteCcallFromSubFunc targetid
     r$ = RTRIM$(id2.callname) + "("
     funcargprep$ = ""
 
@@ -22620,11 +22610,11 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     '20090703
                     t$ = typ2ctyp$(targettyp, "")
                     IF Error_Happened THEN EXIT FUNCTION
-                    v$ = "pass" + _TOSTR$(uniquenumber)
+                    v$ = "pass" + scopeunique$
                     'assume numeric type
                     IF MID$(sfcmemargs(targetid), curarg, 1) = CHR$(1) THEN 'cmem required?
                         bytesreq = ((targettyp AND UDTMASK) + 7) \ 8
-                        WriteBufLine defdatahandle, t$ + " *" + v$ + "=NULL;"
+                        DeclareGlobalData t$ + " *" + v$ + "=NULL;"
                         WriteBufLineCpp DataTxtBuf, "if(" + v$ + "==NULL){"
                         WriteBufLineCpp DataTxtBuf, "cmem_sp-=" + _TOSTR$(bytesreq) + ";"
                         WriteBufLineCpp DataTxtBuf, v$ + "=(" + t$ + "*)(dblock+cmem_sp);"
@@ -22797,8 +22787,8 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     If id2.ret = ISUDT + (1) And udtretcall = 0 Then
         '***special case***
-        v$ = "func" + _TOSTR$(uniquenumber)
-        WriteBufLine defdatahandle, "mem_block " + v$ + ";"
+        v$ = "func" + scopeunique$
+        DeclareGlobalData "mem_block " + v$ + ";"
         r$ = "(" + v$ + "=" + r$ + ")"
     END IF
 
@@ -27856,6 +27846,24 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
     tlayout$ = tl$
 END SUB
 
+'The label a retry of the statement being compiled jumps back to. Scoped to the
+'SUB/FUNCTION so that the name does not depend on how much code precedes it.
+'Module level is scope 0, and cannot collide with the fixed S_0 the RUN
+'statement needs, because every generated label carries a second number.
+FUNCTION statementlabel$
+    statementlabel$ = "S_" + _TOSTR$(subfuncn) + "_" + _TOSTR$(statementn)
+END FUNCTION
+
+'A name component unique within the SUB/FUNCTION being compiled. Numbering
+'restarts for each one, so that editing a routine leaves the generated C++ of
+'every other routine byte for byte the same and make can skip its object file.
+'The scope is part of the name, so a module-level declaration that lands at
+'file scope still cannot collide with a local of some SUB.
+FUNCTION scopeunique$
+    scopeuniquen = scopeuniquen + 1
+    scopeunique$ = _TOSTR$(subfuncn) + "_" + _TOSTR$(scopeuniquen)
+END FUNCTION
+
 FUNCTION uniquenumber&
     uniquenumbern = uniquenumbern + 1
     uniquenumber& = uniquenumbern
@@ -27999,7 +28007,7 @@ SUB xend
 END SUB
 
 SUB xfileprint (a$, ca$, n)
-    u$ = _TOSTR$(uniquenumber)
+    u$ = scopeunique$
     WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
     IF n = 2 THEN Give_Error "Expected # ... , ...": EXIT SUB
     a3$ = ""
@@ -28228,7 +28236,7 @@ END SUB
 
 SUB xfilewrite (ca$, n)
     l$ = SCase$("Write") + sp + "#"
-    u$ = _TOSTR$(uniquenumber)
+    u$ = scopeunique$
     WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
     IF n = 2 THEN Give_Error "Expected # ...": EXIT SUB
     a3$ = ""
@@ -28384,7 +28392,7 @@ SUB xongotogosub (a$, ca$, n)
         e$ = "qbr_float_to_long(" + e$ + ")"
     END IF
     l$ = l$ + sp + e2$
-    u$ = _TOSTR$(uniquenumber)
+    u$ = scopeunique$
     WriteBufLineCpp DataTxtBuf, "static int32 ongo_" + u$ + "=0;"
     WriteBufLineCpp MainTxtBuf, "ongo_" + u$ + "=" + e$ + ";"
     ln = 1
@@ -28454,7 +28462,7 @@ SUB xongotogosub (a$, ca$, n)
 END SUB
 
 SUB xprint (a$, ca$, n)
-    u$ = _TOSTR$(uniquenumber)
+    u$ = scopeunique$
 
     l$ = SCase$("Print")
     IF ASC(a$) = 76 THEN lp = 1: lp$ = "l": l$ = SCase$("LPrint"): WriteBufLineCpp MainTxtBuf, "tab_LPRINT=1;": SetDependency DEPENDENCY_PRINTER '"L"
@@ -28735,7 +28743,7 @@ END SUB
 
 SUB xwrite (ca$, n)
     l$ = SCase$("Write")
-    u$ = _TOSTR$(uniquenumber)
+    u$ = scopeunique$
     IF n = 1 THEN
         WriteBufLineCpp MainTxtBuf, "qbs_print(nothingstring,1);"
         GOTO writeblankline2
@@ -28836,105 +28844,6 @@ FUNCTION lineinput3$
 END FUNCTION
 
 
-' This function is related to $EMBED, it converts the given file into
-' an C-Array incl. read back function and append it to the C/C++ source
-' file "internal\temp\embedded.cpp".
-'
-' Inputs: sourcefile spec, unique handle (case sensitive)
-' Return: 0 = normal embed, 1 = packed embed (DEPENDENCY_ZLIB required)
-FUNCTION ConvertFileToCArray% (file$, handle$)
-    '--- read file contents ---
-    sff% = FREEFILE
-    filedata$ = _READFILE$(file$)
-    '--- try to compress ---
-    compdata$ = _DEFLATE$(filedata$)
-    IF LEN(compdata$) < (LEN(filedata$) * 0.8) THEN
-        tmpfile$ = tmpdir$ + "embed.bin"
-        _WRITEFILE tmpfile$, compdata$
-        packed% = 1
-        OPEN "B", #sff%, tmpfile$
-    ELSE
-        packed% = 0
-        OPEN "B", #sff%, file$
-    END IF
-    '--- init variables ---
-    fl& = LOF(sff%)
-    cntL& = INT(fl& / 32)
-    cntV& = INT(cntL& / 8180)
-    cntB& = (fl& - (cntL& * 32))
-    '--- create C-Array ---
-    dff% = FREEFILE
-    OPEN "A", #dff%, tmpdir$ + "embedded.cpp"
-    '--- process LONGs ---
-    tmpI$ = SPACE$(32)
-    FOR vc& = 0 TO cntV&
-        IF vc& = cntV& THEN numL& = (cntL& MOD 8180): ELSE numL& = 8180
-        PRINT #dff%, "static const uint32_t "; handle$; "L"; _TOSTR$(vc&); "[] = {"
-        PRINT #dff%, "    "; _TOSTR$(numL& * 8); ","
-        FOR z& = 1 TO numL&
-            GET #sff%, , tmpI$: offI% = 1
-            tmpO$ = "    " + STRING$(88, ","): offO% = 5
-            DO
-                tmpL& = CVL(MID$(tmpI$, offI%, 4)): offI% = offI% + 4
-                MID$(tmpO$, offO%, 10) = "0x" + RIGHT$("00000000" + HEX$(tmpL&), 8)
-                offO% = offO% + 11
-            LOOP UNTIL offO% > 92
-            IF z& < numL& THEN PRINT #dff%, tmpO$: ELSE PRINT #dff%, LEFT$(tmpO$, 91)
-        NEXT z&
-        PRINT #dff%, "};"
-        PRINT #dff%, ""
-    NEXT vc&
-    '--- process remaining BYTEs ---
-    IF cntB& > 0 THEN
-        PRINT #dff%, "static const uint8_t "; handle$; "B[] = {"
-        PRINT #dff%, "    "; _TOSTR$(cntB&); ","
-        PRINT #dff%, "    ";
-        FOR x% = 1 TO cntB&
-            GET #sff%, , tmpB%%
-            PRINT #dff%, "0x" + RIGHT$("00" + HEX$(tmpB%%), 2);
-            IF x% <> 16 THEN
-                IF x% <> cntB& THEN PRINT #dff%, ",";
-            ELSE
-                IF x% <> cntB& THEN
-                    PRINT #dff%, ","
-                    PRINT #dff%, "    ";
-                END IF
-            END IF
-        NEXT x%
-        PRINT #dff%, ""
-        PRINT #dff%, "};"
-        PRINT #dff%, ""
-    END IF
-    '--- make a read function ---
-    PRINT #dff%, "qbs *GetArrayData_"; handle$; "(void)"
-    PRINT #dff%, "{"
-    PRINT #dff%, "    qbs  *data = qbs_new("; _TOSTR$(fl&); ", 1);"
-    PRINT #dff%, "    char *buff = (char*) data -> chr;"
-    PRINT #dff%, ""
-    FOR vc& = 0 TO cntV&
-        PRINT #dff%, "    memcpy(buff, &"; handle$; "L"; _TOSTR$(vc&); "[1], "; handle$; "L"; _TOSTR$(vc&); "[0] << 2);"
-        IF vc& < cntV& OR cntB& > 0 THEN
-            PRINT #dff%, "    buff += ("; handle$; "L"; _TOSTR$(vc&); "[0] << 2);"
-        END IF
-    NEXT vc&
-    IF cntB& > 0 THEN
-        PRINT #dff%, "    memcpy(buff, &"; handle$; "B[1], "; handle$; "B[0]);"
-    END IF
-    PRINT #dff%, ""
-    IF packed% THEN
-        PRINT #dff%, "    return func__inflate(data, "; _TOSTR$(LEN(filedata$)); ", 1);"
-    ELSE
-        PRINT #dff%, "    return data;"
-    END IF
-    PRINT #dff%, "}"
-    PRINT #dff%, ""
-    '--- ending ---
-    CLOSE #dff%
-    CLOSE #sff%
-    ConvertFileToCArray% = packed%
-END FUNCTION
-
-
 SUB SetDependency (requirement)
     IF requirement THEN
         DEPENDENCY(requirement) = 1
@@ -28977,11 +28886,17 @@ END FUNCTION
 
 
 FUNCTION NewByteElement$
-    a$ = "byte_element_" + _TOSTR$(uniquenumber)
-    NewByteElement$ = a$
+    'COMMON/CHAIN generation redirects MainTxtBuf while DataTxtBuf still points
+    'at the current routine, so this one declaration is forced to file scope and
+    'has to be numbered accordingly. byte_element_5 and byte_element_5_3 cannot
+    'collide, so the two forms can share a prefix.
     IF use_global_byte_elements THEN
-        WriteBufLine GlobTxtBuf, "byte_element_struct *" + a$ + "=(byte_element_struct*)malloc(12);"
+        a$ = "byte_element_" + _TOSTR$(uniquenumber)
+        NewByteElement$ = a$
+        DeclareGlobalVar "byte_element_struct *" + a$ + "=(byte_element_struct*)malloc(12);"
     ELSE
+        a$ = "byte_element_" + scopeunique$
+        NewByteElement$ = a$
         WriteBufLineCpp DataTxtBuf, "byte_element_struct *" + a$ + "=NULL;"
         WriteBufLineCpp DataTxtBuf, "if (!" + a$ + "){"
         WriteBufLineCpp DataTxtBuf, "if ((mem_static_pointer+=12)<mem_static_limit) " + a$ + "=(byte_element_struct*)(mem_static_pointer-12); else " + a$ + "=(byte_element_struct*)mem_static_malloc(12);"
@@ -29562,6 +29477,9 @@ END FUNCTION
 '$INCLUDE:'utilities\format.bas'
 '$INCLUDE:'utilities\terminal.bas'
 '$INCLUDE:'emit\logging.bas'
+'$INCLUDE:'emit\embed.bas'
+'$INCLUDE:'emit\globals.bas'
+'$INCLUDE:'emit\split_units.bas'
 
 DEFLNG A-Z
 

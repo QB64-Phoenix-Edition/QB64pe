@@ -1,356 +1,296 @@
-#line 1088 "utilities/const_eval.bas"
-void SUB_PREPARSE(qbs*_SUB_PREPARSE_STRING_E){
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
+int32 FUNC_PARSENUMHASHLOOKUP(qbs*_FUNC_PARSENUMHASHLOOKUP_STRING_ELE,void*_FUNC_PARSENUMHASHLOOKUP_UDT_STATE){
+#line 714 "utilities/const_eval.bas"
 qbs *tqbs;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 ptrszint tmp_long;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 int32 tmp_fileno;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 #include "data270.txt"
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 mem_lock *sf_mem_lock;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 new_mem_lock();
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 sf_mem_lock->type=3;
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 libqb_check_stack();
-#line 1088 "utilities/const_eval.bas"
+#line 714 "utilities/const_eval.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 1089 "utilities/const_eval.bas"
+#line 717 "utilities/const_eval.bas"
 do{
-#line 1089 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_T,_SUB_PREPARSE_STRING_E);
-#line 1089 "utilities/const_eval.bas"
+#line 717 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHFOUND= 0 ;
+#line 717 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,717,"const_eval.bas");}while(r);
+#line 719 "utilities/const_eval.bas"
+do{
+#line 719 "utilities/const_eval.bas"
+qbs_set(_FUNC_PARSENUMHASHLOOKUP_STRING_HASHNAME,_FUNC_PARSENUMHASHLOOKUP_STRING_ELE);
+#line 719 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1089 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1089,"const_eval.bas");}while(r);
-#line 1091 "utilities/const_eval.bas"
+#line 719 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,719,"const_eval.bas");}while(r);
+#line 720 "utilities/const_eval.bas"
 do{
-#line 1091 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_T,FUNC_ELEUCASE(_SUB_PREPARSE_STRING_T));
-#line 1091 "utilities/const_eval.bas"
+#line 720 "utilities/const_eval.bas"
+qbs_set(_FUNC_PARSENUMHASHLOOKUP_STRING_UNUSEDSYMBOL,FUNC_TRYREMOVESYMBOL(_FUNC_PARSENUMHASHLOOKUP_STRING_HASHNAME));
+#line 720 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1091 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1091,"const_eval.bas");}while(r);
-#line 1092 "utilities/const_eval.bas"
-S_41780:;
-#line 1092 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PREPARSE_STRING_T,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 1092 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1092,"const_eval.bas");if(r)goto S_41780;}
-#line 1092 "utilities/const_eval.bas"
+#line 720 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,720,"const_eval.bas");}while(r);
+#line 722 "utilities/const_eval.bas"
+S_270_4:;
+#line 722 "utilities/const_eval.bas"
+if (( 0ll )||is_error_pending()){
+#line 722 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,722,"const_eval.bas");if(r)goto S_270_4;}
+#line 722 "utilities/const_eval.bas"
 do{
-#line 1092 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_E,qbs_new_txt_len("ERROR - NULL string; nothing to evaluate",40));
-#line 1092 "utilities/const_eval.bas"
+#line 722 "utilities/const_eval.bas"
+sub__echo(qbs_add(qbs_new_txt_len("hash lookup: ",13),_FUNC_PARSENUMHASHLOOKUP_STRING_HASHNAME));
+#line 722 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1092 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1092,"const_eval.bas");}while(r);
-#line 1092 "utilities/const_eval.bas"
-do{
-#line 1092 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 1092 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1092,"const_eval.bas");}while(r);
-#line 1092 "utilities/const_eval.bas"
+#line 722 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,722,"const_eval.bas");}while(r);
+#line 722 "utilities/const_eval.bas"
 }
-#line 1095 "utilities/const_eval.bas"
+#line 723 "utilities/const_eval.bas"
+S_270_7:;
+#line 723 "utilities/const_eval.bas"
+if (( 0ll )||is_error_pending()){
+#line 723 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,723,"const_eval.bas");if(r)goto S_270_7;}
+#line 723 "utilities/const_eval.bas"
 do{
-#line 1095 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_COUNT=FUNC_NUMELEMENTS(_SUB_PREPARSE_STRING_T);
-#line 1095 "utilities/const_eval.bas"
+#line 723 "utilities/const_eval.bas"
+sub__echo(qbs_add(qbs_new_txt_len("unused symbol: ",15),_FUNC_PARSENUMHASHLOOKUP_STRING_HASHNAME));
+#line 723 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1095 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1095,"const_eval.bas");}while(r);
-#line 1096 "utilities/const_eval.bas"
-S_41785:;
-#line 1096 "utilities/const_eval.bas"
-fornext_value3699= 1 ;
-#line 1096 "utilities/const_eval.bas"
-fornext_finalvalue3699=*_SUB_PREPARSE_LONG_COUNT;
-#line 1096 "utilities/const_eval.bas"
-fornext_step3699= 1 ;
-#line 1096 "utilities/const_eval.bas"
-if (fornext_step3699<0) fornext_step_negative3699=1; else fornext_step_negative3699=0;
-#line 1096 "utilities/const_eval.bas"
-if (is_error_pending()) goto fornext_error3699;
-#line 1096 "utilities/const_eval.bas"
-goto fornext_entrylabel3699;
-#line 1096 "utilities/const_eval.bas"
-while(1){
-#line 1096 "utilities/const_eval.bas"
-fornext_value3699=fornext_step3699+(*_SUB_PREPARSE_LONG_L);
-#line 1096 "utilities/const_eval.bas"
-fornext_entrylabel3699:
-#line 1096 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_L=fornext_value3699;
-#line 1096 "utilities/const_eval.bas"
-if (fornext_step_negative3699){
-#line 1096 "utilities/const_eval.bas"
-if (fornext_value3699<fornext_finalvalue3699) break;
-#line 1096 "utilities/const_eval.bas"
+#line 723 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,723,"const_eval.bas");}while(r);
+#line 723 "utilities/const_eval.bas"
+}
+#line 724 "utilities/const_eval.bas"
+do{
+#line 724 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHCHKFLAGS= 1024ll ;
+#line 724 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,724,"const_eval.bas");}while(r);
+#line 725 "utilities/const_eval.bas"
+do{
+#line 725 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRES=FUNC_HASHFINDREV(_FUNC_PARSENUMHASHLOOKUP_STRING_HASHNAME,_FUNC_PARSENUMHASHLOOKUP_LONG_HASHCHKFLAGS,_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESFLAGS,_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF);
+#line 725 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 725 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,725,"const_eval.bas");}while(r);
+#line 726 "utilities/const_eval.bas"
+S_270_12:;
+#line 726 "utilities/const_eval.bas"
+while((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRES)||is_error_pending()){
+#line 726 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,726,"const_eval.bas");if(r)goto S_270_12;}
+#line 727 "utilities/const_eval.bas"
+S_270_13:;
+#line 727 "utilities/const_eval.bas"
+if (((-(((int32*)(__ARRAY_LONG_CONSTSUBFUNC[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTSUBFUNC[4],__ARRAY_LONG_CONSTSUBFUNC[5])]==*__LONG_SUBFUNCN))|(-(((int32*)(__ARRAY_LONG_CONSTSUBFUNC[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTSUBFUNC[4],__ARRAY_LONG_CONSTSUBFUNC[5])]== 0 )))||is_error_pending()){
+#line 727 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,727,"const_eval.bas");if(r)goto S_270_13;}
+#line 728 "utilities/const_eval.bas"
+S_270_14:;
+#line 728 "utilities/const_eval.bas"
+if ((((int32*)(__ARRAY_LONG_CONSTDEFINED[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTDEFINED[4],__ARRAY_LONG_CONSTDEFINED[5])])||is_error_pending()){
+#line 728 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,728,"const_eval.bas");if(r)goto S_270_14;}
+#line 729 "utilities/const_eval.bas"
+do{
+#line 729 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHFOUND= 1 ;
+#line 729 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,729,"const_eval.bas");}while(r);
+#line 730 "utilities/const_eval.bas"
+do{
+#line 730 "utilities/const_eval.bas"
+goto dl_exit_270_2;
+#line 730 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,730,"const_eval.bas");}while(r);
+#line 731 "utilities/const_eval.bas"
+}
+#line 732 "utilities/const_eval.bas"
+}
+#line 733 "utilities/const_eval.bas"
+S_270_19:;
+#line 733 "utilities/const_eval.bas"
+if ((-(*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRES!= 1 ))||is_error_pending()){
+#line 733 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,733,"const_eval.bas");if(r)goto S_270_19;}
+#line 733 "utilities/const_eval.bas"
+do{
+#line 733 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRES=FUNC_HASHFINDCONT(_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESFLAGS,_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF);
+#line 733 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,733,"const_eval.bas");}while(r);
+#line 733 "utilities/const_eval.bas"
 }else{
-#line 1096 "utilities/const_eval.bas"
-if (fornext_value3699>fornext_finalvalue3699) break;
-#line 1096 "utilities/const_eval.bas"
-}
-#line 1096 "utilities/const_eval.bas"
-fornext_error3699:;
-#line 1096 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1096,"const_eval.bas");if(r)goto S_41785;}
-#line 1097 "utilities/const_eval.bas"
+#line 733 "utilities/const_eval.bas"
 do{
-#line 1097 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_ELE,FUNC_GETELEMENT(_SUB_PREPARSE_STRING_T,_SUB_PREPARSE_LONG_L));
-#line 1097 "utilities/const_eval.bas"
+#line 733 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRES= 0 ;
+#line 733 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,733,"const_eval.bas");}while(r);
+#line 733 "utilities/const_eval.bas"
+}
+#line 734 "utilities/const_eval.bas"
+dl_continue_270_2:;
+#line 734 "utilities/const_eval.bas"
+}
+#line 734 "utilities/const_eval.bas"
+dl_exit_270_2:;
+#line 736 "utilities/const_eval.bas"
+S_270_25:;
+#line 736 "utilities/const_eval.bas"
+if (( 0ll )||is_error_pending()){
+#line 736 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,736,"const_eval.bas");if(r)goto S_270_25;}
+#line 736 "utilities/const_eval.bas"
+do{
+#line 736 "utilities/const_eval.bas"
+sub__echo(qbs_add(qbs_new_txt_len("Hashfound:",10),qbs_str((int32)(*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHFOUND))));
+#line 736 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1097 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1097,"const_eval.bas");}while(r);
-#line 1098 "utilities/const_eval.bas"
-S_41787:;
-#line 1098 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("(",1))))||is_error_pending()){
-#line 1098 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1098,"const_eval.bas");if(r)goto S_41787;}
-#line 1098 "utilities/const_eval.bas"
-do{
-#line 1098 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_C=*_SUB_PREPARSE_LONG_C+ 1 ;
-#line 1098 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1098,"const_eval.bas");}while(r);
-#line 1098 "utilities/const_eval.bas"
+#line 736 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,736,"const_eval.bas");}while(r);
+#line 736 "utilities/const_eval.bas"
 }
-#line 1099 "utilities/const_eval.bas"
-S_41790:;
-#line 1099 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len(")",1))))||is_error_pending()){
-#line 1099 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1099,"const_eval.bas");if(r)goto S_41790;}
-#line 1099 "utilities/const_eval.bas"
+#line 737 "utilities/const_eval.bas"
+S_270_28:;
+#line 737 "utilities/const_eval.bas"
+if ((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHFOUND)||is_error_pending()){
+#line 737 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,737,"const_eval.bas");if(r)goto S_270_28;}
+#line 738 "utilities/const_eval.bas"
+S_270_29:;
+#line 738 "utilities/const_eval.bas"
+if (( 0ll )||is_error_pending()){
+#line 738 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,738,"const_eval.bas");if(r)goto S_270_29;}
+#line 738 "utilities/const_eval.bas"
 do{
-#line 1099 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_C=*_SUB_PREPARSE_LONG_C- 1 ;
-#line 1099 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1099,"const_eval.bas");}while(r);
-#line 1099 "utilities/const_eval.bas"
-}
-#line 1101 "utilities/const_eval.bas"
-S_41793:;
-#line 1101 "utilities/const_eval.bas"
-if ((-(*_SUB_PREPARSE_LONG_C< 0 ))||is_error_pending()){
-#line 1101 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1101,"const_eval.bas");if(r)goto S_41793;}
-#line 1101 "utilities/const_eval.bas"
-do{
-#line 1101 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_E,qbs_new_txt_len("ERROR - Bad Parenthesis, too many )",35));
-#line 1101 "utilities/const_eval.bas"
+#line 738 "utilities/const_eval.bas"
+sub__echo(qbs_add(qbs_new_txt_len("is string:",10),qbs_str((int64)(((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])]&*__LONG_ISSTRING))));
+#line 738 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1101 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1101,"const_eval.bas");}while(r);
-#line 1101 "utilities/const_eval.bas"
-do{
-#line 1101 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 1101 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1101,"const_eval.bas");}while(r);
-#line 1101 "utilities/const_eval.bas"
+#line 738 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,738,"const_eval.bas");}while(r);
+#line 738 "utilities/const_eval.bas"
 }
-#line 1102 "utilities/const_eval.bas"
-fornext_continue_3698:;
-#line 1102 "utilities/const_eval.bas"
-}
-#line 1102 "utilities/const_eval.bas"
-fornext_exit_3698:;
-#line 1103 "utilities/const_eval.bas"
-S_41798:;
-#line 1103 "utilities/const_eval.bas"
-if ((-(*_SUB_PREPARSE_LONG_C!= 0 ))||is_error_pending()){
-#line 1103 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1103,"const_eval.bas");if(r)goto S_41798;}
-#line 1103 "utilities/const_eval.bas"
+#line 740 "utilities/const_eval.bas"
+S_270_32:;
+#line 740 "utilities/const_eval.bas"
+if ((((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])]&*__LONG_ISSTRING)||is_error_pending()){
+#line 740 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,740,"const_eval.bas");if(r)goto S_270_32;}
+#line 741 "utilities/const_eval.bas"
 do{
-#line 1103 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_E,qbs_new_txt_len("ERROR - Bad Parenthesis",23));
-#line 1103 "utilities/const_eval.bas"
+#line 741 "utilities/const_eval.bas"
+SUB_PARSENUMSETS((void*)( ((char*)(_FUNC_PARSENUMHASHLOOKUP_UDT_STATE)) + ((0+8)) ),(((qbs**)(__ARRAY_STRING_CONSTSTRING[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_STRING_CONSTSTRING[4],__ARRAY_STRING_CONSTSTRING[5])]));
+#line 741 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1103 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1103,"const_eval.bas");}while(r);
-#line 1103 "utilities/const_eval.bas"
-do{
-#line 1103 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 1103 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1103,"const_eval.bas");}while(r);
-#line 1103 "utilities/const_eval.bas"
-}
-#line 1106 "utilities/const_eval.bas"
-S_41802:;
-#line 1106 "utilities/const_eval.bas"
-fornext_value3701= 1 ;
-#line 1106 "utilities/const_eval.bas"
-fornext_finalvalue3701=FUNC_NUMELEMENTS(_SUB_PREPARSE_STRING_T);
-#line 1106 "utilities/const_eval.bas"
-fornext_step3701= 1 ;
-#line 1106 "utilities/const_eval.bas"
-if (fornext_step3701<0) fornext_step_negative3701=1; else fornext_step_negative3701=0;
-#line 1106 "utilities/const_eval.bas"
-if (is_error_pending()) goto fornext_error3701;
-#line 1106 "utilities/const_eval.bas"
-goto fornext_entrylabel3701;
-#line 1106 "utilities/const_eval.bas"
-while(1){
-#line 1106 "utilities/const_eval.bas"
-fornext_value3701=fornext_step3701+(*_SUB_PREPARSE_LONG_L);
-#line 1106 "utilities/const_eval.bas"
-fornext_entrylabel3701:
-#line 1106 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_L=fornext_value3701;
-#line 1106 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 1106 "utilities/const_eval.bas"
-if (fornext_step_negative3701){
-#line 1106 "utilities/const_eval.bas"
-if (fornext_value3701<fornext_finalvalue3701) break;
-#line 1106 "utilities/const_eval.bas"
+#line 741 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,741,"const_eval.bas");}while(r);
+#line 742 "utilities/const_eval.bas"
+S_270_34:;
+#line 742 "utilities/const_eval.bas"
 }else{
-#line 1106 "utilities/const_eval.bas"
-if (fornext_value3701>fornext_finalvalue3701) break;
-#line 1106 "utilities/const_eval.bas"
-}
-#line 1106 "utilities/const_eval.bas"
-fornext_error3701:;
-#line 1106 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1106,"const_eval.bas");if(r)goto S_41802;}
-#line 1108 "utilities/const_eval.bas"
-S_41803:;
-#line 1108 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(FUNC_GETELEMENT(_SUB_PREPARSE_STRING_T,_SUB_PREPARSE_LONG_L),qbs_new_txt_len("NOT",3))))||is_error_pending()){
-#line 1108 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1108,"const_eval.bas");if(r)goto S_41803;}
-#line 1109 "utilities/const_eval.bas"
-S_41804:;
-#line 1109 "utilities/const_eval.bas"
-fornext_value3703=*_SUB_PREPARSE_LONG_L;
-#line 1109 "utilities/const_eval.bas"
-fornext_finalvalue3703=FUNC_NUMELEMENTS(_SUB_PREPARSE_STRING_T);
-#line 1109 "utilities/const_eval.bas"
-fornext_step3703= 1 ;
-#line 1109 "utilities/const_eval.bas"
-if (fornext_step3703<0) fornext_step_negative3703=1; else fornext_step_negative3703=0;
-#line 1109 "utilities/const_eval.bas"
-if (is_error_pending()) goto fornext_error3703;
-#line 1109 "utilities/const_eval.bas"
-goto fornext_entrylabel3703;
-#line 1109 "utilities/const_eval.bas"
-while(1){
-#line 1109 "utilities/const_eval.bas"
-fornext_value3703=fornext_step3703+(*_SUB_PREPARSE_LONG_L2);
-#line 1109 "utilities/const_eval.bas"
-fornext_entrylabel3703:
-#line 1109 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_L2=fornext_value3703;
-#line 1109 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 1109 "utilities/const_eval.bas"
-if (fornext_step_negative3703){
-#line 1109 "utilities/const_eval.bas"
-if (fornext_value3703<fornext_finalvalue3703) break;
-#line 1109 "utilities/const_eval.bas"
+#line 742 "utilities/const_eval.bas"
+if (((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])]&*__LONG_ISFLOAT){
+#line 742 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,742,"const_eval.bas");if(r)goto S_270_34;}
+#line 743 "utilities/const_eval.bas"
+do{
+#line 743 "utilities/const_eval.bas"
+SUB_PARSENUMSETF((void*)( ((char*)(_FUNC_PARSENUMHASHLOOKUP_UDT_STATE)) + ((0+8)) ),(&(((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])])),(&(((long double*)(__ARRAY_FLOAT_CONSTFLOAT[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_FLOAT_CONSTFLOAT[4],__ARRAY_FLOAT_CONSTFLOAT[5])])));
+#line 743 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,743,"const_eval.bas");}while(r);
+#line 744 "utilities/const_eval.bas"
 }else{
-#line 1109 "utilities/const_eval.bas"
-if (fornext_value3703>fornext_finalvalue3703) break;
-#line 1109 "utilities/const_eval.bas"
-}
-#line 1109 "utilities/const_eval.bas"
-fornext_error3703:;
-#line 1109 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1109,"const_eval.bas");if(r)goto S_41804;}
-#line 1110 "utilities/const_eval.bas"
+#line 745 "utilities/const_eval.bas"
+S_270_37:;
+#line 745 "utilities/const_eval.bas"
+if ((((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])]&*__LONG_ISUNSIGNED)||is_error_pending()){
+#line 745 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,745,"const_eval.bas");if(r)goto S_270_37;}
+#line 746 "utilities/const_eval.bas"
 do{
-#line 1110 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_ELE,FUNC_GETELEMENT(_SUB_PREPARSE_STRING_T,_SUB_PREPARSE_LONG_L2));
-#line 1110 "utilities/const_eval.bas"
+#line 746 "utilities/const_eval.bas"
+SUB_PARSENUMSETUI((void*)( ((char*)(_FUNC_PARSENUMHASHLOOKUP_UDT_STATE)) + ((0+8)) ),(&(((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])])),(&(((uint64*)(__ARRAY_UINTEGER64_CONSTUINTEGER[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_UINTEGER64_CONSTUINTEGER[4],__ARRAY_UINTEGER64_CONSTUINTEGER[5])])));
+#line 746 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,746,"const_eval.bas");}while(r);
+#line 747 "utilities/const_eval.bas"
+}else{
+#line 748 "utilities/const_eval.bas"
+do{
+#line 748 "utilities/const_eval.bas"
+SUB_PARSENUMSETI((void*)( ((char*)(_FUNC_PARSENUMHASHLOOKUP_UDT_STATE)) + ((0+8)) ),(&(((int32*)(__ARRAY_LONG_CONSTTYPE[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_LONG_CONSTTYPE[4],__ARRAY_LONG_CONSTTYPE[5])])),(&(((int64*)(__ARRAY_INTEGER64_CONSTINTEGER[0]))[array_check((*_FUNC_PARSENUMHASHLOOKUP_LONG_HASHRESREF)-__ARRAY_INTEGER64_CONSTINTEGER[4],__ARRAY_INTEGER64_CONSTINTEGER[5])])));
+#line 748 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,748,"const_eval.bas");}while(r);
+#line 749 "utilities/const_eval.bas"
+}
+#line 750 "utilities/const_eval.bas"
+}
+#line 750 "utilities/const_eval.bas"
+}
+#line 752 "utilities/const_eval.bas"
+S_270_43:;
+#line 752 "utilities/const_eval.bas"
+if (( 0ll )||is_error_pending()){
+#line 752 "utilities/const_eval.bas"
+if(qbevent){evnt(28745,752,"const_eval.bas");if(r)goto S_270_43;}
+#line 752 "utilities/const_eval.bas"
+do{
+#line 752 "utilities/const_eval.bas"
+sub__echo(qbs_add(qbs_add(qbs_new_txt_len("Found! value: ",14),qbs__tostr((long double)(*(long double*)(((char*)_FUNC_PARSENUMHASHLOOKUP_UDT_STATE)+((0+8)))),NULL,0)),*((qbs**)((char*)_FUNC_PARSENUMHASHLOOKUP_UDT_STATE+((0+56))))));
+#line 752 "utilities/const_eval.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 1110 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1110,"const_eval.bas");}while(r);
-#line 1111 "utilities/const_eval.bas"
-S_41806:;
-#line 1111 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("AND",3)))|(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("OR",2)))|(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("XOR",3)))|(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("EQV",3)))|(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len("IMP",3)))|(qbs_equal(_SUB_PREPARSE_STRING_ELE,qbs_new_txt_len(")",1)))))||is_error_pending()){
-#line 1111 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,1111,"const_eval.bas");if(r)goto S_41806;}
-#line 1112 "utilities/const_eval.bas"
-do{
-#line 1112 "utilities/const_eval.bas"
-goto fornext_exit_3702;
-#line 1112 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1112,"const_eval.bas");}while(r);
-#line 1113 "utilities/const_eval.bas"
+#line 752 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,752,"const_eval.bas");}while(r);
+#line 752 "utilities/const_eval.bas"
 }
-#line 1114 "utilities/const_eval.bas"
-fornext_continue_3702:;
-#line 1114 "utilities/const_eval.bas"
+#line 754 "utilities/const_eval.bas"
+do{
+#line 754 "utilities/const_eval.bas"
+*_FUNC_PARSENUMHASHLOOKUP_LONG_PARSENUMHASHLOOKUP= -1 ;
+#line 754 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,754,"const_eval.bas");}while(r);
+#line 755 "utilities/const_eval.bas"
+do{
+#line 755 "utilities/const_eval.bas"
+goto exit_subfunc;
+#line 755 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,755,"const_eval.bas");}while(r);
+#line 756 "utilities/const_eval.bas"
 }
-#line 1114 "utilities/const_eval.bas"
-fornext_exit_3702:;
-#line 1116 "utilities/const_eval.bas"
-do{
-#line 1116 "utilities/const_eval.bas"
-SUB_INSERTELEMENTS(_SUB_PREPARSE_STRING_T,&(pass3704=*_SUB_PREPARSE_LONG_L2- 1 ),qbs_new_txt_len(")",1));
-#line 1116 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 1116 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1116,"const_eval.bas");}while(r);
-#line 1117 "utilities/const_eval.bas"
-do{
-#line 1117 "utilities/const_eval.bas"
-SUB_INSERTELEMENTS(_SUB_PREPARSE_STRING_T,&(pass3705=*_SUB_PREPARSE_LONG_L- 1 ),qbs_new_txt_len("(",1));
-#line 1117 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 1117 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1117,"const_eval.bas");}while(r);
-#line 1118 "utilities/const_eval.bas"
-do{
-#line 1118 "utilities/const_eval.bas"
-*_SUB_PREPARSE_LONG_L=*_SUB_PREPARSE_LONG_L+ 1 ;
-#line 1118 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1118,"const_eval.bas");}while(r);
-#line 1119 "utilities/const_eval.bas"
-}
-#line 1120 "utilities/const_eval.bas"
-fornext_continue_3700:;
-#line 1120 "utilities/const_eval.bas"
-}
-#line 1120 "utilities/const_eval.bas"
-fornext_exit_3700:;
-#line 1122 "utilities/const_eval.bas"
-do{
-#line 1122 "utilities/const_eval.bas"
-qbs_set(_SUB_PREPARSE_STRING_E,_SUB_PREPARSE_STRING_T);
-#line 1122 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 1122 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,1122,"const_eval.bas");}while(r);
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
 exit_subfunc:;
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
 free_mem_lock(sf_mem_lock);
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
 #include "free270.txt"
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
 cmem_sp=tmp_cmem_sp;
-#line 1123 "utilities/const_eval.bas"
+#line 757 "utilities/const_eval.bas"
+return *_FUNC_PARSENUMHASHLOOKUP_LONG_PARSENUMHASHLOOKUP;
+#line 757 "utilities/const_eval.bas"
 }

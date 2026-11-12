@@ -34,6 +34,8 @@ DIM SHARED MaxParallelProcesses AS LONG
 DIM SHARED ExtraCppFlags$, ExtraLinkerFlags$
 DIM SHARED StripDebugSymbols AS LONG
 DIM SHARED OptimizeCppProgram AS LONG
+DIM SHARED SplitObjectFiles AS LONG
+DIM SHARED WriteFilesWhileTranslating AS LONG
 DIM SHARED IncludeDebugInfo AS LONG
 DIM SHARED AbsoluteDebugPaths AS LONG
 DIM SHARED UseSystemMinGW AS LONG

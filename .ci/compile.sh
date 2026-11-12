@@ -16,6 +16,28 @@ rm internal/source/*
 rm internal/temp/debug_* internal/temp/recompile_*
 rm internal/temp/qb64pe.sym
 rm internal/temp/qb64pe_bootstrap.sym
+rm -f internal/temp/*.o internal/temp/*.gch internal/temp/*.d
+
+# This file contains machine-specific information, it can't work with
+# ./internal/source and is not needed
+rm -f internal/temp/embeds.txt
+
+# globalx.txt is only included by a split build's qbx_gen.h, and the bootstrap
+# is never a split build.
+rm -f internal/temp/globalx.txt
+
+# These are extra files only created for split builds
+rm -f internal/temp/tu_*.cpp internal/temp/split.mk internal/temp/objs.rsp \
+      internal/temp/qbx_gen.h internal/temp/main_split.txt internal/temp/compinfo.cpp
+
+# If SplitObjectFiles=true is set then the compiler will not produce a
+# main.txt. The build scripts are currently not set up to handle this, so
+# ./internal/source requires that main.txt exist.
+if [ ! -f internal/temp/main.txt ]; then
+    echo "ERROR: internal/temp/main.txt is missing - the snapshot cannot be bootstrapped."
+    echo "       Check if it was compiled with SplitObjectFiles=true"
+    exit 1
+fi
 
 mv internal/temp/* internal/source/
 

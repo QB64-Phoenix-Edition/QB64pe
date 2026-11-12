@@ -1,0 +1,12 @@
+' Routines declared here are one group, and so one object file.
+
+SUB ASub1
+    ' Forward into another unit, before that unit has been seen
+    gCount = gCount + 1
+    PRINT "a says "; BFunc1$(1)
+END SUB
+
+FUNCTION AFunc1$
+    ' Called from c.bm, so this unit is reached from a later one as well
+    AFunc1$ = ATag + "-" + _TOSTR$(gRec.n)
+END FUNCTION

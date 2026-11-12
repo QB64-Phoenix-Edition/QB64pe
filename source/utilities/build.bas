@@ -35,3 +35,24 @@ FUNCTION MakeNMOutputFilename$ (libfile AS STRING, dynamic AS LONG)
     MakeNMOutputFilename$ = tmpdir$ + "nm_output_" + StrReplace$(StrReplace$(libfile, pathsep$, "."), ":", ".") + dyn$ + ".txt"
 END FUNCTION
 
+'
+' Writes buildflags.txt, a record of everything that decides how the generated
+' C++ is compiled. The object files are named the same whatever they were built
+' with, so the Makefile keys them on this: without it, turning SplitObjectFiles
+' or OptimizeCppProgram off and on again would reuse an object compiled the
+' other way.
+'
+SUB WriteBuildFlags (makedeps AS STRING, cxxflags AS STRING)
+    DIM buf AS LONG
+
+    buf = OpenBuffer&("O", tmpdir$ + "buildflags.txt")
+    WriteBufLine buf, "deps:" + makedeps
+    WriteBufLine buf, "cxxflags:" + cxxflags
+    WriteBufLine buf, "bits:" + _TOSTR$(TARGET_BITS)
+    IF SplitObjectFiles THEN
+        WriteBufLine buf, "split:y"
+    ELSE
+        WriteBufLine buf, "split:n"
+    END IF
+END SUB
+

@@ -1,58 +1,34 @@
-#line 213 "utilities/hash.bas"
-void SUB_HASHREMOVE(){
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
+void SUB_SET_CONSTFUNCTIONS(){
+#line 815 "utilities/const_eval.bas"
 qbs *tqbs;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 ptrszint tmp_long;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 int32 tmp_fileno;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 #include "data277.txt"
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 mem_lock *sf_mem_lock;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 new_mem_lock();
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 sf_mem_lock->type=3;
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 libqb_check_stack();
-#line 213 "utilities/hash.bas"
+#line 815 "utilities/const_eval.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 215 "utilities/hash.bas"
+#line 816 "utilities/const_eval.bas"
 do{
-#line 215 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_I=*__LONG_HASHREMOVE_LASTFOUND;
-#line 215 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,215,"hash.bas");}while(r);
-#line 218 "utilities/hash.bas"
-do{
-#line 218 "utilities/hash.bas"
-*__LONG_HASHLISTFREELAST=*__LONG_HASHLISTFREELAST+ 1 ;
-#line 218 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,218,"hash.bas");}while(r);
-#line 219 "utilities/hash.bas"
-S_42001:;
-#line 219 "utilities/hash.bas"
-if ((-(*__LONG_HASHLISTFREELAST>*__LONG_HASHLISTFREESIZE))||is_error_pending()){
-#line 219 "utilities/hash.bas"
-if(qbevent){evnt(28831,219,"hash.bas");if(r)goto S_42001;}
-#line 220 "utilities/hash.bas"
-do{
-#line 220 "utilities/hash.bas"
-*__LONG_HASHLISTFREESIZE=*__LONG_HASHLISTFREESIZE* 2 ;
-#line 220 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,220,"hash.bas");}while(r);
-#line 221 "utilities/hash.bas"
-do{
-if (__ARRAY_LONG_HASHLISTFREE[2]&2){
+if (__ARRAY_UDT_CONSTFUNCS[2]&2){
 error(10);
 }else{
 static int64 alloc_new_desc[8];
@@ -60,26 +36,26 @@ static uint64 alloc_req_elems;
 static uint64 alloc_req_bytes;
 static uint64 alloc_dim_value;
 static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_LONG_HASHLISTFREE)[8])->id=(++mem_lock_id);
+((mem_lock*)((ptrszint*)__ARRAY_UDT_CONSTFUNCS)[8])->id=(++mem_lock_id);
 static ptrszint preserve_old_ptr;
 static ptrszint preserve_old_flags;
 static uint64 preserve_old_total;
 static uint64 preserve_new_total;
 static uint64 preserve_copy_count;
 static ptrszint preserve_new_ptr;
-if (__ARRAY_LONG_HASHLISTFREE[2]&1){
-preserve_old_ptr=__ARRAY_LONG_HASHLISTFREE[0];
-preserve_old_flags=__ARRAY_LONG_HASHLISTFREE[2];
-preserve_old_total=__ARRAY_LONG_HASHLISTFREE[5];
+if (__ARRAY_UDT_CONSTFUNCS[2]&1){
+preserve_old_ptr=__ARRAY_UDT_CONSTFUNCS[0];
+preserve_old_flags=__ARRAY_UDT_CONSTFUNCS[2];
+preserve_old_total=__ARRAY_UDT_CONSTFUNCS[5];
 }else{
 preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
 }
-alloc_new_desc[4]= 1 ;
-alloc_new_desc[5]=(*__LONG_HASHLISTFREESIZE)-alloc_new_desc[4]+1;
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=( 10000 )-alloc_new_desc[4]+1;
 if (alloc_new_desc[5]<=0) error(5);
 alloc_new_desc[6]=1;
 alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(4);
+alloc_bytes_per_element=(uint64)(10);
 if (!alloc_bytes_per_element) error(257);
 if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
 if (alloc_new_desc[5]<0) error(257);
@@ -98,182 +74,1037 @@ if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
 preserve_new_total=alloc_req_elems;
 preserve_copy_count=preserve_old_total;
 if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_LONG_HASHLISTFREE[2]&4){
 if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
 if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_new_ptr;
+__ARRAY_UDT_CONSTFUNCS[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+ZeroMemory((uint8*)(__ARRAY_UDT_CONSTFUNCS[0]),tmp_long*10);
+while(tmp_long--){
+
+*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0)))=qbs_new(0,0);}
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_old_ptr;
+tmp_long=preserve_old_total;
+while(tmp_long--){
+
+qbs_free(*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0))));}
 free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_HASHLISTFREE[0]=preserve_new_ptr;
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_new_ptr;
 }else{
-__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
-memset((void*)(__ARRAY_LONG_HASHLISTFREE[0]),0,(size_t)alloc_req_bytes);
+__ARRAY_UDT_CONSTFUNCS[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_UDT_CONSTFUNCS[0]) error(257);
+__ARRAY_UDT_CONSTFUNCS[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+ZeroMemory((uint8*)(__ARRAY_UDT_CONSTFUNCS[0]),tmp_long*10);
+while(tmp_long--){
+
+*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0)))=qbs_new(0,0);}
 }
+__ARRAY_UDT_CONSTFUNCS[4]=alloc_new_desc[4];
+__ARRAY_UDT_CONSTFUNCS[5]=alloc_new_desc[5];
+__ARRAY_UDT_CONSTFUNCS[6]=alloc_new_desc[6];
+__ARRAY_UDT_CONSTFUNCS[7]=alloc_new_desc[7];
+}
+#line 816 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,816,"const_eval.bas");}while(r);
+#line 819 "utilities/const_eval.bas"
+do{
+#line 819 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 819 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,819,"const_eval.bas");}while(r);
+#line 819 "utilities/const_eval.bas"
+do{
+#line 819 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_PI",3));
+#line 819 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 819 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,819,"const_eval.bas");}while(r);
+#line 819 "utilities/const_eval.bas"
+do{
+#line 819 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 819 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,819,"const_eval.bas");}while(r);
+#line 820 "utilities/const_eval.bas"
+do{
+#line 820 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 820 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,820,"const_eval.bas");}while(r);
+#line 820 "utilities/const_eval.bas"
+do{
+#line 820 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ACOS",5));
+#line 820 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 820 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,820,"const_eval.bas");}while(r);
+#line 820 "utilities/const_eval.bas"
+do{
+#line 820 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 820 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,820,"const_eval.bas");}while(r);
+#line 821 "utilities/const_eval.bas"
+do{
+#line 821 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 821 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,821,"const_eval.bas");}while(r);
+#line 821 "utilities/const_eval.bas"
+do{
+#line 821 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ASIN",5));
+#line 821 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 821 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,821,"const_eval.bas");}while(r);
+#line 821 "utilities/const_eval.bas"
+do{
+#line 821 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 821 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,821,"const_eval.bas");}while(r);
+#line 822 "utilities/const_eval.bas"
+do{
+#line 822 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 822 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,822,"const_eval.bas");}while(r);
+#line 822 "utilities/const_eval.bas"
+do{
+#line 822 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ARCSEC",7));
+#line 822 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 822 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,822,"const_eval.bas");}while(r);
+#line 822 "utilities/const_eval.bas"
+do{
+#line 822 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 822 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,822,"const_eval.bas");}while(r);
+#line 823 "utilities/const_eval.bas"
+do{
+#line 823 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 823 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,823,"const_eval.bas");}while(r);
+#line 823 "utilities/const_eval.bas"
+do{
+#line 823 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ARCCSC",7));
+#line 823 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 823 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,823,"const_eval.bas");}while(r);
+#line 823 "utilities/const_eval.bas"
+do{
+#line 823 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 823 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,823,"const_eval.bas");}while(r);
+#line 824 "utilities/const_eval.bas"
+do{
+#line 824 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 824 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,824,"const_eval.bas");}while(r);
+#line 824 "utilities/const_eval.bas"
+do{
+#line 824 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ARCCOT",7));
+#line 824 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 824 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,824,"const_eval.bas");}while(r);
+#line 824 "utilities/const_eval.bas"
+do{
+#line 824 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 824 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,824,"const_eval.bas");}while(r);
+#line 825 "utilities/const_eval.bas"
+do{
+#line 825 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 825 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,825,"const_eval.bas");}while(r);
+#line 825 "utilities/const_eval.bas"
+do{
+#line 825 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_SECH",5));
+#line 825 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 825 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,825,"const_eval.bas");}while(r);
+#line 825 "utilities/const_eval.bas"
+do{
+#line 825 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 825 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,825,"const_eval.bas");}while(r);
+#line 826 "utilities/const_eval.bas"
+do{
+#line 826 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 826 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,826,"const_eval.bas");}while(r);
+#line 826 "utilities/const_eval.bas"
+do{
+#line 826 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_CSCH",5));
+#line 826 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 826 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,826,"const_eval.bas");}while(r);
+#line 826 "utilities/const_eval.bas"
+do{
+#line 826 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 826 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,826,"const_eval.bas");}while(r);
+#line 827 "utilities/const_eval.bas"
+do{
+#line 827 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 827 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,827,"const_eval.bas");}while(r);
+#line 827 "utilities/const_eval.bas"
+do{
+#line 827 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_COTH",5));
+#line 827 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 827 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,827,"const_eval.bas");}while(r);
+#line 827 "utilities/const_eval.bas"
+do{
+#line 827 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 827 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,827,"const_eval.bas");}while(r);
+#line 828 "utilities/const_eval.bas"
+do{
+#line 828 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 828 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,828,"const_eval.bas");}while(r);
+#line 828 "utilities/const_eval.bas"
+do{
+#line 828 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("COS",3));
+#line 828 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 828 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,828,"const_eval.bas");}while(r);
+#line 828 "utilities/const_eval.bas"
+do{
+#line 828 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 828 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,828,"const_eval.bas");}while(r);
+#line 829 "utilities/const_eval.bas"
+do{
+#line 829 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 829 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,829,"const_eval.bas");}while(r);
+#line 829 "utilities/const_eval.bas"
+do{
+#line 829 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("SIN",3));
+#line 829 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 829 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,829,"const_eval.bas");}while(r);
+#line 829 "utilities/const_eval.bas"
+do{
+#line 829 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 829 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,829,"const_eval.bas");}while(r);
+#line 830 "utilities/const_eval.bas"
+do{
+#line 830 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 830 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,830,"const_eval.bas");}while(r);
+#line 830 "utilities/const_eval.bas"
+do{
+#line 830 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("TAN",3));
+#line 830 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 830 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,830,"const_eval.bas");}while(r);
+#line 830 "utilities/const_eval.bas"
+do{
+#line 830 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 830 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,830,"const_eval.bas");}while(r);
+#line 831 "utilities/const_eval.bas"
+do{
+#line 831 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 831 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,831,"const_eval.bas");}while(r);
+#line 831 "utilities/const_eval.bas"
+do{
+#line 831 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("LOG",3));
+#line 831 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 831 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,831,"const_eval.bas");}while(r);
+#line 831 "utilities/const_eval.bas"
+do{
+#line 831 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 831 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,831,"const_eval.bas");}while(r);
+#line 832 "utilities/const_eval.bas"
+do{
+#line 832 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 832 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,832,"const_eval.bas");}while(r);
+#line 832 "utilities/const_eval.bas"
+do{
+#line 832 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("EXP",3));
+#line 832 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 832 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,832,"const_eval.bas");}while(r);
+#line 832 "utilities/const_eval.bas"
+do{
+#line 832 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 832 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,832,"const_eval.bas");}while(r);
+#line 833 "utilities/const_eval.bas"
+do{
+#line 833 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 833 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,833,"const_eval.bas");}while(r);
+#line 833 "utilities/const_eval.bas"
+do{
+#line 833 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("ATN",3));
+#line 833 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 833 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,833,"const_eval.bas");}while(r);
+#line 833 "utilities/const_eval.bas"
+do{
+#line 833 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 833 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,833,"const_eval.bas");}while(r);
+#line 834 "utilities/const_eval.bas"
+do{
+#line 834 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 834 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,834,"const_eval.bas");}while(r);
+#line 834 "utilities/const_eval.bas"
+do{
+#line 834 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("SQR",3));
+#line 834 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 834 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,834,"const_eval.bas");}while(r);
+#line 834 "utilities/const_eval.bas"
+do{
+#line 834 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 834 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,834,"const_eval.bas");}while(r);
+#line 835 "utilities/const_eval.bas"
+do{
+#line 835 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 835 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,835,"const_eval.bas");}while(r);
+#line 835 "utilities/const_eval.bas"
+do{
+#line 835 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_D2R",4));
+#line 835 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 835 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,835,"const_eval.bas");}while(r);
+#line 835 "utilities/const_eval.bas"
+do{
+#line 835 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 835 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,835,"const_eval.bas");}while(r);
+#line 836 "utilities/const_eval.bas"
+do{
+#line 836 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 836 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,836,"const_eval.bas");}while(r);
+#line 836 "utilities/const_eval.bas"
+do{
+#line 836 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_D2G",4));
+#line 836 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 836 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,836,"const_eval.bas");}while(r);
+#line 836 "utilities/const_eval.bas"
+do{
+#line 836 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 836 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,836,"const_eval.bas");}while(r);
+#line 837 "utilities/const_eval.bas"
+do{
+#line 837 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 837 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,837,"const_eval.bas");}while(r);
+#line 837 "utilities/const_eval.bas"
+do{
+#line 837 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_R2D",4));
+#line 837 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 837 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,837,"const_eval.bas");}while(r);
+#line 837 "utilities/const_eval.bas"
+do{
+#line 837 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 837 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,837,"const_eval.bas");}while(r);
+#line 838 "utilities/const_eval.bas"
+do{
+#line 838 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 838 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,838,"const_eval.bas");}while(r);
+#line 838 "utilities/const_eval.bas"
+do{
+#line 838 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_R2G",4));
+#line 838 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 838 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,838,"const_eval.bas");}while(r);
+#line 838 "utilities/const_eval.bas"
+do{
+#line 838 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 838 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,838,"const_eval.bas");}while(r);
+#line 839 "utilities/const_eval.bas"
+do{
+#line 839 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 839 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,839,"const_eval.bas");}while(r);
+#line 839 "utilities/const_eval.bas"
+do{
+#line 839 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_G2D",4));
+#line 839 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 839 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,839,"const_eval.bas");}while(r);
+#line 839 "utilities/const_eval.bas"
+do{
+#line 839 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 839 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,839,"const_eval.bas");}while(r);
+#line 840 "utilities/const_eval.bas"
+do{
+#line 840 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 840 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,840,"const_eval.bas");}while(r);
+#line 840 "utilities/const_eval.bas"
+do{
+#line 840 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_G2R",4));
+#line 840 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 840 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,840,"const_eval.bas");}while(r);
+#line 840 "utilities/const_eval.bas"
+do{
+#line 840 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 840 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,840,"const_eval.bas");}while(r);
+#line 841 "utilities/const_eval.bas"
+do{
+#line 841 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 841 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,841,"const_eval.bas");}while(r);
+#line 841 "utilities/const_eval.bas"
+do{
+#line 841 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("ABS",3));
+#line 841 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 841 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,841,"const_eval.bas");}while(r);
+#line 841 "utilities/const_eval.bas"
+do{
+#line 841 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 841 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,841,"const_eval.bas");}while(r);
+#line 842 "utilities/const_eval.bas"
+do{
+#line 842 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 842 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,842,"const_eval.bas");}while(r);
+#line 842 "utilities/const_eval.bas"
+do{
+#line 842 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("SGN",3));
+#line 842 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 842 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,842,"const_eval.bas");}while(r);
+#line 842 "utilities/const_eval.bas"
+do{
+#line 842 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 842 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,842,"const_eval.bas");}while(r);
+#line 843 "utilities/const_eval.bas"
+do{
+#line 843 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 843 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,843,"const_eval.bas");}while(r);
+#line 843 "utilities/const_eval.bas"
+do{
+#line 843 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("INT",3));
+#line 843 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 843 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,843,"const_eval.bas");}while(r);
+#line 843 "utilities/const_eval.bas"
+do{
+#line 843 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 843 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,843,"const_eval.bas");}while(r);
+#line 844 "utilities/const_eval.bas"
+do{
+#line 844 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 844 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,844,"const_eval.bas");}while(r);
+#line 844 "utilities/const_eval.bas"
+do{
+#line 844 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ROUND",6));
+#line 844 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 844 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,844,"const_eval.bas");}while(r);
+#line 844 "utilities/const_eval.bas"
+do{
+#line 844 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 844 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,844,"const_eval.bas");}while(r);
+#line 845 "utilities/const_eval.bas"
+do{
+#line 845 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 845 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,845,"const_eval.bas");}while(r);
+#line 845 "utilities/const_eval.bas"
+do{
+#line 845 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_CEIL",5));
+#line 845 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 845 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,845,"const_eval.bas");}while(r);
+#line 845 "utilities/const_eval.bas"
+do{
+#line 845 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 845 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,845,"const_eval.bas");}while(r);
+#line 846 "utilities/const_eval.bas"
+do{
+#line 846 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 846 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,846,"const_eval.bas");}while(r);
+#line 846 "utilities/const_eval.bas"
+do{
+#line 846 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("FIX",3));
+#line 846 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 846 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,846,"const_eval.bas");}while(r);
+#line 846 "utilities/const_eval.bas"
+do{
+#line 846 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 846 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,846,"const_eval.bas");}while(r);
+#line 847 "utilities/const_eval.bas"
+do{
+#line 847 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 847 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,847,"const_eval.bas");}while(r);
+#line 847 "utilities/const_eval.bas"
+do{
+#line 847 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_SEC",4));
+#line 847 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 847 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,847,"const_eval.bas");}while(r);
+#line 847 "utilities/const_eval.bas"
+do{
+#line 847 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 847 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,847,"const_eval.bas");}while(r);
+#line 848 "utilities/const_eval.bas"
+do{
+#line 848 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 848 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,848,"const_eval.bas");}while(r);
+#line 848 "utilities/const_eval.bas"
+do{
+#line 848 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_CSC",4));
+#line 848 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 848 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,848,"const_eval.bas");}while(r);
+#line 848 "utilities/const_eval.bas"
+do{
+#line 848 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 848 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,848,"const_eval.bas");}while(r);
+#line 849 "utilities/const_eval.bas"
+do{
+#line 849 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 849 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,849,"const_eval.bas");}while(r);
+#line 849 "utilities/const_eval.bas"
+do{
+#line 849 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_COT",4));
+#line 849 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 849 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,849,"const_eval.bas");}while(r);
+#line 849 "utilities/const_eval.bas"
+do{
+#line 849 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 849 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,849,"const_eval.bas");}while(r);
+#line 851 "utilities/const_eval.bas"
+do{
+#line 851 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 851 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,851,"const_eval.bas");}while(r);
+#line 851 "utilities/const_eval.bas"
+do{
+#line 851 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RGB32",6));
+#line 851 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 851 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,851,"const_eval.bas");}while(r);
+#line 851 "utilities/const_eval.bas"
+do{
+#line 851 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= -1 ;
+#line 851 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,851,"const_eval.bas");}while(r);
+#line 852 "utilities/const_eval.bas"
+do{
+#line 852 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 852 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,852,"const_eval.bas");}while(r);
+#line 852 "utilities/const_eval.bas"
+do{
+#line 852 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RGBA32",7));
+#line 852 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 852 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,852,"const_eval.bas");}while(r);
+#line 852 "utilities/const_eval.bas"
+do{
+#line 852 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 4 ;
+#line 852 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,852,"const_eval.bas");}while(r);
+#line 853 "utilities/const_eval.bas"
+do{
+#line 853 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 853 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,853,"const_eval.bas");}while(r);
+#line 853 "utilities/const_eval.bas"
+do{
+#line 853 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RGBA",5));
+#line 853 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 853 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,853,"const_eval.bas");}while(r);
+#line 853 "utilities/const_eval.bas"
+do{
+#line 853 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 5 ;
+#line 853 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,853,"const_eval.bas");}while(r);
+#line 854 "utilities/const_eval.bas"
+do{
+#line 854 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 854 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,854,"const_eval.bas");}while(r);
+#line 854 "utilities/const_eval.bas"
+do{
+#line 854 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RGB",4));
+#line 854 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 854 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,854,"const_eval.bas");}while(r);
+#line 854 "utilities/const_eval.bas"
+do{
+#line 854 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 4 ;
+#line 854 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,854,"const_eval.bas");}while(r);
+#line 855 "utilities/const_eval.bas"
+do{
+#line 855 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 855 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,855,"const_eval.bas");}while(r);
+#line 855 "utilities/const_eval.bas"
+do{
+#line 855 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RED32",6));
+#line 855 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 855 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,855,"const_eval.bas");}while(r);
+#line 855 "utilities/const_eval.bas"
+do{
+#line 855 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 855 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,855,"const_eval.bas");}while(r);
+#line 856 "utilities/const_eval.bas"
+do{
+#line 856 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 856 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,856,"const_eval.bas");}while(r);
+#line 856 "utilities/const_eval.bas"
+do{
+#line 856 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_GREEN32",8));
+#line 856 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 856 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,856,"const_eval.bas");}while(r);
+#line 856 "utilities/const_eval.bas"
+do{
+#line 856 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 856 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,856,"const_eval.bas");}while(r);
+#line 857 "utilities/const_eval.bas"
+do{
+#line 857 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 857 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,857,"const_eval.bas");}while(r);
+#line 857 "utilities/const_eval.bas"
+do{
+#line 857 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_BLUE32",7));
+#line 857 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 857 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,857,"const_eval.bas");}while(r);
+#line 857 "utilities/const_eval.bas"
+do{
+#line 857 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 857 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,857,"const_eval.bas");}while(r);
+#line 858 "utilities/const_eval.bas"
+do{
+#line 858 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 858 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,858,"const_eval.bas");}while(r);
+#line 858 "utilities/const_eval.bas"
+do{
+#line 858 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ALPHA32",8));
+#line 858 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 858 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,858,"const_eval.bas");}while(r);
+#line 858 "utilities/const_eval.bas"
+do{
+#line 858 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 858 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,858,"const_eval.bas");}while(r);
+#line 859 "utilities/const_eval.bas"
+do{
+#line 859 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 859 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,859,"const_eval.bas");}while(r);
+#line 859 "utilities/const_eval.bas"
+do{
+#line 859 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_RED",4));
+#line 859 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 859 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,859,"const_eval.bas");}while(r);
+#line 859 "utilities/const_eval.bas"
+do{
+#line 859 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 2 ;
+#line 859 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,859,"const_eval.bas");}while(r);
+#line 860 "utilities/const_eval.bas"
+do{
+#line 860 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 860 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,860,"const_eval.bas");}while(r);
+#line 860 "utilities/const_eval.bas"
+do{
+#line 860 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_GREEN",6));
+#line 860 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 860 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,860,"const_eval.bas");}while(r);
+#line 860 "utilities/const_eval.bas"
+do{
+#line 860 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 2 ;
+#line 860 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,860,"const_eval.bas");}while(r);
+#line 861 "utilities/const_eval.bas"
+do{
+#line 861 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 861 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,861,"const_eval.bas");}while(r);
+#line 861 "utilities/const_eval.bas"
+do{
+#line 861 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_BLUE",5));
+#line 861 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 861 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,861,"const_eval.bas");}while(r);
+#line 861 "utilities/const_eval.bas"
+do{
+#line 861 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 2 ;
+#line 861 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,861,"const_eval.bas");}while(r);
+#line 862 "utilities/const_eval.bas"
+do{
+#line 862 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 862 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,862,"const_eval.bas");}while(r);
+#line 862 "utilities/const_eval.bas"
+do{
+#line 862 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("_ALPHA",6));
+#line 862 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 862 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,862,"const_eval.bas");}while(r);
+#line 862 "utilities/const_eval.bas"
+do{
+#line 862 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 2 ;
+#line 862 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,862,"const_eval.bas");}while(r);
+#line 864 "utilities/const_eval.bas"
+do{
+#line 864 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 864 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,864,"const_eval.bas");}while(r);
+#line 864 "utilities/const_eval.bas"
+do{
+#line 864 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("CHR$",4));
+#line 864 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 864 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,864,"const_eval.bas");}while(r);
+#line 864 "utilities/const_eval.bas"
+do{
+#line 864 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= 1 ;
+#line 864 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,864,"const_eval.bas");}while(r);
+#line 865 "utilities/const_eval.bas"
+do{
+#line 865 "utilities/const_eval.bas"
+*_SUB_SET_CONSTFUNCTIONS_LONG_I=*_SUB_SET_CONSTFUNCTIONS_LONG_I+ 1 ;
+#line 865 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,865,"const_eval.bas");}while(r);
+#line 865 "utilities/const_eval.bas"
+do{
+#line 865 "utilities/const_eval.bas"
+qbs_set(*((qbs**)((char*)(__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+0)))),qbs_new_txt_len("ASC",3));
+#line 865 "utilities/const_eval.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 865 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,865,"const_eval.bas");}while(r);
+#line 865 "utilities/const_eval.bas"
+do{
+#line 865 "utilities/const_eval.bas"
+*(int16*)(((char*)__ARRAY_UDT_CONSTFUNCS[0])+(((array_check((*_SUB_SET_CONSTFUNCTIONS_LONG_I)-__ARRAY_UDT_CONSTFUNCS[4],__ARRAY_UDT_CONSTFUNCS[5]))*10+8)))= -1 ;
+#line 865 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,865,"const_eval.bas");}while(r);
+#line 867 "utilities/const_eval.bas"
+do{
+if (__ARRAY_UDT_CONSTFUNCS[2]&2){
+error(10);
 }else{
+static int64 alloc_new_desc[8];
+static uint64 alloc_req_elems;
+static uint64 alloc_req_bytes;
+static uint64 alloc_dim_value;
+static uint64 alloc_bytes_per_element;
+((mem_lock*)((ptrszint*)__ARRAY_UDT_CONSTFUNCS)[8])->id=(++mem_lock_id);
+static ptrszint preserve_old_ptr;
+static ptrszint preserve_old_flags;
+static uint64 preserve_old_total;
+static uint64 preserve_new_total;
+static uint64 preserve_copy_count;
+static ptrszint preserve_new_ptr;
+if (__ARRAY_UDT_CONSTFUNCS[2]&1){
+preserve_old_ptr=__ARRAY_UDT_CONSTFUNCS[0];
+preserve_old_flags=__ARRAY_UDT_CONSTFUNCS[2];
+preserve_old_total=__ARRAY_UDT_CONSTFUNCS[5];
+}else{
+preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
+}
+alloc_new_desc[4]= 0 ;
+alloc_new_desc[5]=(*_SUB_SET_CONSTFUNCTIONS_LONG_I)-alloc_new_desc[4]+1;
+if (alloc_new_desc[5]<=0) error(5);
+alloc_new_desc[6]=1;
+alloc_req_elems=1;
+alloc_bytes_per_element=(uint64)(10);
+if (!alloc_bytes_per_element) error(257);
+if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
+if (alloc_new_desc[5]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
+if (alloc_new_desc[6]<0) error(257);
+if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
+alloc_dim_value=(uint64)alloc_new_desc[5];
+if (alloc_dim_value){
+if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
+alloc_req_elems*=alloc_dim_value;
+}
+if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
+alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
+if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
+if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
+preserve_new_total=alloc_req_elems;
+preserve_copy_count=preserve_old_total;
+if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
 if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
+preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
 if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*4);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_new_ptr;
+__ARRAY_UDT_CONSTFUNCS[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+ZeroMemory((uint8*)(__ARRAY_UDT_CONSTFUNCS[0]),tmp_long*10);
+while(tmp_long--){
+
+*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0)))=qbs_new(0,0);}
+tmp_long=preserve_copy_count;
+while(tmp_long--){
+
+qbs_set((*(qbs**)(((char*)(preserve_new_ptr)+(((tmp_long*10))+0)))),(*(qbs**)(((char*)(preserve_old_ptr)+(((tmp_long*10))+0)))));
+memcpy((void*)(((char*)(preserve_new_ptr)+(((tmp_long*10))+8))),(void*)(((char*)(preserve_old_ptr)+(((tmp_long*10))+8))),2);
+}
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_old_ptr;
+tmp_long=preserve_old_total;
+while(tmp_long--){
+
+qbs_free(*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0))));}
 free((void*)(preserve_old_ptr));
-}
-__ARRAY_LONG_HASHLISTFREE[0]=preserve_new_ptr;
+__ARRAY_UDT_CONSTFUNCS[0]=preserve_new_ptr;
 }else{
-__ARRAY_LONG_HASHLISTFREE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_LONG_HASHLISTFREE[0]) error(257);
+__ARRAY_UDT_CONSTFUNCS[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!__ARRAY_UDT_CONSTFUNCS[0]) error(257);
+__ARRAY_UDT_CONSTFUNCS[2]|=1;
+tmp_long=(ptrszint)alloc_req_elems;
+ZeroMemory((uint8*)(__ARRAY_UDT_CONSTFUNCS[0]),tmp_long*10);
+while(tmp_long--){
+
+*(qbs**)(((uint8*)((__ARRAY_UDT_CONSTFUNCS[0]+10*tmp_long)))+((0+0)))=qbs_new(0,0);}
 }
+__ARRAY_UDT_CONSTFUNCS[4]=alloc_new_desc[4];
+__ARRAY_UDT_CONSTFUNCS[5]=alloc_new_desc[5];
+__ARRAY_UDT_CONSTFUNCS[6]=alloc_new_desc[6];
+__ARRAY_UDT_CONSTFUNCS[7]=alloc_new_desc[7];
 }
-__ARRAY_LONG_HASHLISTFREE[2]|=1;
-__ARRAY_LONG_HASHLISTFREE[4]=alloc_new_desc[4];
-__ARRAY_LONG_HASHLISTFREE[5]=alloc_new_desc[5];
-__ARRAY_LONG_HASHLISTFREE[6]=alloc_new_desc[6];
-__ARRAY_LONG_HASHLISTFREE[7]=alloc_new_desc[7];
-}
-#line 221 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,221,"hash.bas");}while(r);
-#line 222 "utilities/hash.bas"
-}
-#line 223 "utilities/hash.bas"
-do{
-#line 223 "utilities/hash.bas"
-tmp_long=array_check((*__LONG_HASHLISTFREELAST)-__ARRAY_LONG_HASHLISTFREE[4],__ARRAY_LONG_HASHLISTFREE[5]);
-#line 223 "utilities/hash.bas"
-if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHLISTFREE[0]))[tmp_long]=*_SUB_HASHREMOVE_LONG_I;
-#line 223 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,223,"hash.bas");}while(r);
-#line 226 "utilities/hash.bas"
-do{
-#line 226 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_I1=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)));
-#line 226 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,226,"hash.bas");}while(r);
-#line 227 "utilities/hash.bas"
-S_42007:;
-#line 227 "utilities/hash.bas"
-if ((*_SUB_HASHREMOVE_LONG_I1)||is_error_pending()){
-#line 227 "utilities/hash.bas"
-if(qbevent){evnt(28831,227,"hash.bas");if(r)goto S_42007;}
-#line 229 "utilities/hash.bas"
-do{
-#line 229 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
-#line 229 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,229,"hash.bas");}while(r);
-#line 230 "utilities/hash.bas"
-S_42009:;
-#line 230 "utilities/hash.bas"
-if ((*_SUB_HASHREMOVE_LONG_I2)||is_error_pending()){
-#line 230 "utilities/hash.bas"
-if(qbevent){evnt(28831,230,"hash.bas");if(r)goto S_42009;}
-#line 232 "utilities/hash.bas"
-do{
-#line 232 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I1)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)))=*_SUB_HASHREMOVE_LONG_I2;
-#line 232 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,232,"hash.bas");}while(r);
-#line 233 "utilities/hash.bas"
-do{
-#line 233 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*_SUB_HASHREMOVE_LONG_I1;
-#line 233 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,233,"hash.bas");}while(r);
-#line 234 "utilities/hash.bas"
-}else{
-#line 236 "utilities/hash.bas"
-do{
-#line 236 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_X=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((FUNC_HASHVALUE(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1)))-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
-#line 236 "utilities/hash.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 236 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,236,"hash.bas");}while(r);
-#line 237 "utilities/hash.bas"
-do{
-#line 237 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*_SUB_HASHREMOVE_LONG_I1;
-#line 237 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,237,"hash.bas");}while(r);
-#line 238 "utilities/hash.bas"
-do{
-#line 238 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I1)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)))= 0 ;
-#line 238 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,238,"hash.bas");}while(r);
-#line 239 "utilities/hash.bas"
-}
-#line 240 "utilities/hash.bas"
-}else{
-#line 242 "utilities/hash.bas"
-do{
-#line 242 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_X=((int32*)(__ARRAY_LONG_HASHTABLE[0]))[array_check((FUNC_HASHVALUE(qbs_new_fixed(&((uint8*)(__ARRAY_STRING256_HASHLISTNAME[0]))[(array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_STRING256_HASHLISTNAME[4],__ARRAY_STRING256_HASHLISTNAME[5]))*256],256,1)))-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5])];
-#line 242 "utilities/hash.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 242 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,242,"hash.bas");}while(r);
-#line 243 "utilities/hash.bas"
-do{
-#line 243 "utilities/hash.bas"
-*_SUB_HASHREMOVE_LONG_I2=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+8)));
-#line 243 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,243,"hash.bas");}while(r);
-#line 244 "utilities/hash.bas"
-S_42020:;
-#line 244 "utilities/hash.bas"
-if ((*_SUB_HASHREMOVE_LONG_I2)||is_error_pending()){
-#line 244 "utilities/hash.bas"
-if(qbevent){evnt(28831,244,"hash.bas");if(r)goto S_42020;}
-#line 246 "utilities/hash.bas"
-do{
-#line 246 "utilities/hash.bas"
-tmp_long=array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5]);
-#line 246 "utilities/hash.bas"
-if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHTABLE[0]))[tmp_long]=*_SUB_HASHREMOVE_LONG_I2;
-#line 246 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,246,"hash.bas");}while(r);
-#line 247 "utilities/hash.bas"
-do{
-#line 247 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+12)))= 0 ;
-#line 247 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,247,"hash.bas");}while(r);
-#line 248 "utilities/hash.bas"
-do{
-#line 248 "utilities/hash.bas"
-*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I2)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)))=*(int32*)(((char*)__ARRAY_UDT_HASHLIST[0])+(((array_check((*_SUB_HASHREMOVE_LONG_I)-__ARRAY_UDT_HASHLIST[4],__ARRAY_UDT_HASHLIST[5]))*20+16)));
-#line 248 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,248,"hash.bas");}while(r);
-#line 249 "utilities/hash.bas"
-}else{
-#line 251 "utilities/hash.bas"
-do{
-#line 251 "utilities/hash.bas"
-tmp_long=array_check((*_SUB_HASHREMOVE_LONG_X)-__ARRAY_LONG_HASHTABLE[4],__ARRAY_LONG_HASHTABLE[5]);
-#line 251 "utilities/hash.bas"
-if (!is_error_pending()) ((int32*)(__ARRAY_LONG_HASHTABLE[0]))[tmp_long]= 0 ;
-#line 251 "utilities/hash.bas"
-if(!qbevent)break;evnt(28831,251,"hash.bas");}while(r);
-#line 252 "utilities/hash.bas"
-}
-#line 253 "utilities/hash.bas"
-}
-#line 255 "utilities/hash.bas"
+#line 867 "utilities/const_eval.bas"
+if(!qbevent)break;evnt(28745,867,"const_eval.bas");}while(r);
+#line 868 "utilities/const_eval.bas"
 exit_subfunc:;
-#line 255 "utilities/hash.bas"
+#line 868 "utilities/const_eval.bas"
 free_mem_lock(sf_mem_lock);
-#line 255 "utilities/hash.bas"
+#line 868 "utilities/const_eval.bas"
 #include "free277.txt"
-#line 255 "utilities/hash.bas"
+#line 868 "utilities/const_eval.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 255 "utilities/hash.bas"
+#line 868 "utilities/const_eval.bas"
 cmem_sp=tmp_cmem_sp;
-#line 255 "utilities/hash.bas"
+#line 868 "utilities/const_eval.bas"
 }
