@@ -280,23 +280,86 @@ ifeq ($(STRIP_SYMBOLS),n)
 endif
 endif
 
-QB_QBX_SRC := $(PATH_INTERNAL_C)/qbx$(TEMP_ID).cpp
-QB_QBX_OBJ := $(patsubst %.cpp,%.o,$(QB_QBX_SRC))
-
-$(QB_QBX_OBJ): $(wildcard $(PATH_INTERNAL)/temp$(TEMP_ID)/*.txt)
-
-EXE_OBJS += $(QB_QBX_OBJ)
-
-CLEAN_LIST += $(QB_QBX_OBJ)
-
 ifdef BUILD_QB64
 	# Copy the QB64-PE source code into temp before compiling
+	#
+	# Note this is evaluated inline, so that the files are in place before the
+	# rest of the Makefile is parsed.
 ifeq ($(OS),win)
 	_shell := $(shell $(CP) $(PATH_INTERNAL_SRC)\\* $(PATH_INTERNAL_TEMP)\\)
 else
 	_shell := $(shell $(CP) $(PATH_INTERNAL_SRC)/* $(PATH_INTERNAL_TEMP)/)
 endif
+endif
 
+QB_QBX_SRC := $(PATH_INTERNAL_C)/qbx.cpp
+QB_QBX_OBJ := $(PATH_INTERNAL_TEMP)/qbx.o
+
+# Where qbx.cpp and the generated units resolve the generated files they
+# "#include". Kept out of CXXFLAGS so that the temp folder - which holds tens of
+# thousands of files for a large program - stays off libqb's include path.
+QB_GEN_INCLUDE := -I$(PATH_INTERNAL_TEMP)
+
+# What the main unit was built from, recorded by the C++ compiler as it reads
+# the includes.
+QB_QBX_DEP := $(QB_QBX_OBJ).d
+-include $(QB_QBX_DEP)
+
+# The 'buildflags.txt' includes the exact set of settings used for this build.
+# The object files are named the same whatever they were built with, so they
+# take a dependency on it and are rebuilt when the settings change. wildcard so
+# that a temp folder without one is not a missing prerequisite.
+QB_BUILD_FLAGS := $(wildcard $(PATH_INTERNAL_TEMP)/buildflags.txt)
+
+$(QB_QBX_OBJ): $(QB_BUILD_FLAGS)
+
+EXE_OBJS += $(QB_QBX_OBJ)
+
+CLEAN_LIST += $(QB_QBX_OBJ)
+
+# SPLIT_TUS=y builds the generated C++ as several object files rather than one.
+#
+# In this setup QB64-PE supplies us a split.mk file which lists the individual
+# units to build along with their subsequent object files.
+ifdef SPLIT_TUS
+CXXFLAGS += -DQB64_SPLIT_TUS
+
+QB_SPLIT_MK := $(PATH_INTERNAL_TEMP)/split.mk
+QB_SPLIT_RSP := $(PATH_INTERNAL_TEMP)/objs.rsp
+QB_SPLIT_PCH := $(PATH_INTERNAL_TEMP)/qbx_gen.h.gch
+
+-include $(QB_SPLIT_MK)
+
+QB_SPLIT_OBJS := $(patsubst %.cpp,%.o,$(QB_SPLIT_SRCS))
+
+# What the precompiled header was built from, recorded by the C++ compiler as it
+# reads the includes. This is how a change to one of libqb's own headers reaches
+# the units, which the list below cannot name without repeating everything
+# qbx.h includes.
+QB_SPLIT_PCH_DEP := $(QB_SPLIT_PCH).d
+-include $(QB_SPLIT_PCH_DEP)
+
+# We precompile the shared header because it can comprise a lot of code for
+# larger programs and gets included by every TU.
+$(QB_SPLIT_PCH): $(PATH_INTERNAL_TEMP)/qbx_gen.h $(PATH_INTERNAL_C)/qbx.h \
+                 $(PATH_INTERNAL_TEMP)/globalx.txt $(PATH_INTERNAL_TEMP)/regsf.txt \
+                 $(wildcard $(PATH_INTERNAL_TEMP)/externtype*.txt) \
+                 $(wildcard $(PATH_INTERNAL_TEMP)/gl_helper_code.h)
+	$(CXX) $(CXXFLAGS) $(QB_GEN_INCLUDE) -MMD -MP -MT $@ -MF $(QB_SPLIT_PCH_DEP) -x c++-header $< -o $@
+
+$(QB_SPLIT_OBJS): $(QB_SPLIT_PCH)
+# The split units get their own recipe to include the qbx_gen.h header (which
+# has a coresponding precompiled version created by the recipe above).
+$(QB_SPLIT_OBJS): %.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(QB_GEN_INCLUDE) -Winvalid-pch -include $(PATH_INTERNAL_TEMP)/qbx_gen.h $< -c -o $@
+
+$(QB_SPLIT_OBJS) $(QB_SPLIT_PCH): $(QB_BUILD_FLAGS)
+
+EXE_LINK_EXTRA += @$(QB_SPLIT_RSP)
+CLEAN_LIST += $(QB_SPLIT_OBJS) $(QB_SPLIT_PCH)
+endif
+
+ifdef BUILD_QB64
 	# Required dependencies of QB64-PE itself
 	DEP_FONT := y
 	DEP_ICON := y
@@ -493,17 +556,36 @@ EXE_OBJS := $(QBLIB) $(EXE_OBJS)
 
 # qbx produces thousands of warnings due to passing NULL for every unused parameter
 $(QB_QBX_OBJ): $(QB_QBX_SRC)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $(QB_GEN_INCLUDE) -MMD -MP -MT $@ -MF $(QB_QBX_DEP) $< -c -o $@
 
 $(PATH_INTERNAL_TEMP)/embedded.o: $(PATH_INTERNAL_TEMP)/embedded.cpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-# Clean all files out of ./internal/temp except for temp.bin
-CLEAN_LIST += $(wildcard $(PATH_INTERNAL_TEMP)/*)
-CLEAN_LIST := $(filter-out $(PATH_INTERNAL_TEMP)/temp.bin,$(CLEAN_LIST))
+# Clean everything out of the temp folder except temp.bin. These approaches
+# avoid creating very large arguments lists whcih might fail.
+ifdef unix
+    # find lets us delete everything that's not exactly temp.bin
+    CLEAN_TEMP_CMD = find $(PATH_INTERNAL_TEMP) -maxdepth 1 -type f \
+                     ! -name temp.bin -delete
+else
+    # del doesn't give a way to exclude temp.bin specifically, so we name every
+    # possible extension and the specific .bin files to delete.
+    CLEAN_TEMP_GLOBS := $(PATH_INTERNAL_TEMP)/*.txt $(PATH_INTERNAL_TEMP)/*.cpp \
+                        $(PATH_INTERNAL_TEMP)/*.o $(PATH_INTERNAL_TEMP)/*.h \
+                        $(PATH_INTERNAL_TEMP)/*.gch $(PATH_INTERNAL_TEMP)/*.mk \
+                        $(PATH_INTERNAL_TEMP)/*.d $(PATH_INTERNAL_TEMP)/*.ico \
+                        $(PATH_INTERNAL_TEMP)/*.rsp $(PATH_INTERNAL_TEMP)/*.sym \
+                        $(PATH_INTERNAL_TEMP)/*.rc $(PATH_INTERNAL_TEMP)/*.sh \
+                        $(PATH_INTERNAL_TEMP)/*.command $(PATH_INTERNAL_TEMP)/*.out \
+                        $(PATH_INTERNAL_TEMP)/*.bat $(PATH_INTERNAL_TEMP)/*.manifest \
+                        $(PATH_INTERNAL_TEMP)/data.bin $(PATH_INTERNAL_TEMP)/embed.bin
+
+    CLEAN_TEMP_CMD = $(RM) $(call FIXPATH,$(CLEAN_TEMP_GLOBS))
+endif
 
 clean: $(CLEAN_DEP_LIST)
 	$(RM) $(call FIXPATH,$(CLEAN_LIST))
+	-$(CLEAN_TEMP_CMD)
 
 ifeq ($(GENERATE_LICENSE),y)
 LICENSE_FILES := $(patsubst %,licenses/license_%.txt,$(LICENSE_IN_USE))
@@ -512,9 +594,12 @@ endif
 
 # Special care has to be taken for EXE because it is the user-supplied
 # executable name - it can contain any valid characters. We have to quote it
-# when passing it on the command-line and additionally have to escape the quote
-exe: $(EXE_OBJS) $(EXE_LIBS) $(LICENSE_DEP)
-	$(CXX) $(CXXFLAGS) $(EXE_OBJS) -o $(call ADDQUOTES,$(call ESCAPENAME,$(EXE))) $(EXE_LIBS) $(CXXLIBS)
+# when passing it on the command-line and additionally have to escape the quotes.
+#
+# The split objects are passed via a response file rather than on the command
+# line to avoid the potential for command line that's too long.
+exe: $(EXE_OBJS) $(QB_SPLIT_OBJS) $(EXE_LIBS) $(LICENSE_DEP)
+	$(CXX) $(CXXFLAGS) $(EXE_OBJS) $(EXE_LINK_EXTRA) -o $(call ADDQUOTES,$(call ESCAPENAME,$(EXE))) $(EXE_LIBS) $(CXXLIBS)
 ifneq ($(filter-out osx,$(OS)),)
 ifneq ($(STRIP_SYMBOLS),n)
 	$(OBJCOPY) --only-keep-debug $(call ADDQUOTES,$(call ESCAPENAME,$(EXE))) $(call ADDQUOTES,$(PATH_INTERNAL_TEMP)/$(notdir $(call ESCAPENAME,$(EXE))).sym)
@@ -531,5 +616,14 @@ else
 	cat $^ > $(call ADDQUOTES,$(call ESCAPENAME,$(LICENSE)))
 endif
 endif
+
+# Rules can take a dependency on FORCE to ensure they always recompile. split.mk
+# does this for the unit holding _COMPILEDATE$/_COMPILETIME$, whose values make
+# cannot see change.
+#
+# Note that this is rarely wanted or the correct thing to do, as it also means
+# anything dependent on those rules will always recompile.
+FORCE:
+.PHONY: FORCE
 
 -include ./tests/build.mk

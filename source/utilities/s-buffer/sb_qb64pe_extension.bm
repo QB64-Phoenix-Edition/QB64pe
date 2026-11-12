@@ -12,7 +12,7 @@
 '---------------------------------------------------------------------
 FUNCTION OpenBuffer& (sbMode$, sbName$)
     '--- option _explicit requirements ---
-    DIM buf&, nul&, known&, newUb&
+    DIM buf&, nul&, known&, newUb&, mode$
     '--- buffer already existing? ---
     IF LEN(sbName$) > 0 THEN
         known& = SBufNFind&(sbName$)
@@ -23,8 +23,21 @@ FUNCTION OpenBuffer& (sbMode$, sbName$)
             IF SBufN(buf&) = sbName$ THEN EXIT FOR
         NEXT buf&
     END IF
+    mode$ = UCASE$(LEFT$(sbMode$, 1))
+    '--- Retired buffers are no longer in memory even though the backing file
+    '--- has contents, so opening them for anything other then "O" is invalid.
+    '-----
+    '--- This reports an "UNEXPECTED INTERNAL COMPILER ERROR!"; run with
+    '--- QB64PE_LOG_HANDLERS=console QB64PE_LOG_LEVEL=error to see which file
+    '--- and which mode.
+    IF buf& <= UBOUND(SBufN) THEN
+        IF SBufRetired(buf&) AND mode$ <> "O" THEN
+            _LogError "Buffer for " + sbName$ + " was retired, it cannot be reopened in mode " + mode$
+            ERROR 258: STOP 'invalid handle
+        END IF
+    END IF
     '--- simulate file modes ---
-    SELECT CASE UCASE$(LEFT$(sbMode$, 1))
+    SELECT CASE mode$
         CASE "A" 'append
             IF buf& > UBOUND(SBufN) THEN GOSUB newBuf
             nul& = SeekBuf&(buf&, 0, SBM_BufEnd)
@@ -35,7 +48,7 @@ FUNCTION OpenBuffer& (sbMode$, sbName$)
             IF buf& > UBOUND(SBufN) THEN GOSUB loadBuf
             nul& = SeekBuf&(buf&, 0, SBM_BufStart)
         CASE "O" 'output
-            IF buf& <= UBOUND(SBufN) THEN DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
+            IF buf& <= UBOUND(SBufN) THEN DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = "": SBufRetired(buf&) = 0
             GOSUB newBuf
         CASE ELSE 'random or unknown mode
             buf& = SBE_NoMoreBuffers 'not supported
@@ -47,12 +60,14 @@ FUNCTION OpenBuffer& (sbMode$, sbName$)
     buf& = CreateBuf&: ConvBufToNativeEol buf&
     GOSUB growLists
     SBufN(buf&) = sbName$: SBufNIndex buf&
+    SBufRetired(buf&) = 0
     RETURN
     '----------
     loadBuf:
     buf& = FileToBuf&(sbName$): ConvBufToNativeEol buf&
     GOSUB growLists
     SBufN(buf&) = sbName$: SBufNIndex buf&
+    SBufRetired(buf&) = 0
     RETURN
     '----------
     growLists:
@@ -65,6 +80,7 @@ FUNCTION OpenBuffer& (sbMode$, sbName$)
         IF newUb& > simplebuffer_maxBufs THEN newUb& = simplebuffer_maxBufs
         REDIM _PRESERVE SBufN(0 TO newUb&) AS STRING
         REDIM _PRESERVE SBufCppLineStatus(0 TO newUb&) AS _Byte
+        REDIM _PRESERVE SBufRetired(0 TO newUb&) AS _Byte
         REDIM _PRESERVE SBufNHashNext(0 TO newUb&) AS LONG
     END IF
     RETURN
@@ -159,13 +175,23 @@ SUB ClearBuffers (sbName$)
         NEXT buf&
         IF buf& > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
         DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
-        SBufCppLineStatus(buf&) = 0
+        SBufCppLineStatus(buf&) = 0: SBufRetired(buf&) = 0
     ELSE
         FOR buf& = 0 TO UBOUND(SBufN)
             IF SBufN(buf&) <> "" THEN DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
-            SBufCppLineStatus(buf&) = 0
+            SBufCppLineStatus(buf&) = 0: SBufRetired(buf&) = 0
         NEXT buf&
     END IF
+END SUB
+
+'--- Clears one buffer, given its handle rather than its name.
+'--- This is a lot faster than ClearBuffers() if we still have a handle to the
+'--- file.
+'---------------------------------------------------------------------
+SUB ClearBufferAt (buf&)
+    IF LEN(SBufN(buf&)) = 0 THEN EXIT SUB
+    DisposeBuf buf&: SBufNUnindex buf&: SBufN(buf&) = ""
+    SBufCppLineStatus(buf&) = 0: SBufRetired(buf&) = 0
 END SUB
 
 '--- This subroutine will write the current contents of the given buffer
@@ -186,15 +212,91 @@ SUB WriteBuffers (sbName$)
             IF SBufN(buf&) = sbName$ THEN EXIT FOR 'buffer found
         NEXT buf&
         IF buf& > UBOUND(SBufN) THEN EXIT SUB 'buffer doesn't exist
-        IF IsBufChanged%(buf&) THEN BufToFile buf&, SBufN(buf&)
+        IF NOT SBufRetired(buf&) THEN WriteBufferAt buf&
     ELSE
         FOR buf& = 0 TO UBOUND(SBufN)
             IF SBufN(buf&) <> "" THEN
-                IF IsBufChanged%(buf&) THEN BufToFile buf&, SBufN(buf&)
+                '--- Retired buffers have already been written out ---
+                IF NOT SBufRetired(buf&) THEN WriteBufferAt buf&
             END IF
         NEXT buf&
     END IF
 END SUB
+
+'---------------------------------------------------------------------
+'--- Writes one buffer to its file, but only if the bytes differ from
+'--- what the file already holds.
+'---------------------------------------------------------------------
+SUB WriteBufferAt (buf&)
+    IF IsBufChanged%(buf&) _ANDALSO NOT BufMatchesFile%(buf&, SBufN(buf&)) THEN BufToFile buf&, SBufN(buf&)
+END SUB
+
+'---------------------------------------------------------------------
+'--- Writes a buffer out and hands its memory back, for a file that is
+'--- complete and will not be added to again. Pass discard% to throw the
+'--- contents away instead of writing them. The buffer itself is still kept in
+'--- SBufN() and its metadata is kept around.
+'---------------------------------------------------------------------
+SUB RetireBuffer (buf&, discard%)
+    '--- option _explicit requirements ---
+    DIM b&
+    '--- check handle ---
+    IF NOT CheckHandle%(buf&) THEN ERROR 258: STOP 'invalid handle
+    IF NOT discard% THEN WriteBufferAt buf&
+    b& = buf& * simplebuffer_slots
+    simplebuffer_array$(b& + 0) = ""
+    '--- cursor back to the start and nothing pending, so that the buffer
+    '--- describes itself honestly even though it holds nothing
+    MID$(simplebuffer_array$(b& + 1), 1, 4) = MKL$(1)
+    MID$(simplebuffer_array$(b& + 1), 13, 4) = MKL$(0)
+    SBufRetired(buf&) = -1
+END SUB
+
+'---------------------------------------------------------------------
+'--- Retires the buffer of the named file, if there is one.
+'---------------------------------------------------------------------
+SUB RetireBufferNamed (sbName$, discard%)
+    '--- option _explicit requirements ---
+    DIM buf&
+    buf& = SBufNFind&(sbName$)
+    IF buf& < 0 THEN EXIT SUB 'buffer doesn't exist
+    RetireBuffer buf&, discard%
+END SUB
+
+'---------------------------------------------------------------------
+'--- Tells whether a buffer's contents are already what the given file
+'--- holds, allowing a write can be skipped. Compares the same bytes
+'--- BufToFile() would write, and checks the length before reading, so
+'--- a file of a different size costs no read at all.
+'---------------------------------------------------------------------
+FUNCTION BufMatchesFile% (handle&, fileSpec$)
+    '--- option _explicit requirements ---
+    DIM buf&, ff%, bl&, ofs&, n&, dat$
+    '--- check handle ---
+    IF NOT CheckHandle%(handle&) THEN ERROR 258: STOP 'invalid handle
+    '--- nothing to compare against ---
+    IF NOT _FILEEXISTS(fileSpec$) THEN EXIT FUNCTION
+    buf& = handle& * simplebuffer_slots
+    bl& = GetBufLen&(handle&)
+    ff% = FREEFILE
+    OPEN fileSpec$ FOR BINARY LOCK WRITE AS ff%
+    IF LOF(ff%) = bl& THEN
+        BufMatchesFile% = -1
+        ofs& = 1
+        DO WHILE ofs& <= bl&
+            n& = bl& - ofs& + 1
+            IF n& > BufCompareChunkSize THEN n& = BufCompareChunkSize
+            IF LEN(dat$) <> n& THEN dat$ = SPACE$(n&)
+            GET ff%, ofs&, dat$
+            IF dat$ <> MID$(simplebuffer_array$(buf& + 0), ofs&, n&) THEN
+                BufMatchesFile% = 0
+                EXIT DO
+            END IF
+            ofs& = ofs& + n&
+        LOOP
+    END IF
+    CLOSE ff%
+END FUNCTION
 
 ' This is the directory that the user's main source file lives, and thus the
 ' path where all other debug paths are made relative too (so when the debugger
