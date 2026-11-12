@@ -235,6 +235,8 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
+        _WINDOWSIZELIMIT (80, 25)
+
         m = 1: i = 0
         IdeMakeFileMenu 0
 
@@ -5166,6 +5168,7 @@ FUNCTION ide2 (ignore)
                         ELSE
                             IF IDEUseFont8 THEN _FONT 8 ELSE _FONT 16
                         END IF
+                        _WINDOWSIZELIMIT (80, 25)
                         skipdisplay = _FALSE
                         GOSUB redrawItAll
                     END IF
