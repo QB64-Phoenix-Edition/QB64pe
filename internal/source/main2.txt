@@ -1,143 +1,633 @@
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 qbs* FUNC_PARSECMDLINEARGS(){
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 qbs *tqbs;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 ptrszint tmp_long;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 int32 tmp_fileno;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 #include "data2.txt"
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 mem_lock *sf_mem_lock;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 new_mem_lock();
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 sf_mem_lock->type=3;
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 libqb_check_stack();
-#line 14360 "qb64pe.bas"
+#line 14336 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 14364 "qb64pe.bas"
+#line 14340 "qb64pe.bas"
 do{
-#line 14364 "qb64pe.bas"
+#line 14340 "qb64pe.bas"
 *_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP= -5 ;
-#line 14364 "qb64pe.bas"
-if(!qbevent)break;evnt(14364);}while(r);
-#line 14364 "qb64pe.bas"
+#line 14340 "qb64pe.bas"
+if(!qbevent)break;evnt(14340);}while(r);
+#line 14340 "qb64pe.bas"
 do{
-#line 14364 "qb64pe.bas"
+#line 14340 "qb64pe.bas"
 *_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW= -5 ;
+#line 14340 "qb64pe.bas"
+if(!qbevent)break;evnt(14340);}while(r);
+#line 14341 "qb64pe.bas"
+S_16871:;
+#line 14341 "qb64pe.bas"
+fornext_value1514= 1 ;
+#line 14341 "qb64pe.bas"
+fornext_finalvalue1514=func__commandcount();
+#line 14341 "qb64pe.bas"
+fornext_step1514= 1 ;
+#line 14341 "qb64pe.bas"
+if (fornext_step1514<0) fornext_step_negative1514=1; else fornext_step_negative1514=0;
+#line 14341 "qb64pe.bas"
+if (is_error_pending()) goto fornext_error1514;
+#line 14341 "qb64pe.bas"
+goto fornext_entrylabel1514;
+#line 14341 "qb64pe.bas"
+while(1){
+#line 14341 "qb64pe.bas"
+fornext_value1514=fornext_step1514+(*_FUNC_PARSECMDLINEARGS_LONG_I);
+#line 14341 "qb64pe.bas"
+fornext_entrylabel1514:
+#line 14341 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_I=fornext_value1514;
+#line 14341 "qb64pe.bas"
+if (fornext_step_negative1514){
+#line 14341 "qb64pe.bas"
+if (fornext_value1514<fornext_finalvalue1514) break;
+#line 14341 "qb64pe.bas"
+}else{
+#line 14341 "qb64pe.bas"
+if (fornext_value1514>fornext_finalvalue1514) break;
+#line 14341 "qb64pe.bas"
+}
+#line 14341 "qb64pe.bas"
+fornext_error1514:;
+#line 14341 "qb64pe.bas"
+if(qbevent){evnt(14341);if(r)goto S_16871;}
+#line 14342 "qb64pe.bas"
+do{
+#line 14342 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,func_command(*_FUNC_PARSECMDLINEARGS_LONG_I,0|1));
+#line 14342 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14342 "qb64pe.bas"
+if(!qbevent)break;evnt(14342);}while(r);
+#line 14343 "qb64pe.bas"
+S_16873:;
+#line 14343 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/?",2)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/h",2)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("--help",6)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/help",5)))))||is_error_pending()){
+#line 14343 "qb64pe.bas"
+if(qbevent){evnt(14343);if(r)goto S_16873;}
+#line 14343 "qb64pe.bas"
+do{
+#line 14343 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,qbs_new_txt_len("-?",2));
+#line 14343 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14343 "qb64pe.bas"
+if(!qbevent)break;evnt(14343);}while(r);
+#line 14343 "qb64pe.bas"
+}
+#line 14344 "qb64pe.bas"
+S_16876:;
+#line 14344 "qb64pe.bas"
+qbs_set(sc_1515,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 2 )));
+#line 14344 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14344 "qb64pe.bas"
+if(qbevent){evnt(14344);if(r)goto S_16876;}
+#line 14345 "qb64pe.bas"
+S_16877:;
+#line 14345 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-?",2))||qbs_equal(sc_1515,qbs_new_txt_len("-h",2))))||is_error_pending()){
+#line 14345 "qb64pe.bas"
+if(qbevent){evnt(14345);if(r)goto S_16877;}
+#line 14346 "qb64pe.bas"
+do{
+#line 14346 "qb64pe.bas"
+sub__dest(func__console());
+#line 14346 "qb64pe.bas"
+if(!qbevent)break;evnt(14346);}while(r);
+#line 14347 "qb64pe.bas"
+S_16879:;
+#line 14347 "qb64pe.bas"
+if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
+#line 14347 "qb64pe.bas"
+if(qbevent){evnt(14347);if(r)goto S_16879;}
+#line 14347 "qb64pe.bas"
+do{
+#line 14347 "qb64pe.bas"
+*__BYTE_QB64VERSIONPRINTED= -1ll ;
+#line 14347 "qb64pe.bas"
+if(!qbevent)break;evnt(14347);}while(r);
+#line 14347 "qb64pe.bas"
+do{
+#line 14347 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14347 "qb64pe.bas"
+qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
+#line 14347 "qb64pe.bas"
+if (is_error_pending()) goto skip1516;
+#line 14347 "qb64pe.bas"
+makefit(tqbs);
+#line 14347 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14347 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14347 "qb64pe.bas"
+skip1516:
+#line 14347 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14347 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14347 "qb64pe.bas"
+if(!qbevent)break;evnt(14347);}while(r);
+#line 14347 "qb64pe.bas"
+}
+#line 14348 "qb64pe.bas"
+do{
+#line 14348 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14348 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14348 "qb64pe.bas"
+skip1517:
+#line 14348 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14348 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14348 "qb64pe.bas"
+if(!qbevent)break;evnt(14348);}while(r);
+#line 14349 "qb64pe.bas"
+do{
+#line 14349 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14349 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("USAGE: qb64pe [options] <source file> [-o <output file>]",56));
+#line 14349 "qb64pe.bas"
+if (is_error_pending()) goto skip1518;
+#line 14349 "qb64pe.bas"
+makefit(tqbs);
+#line 14349 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14349 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14349 "qb64pe.bas"
+skip1518:
+#line 14349 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14349 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14349 "qb64pe.bas"
+if(!qbevent)break;evnt(14349);}while(r);
+#line 14350 "qb64pe.bas"
+do{
+#line 14350 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14350 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14350 "qb64pe.bas"
+skip1519:
+#line 14350 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14350 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14350 "qb64pe.bas"
+if(!qbevent)break;evnt(14350);}while(r);
+#line 14351 "qb64pe.bas"
+do{
+#line 14351 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14351 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("Info Options (no files required):",33));
+#line 14351 "qb64pe.bas"
+if (is_error_pending()) goto skip1520;
+#line 14351 "qb64pe.bas"
+makefit(tqbs);
+#line 14351 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14351 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14351 "qb64pe.bas"
+skip1520:
+#line 14351 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14351 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14351 "qb64pe.bas"
+if(!qbevent)break;evnt(14351);}while(r);
+#line 14352 "qb64pe.bas"
+do{
+#line 14352 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14352 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -?, -h, --help       Show this help text",42));
+#line 14352 "qb64pe.bas"
+if (is_error_pending()) goto skip1521;
+#line 14352 "qb64pe.bas"
+makefit(tqbs);
+#line 14352 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14352 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14352 "qb64pe.bas"
+skip1521:
+#line 14352 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14352 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14352 "qb64pe.bas"
+if(!qbevent)break;evnt(14352);}while(r);
+#line 14353 "qb64pe.bas"
+do{
+#line 14353 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14353 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -v                   Show version information",47));
+#line 14353 "qb64pe.bas"
+if (is_error_pending()) goto skip1522;
+#line 14353 "qb64pe.bas"
+makefit(tqbs);
+#line 14353 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14353 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14353 "qb64pe.bas"
+skip1522:
+#line 14353 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14353 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14353 "qb64pe.bas"
+if(!qbevent)break;evnt(14353);}while(r);
+#line 14354 "qb64pe.bas"
+do{
+#line 14354 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14354 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14354 "qb64pe.bas"
+skip1523:
+#line 14354 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14354 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14354 "qb64pe.bas"
+if(!qbevent)break;evnt(14354);}while(r);
+#line 14355 "qb64pe.bas"
+do{
+#line 14355 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14355 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("File specifications:",20));
+#line 14355 "qb64pe.bas"
+if (is_error_pending()) goto skip1524;
+#line 14355 "qb64pe.bas"
+makefit(tqbs);
+#line 14355 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14355 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14355 "qb64pe.bas"
+skip1524:
+#line 14355 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14355 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14355 "qb64pe.bas"
+if(!qbevent)break;evnt(14355);}while(r);
+#line 14356 "qb64pe.bas"
+do{
+#line 14356 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14356 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  <source file>        Source file to load into IDE, to format or compile",73));
+#line 14356 "qb64pe.bas"
+if (is_error_pending()) goto skip1525;
+#line 14356 "qb64pe.bas"
+makefit(tqbs);
+#line 14356 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14356 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14356 "qb64pe.bas"
+skip1525:
+#line 14356 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14356 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14356 "qb64pe.bas"
+if(!qbevent)break;evnt(14356);}while(r);
+#line 14357 "qb64pe.bas"
+do{
+#line 14357 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14357 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -o <output file>     Write result to <output file>",52));
+#line 14357 "qb64pe.bas"
+if (is_error_pending()) goto skip1526;
+#line 14357 "qb64pe.bas"
+makefit(tqbs);
+#line 14357 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14357 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14357 "qb64pe.bas"
+skip1526:
+#line 14357 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14357 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14357 "qb64pe.bas"
+if(!qbevent)break;evnt(14357);}while(r);
+#line 14358 "qb64pe.bas"
+do{
+#line 14358 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14358 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("                         - optionally override the default executable name",74));
+#line 14358 "qb64pe.bas"
+if (is_error_pending()) goto skip1527;
+#line 14358 "qb64pe.bas"
+makefit(tqbs);
+#line 14358 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14358 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14358 "qb64pe.bas"
+skip1527:
+#line 14358 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14358 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14358 "qb64pe.bas"
+if(!qbevent)break;evnt(14358);}while(r);
+#line 14359 "qb64pe.bas"
+do{
+#line 14359 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14359 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("                         - is mandatory for code formatting (-y option)",71));
+#line 14359 "qb64pe.bas"
+if (is_error_pending()) goto skip1528;
+#line 14359 "qb64pe.bas"
+makefit(tqbs);
+#line 14359 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14359 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14359 "qb64pe.bas"
+skip1528:
+#line 14359 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14359 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14359 "qb64pe.bas"
+if(!qbevent)break;evnt(14359);}while(r);
+#line 14360 "qb64pe.bas"
+do{
+#line 14360 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14360 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14360 "qb64pe.bas"
+skip1529:
+#line 14360 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14360 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14360 "qb64pe.bas"
+if(!qbevent)break;evnt(14360);}while(r);
+#line 14361 "qb64pe.bas"
+do{
+#line 14361 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14361 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("IDE Options:",12));
+#line 14361 "qb64pe.bas"
+if (is_error_pending()) goto skip1530;
+#line 14361 "qb64pe.bas"
+makefit(tqbs);
+#line 14361 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14361 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14361 "qb64pe.bas"
+skip1530:
+#line 14361 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14361 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14361 "qb64pe.bas"
+if(!qbevent)break;evnt(14361);}while(r);
+#line 14362 "qb64pe.bas"
+do{
+#line 14362 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14362 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -l:<line number>     Load <source file> into the IDE and move cursor to",73));
+#line 14362 "qb64pe.bas"
+if (is_error_pending()) goto skip1531;
+#line 14362 "qb64pe.bas"
+makefit(tqbs);
+#line 14362 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14362 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14362 "qb64pe.bas"
+skip1531:
+#line 14362 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14362 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14362 "qb64pe.bas"
+if(!qbevent)break;evnt(14362);}while(r);
+#line 14363 "qb64pe.bas"
+do{
+#line 14363 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14363 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("                       the given <line number>, if possible",59));
+#line 14363 "qb64pe.bas"
+if (is_error_pending()) goto skip1532;
+#line 14363 "qb64pe.bas"
+makefit(tqbs);
+#line 14363 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14363 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14363 "qb64pe.bas"
+skip1532:
+#line 14363 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14363 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14363 "qb64pe.bas"
+if(!qbevent)break;evnt(14363);}while(r);
+#line 14364 "qb64pe.bas"
+do{
+#line 14364 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14364 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14364 "qb64pe.bas"
+skip1533:
+#line 14364 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14364 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14364 "qb64pe.bas"
 if(!qbevent)break;evnt(14364);}while(r);
 #line 14365 "qb64pe.bas"
-S_16925:;
+do{
 #line 14365 "qb64pe.bas"
-fornext_value1565= 1 ;
+tqbs=qbs_new(0,0);
 #line 14365 "qb64pe.bas"
-fornext_finalvalue1565=func__commandcount();
+qbs_set(tqbs,qbs_new_txt_len("Compiler Options (no IDE):",26));
 #line 14365 "qb64pe.bas"
-fornext_step1565= 1 ;
+if (is_error_pending()) goto skip1534;
 #line 14365 "qb64pe.bas"
-if (fornext_step1565<0) fornext_step_negative1565=1; else fornext_step_negative1565=0;
+makefit(tqbs);
 #line 14365 "qb64pe.bas"
-if (is_error_pending()) goto fornext_error1565;
+qbs_print(tqbs,0);
 #line 14365 "qb64pe.bas"
-goto fornext_entrylabel1565;
+qbs_print(nothingstring,1);
 #line 14365 "qb64pe.bas"
-while(1){
+skip1534:
 #line 14365 "qb64pe.bas"
-fornext_value1565=fornext_step1565+(*_FUNC_PARSECMDLINEARGS_LONG_I);
+qbs_free(tqbs);
 #line 14365 "qb64pe.bas"
-fornext_entrylabel1565:
+qbs_cleanup(qbs_tmp_base,0);
 #line 14365 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_I=fornext_value1565;
-#line 14365 "qb64pe.bas"
-if (fornext_step_negative1565){
-#line 14365 "qb64pe.bas"
-if (fornext_value1565<fornext_finalvalue1565) break;
-#line 14365 "qb64pe.bas"
-}else{
-#line 14365 "qb64pe.bas"
-if (fornext_value1565>fornext_finalvalue1565) break;
-#line 14365 "qb64pe.bas"
-}
-#line 14365 "qb64pe.bas"
-fornext_error1565:;
-#line 14365 "qb64pe.bas"
-if(qbevent){evnt(14365);if(r)goto S_16925;}
+if(!qbevent)break;evnt(14365);}while(r);
 #line 14366 "qb64pe.bas"
 do{
 #line 14366 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,func_command(*_FUNC_PARSECMDLINEARGS_LONG_I,0|1));
+tqbs=qbs_new(0,0);
+#line 14366 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -c                   Compile <source file> (show progress in own window)",74));
+#line 14366 "qb64pe.bas"
+if (is_error_pending()) goto skip1535;
+#line 14366 "qb64pe.bas"
+makefit(tqbs);
+#line 14366 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14366 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14366 "qb64pe.bas"
+skip1535:
+#line 14366 "qb64pe.bas"
+qbs_free(tqbs);
 #line 14366 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14366 "qb64pe.bas"
 if(!qbevent)break;evnt(14366);}while(r);
 #line 14367 "qb64pe.bas"
-S_16927:;
-#line 14367 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/?",2)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/h",2)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("--help",6)))|(qbs_equal(qbs_lcase(_FUNC_PARSECMDLINEARGS_STRING_TOKEN),qbs_new_txt_len("/help",5)))))||is_error_pending()){
-#line 14367 "qb64pe.bas"
-if(qbevent){evnt(14367);if(r)goto S_16927;}
-#line 14367 "qb64pe.bas"
 do{
 #line 14367 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,qbs_new_txt_len("-?",2));
+tqbs=qbs_new(0,0);
+#line 14367 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -x                   Like -c, but progress goes to console (no own window)",76));
+#line 14367 "qb64pe.bas"
+if (is_error_pending()) goto skip1536;
+#line 14367 "qb64pe.bas"
+makefit(tqbs);
+#line 14367 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14367 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14367 "qb64pe.bas"
+skip1536:
+#line 14367 "qb64pe.bas"
+qbs_free(tqbs);
 #line 14367 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14367 "qb64pe.bas"
 if(!qbevent)break;evnt(14367);}while(r);
-#line 14367 "qb64pe.bas"
-}
 #line 14368 "qb64pe.bas"
-S_16930:;
+do{
 #line 14368 "qb64pe.bas"
-qbs_set(sc_1566,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 2 )));
+tqbs=qbs_new(0,0);
+#line 14368 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -y                   Output (re)formatted <source file> to -o <output file>",77));
+#line 14368 "qb64pe.bas"
+if (is_error_pending()) goto skip1537;
+#line 14368 "qb64pe.bas"
+makefit(tqbs);
+#line 14368 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14368 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14368 "qb64pe.bas"
+skip1537:
+#line 14368 "qb64pe.bas"
+qbs_free(tqbs);
 #line 14368 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14368 "qb64pe.bas"
-if(qbevent){evnt(14368);if(r)goto S_16930;}
+if(!qbevent)break;evnt(14368);}while(r);
 #line 14369 "qb64pe.bas"
-S_16931:;
+do{
 #line 14369 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-?",2))||qbs_equal(sc_1566,qbs_new_txt_len("-h",2))))||is_error_pending()){
+tqbs=qbs_new(0,0);
 #line 14369 "qb64pe.bas"
-if(qbevent){evnt(14369);if(r)goto S_16931;}
+qbs_set(tqbs,qbs_new_txt_len("  -z                   Generate C code from <source file> without compiling",75));
+#line 14369 "qb64pe.bas"
+if (is_error_pending()) goto skip1538;
+#line 14369 "qb64pe.bas"
+makefit(tqbs);
+#line 14369 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14369 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14369 "qb64pe.bas"
+skip1538:
+#line 14369 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14369 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14369 "qb64pe.bas"
+if(!qbevent)break;evnt(14369);}while(r);
 #line 14370 "qb64pe.bas"
 do{
 #line 14370 "qb64pe.bas"
-sub__dest(func__console());
+tqbs=qbs_new(0,0);
+#line 14370 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("                       the executable (C code output goes to internal\\temp)",75));
+#line 14370 "qb64pe.bas"
+if (is_error_pending()) goto skip1539;
+#line 14370 "qb64pe.bas"
+makefit(tqbs);
+#line 14370 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14370 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14370 "qb64pe.bas"
+skip1539:
+#line 14370 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14370 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14370 "qb64pe.bas"
 if(!qbevent)break;evnt(14370);}while(r);
-#line 14371 "qb64pe.bas"
-S_16933:;
-#line 14371 "qb64pe.bas"
-if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
-#line 14371 "qb64pe.bas"
-if(qbevent){evnt(14371);if(r)goto S_16933;}
-#line 14371 "qb64pe.bas"
-do{
-#line 14371 "qb64pe.bas"
-*__BYTE_QB64VERSIONPRINTED= -1ll ;
-#line 14371 "qb64pe.bas"
-if(!qbevent)break;evnt(14371);}while(r);
 #line 14371 "qb64pe.bas"
 do{
 #line 14371 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14371 "qb64pe.bas"
-qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
+qbs_set(tqbs,qbs_new_txt_len("                         - may be used to quickly check for syntax errors",73));
 #line 14371 "qb64pe.bas"
-if (is_error_pending()) goto skip1567;
+if (is_error_pending()) goto skip1540;
 #line 14371 "qb64pe.bas"
 makefit(tqbs);
 #line 14371 "qb64pe.bas"
@@ -145,15 +635,13 @@ qbs_print(tqbs,0);
 #line 14371 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14371 "qb64pe.bas"
-skip1567:
+skip1540:
 #line 14371 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14371 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14371 "qb64pe.bas"
 if(!qbevent)break;evnt(14371);}while(r);
-#line 14371 "qb64pe.bas"
-}
 #line 14372 "qb64pe.bas"
 do{
 #line 14372 "qb64pe.bas"
@@ -161,7 +649,7 @@ tqbs=qbs_new(0,0);
 #line 14372 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14372 "qb64pe.bas"
-skip1568:
+skip1541:
 #line 14372 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14372 "qb64pe.bas"
@@ -173,9 +661,9 @@ do{
 #line 14373 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14373 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("USAGE: qb64pe [options] <source file> [-o <output file>]",56));
+qbs_set(tqbs,qbs_new_txt_len("Extended Compiler Options:",26));
 #line 14373 "qb64pe.bas"
-if (is_error_pending()) goto skip1569;
+if (is_error_pending()) goto skip1542;
 #line 14373 "qb64pe.bas"
 makefit(tqbs);
 #line 14373 "qb64pe.bas"
@@ -183,7 +671,7 @@ qbs_print(tqbs,0);
 #line 14373 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14373 "qb64pe.bas"
-skip1569:
+skip1542:
 #line 14373 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14373 "qb64pe.bas"
@@ -195,9 +683,17 @@ do{
 #line 14374 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14374 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -p                   Purge all pre-compiled content first",59));
+#line 14374 "qb64pe.bas"
+if (is_error_pending()) goto skip1543;
+#line 14374 "qb64pe.bas"
+makefit(tqbs);
+#line 14374 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14374 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14374 "qb64pe.bas"
-skip1570:
+skip1543:
 #line 14374 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14374 "qb64pe.bas"
@@ -209,9 +705,9 @@ do{
 #line 14375 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14375 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Info Options (no files required):",33));
+qbs_set(tqbs,qbs_new_txt_len("  -e                   Enforce variable declaration even if no OPTION _EXPLICIT",79));
 #line 14375 "qb64pe.bas"
-if (is_error_pending()) goto skip1571;
+if (is_error_pending()) goto skip1544;
 #line 14375 "qb64pe.bas"
 makefit(tqbs);
 #line 14375 "qb64pe.bas"
@@ -219,7 +715,7 @@ qbs_print(tqbs,0);
 #line 14375 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14375 "qb64pe.bas"
-skip1571:
+skip1544:
 #line 14375 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14375 "qb64pe.bas"
@@ -231,9 +727,9 @@ do{
 #line 14376 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14376 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -?, -h, --help       Show this help text",42));
+qbs_set(tqbs,qbs_new_txt_len("                       was used in the <source file>",52));
 #line 14376 "qb64pe.bas"
-if (is_error_pending()) goto skip1572;
+if (is_error_pending()) goto skip1545;
 #line 14376 "qb64pe.bas"
 makefit(tqbs);
 #line 14376 "qb64pe.bas"
@@ -241,7 +737,7 @@ qbs_print(tqbs,0);
 #line 14376 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14376 "qb64pe.bas"
-skip1572:
+skip1545:
 #line 14376 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14376 "qb64pe.bas"
@@ -253,9 +749,9 @@ do{
 #line 14377 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14377 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -v                   Show version information",47));
+qbs_set(tqbs,qbs_new_txt_len("                         - per compilation, doesn't change the <source file>",76));
 #line 14377 "qb64pe.bas"
-if (is_error_pending()) goto skip1573;
+if (is_error_pending()) goto skip1546;
 #line 14377 "qb64pe.bas"
 makefit(tqbs);
 #line 14377 "qb64pe.bas"
@@ -263,7 +759,7 @@ qbs_print(tqbs,0);
 #line 14377 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14377 "qb64pe.bas"
-skip1573:
+skip1546:
 #line 14377 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14377 "qb64pe.bas"
@@ -275,9 +771,17 @@ do{
 #line 14378 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14378 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("  -s[:setting=value]   View and/or edit & save compiler settings permanently",76));
+#line 14378 "qb64pe.bas"
+if (is_error_pending()) goto skip1547;
+#line 14378 "qb64pe.bas"
+makefit(tqbs);
+#line 14378 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14378 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14378 "qb64pe.bas"
-skip1574:
+skip1547:
 #line 14378 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14378 "qb64pe.bas"
@@ -289,17 +793,9 @@ do{
 #line 14379 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14379 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("File specifications:",20));
-#line 14379 "qb64pe.bas"
-if (is_error_pending()) goto skip1575;
-#line 14379 "qb64pe.bas"
-makefit(tqbs);
-#line 14379 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14379 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14379 "qb64pe.bas"
-skip1575:
+skip1548:
 #line 14379 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14379 "qb64pe.bas"
@@ -311,9 +807,9 @@ do{
 #line 14380 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14380 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  <source file>        Source file to load into IDE, to format or compile",73));
+qbs_set(tqbs,qbs_new_txt_len("Temporary Compiler Options:",27));
 #line 14380 "qb64pe.bas"
-if (is_error_pending()) goto skip1576;
+if (is_error_pending()) goto skip1549;
 #line 14380 "qb64pe.bas"
 makefit(tqbs);
 #line 14380 "qb64pe.bas"
@@ -321,7 +817,7 @@ qbs_print(tqbs,0);
 #line 14380 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14380 "qb64pe.bas"
-skip1576:
+skip1549:
 #line 14380 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14380 "qb64pe.bas"
@@ -333,9 +829,9 @@ do{
 #line 14381 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14381 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -o <output file>     Write result to <output file>",52));
+qbs_set(tqbs,qbs_new_txt_len("  -f[:setting=value]   Compiler and/or formatting settings to use",65));
 #line 14381 "qb64pe.bas"
-if (is_error_pending()) goto skip1577;
+if (is_error_pending()) goto skip1550;
 #line 14381 "qb64pe.bas"
 makefit(tqbs);
 #line 14381 "qb64pe.bas"
@@ -343,7 +839,7 @@ qbs_print(tqbs,0);
 #line 14381 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14381 "qb64pe.bas"
-skip1577:
+skip1550:
 #line 14381 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14381 "qb64pe.bas"
@@ -355,9 +851,9 @@ do{
 #line 14382 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14382 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                         - optionally override the default executable name",74));
+qbs_set(tqbs,qbs_new_txt_len("                         - per compilation, doesn't change global defaults",74));
 #line 14382 "qb64pe.bas"
-if (is_error_pending()) goto skip1578;
+if (is_error_pending()) goto skip1551;
 #line 14382 "qb64pe.bas"
 makefit(tqbs);
 #line 14382 "qb64pe.bas"
@@ -365,7 +861,7 @@ qbs_print(tqbs,0);
 #line 14382 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14382 "qb64pe.bas"
-skip1578:
+skip1551:
 #line 14382 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14382 "qb64pe.bas"
@@ -377,17 +873,9 @@ do{
 #line 14383 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14383 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                         - is mandatory for code formatting (-y option)",71));
-#line 14383 "qb64pe.bas"
-if (is_error_pending()) goto skip1579;
-#line 14383 "qb64pe.bas"
-makefit(tqbs);
-#line 14383 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14383 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14383 "qb64pe.bas"
-skip1579:
+skip1552:
 #line 14383 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14383 "qb64pe.bas"
@@ -399,9 +887,17 @@ do{
 #line 14384 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14384 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("Reporting Options:",18));
+#line 14384 "qb64pe.bas"
+if (is_error_pending()) goto skip1553;
+#line 14384 "qb64pe.bas"
+makefit(tqbs);
+#line 14384 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14384 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14384 "qb64pe.bas"
-skip1580:
+skip1553:
 #line 14384 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14384 "qb64pe.bas"
@@ -413,9 +909,9 @@ do{
 #line 14385 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14385 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("IDE Options:",12));
+qbs_set(tqbs,qbs_new_txt_len("  -w                   Show warnings (such as unused variables etc.)",68));
 #line 14385 "qb64pe.bas"
-if (is_error_pending()) goto skip1581;
+if (is_error_pending()) goto skip1554;
 #line 14385 "qb64pe.bas"
 makefit(tqbs);
 #line 14385 "qb64pe.bas"
@@ -423,7 +919,7 @@ qbs_print(tqbs,0);
 #line 14385 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14385 "qb64pe.bas"
-skip1581:
+skip1554:
 #line 14385 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14385 "qb64pe.bas"
@@ -435,9 +931,9 @@ do{
 #line 14386 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14386 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -l:<line number>     Load <source file> into the IDE and move cursor to",73));
+qbs_set(tqbs,qbs_new_txt_len("  -q                   Quiet mode (no progress, but warnings/errors, if any)",76));
 #line 14386 "qb64pe.bas"
-if (is_error_pending()) goto skip1582;
+if (is_error_pending()) goto skip1555;
 #line 14386 "qb64pe.bas"
 makefit(tqbs);
 #line 14386 "qb64pe.bas"
@@ -445,7 +941,7 @@ qbs_print(tqbs,0);
 #line 14386 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14386 "qb64pe.bas"
-skip1582:
+skip1555:
 #line 14386 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14386 "qb64pe.bas"
@@ -457,9 +953,9 @@ do{
 #line 14387 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14387 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                       the given <line number>, if possible",59));
+qbs_set(tqbs,qbs_new_txt_len("  -m                   Do not colorize compiler outputs (monochrome mode)",73));
 #line 14387 "qb64pe.bas"
-if (is_error_pending()) goto skip1583;
+if (is_error_pending()) goto skip1556;
 #line 14387 "qb64pe.bas"
 makefit(tqbs);
 #line 14387 "qb64pe.bas"
@@ -467,7 +963,7 @@ qbs_print(tqbs,0);
 #line 14387 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14387 "qb64pe.bas"
-skip1583:
+skip1556:
 #line 14387 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14387 "qb64pe.bas"
@@ -481,7 +977,7 @@ tqbs=qbs_new(0,0);
 #line 14388 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14388 "qb64pe.bas"
-skip1584:
+skip1557:
 #line 14388 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14388 "qb64pe.bas"
@@ -493,9 +989,9 @@ do{
 #line 14389 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14389 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Compiler Options (no IDE):",26));
+qbs_set(tqbs,qbs_new_txt_len("     ----------------------------------------------------------------------",75));
 #line 14389 "qb64pe.bas"
-if (is_error_pending()) goto skip1585;
+if (is_error_pending()) goto skip1558;
 #line 14389 "qb64pe.bas"
 makefit(tqbs);
 #line 14389 "qb64pe.bas"
@@ -503,7 +999,7 @@ qbs_print(tqbs,0);
 #line 14389 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14389 "qb64pe.bas"
-skip1585:
+skip1558:
 #line 14389 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14389 "qb64pe.bas"
@@ -515,17 +1011,9 @@ do{
 #line 14390 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14390 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -c                   Compile <source file> (show progress in own window)",74));
-#line 14390 "qb64pe.bas"
-if (is_error_pending()) goto skip1586;
-#line 14390 "qb64pe.bas"
-makefit(tqbs);
-#line 14390 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14390 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14390 "qb64pe.bas"
-skip1586:
+skip1559:
 #line 14390 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14390 "qb64pe.bas"
@@ -535,23 +1023,7 @@ if(!qbevent)break;evnt(14390);}while(r);
 #line 14391 "qb64pe.bas"
 do{
 #line 14391 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14391 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -x                   Like -c, but progress goes to console (no own window)",76));
-#line 14391 "qb64pe.bas"
-if (is_error_pending()) goto skip1587;
-#line 14391 "qb64pe.bas"
-makefit(tqbs);
-#line 14391 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14391 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14391 "qb64pe.bas"
-skip1587:
-#line 14391 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14391 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+SUB_CMDLINESETTINGSHELP();
 #line 14391 "qb64pe.bas"
 if(!qbevent)break;evnt(14391);}while(r);
 #line 14392 "qb64pe.bas"
@@ -559,17 +1031,9 @@ do{
 #line 14392 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14392 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -y                   Output (re)formatted <source file> to -o <output file>",77));
-#line 14392 "qb64pe.bas"
-if (is_error_pending()) goto skip1588;
-#line 14392 "qb64pe.bas"
-makefit(tqbs);
-#line 14392 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14392 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14392 "qb64pe.bas"
-skip1588:
+skip1560:
 #line 14392 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14392 "qb64pe.bas"
@@ -581,9 +1045,9 @@ do{
 #line 14393 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14393 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -z                   Generate C code from <source file> without compiling",75));
+qbs_set(tqbs,qbs_new_txt_len("     ----------------------------------------------------------------------",75));
 #line 14393 "qb64pe.bas"
-if (is_error_pending()) goto skip1589;
+if (is_error_pending()) goto skip1561;
 #line 14393 "qb64pe.bas"
 makefit(tqbs);
 #line 14393 "qb64pe.bas"
@@ -591,7 +1055,7 @@ qbs_print(tqbs,0);
 #line 14393 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14393 "qb64pe.bas"
-skip1589:
+skip1561:
 #line 14393 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14393 "qb64pe.bas"
@@ -603,17 +1067,9 @@ do{
 #line 14394 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14394 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                       the executable (C code output goes to internal\\temp)",75));
-#line 14394 "qb64pe.bas"
-if (is_error_pending()) goto skip1590;
-#line 14394 "qb64pe.bas"
-makefit(tqbs);
-#line 14394 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14394 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14394 "qb64pe.bas"
-skip1590:
+skip1562:
 #line 14394 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14394 "qb64pe.bas"
@@ -623,113 +1079,57 @@ if(!qbevent)break;evnt(14394);}while(r);
 #line 14395 "qb64pe.bas"
 do{
 #line 14395 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14395 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                         - may be used to quickly check for syntax errors",73));
-#line 14395 "qb64pe.bas"
-if (is_error_pending()) goto skip1591;
-#line 14395 "qb64pe.bas"
-makefit(tqbs);
-#line 14395 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14395 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14395 "qb64pe.bas"
-skip1591:
-#line 14395 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14395 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+SUB_CMDLINETEMPORARYSETTINGSHELP();
 #line 14395 "qb64pe.bas"
 if(!qbevent)break;evnt(14395);}while(r);
 #line 14396 "qb64pe.bas"
 do{
 #line 14396 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+if (sub_gl_called) error(271);
 #line 14396 "qb64pe.bas"
-qbs_print(nothingstring,1);
+close_program=1;
 #line 14396 "qb64pe.bas"
-skip1592:
-#line 14396 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14396 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+end();
 #line 14396 "qb64pe.bas"
 if(!qbevent)break;evnt(14396);}while(r);
-#line 14397 "qb64pe.bas"
-do{
-#line 14397 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14397 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Extended Compiler Options:",26));
-#line 14397 "qb64pe.bas"
-if (is_error_pending()) goto skip1593;
-#line 14397 "qb64pe.bas"
-makefit(tqbs);
-#line 14397 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14397 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14397 "qb64pe.bas"
-skip1593:
-#line 14397 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14397 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14397 "qb64pe.bas"
-if(!qbevent)break;evnt(14397);}while(r);
 #line 14398 "qb64pe.bas"
-do{
+sc_ec_46_end:;
 #line 14398 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+goto sc_1515_end;
 #line 14398 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -p                   Purge all pre-compiled content first",59));
+}
 #line 14398 "qb64pe.bas"
-if (is_error_pending()) goto skip1594;
+S_16932:;
 #line 14398 "qb64pe.bas"
-makefit(tqbs);
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-v",2))))||is_error_pending()){
 #line 14398 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14398 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14398 "qb64pe.bas"
-skip1594:
-#line 14398 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14398 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14398 "qb64pe.bas"
-if(!qbevent)break;evnt(14398);}while(r);
+if(qbevent){evnt(14398);if(r)goto S_16932;}
 #line 14399 "qb64pe.bas"
 do{
 #line 14399 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14399 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -e                   Enforce variable declaration even if no OPTION _EXPLICIT",79));
-#line 14399 "qb64pe.bas"
-if (is_error_pending()) goto skip1595;
-#line 14399 "qb64pe.bas"
-makefit(tqbs);
-#line 14399 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14399 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14399 "qb64pe.bas"
-skip1595:
-#line 14399 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14399 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+sub__dest(func__console());
 #line 14399 "qb64pe.bas"
 if(!qbevent)break;evnt(14399);}while(r);
 #line 14400 "qb64pe.bas"
+S_16934:;
+#line 14400 "qb64pe.bas"
+if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
+#line 14400 "qb64pe.bas"
+if(qbevent){evnt(14400);if(r)goto S_16934;}
+#line 14400 "qb64pe.bas"
+do{
+#line 14400 "qb64pe.bas"
+*__BYTE_QB64VERSIONPRINTED= -1ll ;
+#line 14400 "qb64pe.bas"
+if(!qbevent)break;evnt(14400);}while(r);
+#line 14400 "qb64pe.bas"
 do{
 #line 14400 "qb64pe.bas"
 tqbs=qbs_new(0,0);
 #line 14400 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                       was used in the <source file>",52));
+qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
 #line 14400 "qb64pe.bas"
-if (is_error_pending()) goto skip1596;
+if (is_error_pending()) goto skip1563;
 #line 14400 "qb64pe.bas"
 makefit(tqbs);
 #line 14400 "qb64pe.bas"
@@ -737,869 +1137,755 @@ qbs_print(tqbs,0);
 #line 14400 "qb64pe.bas"
 qbs_print(nothingstring,1);
 #line 14400 "qb64pe.bas"
-skip1596:
+skip1563:
 #line 14400 "qb64pe.bas"
 qbs_free(tqbs);
 #line 14400 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14400 "qb64pe.bas"
 if(!qbevent)break;evnt(14400);}while(r);
+#line 14400 "qb64pe.bas"
+}
 #line 14401 "qb64pe.bas"
 do{
 #line 14401 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+if (sub_gl_called) error(271);
 #line 14401 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                         - per compilation, doesn't change the <source file>",76));
+close_program=1;
 #line 14401 "qb64pe.bas"
-if (is_error_pending()) goto skip1597;
-#line 14401 "qb64pe.bas"
-makefit(tqbs);
-#line 14401 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14401 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14401 "qb64pe.bas"
-skip1597:
-#line 14401 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14401 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+end();
 #line 14401 "qb64pe.bas"
 if(!qbevent)break;evnt(14401);}while(r);
-#line 14402 "qb64pe.bas"
-do{
-#line 14402 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14402 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -s[:setting=value]   View and/or edit & save compiler settings permanently",76));
-#line 14402 "qb64pe.bas"
-if (is_error_pending()) goto skip1598;
-#line 14402 "qb64pe.bas"
-makefit(tqbs);
-#line 14402 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14402 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14402 "qb64pe.bas"
-skip1598:
-#line 14402 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14402 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14402 "qb64pe.bas"
-if(!qbevent)break;evnt(14402);}while(r);
 #line 14403 "qb64pe.bas"
-do{
+sc_ec_47_end:;
 #line 14403 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+goto sc_1515_end;
 #line 14403 "qb64pe.bas"
-qbs_print(nothingstring,1);
+}
 #line 14403 "qb64pe.bas"
-skip1599:
+S_16939:;
 #line 14403 "qb64pe.bas"
-qbs_free(tqbs);
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-o",2))))||is_error_pending()){
 #line 14403 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14403 "qb64pe.bas"
-if(!qbevent)break;evnt(14403);}while(r);
+if(qbevent){evnt(14403);if(r)goto S_16939;}
+#line 14404 "qb64pe.bas"
+S_16940:;
+#line 14404 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(((int32)(func_command(*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ,0|1))->len)> 0 )))||is_error_pending()){
+#line 14404 "qb64pe.bas"
+if(qbevent){evnt(14404);if(r)goto S_16940;}
 #line 14404 "qb64pe.bas"
 do{
 #line 14404 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14404 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Temporary Compiler Options:",27));
-#line 14404 "qb64pe.bas"
-if (is_error_pending()) goto skip1600;
-#line 14404 "qb64pe.bas"
-makefit(tqbs);
-#line 14404 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14404 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14404 "qb64pe.bas"
-skip1600:
-#line 14404 "qb64pe.bas"
-qbs_free(tqbs);
+qbs_set(__STRING_CMDLINEOUTFILE,func_command(*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ,0|1));
 #line 14404 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14404 "qb64pe.bas"
 if(!qbevent)break;evnt(14404);}while(r);
+#line 14404 "qb64pe.bas"
+do{
+#line 14404 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_I=*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ;
+#line 14404 "qb64pe.bas"
+if(!qbevent)break;evnt(14404);}while(r);
+#line 14404 "qb64pe.bas"
+}
 #line 14405 "qb64pe.bas"
 do{
 #line 14405 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14405 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -f[:setting=value]   Compiler and/or formatting settings to use",65));
-#line 14405 "qb64pe.bas"
-if (is_error_pending()) goto skip1601;
-#line 14405 "qb64pe.bas"
-makefit(tqbs);
-#line 14405 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14405 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14405 "qb64pe.bas"
-skip1601:
-#line 14405 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14405 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14405 "qb64pe.bas"
 if(!qbevent)break;evnt(14405);}while(r);
-#line 14406 "qb64pe.bas"
-do{
-#line 14406 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14406 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("                         - per compilation, doesn't change global defaults",74));
-#line 14406 "qb64pe.bas"
-if (is_error_pending()) goto skip1602;
-#line 14406 "qb64pe.bas"
-makefit(tqbs);
-#line 14406 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14406 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14406 "qb64pe.bas"
-skip1602:
-#line 14406 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14406 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14406 "qb64pe.bas"
-if(!qbevent)break;evnt(14406);}while(r);
 #line 14407 "qb64pe.bas"
-do{
+sc_ec_48_end:;
 #line 14407 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+goto sc_1515_end;
 #line 14407 "qb64pe.bas"
-qbs_print(nothingstring,1);
+}
 #line 14407 "qb64pe.bas"
-skip1603:
+S_16945:;
 #line 14407 "qb64pe.bas"
-qbs_free(tqbs);
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-l",2))))||is_error_pending()){
 #line 14407 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14407 "qb64pe.bas"
-if(!qbevent)break;evnt(14407);}while(r);
+if(qbevent){evnt(14407);if(r)goto S_16945;}
+#line 14408 "qb64pe.bas"
+S_16946:;
+#line 14408 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 , 1 ,0|1),qbs_new_txt_len(":",1))))||is_error_pending()){
+#line 14408 "qb64pe.bas"
+if(qbevent){evnt(14408);if(r)goto S_16946;}
 #line 14408 "qb64pe.bas"
 do{
 #line 14408 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14408 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Reporting Options:",18));
-#line 14408 "qb64pe.bas"
-if (is_error_pending()) goto skip1604;
-#line 14408 "qb64pe.bas"
-makefit(tqbs);
-#line 14408 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14408 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14408 "qb64pe.bas"
-skip1604:
-#line 14408 "qb64pe.bas"
-qbs_free(tqbs);
+*__LONG_IDESTARTATLINE=qbr(qbs_val<long double>(func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 4 ,NULL,0)));
 #line 14408 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14408 "qb64pe.bas"
 if(!qbevent)break;evnt(14408);}while(r);
+#line 14408 "qb64pe.bas"
+}
 #line 14409 "qb64pe.bas"
 do{
 #line 14409 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14409 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -w                   Show warnings (such as unused variables etc.)",68));
-#line 14409 "qb64pe.bas"
-if (is_error_pending()) goto skip1605;
-#line 14409 "qb64pe.bas"
-makefit(tqbs);
-#line 14409 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14409 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14409 "qb64pe.bas"
-skip1605:
-#line 14409 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14409 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14409 "qb64pe.bas"
 if(!qbevent)break;evnt(14409);}while(r);
-#line 14410 "qb64pe.bas"
-do{
-#line 14410 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14410 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -q                   Quiet mode (no progress, but warnings/errors, if any)",76));
-#line 14410 "qb64pe.bas"
-if (is_error_pending()) goto skip1606;
-#line 14410 "qb64pe.bas"
-makefit(tqbs);
-#line 14410 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14410 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14410 "qb64pe.bas"
-skip1606:
-#line 14410 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14410 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14410 "qb64pe.bas"
-if(!qbevent)break;evnt(14410);}while(r);
 #line 14411 "qb64pe.bas"
-do{
+sc_ec_49_end:;
 #line 14411 "qb64pe.bas"
-tqbs=qbs_new(0,0);
+goto sc_1515_end;
 #line 14411 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("  -m                   Do not colorize compiler outputs (monochrome mode)",73));
+}
 #line 14411 "qb64pe.bas"
-if (is_error_pending()) goto skip1607;
+S_16950:;
 #line 14411 "qb64pe.bas"
-makefit(tqbs);
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-c",2))))||is_error_pending()){
 #line 14411 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14411 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14411 "qb64pe.bas"
-skip1607:
-#line 14411 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14411 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14411 "qb64pe.bas"
-if(!qbevent)break;evnt(14411);}while(r);
+if(qbevent){evnt(14411);if(r)goto S_16950;}
 #line 14412 "qb64pe.bas"
 do{
 #line 14412 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14412 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14412 "qb64pe.bas"
-skip1608:
-#line 14412 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14412 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*__BYTE_NOIDEMODE= -1ll ;
 #line 14412 "qb64pe.bas"
 if(!qbevent)break;evnt(14412);}while(r);
 #line 14413 "qb64pe.bas"
 do{
 #line 14413 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14413 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("     ----------------------------------------------------------------------",75));
-#line 14413 "qb64pe.bas"
-if (is_error_pending()) goto skip1609;
-#line 14413 "qb64pe.bas"
-makefit(tqbs);
-#line 14413 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14413 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14413 "qb64pe.bas"
-skip1609:
-#line 14413 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14413 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14413 "qb64pe.bas"
 if(!qbevent)break;evnt(14413);}while(r);
-#line 14414 "qb64pe.bas"
-do{
-#line 14414 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14414 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14414 "qb64pe.bas"
-skip1610:
-#line 14414 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14414 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14414 "qb64pe.bas"
-if(!qbevent)break;evnt(14414);}while(r);
 #line 14415 "qb64pe.bas"
-do{
+sc_ec_50_end:;
 #line 14415 "qb64pe.bas"
-SUB_CMDLINESETTINGSHELP();
+goto sc_1515_end;
 #line 14415 "qb64pe.bas"
-if(!qbevent)break;evnt(14415);}while(r);
+}
+#line 14415 "qb64pe.bas"
+S_16953:;
+#line 14415 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-x",2))))||is_error_pending()){
+#line 14415 "qb64pe.bas"
+if(qbevent){evnt(14415);if(r)goto S_16953;}
 #line 14416 "qb64pe.bas"
 do{
 #line 14416 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14416 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14416 "qb64pe.bas"
-skip1611:
-#line 14416 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14416 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*__BYTE_CONSOLEMODE= -1ll ;
 #line 14416 "qb64pe.bas"
 if(!qbevent)break;evnt(14416);}while(r);
 #line 14417 "qb64pe.bas"
 do{
 #line 14417 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14417 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("     ----------------------------------------------------------------------",75));
-#line 14417 "qb64pe.bas"
-if (is_error_pending()) goto skip1612;
-#line 14417 "qb64pe.bas"
-makefit(tqbs);
-#line 14417 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14417 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14417 "qb64pe.bas"
-skip1612:
-#line 14417 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14417 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*__BYTE_NOIDEMODE= -1ll ;
 #line 14417 "qb64pe.bas"
 if(!qbevent)break;evnt(14417);}while(r);
 #line 14418 "qb64pe.bas"
 do{
 #line 14418 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14418 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14418 "qb64pe.bas"
-skip1613:
-#line 14418 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14418 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14418 "qb64pe.bas"
 if(!qbevent)break;evnt(14418);}while(r);
-#line 14419 "qb64pe.bas"
-do{
-#line 14419 "qb64pe.bas"
-SUB_CMDLINETEMPORARYSETTINGSHELP();
-#line 14419 "qb64pe.bas"
-if(!qbevent)break;evnt(14419);}while(r);
 #line 14420 "qb64pe.bas"
-do{
+sc_ec_51_end:;
 #line 14420 "qb64pe.bas"
-if (sub_gl_called) error(271);
+goto sc_1515_end;
 #line 14420 "qb64pe.bas"
-close_program=1;
-#line 14420 "qb64pe.bas"
-end();
-#line 14420 "qb64pe.bas"
-if(!qbevent)break;evnt(14420);}while(r);
-#line 14422 "qb64pe.bas"
-sc_ec_46_end:;
-#line 14422 "qb64pe.bas"
-goto sc_1566_end;
-#line 14422 "qb64pe.bas"
 }
+#line 14420 "qb64pe.bas"
+S_16957:;
+#line 14420 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-y",2))))||is_error_pending()){
+#line 14420 "qb64pe.bas"
+if(qbevent){evnt(14420);if(r)goto S_16957;}
+#line 14421 "qb64pe.bas"
+do{
+#line 14421 "qb64pe.bas"
+*__BYTE_FORMATMODE= -1ll ;
+#line 14421 "qb64pe.bas"
+if(!qbevent)break;evnt(14421);}while(r);
 #line 14422 "qb64pe.bas"
-S_16986:;
+do{
 #line 14422 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-v",2))))||is_error_pending()){
+*__BYTE_CONSOLEMODE= -1ll ;
 #line 14422 "qb64pe.bas"
-if(qbevent){evnt(14422);if(r)goto S_16986;}
+if(!qbevent)break;evnt(14422);}while(r);
 #line 14423 "qb64pe.bas"
 do{
 #line 14423 "qb64pe.bas"
-sub__dest(func__console());
+*__BYTE_NOIDEMODE= -1ll ;
 #line 14423 "qb64pe.bas"
 if(!qbevent)break;evnt(14423);}while(r);
 #line 14424 "qb64pe.bas"
-S_16988:;
-#line 14424 "qb64pe.bas"
-if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
-#line 14424 "qb64pe.bas"
-if(qbevent){evnt(14424);if(r)goto S_16988;}
-#line 14424 "qb64pe.bas"
 do{
 #line 14424 "qb64pe.bas"
-*__BYTE_QB64VERSIONPRINTED= -1ll ;
+*__BYTE_QUIETMODE= -1ll ;
 #line 14424 "qb64pe.bas"
 if(!qbevent)break;evnt(14424);}while(r);
-#line 14424 "qb64pe.bas"
-do{
-#line 14424 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14424 "qb64pe.bas"
-qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
-#line 14424 "qb64pe.bas"
-if (is_error_pending()) goto skip1614;
-#line 14424 "qb64pe.bas"
-makefit(tqbs);
-#line 14424 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14424 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14424 "qb64pe.bas"
-skip1614:
-#line 14424 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14424 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14424 "qb64pe.bas"
-if(!qbevent)break;evnt(14424);}while(r);
-#line 14424 "qb64pe.bas"
-}
 #line 14425 "qb64pe.bas"
 do{
 #line 14425 "qb64pe.bas"
-if (sub_gl_called) error(271);
-#line 14425 "qb64pe.bas"
-close_program=1;
-#line 14425 "qb64pe.bas"
-end();
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14425 "qb64pe.bas"
 if(!qbevent)break;evnt(14425);}while(r);
 #line 14427 "qb64pe.bas"
-sc_ec_47_end:;
+sc_ec_52_end:;
 #line 14427 "qb64pe.bas"
-goto sc_1566_end;
+goto sc_1515_end;
 #line 14427 "qb64pe.bas"
 }
 #line 14427 "qb64pe.bas"
-S_16993:;
+S_16963:;
 #line 14427 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-o",2))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-z",2))))||is_error_pending()){
 #line 14427 "qb64pe.bas"
-if(qbevent){evnt(14427);if(r)goto S_16993;}
-#line 14428 "qb64pe.bas"
-S_16994:;
-#line 14428 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(((int32)(func_command(*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ,0|1))->len)> 0 )))||is_error_pending()){
-#line 14428 "qb64pe.bas"
-if(qbevent){evnt(14428);if(r)goto S_16994;}
+if(qbevent){evnt(14427);if(r)goto S_16963;}
 #line 14428 "qb64pe.bas"
 do{
 #line 14428 "qb64pe.bas"
-qbs_set(__STRING_CMDLINEOUTFILE,func_command(*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ,0|1));
-#line 14428 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*__BYTE_NOCCOMPILEMODE= -1ll ;
 #line 14428 "qb64pe.bas"
 if(!qbevent)break;evnt(14428);}while(r);
-#line 14428 "qb64pe.bas"
-do{
-#line 14428 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_I=*_FUNC_PARSECMDLINEARGS_LONG_I+ 1 ;
-#line 14428 "qb64pe.bas"
-if(!qbevent)break;evnt(14428);}while(r);
-#line 14428 "qb64pe.bas"
-}
 #line 14429 "qb64pe.bas"
 do{
 #line 14429 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+*__BYTE_CONSOLEMODE= -1ll ;
 #line 14429 "qb64pe.bas"
 if(!qbevent)break;evnt(14429);}while(r);
-#line 14431 "qb64pe.bas"
-sc_ec_48_end:;
-#line 14431 "qb64pe.bas"
-goto sc_1566_end;
-#line 14431 "qb64pe.bas"
-}
-#line 14431 "qb64pe.bas"
-S_16999:;
-#line 14431 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-l",2))))||is_error_pending()){
-#line 14431 "qb64pe.bas"
-if(qbevent){evnt(14431);if(r)goto S_16999;}
-#line 14432 "qb64pe.bas"
-S_17000:;
-#line 14432 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 , 1 ,0|1),qbs_new_txt_len(":",1))))||is_error_pending()){
-#line 14432 "qb64pe.bas"
-if(qbevent){evnt(14432);if(r)goto S_17000;}
-#line 14432 "qb64pe.bas"
+#line 14430 "qb64pe.bas"
 do{
-#line 14432 "qb64pe.bas"
-*__LONG_IDESTARTATLINE=qbr(qbs_val<long double>(func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 4 ,NULL,0)));
-#line 14432 "qb64pe.bas"
+#line 14430 "qb64pe.bas"
+*__BYTE_NOIDEMODE= -1ll ;
+#line 14430 "qb64pe.bas"
+if(!qbevent)break;evnt(14430);}while(r);
+#line 14431 "qb64pe.bas"
+do{
+#line 14431 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+#line 14431 "qb64pe.bas"
+if(!qbevent)break;evnt(14431);}while(r);
+#line 14433 "qb64pe.bas"
+sc_ec_53_end:;
+#line 14433 "qb64pe.bas"
+goto sc_1515_end;
+#line 14433 "qb64pe.bas"
+}
+#line 14433 "qb64pe.bas"
+S_16968:;
+#line 14433 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-p",2))))||is_error_pending()){
+#line 14433 "qb64pe.bas"
+if(qbevent){evnt(14433);if(r)goto S_16968;}
+#line 14434 "qb64pe.bas"
+do{
+#line 14434 "qb64pe.bas"
+SUB_PURGETEMPORARYBUILDFILES(__STRING_OS,&(pass1564=*__LONG_MACOSX));
+#line 14434 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14432 "qb64pe.bas"
-if(!qbevent)break;evnt(14432);}while(r);
-#line 14432 "qb64pe.bas"
-}
-#line 14433 "qb64pe.bas"
+#line 14434 "qb64pe.bas"
+if(!qbevent)break;evnt(14434);}while(r);
+#line 14435 "qb64pe.bas"
 do{
-#line 14433 "qb64pe.bas"
+#line 14435 "qb64pe.bas"
 *_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
-#line 14433 "qb64pe.bas"
-if(!qbevent)break;evnt(14433);}while(r);
 #line 14435 "qb64pe.bas"
-sc_ec_49_end:;
-#line 14435 "qb64pe.bas"
-goto sc_1566_end;
-#line 14435 "qb64pe.bas"
+if(!qbevent)break;evnt(14435);}while(r);
+#line 14437 "qb64pe.bas"
+sc_ec_54_end:;
+#line 14437 "qb64pe.bas"
+goto sc_1515_end;
+#line 14437 "qb64pe.bas"
 }
-#line 14435 "qb64pe.bas"
-S_17004:;
-#line 14435 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-c",2))))||is_error_pending()){
-#line 14435 "qb64pe.bas"
-if(qbevent){evnt(14435);if(r)goto S_17004;}
-#line 14436 "qb64pe.bas"
-do{
-#line 14436 "qb64pe.bas"
-*__BYTE_NOIDEMODE= -1ll ;
-#line 14436 "qb64pe.bas"
-if(!qbevent)break;evnt(14436);}while(r);
 #line 14437 "qb64pe.bas"
-do{
+S_16971:;
 #line 14437 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-e",2))))||is_error_pending()){
+#line 14437 "qb64pe.bas"
+if(qbevent){evnt(14437);if(r)goto S_16971;}
+#line 14438 "qb64pe.bas"
+do{
+#line 14438 "qb64pe.bas"
+*__BYTE_FORCEOPTEXPL= -1ll ;
+#line 14438 "qb64pe.bas"
+if(!qbevent)break;evnt(14438);}while(r);
+#line 14439 "qb64pe.bas"
+do{
+#line 14439 "qb64pe.bas"
 *_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
-#line 14437 "qb64pe.bas"
-if(!qbevent)break;evnt(14437);}while(r);
 #line 14439 "qb64pe.bas"
-sc_ec_50_end:;
-#line 14439 "qb64pe.bas"
-goto sc_1566_end;
-#line 14439 "qb64pe.bas"
+if(!qbevent)break;evnt(14439);}while(r);
+#line 14441 "qb64pe.bas"
+sc_ec_55_end:;
+#line 14441 "qb64pe.bas"
+goto sc_1515_end;
+#line 14441 "qb64pe.bas"
 }
-#line 14439 "qb64pe.bas"
-S_17007:;
-#line 14439 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-x",2))))||is_error_pending()){
-#line 14439 "qb64pe.bas"
-if(qbevent){evnt(14439);if(r)goto S_17007;}
-#line 14440 "qb64pe.bas"
-do{
-#line 14440 "qb64pe.bas"
-*__BYTE_CONSOLEMODE= -1ll ;
-#line 14440 "qb64pe.bas"
-if(!qbevent)break;evnt(14440);}while(r);
 #line 14441 "qb64pe.bas"
-do{
+S_16974:;
 #line 14441 "qb64pe.bas"
-*__BYTE_NOIDEMODE= -1ll ;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-s",2))))||is_error_pending()){
 #line 14441 "qb64pe.bas"
-if(!qbevent)break;evnt(14441);}while(r);
+if(qbevent){evnt(14441);if(r)goto S_16974;}
 #line 14442 "qb64pe.bas"
 do{
 #line 14442 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE= -1ll ;
 #line 14442 "qb64pe.bas"
 if(!qbevent)break;evnt(14442);}while(r);
+#line 14443 "qb64pe.bas"
+do{
+#line 14443 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_SETTING,func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 ,NULL,0));
+#line 14443 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14443 "qb64pe.bas"
+if(!qbevent)break;evnt(14443);}while(r);
 #line 14444 "qb64pe.bas"
-sc_ec_51_end:;
+do{
 #line 14444 "qb64pe.bas"
-goto sc_1566_end;
+sub__dest(func__console());
 #line 14444 "qb64pe.bas"
-}
-#line 14444 "qb64pe.bas"
-S_17011:;
-#line 14444 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-y",2))))||is_error_pending()){
-#line 14444 "qb64pe.bas"
-if(qbevent){evnt(14444);if(r)goto S_17011;}
+if(!qbevent)break;evnt(14444);}while(r);
+#line 14445 "qb64pe.bas"
+S_16978:;
+#line 14445 "qb64pe.bas"
+if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
+#line 14445 "qb64pe.bas"
+if(qbevent){evnt(14445);if(r)goto S_16978;}
 #line 14445 "qb64pe.bas"
 do{
 #line 14445 "qb64pe.bas"
-*__BYTE_FORMATMODE= -1ll ;
+*__BYTE_QB64VERSIONPRINTED= -1ll ;
 #line 14445 "qb64pe.bas"
 if(!qbevent)break;evnt(14445);}while(r);
-#line 14446 "qb64pe.bas"
+#line 14445 "qb64pe.bas"
 do{
-#line 14446 "qb64pe.bas"
-*__BYTE_CONSOLEMODE= -1ll ;
-#line 14446 "qb64pe.bas"
-if(!qbevent)break;evnt(14446);}while(r);
+#line 14445 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14445 "qb64pe.bas"
+qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
+#line 14445 "qb64pe.bas"
+if (is_error_pending()) goto skip1565;
+#line 14445 "qb64pe.bas"
+makefit(tqbs);
+#line 14445 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14445 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14445 "qb64pe.bas"
+skip1565:
+#line 14445 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14445 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14445 "qb64pe.bas"
+if(!qbevent)break;evnt(14445);}while(r);
+#line 14445 "qb64pe.bas"
+do{
+#line 14445 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14445 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14445 "qb64pe.bas"
+skip1566:
+#line 14445 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14445 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14445 "qb64pe.bas"
+if(!qbevent)break;evnt(14445);}while(r);
+#line 14445 "qb64pe.bas"
+}
 #line 14447 "qb64pe.bas"
 do{
 #line 14447 "qb64pe.bas"
-*__BYTE_NOIDEMODE= -1ll ;
+*_FUNC_PARSECMDLINEARGS_LONG_DELIM=func_instr(NULL,_FUNC_PARSECMDLINEARGS_STRING_SETTING,qbs_new_txt_len("=",1),0);
+#line 14447 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14447 "qb64pe.bas"
+if(!qbevent)break;evnt(14447);}while(r);
+#line 14447 "qb64pe.bas"
+do{
+#line 14447 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_EOS= 0 ;
 #line 14447 "qb64pe.bas"
 if(!qbevent)break;evnt(14447);}while(r);
 #line 14448 "qb64pe.bas"
+S_16985:;
+#line 14448 "qb64pe.bas"
+if ((-(*_FUNC_PARSECMDLINEARGS_LONG_DELIM== 0 ))||is_error_pending()){
+#line 14448 "qb64pe.bas"
+if(qbevent){evnt(14448);if(r)goto S_16985;}
+#line 14448 "qb64pe.bas"
 do{
 #line 14448 "qb64pe.bas"
-*__BYTE_QUIETMODE= -1ll ;
+*_FUNC_PARSECMDLINEARGS_LONG_DELIM=_FUNC_PARSECMDLINEARGS_STRING_SETTING->len+ 1 ;
+#line 14448 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14448 "qb64pe.bas"
 if(!qbevent)break;evnt(14448);}while(r);
-#line 14449 "qb64pe.bas"
+#line 14448 "qb64pe.bas"
 do{
-#line 14449 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
-#line 14449 "qb64pe.bas"
-if(!qbevent)break;evnt(14449);}while(r);
-#line 14451 "qb64pe.bas"
-sc_ec_52_end:;
-#line 14451 "qb64pe.bas"
-goto sc_1566_end;
-#line 14451 "qb64pe.bas"
+#line 14448 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_EOS= -1 ;
+#line 14448 "qb64pe.bas"
+if(!qbevent)break;evnt(14448);}while(r);
+#line 14448 "qb64pe.bas"
 }
+#line 14449 "qb64pe.bas"
+S_16989:;
+#line 14449 "qb64pe.bas"
+qbs_set(sc_1568,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_SETTING,*_FUNC_PARSECMDLINEARGS_LONG_DELIM- 1 )));
+#line 14449 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14449 "qb64pe.bas"
+if(qbevent){evnt(14449);if(r)goto S_16989;}
+#line 14450 "qb64pe.bas"
+S_16990:;
+#line 14450 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1568,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 14450 "qb64pe.bas"
+if(qbevent){evnt(14450);if(r)goto S_16990;}
 #line 14451 "qb64pe.bas"
-S_17017:;
+do{
 #line 14451 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-z",2))))||is_error_pending()){
+tqbs=qbs_new(0,0);
 #line 14451 "qb64pe.bas"
-if(qbevent){evnt(14451);if(r)goto S_17017;}
+qbs_set(tqbs,qbs_new_txt_len("DebugInfo     = ",16));
+#line 14451 "qb64pe.bas"
+if (is_error_pending()) goto skip1569;
+#line 14451 "qb64pe.bas"
+makefit(tqbs);
+#line 14451 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14451 "qb64pe.bas"
+qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
+#line 14451 "qb64pe.bas"
+if (is_error_pending()) goto skip1569;
+#line 14451 "qb64pe.bas"
+makefit(tqbs);
+#line 14451 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14451 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14451 "qb64pe.bas"
+skip1569:
+#line 14451 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14451 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14451 "qb64pe.bas"
+if(!qbevent)break;evnt(14451);}while(r);
 #line 14452 "qb64pe.bas"
 do{
 #line 14452 "qb64pe.bas"
-*__BYTE_NOCCOMPILEMODE= -1ll ;
+tqbs=qbs_new(0,0);
+#line 14452 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("ExeWithSource = ",16));
+#line 14452 "qb64pe.bas"
+if (is_error_pending()) goto skip1570;
+#line 14452 "qb64pe.bas"
+makefit(tqbs);
+#line 14452 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14452 "qb64pe.bas"
+qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_SAVEEXEWITHSOURCE));
+#line 14452 "qb64pe.bas"
+if (is_error_pending()) goto skip1570;
+#line 14452 "qb64pe.bas"
+makefit(tqbs);
+#line 14452 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14452 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14452 "qb64pe.bas"
+skip1570:
+#line 14452 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14452 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14452 "qb64pe.bas"
 if(!qbevent)break;evnt(14452);}while(r);
 #line 14453 "qb64pe.bas"
 do{
 #line 14453 "qb64pe.bas"
-*__BYTE_CONSOLEMODE= -1ll ;
+tqbs=qbs_new(0,0);
+#line 14453 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("ExeDefaultDir = ",16));
+#line 14453 "qb64pe.bas"
+if (is_error_pending()) goto skip1571;
+#line 14453 "qb64pe.bas"
+makefit(tqbs);
+#line 14453 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14453 "qb64pe.bas"
+qbs_set(tqbs,((__STRING_DEFAULTEXESAVEFOLDER->len)?(__STRING_DEFAULTEXESAVEFOLDER):(qbs_new_txt_len("unset (= qb64pe folder)",23))));
+#line 14453 "qb64pe.bas"
+if (is_error_pending()) goto skip1571;
+#line 14453 "qb64pe.bas"
+makefit(tqbs);
+#line 14453 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14453 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14453 "qb64pe.bas"
+skip1571:
+#line 14453 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14453 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14453 "qb64pe.bas"
 if(!qbevent)break;evnt(14453);}while(r);
 #line 14454 "qb64pe.bas"
 do{
 #line 14454 "qb64pe.bas"
-*__BYTE_NOIDEMODE= -1ll ;
+if (sub_gl_called) error(271);
+#line 14454 "qb64pe.bas"
+close_program=1;
+#line 14454 "qb64pe.bas"
+end();
 #line 14454 "qb64pe.bas"
 if(!qbevent)break;evnt(14454);}while(r);
 #line 14455 "qb64pe.bas"
+sc_ec_56_end:;
+#line 14455 "qb64pe.bas"
+goto sc_1568_end;
+#line 14455 "qb64pe.bas"
+}
+#line 14455 "qb64pe.bas"
+S_16995:;
+#line 14455 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1568,qbs_new_txt_len(":",1))))||is_error_pending()){
+#line 14455 "qb64pe.bas"
+if(qbevent){evnt(14455);if(r)goto S_16995;}
+#line 14456 "qb64pe.bas"
 do{
-#line 14455 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
-#line 14455 "qb64pe.bas"
-if(!qbevent)break;evnt(14455);}while(r);
+#line 14456 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Missing setting specification: ",31),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1573= 0 ),&(pass1574= 0 ));
+#line 14456 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14456 "qb64pe.bas"
+if(!qbevent)break;evnt(14456);}while(r);
 #line 14457 "qb64pe.bas"
-sc_ec_53_end:;
+sc_ec_57_end:;
 #line 14457 "qb64pe.bas"
-goto sc_1566_end;
+goto sc_1568_end;
 #line 14457 "qb64pe.bas"
 }
 #line 14457 "qb64pe.bas"
-S_17022:;
+S_16997:;
 #line 14457 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-p",2))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1568,qbs_new_txt_len(":debuginfo",10))))||is_error_pending()){
 #line 14457 "qb64pe.bas"
-if(qbevent){evnt(14457);if(r)goto S_17022;}
+if(qbevent){evnt(14457);if(r)goto S_16997;}
 #line 14458 "qb64pe.bas"
+S_16998:;
+#line 14458 "qb64pe.bas"
+if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
+#line 14458 "qb64pe.bas"
+if(qbevent){evnt(14458);if(r)goto S_16998;}
+#line 14459 "qb64pe.bas"
+S_16999:;
+#line 14459 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_INCLUDEDEBUGINFO))))||is_error_pending()){
+#line 14459 "qb64pe.bas"
+if(qbevent){evnt(14459);if(r)goto S_16999;}
+#line 14459 "qb64pe.bas"
 do{
-#line 14458 "qb64pe.bas"
-SUB_PURGETEMPORARYBUILDFILES(__STRING_OS,&(pass1615=*__LONG_MACOSX));
-#line 14458 "qb64pe.bas"
+#line 14459 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1575= 1 ),&(pass1576= 0 ));
+#line 14459 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14458 "qb64pe.bas"
-if(!qbevent)break;evnt(14458);}while(r);
-#line 14459 "qb64pe.bas"
-do{
-#line 14459 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14459 "qb64pe.bas"
 if(!qbevent)break;evnt(14459);}while(r);
-#line 14461 "qb64pe.bas"
-sc_ec_54_end:;
-#line 14461 "qb64pe.bas"
-goto sc_1566_end;
-#line 14461 "qb64pe.bas"
+#line 14459 "qb64pe.bas"
 }
-#line 14461 "qb64pe.bas"
-S_17025:;
-#line 14461 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-e",2))))||is_error_pending()){
-#line 14461 "qb64pe.bas"
-if(qbevent){evnt(14461);if(r)goto S_17025;}
-#line 14462 "qb64pe.bas"
+#line 14460 "qb64pe.bas"
 do{
+#line 14460 "qb64pe.bas"
+SUB_WRITECONFIGSETTING(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("IncludeDebugInfo",16),FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
+#line 14460 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14460 "qb64pe.bas"
+if(!qbevent)break;evnt(14460);}while(r);
+#line 14461 "qb64pe.bas"
+do{
+#line 14461 "qb64pe.bas"
+SUB_PURGETEMPORARYBUILDFILES(__STRING_OS,&(pass1577=*__LONG_MACOSX));
+#line 14461 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14461 "qb64pe.bas"
+if(!qbevent)break;evnt(14461);}while(r);
 #line 14462 "qb64pe.bas"
-*__BYTE_FORCEOPTEXPL= -1ll ;
-#line 14462 "qb64pe.bas"
-if(!qbevent)break;evnt(14462);}while(r);
+}
 #line 14463 "qb64pe.bas"
 do{
 #line 14463 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+tqbs=qbs_new(0,0);
+#line 14463 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("DebugInfo = ",12));
+#line 14463 "qb64pe.bas"
+if (is_error_pending()) goto skip1578;
+#line 14463 "qb64pe.bas"
+makefit(tqbs);
+#line 14463 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14463 "qb64pe.bas"
+qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
+#line 14463 "qb64pe.bas"
+if (is_error_pending()) goto skip1578;
+#line 14463 "qb64pe.bas"
+makefit(tqbs);
+#line 14463 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14463 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14463 "qb64pe.bas"
+skip1578:
+#line 14463 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14463 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14463 "qb64pe.bas"
 if(!qbevent)break;evnt(14463);}while(r);
-#line 14465 "qb64pe.bas"
-sc_ec_55_end:;
-#line 14465 "qb64pe.bas"
-goto sc_1566_end;
-#line 14465 "qb64pe.bas"
+#line 14464 "qb64pe.bas"
+sc_ec_58_end:;
+#line 14464 "qb64pe.bas"
+goto sc_1568_end;
+#line 14464 "qb64pe.bas"
 }
+#line 14464 "qb64pe.bas"
+S_17006:;
+#line 14464 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1568,qbs_new_txt_len(":exewithsource",14))))||is_error_pending()){
+#line 14464 "qb64pe.bas"
+if(qbevent){evnt(14464);if(r)goto S_17006;}
 #line 14465 "qb64pe.bas"
-S_17028:;
+S_17007:;
 #line 14465 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-s",2))))||is_error_pending()){
+if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
 #line 14465 "qb64pe.bas"
-if(qbevent){evnt(14465);if(r)goto S_17028;}
+if(qbevent){evnt(14465);if(r)goto S_17007;}
+#line 14466 "qb64pe.bas"
+S_17008:;
+#line 14466 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_SAVEEXEWITHSOURCE))))||is_error_pending()){
+#line 14466 "qb64pe.bas"
+if(qbevent){evnt(14466);if(r)goto S_17008;}
 #line 14466 "qb64pe.bas"
 do{
 #line 14466 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE= -1ll ;
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1579= 1 ),&(pass1580= 0 ));
+#line 14466 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14466 "qb64pe.bas"
 if(!qbevent)break;evnt(14466);}while(r);
+#line 14466 "qb64pe.bas"
+}
 #line 14467 "qb64pe.bas"
 do{
 #line 14467 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_SETTING,func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 ,NULL,0));
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("SaveExeWithSource",17),FUNC_BOOLTOTFSTRING(__LONG_SAVEEXEWITHSOURCE));
 #line 14467 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14467 "qb64pe.bas"
 if(!qbevent)break;evnt(14467);}while(r);
 #line 14468 "qb64pe.bas"
-do{
-#line 14468 "qb64pe.bas"
-sub__dest(func__console());
-#line 14468 "qb64pe.bas"
-if(!qbevent)break;evnt(14468);}while(r);
-#line 14469 "qb64pe.bas"
-S_17032:;
-#line 14469 "qb64pe.bas"
-if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
-#line 14469 "qb64pe.bas"
-if(qbevent){evnt(14469);if(r)goto S_17032;}
-#line 14469 "qb64pe.bas"
-do{
-#line 14469 "qb64pe.bas"
-*__BYTE_QB64VERSIONPRINTED= -1ll ;
-#line 14469 "qb64pe.bas"
-if(!qbevent)break;evnt(14469);}while(r);
-#line 14469 "qb64pe.bas"
-do{
-#line 14469 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14469 "qb64pe.bas"
-qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
-#line 14469 "qb64pe.bas"
-if (is_error_pending()) goto skip1616;
-#line 14469 "qb64pe.bas"
-makefit(tqbs);
-#line 14469 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14469 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14469 "qb64pe.bas"
-skip1616:
-#line 14469 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14469 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14469 "qb64pe.bas"
-if(!qbevent)break;evnt(14469);}while(r);
-#line 14469 "qb64pe.bas"
-do{
-#line 14469 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14469 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14469 "qb64pe.bas"
-skip1617:
-#line 14469 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14469 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14469 "qb64pe.bas"
-if(!qbevent)break;evnt(14469);}while(r);
-#line 14469 "qb64pe.bas"
 }
-#line 14471 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 do{
-#line 14471 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_DELIM=func_instr(NULL,_FUNC_PARSECMDLINEARGS_STRING_SETTING,qbs_new_txt_len("=",1),0);
-#line 14471 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14471 "qb64pe.bas"
-if(!qbevent)break;evnt(14471);}while(r);
-#line 14471 "qb64pe.bas"
-do{
-#line 14471 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_EOS= 0 ;
-#line 14471 "qb64pe.bas"
-if(!qbevent)break;evnt(14471);}while(r);
-#line 14472 "qb64pe.bas"
-S_17039:;
-#line 14472 "qb64pe.bas"
-if ((-(*_FUNC_PARSECMDLINEARGS_LONG_DELIM== 0 ))||is_error_pending()){
-#line 14472 "qb64pe.bas"
-if(qbevent){evnt(14472);if(r)goto S_17039;}
-#line 14472 "qb64pe.bas"
-do{
-#line 14472 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_DELIM=_FUNC_PARSECMDLINEARGS_STRING_SETTING->len+ 1 ;
-#line 14472 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14472 "qb64pe.bas"
-if(!qbevent)break;evnt(14472);}while(r);
-#line 14472 "qb64pe.bas"
-do{
-#line 14472 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_EOS= -1 ;
-#line 14472 "qb64pe.bas"
-if(!qbevent)break;evnt(14472);}while(r);
-#line 14472 "qb64pe.bas"
-}
-#line 14473 "qb64pe.bas"
-S_17043:;
-#line 14473 "qb64pe.bas"
-qbs_set(sc_1619,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_SETTING,*_FUNC_PARSECMDLINEARGS_LONG_DELIM- 1 )));
-#line 14473 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14473 "qb64pe.bas"
-if(qbevent){evnt(14473);if(r)goto S_17043;}
-#line 14474 "qb64pe.bas"
-S_17044:;
-#line 14474 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1619,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 14474 "qb64pe.bas"
-if(qbevent){evnt(14474);if(r)goto S_17044;}
-#line 14475 "qb64pe.bas"
-do{
-#line 14475 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 tqbs=qbs_new(0,0);
-#line 14475 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("DebugInfo     = ",16));
-#line 14475 "qb64pe.bas"
-if (is_error_pending()) goto skip1620;
-#line 14475 "qb64pe.bas"
-makefit(tqbs);
-#line 14475 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14475 "qb64pe.bas"
-qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
-#line 14475 "qb64pe.bas"
-if (is_error_pending()) goto skip1620;
-#line 14475 "qb64pe.bas"
-makefit(tqbs);
-#line 14475 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14475 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14475 "qb64pe.bas"
-skip1620:
-#line 14475 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14475 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14475 "qb64pe.bas"
-if(!qbevent)break;evnt(14475);}while(r);
-#line 14476 "qb64pe.bas"
-do{
-#line 14476 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 qbs_set(tqbs,qbs_new_txt_len("ExeWithSource = ",16));
-#line 14476 "qb64pe.bas"
-if (is_error_pending()) goto skip1621;
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
+if (is_error_pending()) goto skip1581;
+#line 14469 "qb64pe.bas"
 makefit(tqbs);
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 qbs_print(tqbs,0);
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_SAVEEXEWITHSOURCE));
-#line 14476 "qb64pe.bas"
-if (is_error_pending()) goto skip1621;
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
+if (is_error_pending()) goto skip1581;
+#line 14469 "qb64pe.bas"
 makefit(tqbs);
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 qbs_print(tqbs,0);
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
 qbs_print(nothingstring,1);
-#line 14476 "qb64pe.bas"
-skip1621:
-#line 14476 "qb64pe.bas"
+#line 14469 "qb64pe.bas"
+skip1581:
+#line 14469 "qb64pe.bas"
 qbs_free(tqbs);
+#line 14469 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14469 "qb64pe.bas"
+if(!qbevent)break;evnt(14469);}while(r);
+#line 14470 "qb64pe.bas"
+sc_ec_59_end:;
+#line 14470 "qb64pe.bas"
+goto sc_1568_end;
+#line 14470 "qb64pe.bas"
+}
+#line 14470 "qb64pe.bas"
+S_17014:;
+#line 14470 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1568,qbs_new_txt_len(":exedefaultdir",14))))||is_error_pending()){
+#line 14470 "qb64pe.bas"
+if(qbevent){evnt(14470);if(r)goto S_17014;}
+#line 14471 "qb64pe.bas"
+S_17015:;
+#line 14471 "qb64pe.bas"
+if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
+#line 14471 "qb64pe.bas"
+if(qbevent){evnt(14471);if(r)goto S_17015;}
+#line 14472 "qb64pe.bas"
+S_17016:;
+#line 14472 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_STRING_DEXF))))||is_error_pending()){
+#line 14472 "qb64pe.bas"
+if(qbevent){evnt(14472);if(r)goto S_17016;}
+#line 14472 "qb64pe.bas"
+do{
+#line 14472 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1582= 3 ),&(pass1583= 0 ));
+#line 14472 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14472 "qb64pe.bas"
+if(!qbevent)break;evnt(14472);}while(r);
+#line 14472 "qb64pe.bas"
+}
+#line 14473 "qb64pe.bas"
+S_17019:;
+#line 14473 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,_FUNC_PARSECMDLINEARGS_STRING_DEXF->len))||is_error_pending()){
+#line 14473 "qb64pe.bas"
+if(qbevent){evnt(14473);if(r)goto S_17019;}
+#line 14474 "qb64pe.bas"
+S_17020:;
+#line 14474 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,func__direxists(qbs_add(func__startdir(),_FUNC_PARSECMDLINEARGS_STRING_DEXF))))||is_error_pending()){
+#line 14474 "qb64pe.bas"
+if(qbevent){evnt(14474);if(r)goto S_17020;}
+#line 14474 "qb64pe.bas"
+do{
+#line 14474 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_add(func__startdir(),_FUNC_PARSECMDLINEARGS_STRING_DEXF));
+#line 14474 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14474 "qb64pe.bas"
+if(!qbevent)break;evnt(14474);}while(r);
+#line 14474 "qb64pe.bas"
+}
+#line 14475 "qb64pe.bas"
+S_17023:;
+#line 14475 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,func__direxists(_FUNC_PARSECMDLINEARGS_STRING_DEXF)))||is_error_pending()){
+#line 14475 "qb64pe.bas"
+if(qbevent){evnt(14475);if(r)goto S_17023;}
+#line 14476 "qb64pe.bas"
+do{
+#line 14476 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,func__fullpath(_FUNC_PARSECMDLINEARGS_STRING_DEXF));
 #line 14476 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14476 "qb64pe.bas"
@@ -1607,247 +1893,179 @@ if(!qbevent)break;evnt(14476);}while(r);
 #line 14477 "qb64pe.bas"
 do{
 #line 14477 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14477 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("ExeDefaultDir = ",16));
-#line 14477 "qb64pe.bas"
-if (is_error_pending()) goto skip1622;
-#line 14477 "qb64pe.bas"
-makefit(tqbs);
-#line 14477 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14477 "qb64pe.bas"
-qbs_set(tqbs,((__STRING_DEFAULTEXESAVEFOLDER->len)?(__STRING_DEFAULTEXESAVEFOLDER):(qbs_new_txt_len("unset (= qb64pe folder)",23))));
-#line 14477 "qb64pe.bas"
-if (is_error_pending()) goto skip1622;
-#line 14477 "qb64pe.bas"
-makefit(tqbs);
-#line 14477 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14477 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14477 "qb64pe.bas"
-skip1622:
-#line 14477 "qb64pe.bas"
-qbs_free(tqbs);
+SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultExeSaveFolder",20),_FUNC_PARSECMDLINEARGS_STRING_DEXF);
 #line 14477 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14477 "qb64pe.bas"
 if(!qbevent)break;evnt(14477);}while(r);
 #line 14478 "qb64pe.bas"
+S_17026:;
+#line 14478 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_right(_FUNC_PARSECMDLINEARGS_STRING_DEXF, 1 ),__STRING1_PATHSEP)))||is_error_pending()){
+#line 14478 "qb64pe.bas"
+if(qbevent){evnt(14478);if(r)goto S_17026;}
+#line 14478 "qb64pe.bas"
 do{
 #line 14478 "qb64pe.bas"
-if (sub_gl_called) error(271);
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_add(_FUNC_PARSECMDLINEARGS_STRING_DEXF,__STRING1_PATHSEP));
 #line 14478 "qb64pe.bas"
-close_program=1;
-#line 14478 "qb64pe.bas"
-end();
+qbs_cleanup(qbs_tmp_base,0);
 #line 14478 "qb64pe.bas"
 if(!qbevent)break;evnt(14478);}while(r);
-#line 14479 "qb64pe.bas"
-sc_ec_56_end:;
-#line 14479 "qb64pe.bas"
-goto sc_1619_end;
-#line 14479 "qb64pe.bas"
+#line 14478 "qb64pe.bas"
 }
 #line 14479 "qb64pe.bas"
-S_17049:;
-#line 14479 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1619,qbs_new_txt_len(":",1))))||is_error_pending()){
-#line 14479 "qb64pe.bas"
-if(qbevent){evnt(14479);if(r)goto S_17049;}
-#line 14480 "qb64pe.bas"
 do{
-#line 14480 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Missing setting specification: ",31),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1624= 0 ),&(pass1625= 0 ));
-#line 14480 "qb64pe.bas"
+#line 14479 "qb64pe.bas"
+qbs_set(__STRING_DEFAULTEXESAVEFOLDER,_FUNC_PARSECMDLINEARGS_STRING_DEXF);
+#line 14479 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
+#line 14479 "qb64pe.bas"
+if(!qbevent)break;evnt(14479);}while(r);
+#line 14479 "qb64pe.bas"
+do{
+#line 14479 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_new_txt_len("-1",2));
+#line 14479 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14479 "qb64pe.bas"
+if(!qbevent)break;evnt(14479);}while(r);
 #line 14480 "qb64pe.bas"
-if(!qbevent)break;evnt(14480);}while(r);
-#line 14481 "qb64pe.bas"
-sc_ec_57_end:;
-#line 14481 "qb64pe.bas"
-goto sc_1619_end;
-#line 14481 "qb64pe.bas"
 }
 #line 14481 "qb64pe.bas"
-S_17051:;
-#line 14481 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1619,qbs_new_txt_len(":debuginfo",10))))||is_error_pending()){
-#line 14481 "qb64pe.bas"
-if(qbevent){evnt(14481);if(r)goto S_17051;}
+}
 #line 14482 "qb64pe.bas"
-S_17052:;
+S_17033:;
 #line 14482 "qb64pe.bas"
-if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_new_txt_len("-1",2))))||is_error_pending()){
 #line 14482 "qb64pe.bas"
-if(qbevent){evnt(14482);if(r)goto S_17052;}
-#line 14483 "qb64pe.bas"
-S_17053:;
-#line 14483 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_INCLUDEDEBUGINFO))))||is_error_pending()){
-#line 14483 "qb64pe.bas"
-if(qbevent){evnt(14483);if(r)goto S_17053;}
-#line 14483 "qb64pe.bas"
+if(qbevent){evnt(14482);if(r)goto S_17033;}
+#line 14482 "qb64pe.bas"
 do{
-#line 14483 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1626= 1 ),&(pass1627= 0 ));
-#line 14483 "qb64pe.bas"
+#line 14482 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Path not found: ",16),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1585= 0 ),&(pass1586= 0 ));
+#line 14482 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14483 "qb64pe.bas"
-if(!qbevent)break;evnt(14483);}while(r);
+#line 14482 "qb64pe.bas"
+if(!qbevent)break;evnt(14482);}while(r);
+#line 14482 "qb64pe.bas"
+}
 #line 14483 "qb64pe.bas"
 }
 #line 14484 "qb64pe.bas"
 do{
 #line 14484 "qb64pe.bas"
-SUB_WRITECONFIGSETTING(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("IncludeDebugInfo",16),FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
+tqbs=qbs_new(0,0);
+#line 14484 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("ExeDefaultDir = ",16));
+#line 14484 "qb64pe.bas"
+if (is_error_pending()) goto skip1587;
+#line 14484 "qb64pe.bas"
+makefit(tqbs);
+#line 14484 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14484 "qb64pe.bas"
+qbs_set(tqbs,((__STRING_DEFAULTEXESAVEFOLDER->len)?(__STRING_DEFAULTEXESAVEFOLDER):(qbs_new_txt_len("unset (= qb64pe folder)",23))));
+#line 14484 "qb64pe.bas"
+if (is_error_pending()) goto skip1587;
+#line 14484 "qb64pe.bas"
+makefit(tqbs);
+#line 14484 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14484 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14484 "qb64pe.bas"
+skip1587:
+#line 14484 "qb64pe.bas"
+qbs_free(tqbs);
 #line 14484 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14484 "qb64pe.bas"
 if(!qbevent)break;evnt(14484);}while(r);
 #line 14485 "qb64pe.bas"
-do{
+sc_ec_60_end:;
 #line 14485 "qb64pe.bas"
-SUB_PURGETEMPORARYBUILDFILES(__STRING_OS,&(pass1628=*__LONG_MACOSX));
+goto sc_1568_end;
 #line 14485 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14485 "qb64pe.bas"
-if(!qbevent)break;evnt(14485);}while(r);
+}
 #line 14486 "qb64pe.bas"
-}
-#line 14487 "qb64pe.bas"
 do{
-#line 14487 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14487 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("DebugInfo = ",12));
-#line 14487 "qb64pe.bas"
-if (is_error_pending()) goto skip1629;
-#line 14487 "qb64pe.bas"
-makefit(tqbs);
-#line 14487 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14487 "qb64pe.bas"
-qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_INCLUDEDEBUGINFO));
-#line 14487 "qb64pe.bas"
-if (is_error_pending()) goto skip1629;
-#line 14487 "qb64pe.bas"
-makefit(tqbs);
-#line 14487 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14487 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14487 "qb64pe.bas"
-skip1629:
-#line 14487 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14487 "qb64pe.bas"
+#line 14486 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Unsupported setting: ",21),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1589= 0 ),&(pass1590= 0 ));
+#line 14486 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
+#line 14486 "qb64pe.bas"
+if(!qbevent)break;evnt(14486);}while(r);
 #line 14487 "qb64pe.bas"
-if(!qbevent)break;evnt(14487);}while(r);
+sc_1568_end:;
 #line 14488 "qb64pe.bas"
-sc_ec_58_end:;
+S_17041:;
 #line 14488 "qb64pe.bas"
-goto sc_1619_end;
+if ((*_FUNC_PARSECMDLINEARGS_LONG_EOS)||is_error_pending()){
+#line 14488 "qb64pe.bas"
+if(qbevent){evnt(14488);if(r)goto S_17041;}
+#line 14488 "qb64pe.bas"
+do{
+#line 14488 "qb64pe.bas"
+if (sub_gl_called) error(271);
+#line 14488 "qb64pe.bas"
+close_program=1;
+#line 14488 "qb64pe.bas"
+end();
+#line 14488 "qb64pe.bas"
+if(!qbevent)break;evnt(14488);}while(r);
 #line 14488 "qb64pe.bas"
 }
-#line 14488 "qb64pe.bas"
-S_17060:;
-#line 14488 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1619,qbs_new_txt_len(":exewithsource",14))))||is_error_pending()){
-#line 14488 "qb64pe.bas"
-if(qbevent){evnt(14488);if(r)goto S_17060;}
 #line 14489 "qb64pe.bas"
-S_17061:;
-#line 14489 "qb64pe.bas"
-if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
-#line 14489 "qb64pe.bas"
-if(qbevent){evnt(14489);if(r)goto S_17061;}
-#line 14490 "qb64pe.bas"
-S_17062:;
-#line 14490 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_SAVEEXEWITHSOURCE))))||is_error_pending()){
-#line 14490 "qb64pe.bas"
-if(qbevent){evnt(14490);if(r)goto S_17062;}
-#line 14490 "qb64pe.bas"
 do{
-#line 14490 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1630= 1 ),&(pass1631= 0 ));
-#line 14490 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14490 "qb64pe.bas"
-if(!qbevent)break;evnt(14490);}while(r);
-#line 14490 "qb64pe.bas"
+#line 14489 "qb64pe.bas"
+sub__dest( 0 );
+#line 14489 "qb64pe.bas"
+if(!qbevent)break;evnt(14489);}while(r);
+#line 14491 "qb64pe.bas"
+sc_ec_61_end:;
+#line 14491 "qb64pe.bas"
+goto sc_1515_end;
+#line 14491 "qb64pe.bas"
 }
 #line 14491 "qb64pe.bas"
-do{
+S_17045:;
 #line 14491 "qb64pe.bas"
-SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("SaveExeWithSource",17),FUNC_BOOLTOTFSTRING(__LONG_SAVEEXEWITHSOURCE));
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-f",2))))||is_error_pending()){
 #line 14491 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14491 "qb64pe.bas"
-if(!qbevent)break;evnt(14491);}while(r);
+if(qbevent){evnt(14491);if(r)goto S_17045;}
 #line 14492 "qb64pe.bas"
-}
+do{
+#line 14492 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE= -1ll ;
+#line 14492 "qb64pe.bas"
+if(!qbevent)break;evnt(14492);}while(r);
 #line 14493 "qb64pe.bas"
 do{
 #line 14493 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14493 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("ExeWithSource = ",16));
-#line 14493 "qb64pe.bas"
-if (is_error_pending()) goto skip1632;
-#line 14493 "qb64pe.bas"
-makefit(tqbs);
-#line 14493 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14493 "qb64pe.bas"
-qbs_set(tqbs,FUNC_BOOLTOTFSTRING(__LONG_SAVEEXEWITHSOURCE));
-#line 14493 "qb64pe.bas"
-if (is_error_pending()) goto skip1632;
-#line 14493 "qb64pe.bas"
-makefit(tqbs);
-#line 14493 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14493 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14493 "qb64pe.bas"
-skip1632:
-#line 14493 "qb64pe.bas"
-qbs_free(tqbs);
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_SETTING,func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 ,NULL,0));
 #line 14493 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14493 "qb64pe.bas"
 if(!qbevent)break;evnt(14493);}while(r);
-#line 14494 "qb64pe.bas"
-sc_ec_59_end:;
-#line 14494 "qb64pe.bas"
-goto sc_1619_end;
-#line 14494 "qb64pe.bas"
-}
-#line 14494 "qb64pe.bas"
-S_17068:;
-#line 14494 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1619,qbs_new_txt_len(":exedefaultdir",14))))||is_error_pending()){
-#line 14494 "qb64pe.bas"
-if(qbevent){evnt(14494);if(r)goto S_17068;}
 #line 14495 "qb64pe.bas"
-S_17069:;
+do{
 #line 14495 "qb64pe.bas"
-if ((~(*_FUNC_PARSECMDLINEARGS_LONG_EOS))||is_error_pending()){
+*_FUNC_PARSECMDLINEARGS_LONG_DELIM=func_instr(NULL,_FUNC_PARSECMDLINEARGS_STRING_SETTING,qbs_new_txt_len("=",1),0);
 #line 14495 "qb64pe.bas"
-if(qbevent){evnt(14495);if(r)goto S_17069;}
+qbs_cleanup(qbs_tmp_base,0);
+#line 14495 "qb64pe.bas"
+if(!qbevent)break;evnt(14495);}while(r);
 #line 14496 "qb64pe.bas"
-S_17070:;
+S_17049:;
 #line 14496 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_STRING_DEXF))))||is_error_pending()){
+if ((-(*_FUNC_PARSECMDLINEARGS_LONG_DELIM== 0 ))||is_error_pending()){
 #line 14496 "qb64pe.bas"
-if(qbevent){evnt(14496);if(r)goto S_17070;}
+if(qbevent){evnt(14496);if(r)goto S_17049;}
 #line 14496 "qb64pe.bas"
 do{
 #line 14496 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1633= 3 ),&(pass1634= 0 ));
+*_FUNC_PARSECMDLINEARGS_LONG_DELIM=_FUNC_PARSECMDLINEARGS_STRING_SETTING->len+ 1 ;
 #line 14496 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14496 "qb64pe.bas"
@@ -1855,95 +2073,133 @@ if(!qbevent)break;evnt(14496);}while(r);
 #line 14496 "qb64pe.bas"
 }
 #line 14497 "qb64pe.bas"
-S_17073:;
+S_17052:;
 #line 14497 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,_FUNC_PARSECMDLINEARGS_STRING_DEXF->len))||is_error_pending()){
+qbs_set(sc_1592,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_SETTING,*_FUNC_PARSECMDLINEARGS_LONG_DELIM- 1 )));
 #line 14497 "qb64pe.bas"
-if(qbevent){evnt(14497);if(r)goto S_17073;}
-#line 14498 "qb64pe.bas"
-S_17074:;
-#line 14498 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__direxists(qbs_add(func__startdir(),_FUNC_PARSECMDLINEARGS_STRING_DEXF))))||is_error_pending()){
-#line 14498 "qb64pe.bas"
-if(qbevent){evnt(14498);if(r)goto S_17074;}
-#line 14498 "qb64pe.bas"
-do{
-#line 14498 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_add(func__startdir(),_FUNC_PARSECMDLINEARGS_STRING_DEXF));
-#line 14498 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
+#line 14497 "qb64pe.bas"
+if(qbevent){evnt(14497);if(r)goto S_17052;}
 #line 14498 "qb64pe.bas"
-if(!qbevent)break;evnt(14498);}while(r);
+S_17053:;
 #line 14498 "qb64pe.bas"
-}
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 14498 "qb64pe.bas"
+if(qbevent){evnt(14498);if(r)goto S_17053;}
 #line 14499 "qb64pe.bas"
-S_17077:;
+do{
 #line 14499 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,func__direxists(_FUNC_PARSECMDLINEARGS_STRING_DEXF)))||is_error_pending()){
+sub__dest(func__console());
 #line 14499 "qb64pe.bas"
-if(qbevent){evnt(14499);if(r)goto S_17077;}
+if(!qbevent)break;evnt(14499);}while(r);
+#line 14500 "qb64pe.bas"
+S_17055:;
+#line 14500 "qb64pe.bas"
+if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
+#line 14500 "qb64pe.bas"
+if(qbevent){evnt(14500);if(r)goto S_17055;}
 #line 14500 "qb64pe.bas"
 do{
 #line 14500 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,func__fullpath(_FUNC_PARSECMDLINEARGS_STRING_DEXF));
+*__BYTE_QB64VERSIONPRINTED= -1ll ;
+#line 14500 "qb64pe.bas"
+if(!qbevent)break;evnt(14500);}while(r);
+#line 14500 "qb64pe.bas"
+do{
+#line 14500 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14500 "qb64pe.bas"
+qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
+#line 14500 "qb64pe.bas"
+if (is_error_pending()) goto skip1593;
+#line 14500 "qb64pe.bas"
+makefit(tqbs);
+#line 14500 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14500 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14500 "qb64pe.bas"
+skip1593:
+#line 14500 "qb64pe.bas"
+qbs_free(tqbs);
 #line 14500 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14500 "qb64pe.bas"
 if(!qbevent)break;evnt(14500);}while(r);
+#line 14500 "qb64pe.bas"
+do{
+#line 14500 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14500 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14500 "qb64pe.bas"
+skip1594:
+#line 14500 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14500 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14500 "qb64pe.bas"
+if(!qbevent)break;evnt(14500);}while(r);
+#line 14500 "qb64pe.bas"
+}
 #line 14501 "qb64pe.bas"
 do{
 #line 14501 "qb64pe.bas"
-SUB_WRITECONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultExeSaveFolder",20),_FUNC_PARSECMDLINEARGS_STRING_DEXF);
-#line 14501 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+SUB_CMDLINETEMPORARYSETTINGSHELP();
 #line 14501 "qb64pe.bas"
 if(!qbevent)break;evnt(14501);}while(r);
 #line 14502 "qb64pe.bas"
-S_17080:;
-#line 14502 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(qbs_right(_FUNC_PARSECMDLINEARGS_STRING_DEXF, 1 ),__STRING1_PATHSEP)))||is_error_pending()){
-#line 14502 "qb64pe.bas"
-if(qbevent){evnt(14502);if(r)goto S_17080;}
-#line 14502 "qb64pe.bas"
 do{
 #line 14502 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_add(_FUNC_PARSECMDLINEARGS_STRING_DEXF,__STRING1_PATHSEP));
+if (sub_gl_called) error(271);
 #line 14502 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+close_program=1;
+#line 14502 "qb64pe.bas"
+end();
 #line 14502 "qb64pe.bas"
 if(!qbevent)break;evnt(14502);}while(r);
-#line 14502 "qb64pe.bas"
+#line 14503 "qb64pe.bas"
+sc_ec_62_end:;
+#line 14503 "qb64pe.bas"
+goto sc_1592_end;
+#line 14503 "qb64pe.bas"
 }
 #line 14503 "qb64pe.bas"
-do{
+S_17062:;
 #line 14503 "qb64pe.bas"
-qbs_set(__STRING_DEFAULTEXESAVEFOLDER,_FUNC_PARSECMDLINEARGS_STRING_DEXF);
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":",1))))||is_error_pending()){
 #line 14503 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14503 "qb64pe.bas"
-if(!qbevent)break;evnt(14503);}while(r);
-#line 14503 "qb64pe.bas"
-do{
-#line 14503 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_new_txt_len("-1",2));
-#line 14503 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14503 "qb64pe.bas"
-if(!qbevent)break;evnt(14503);}while(r);
+if(qbevent){evnt(14503);if(r)goto S_17062;}
 #line 14504 "qb64pe.bas"
-}
+do{
+#line 14504 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Missing setting specification: ",31),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1595= 0 ),&(pass1596= 1 ));
+#line 14504 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14504 "qb64pe.bas"
+if(!qbevent)break;evnt(14504);}while(r);
+#line 14505 "qb64pe.bas"
+sc_ec_63_end:;
+#line 14505 "qb64pe.bas"
+goto sc_1592_end;
 #line 14505 "qb64pe.bas"
 }
+#line 14505 "qb64pe.bas"
+S_17064:;
+#line 14505 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":optimizecppprogram",19))))||is_error_pending()){
+#line 14505 "qb64pe.bas"
+if(qbevent){evnt(14505);if(r)goto S_17064;}
 #line 14506 "qb64pe.bas"
-S_17087:;
+S_17065:;
 #line 14506 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_FUNC_PARSECMDLINEARGS_STRING_DEXF,qbs_new_txt_len("-1",2))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_OPTIMIZECPPPROGRAM))))||is_error_pending()){
 #line 14506 "qb64pe.bas"
-if(qbevent){evnt(14506);if(r)goto S_17087;}
+if(qbevent){evnt(14506);if(r)goto S_17065;}
 #line 14506 "qb64pe.bas"
 do{
 #line 14506 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Path not found: ",16),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1636= 0 ),&(pass1637= 0 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1597= 1 ),&(pass1598= 1 ));
 #line 14506 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14506 "qb64pe.bas"
@@ -1951,283 +2207,361 @@ if(!qbevent)break;evnt(14506);}while(r);
 #line 14506 "qb64pe.bas"
 }
 #line 14507 "qb64pe.bas"
+sc_ec_64_end:;
+#line 14507 "qb64pe.bas"
+goto sc_1592_end;
+#line 14507 "qb64pe.bas"
 }
+#line 14507 "qb64pe.bas"
+S_17068:;
+#line 14507 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":stripdebugsymbols",18))))||is_error_pending()){
+#line 14507 "qb64pe.bas"
+if(qbevent){evnt(14507);if(r)goto S_17068;}
+#line 14508 "qb64pe.bas"
+S_17069:;
+#line 14508 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_STRIPDEBUGSYMBOLS))))||is_error_pending()){
+#line 14508 "qb64pe.bas"
+if(qbevent){evnt(14508);if(r)goto S_17069;}
 #line 14508 "qb64pe.bas"
 do{
 #line 14508 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14508 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("ExeDefaultDir = ",16));
-#line 14508 "qb64pe.bas"
-if (is_error_pending()) goto skip1638;
-#line 14508 "qb64pe.bas"
-makefit(tqbs);
-#line 14508 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14508 "qb64pe.bas"
-qbs_set(tqbs,((__STRING_DEFAULTEXESAVEFOLDER->len)?(__STRING_DEFAULTEXESAVEFOLDER):(qbs_new_txt_len("unset (= qb64pe folder)",23))));
-#line 14508 "qb64pe.bas"
-if (is_error_pending()) goto skip1638;
-#line 14508 "qb64pe.bas"
-makefit(tqbs);
-#line 14508 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14508 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14508 "qb64pe.bas"
-skip1638:
-#line 14508 "qb64pe.bas"
-qbs_free(tqbs);
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1599= 1 ),&(pass1600= 1 ));
 #line 14508 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14508 "qb64pe.bas"
 if(!qbevent)break;evnt(14508);}while(r);
+#line 14508 "qb64pe.bas"
+}
 #line 14509 "qb64pe.bas"
-sc_ec_60_end:;
+sc_ec_65_end:;
 #line 14509 "qb64pe.bas"
-goto sc_1619_end;
+goto sc_1592_end;
 #line 14509 "qb64pe.bas"
 }
+#line 14509 "qb64pe.bas"
+S_17072:;
+#line 14509 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":splitobjectfiles",17))))||is_error_pending()){
+#line 14509 "qb64pe.bas"
+if(qbevent){evnt(14509);if(r)goto S_17072;}
+#line 14510 "qb64pe.bas"
+S_17073:;
+#line 14510 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_SPLITOBJECTFILES))))||is_error_pending()){
+#line 14510 "qb64pe.bas"
+if(qbevent){evnt(14510);if(r)goto S_17073;}
 #line 14510 "qb64pe.bas"
 do{
 #line 14510 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Unsupported setting: ",21),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1640= 0 ),&(pass1641= 0 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1601= 1 ),&(pass1602= 1 ));
 #line 14510 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14510 "qb64pe.bas"
 if(!qbevent)break;evnt(14510);}while(r);
+#line 14510 "qb64pe.bas"
+}
 #line 14511 "qb64pe.bas"
-sc_1619_end:;
+sc_ec_66_end:;
+#line 14511 "qb64pe.bas"
+goto sc_1592_end;
+#line 14511 "qb64pe.bas"
+}
+#line 14511 "qb64pe.bas"
+S_17076:;
+#line 14511 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":absolutedebugpaths",19))))||is_error_pending()){
+#line 14511 "qb64pe.bas"
+if(qbevent){evnt(14511);if(r)goto S_17076;}
 #line 14512 "qb64pe.bas"
-S_17095:;
+S_17077:;
 #line 14512 "qb64pe.bas"
-if ((*_FUNC_PARSECMDLINEARGS_LONG_EOS)||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_ABSOLUTEDEBUGPATHS))))||is_error_pending()){
 #line 14512 "qb64pe.bas"
-if(qbevent){evnt(14512);if(r)goto S_17095;}
+if(qbevent){evnt(14512);if(r)goto S_17077;}
 #line 14512 "qb64pe.bas"
 do{
 #line 14512 "qb64pe.bas"
-if (sub_gl_called) error(271);
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1603= 1 ),&(pass1604= 1 ));
 #line 14512 "qb64pe.bas"
-close_program=1;
-#line 14512 "qb64pe.bas"
-end();
+qbs_cleanup(qbs_tmp_base,0);
 #line 14512 "qb64pe.bas"
 if(!qbevent)break;evnt(14512);}while(r);
 #line 14512 "qb64pe.bas"
 }
 #line 14513 "qb64pe.bas"
+sc_ec_67_end:;
+#line 14513 "qb64pe.bas"
+goto sc_1592_end;
+#line 14513 "qb64pe.bas"
+}
+#line 14513 "qb64pe.bas"
+S_17080:;
+#line 14513 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":extracppflags",14))))||is_error_pending()){
+#line 14513 "qb64pe.bas"
+if(qbevent){evnt(14513);if(r)goto S_17080;}
+#line 14514 "qb64pe.bas"
+S_17081:;
+#line 14514 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__STRING_EXTRACPPFLAGS))))||is_error_pending()){
+#line 14514 "qb64pe.bas"
+if(qbevent){evnt(14514);if(r)goto S_17081;}
+#line 14514 "qb64pe.bas"
 do{
-#line 14513 "qb64pe.bas"
-sub__dest( 0 );
-#line 14513 "qb64pe.bas"
-if(!qbevent)break;evnt(14513);}while(r);
+#line 14514 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1605= 3 ),&(pass1606= 1 ));
+#line 14514 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14514 "qb64pe.bas"
+if(!qbevent)break;evnt(14514);}while(r);
+#line 14514 "qb64pe.bas"
+}
 #line 14515 "qb64pe.bas"
-sc_ec_61_end:;
+sc_ec_68_end:;
 #line 14515 "qb64pe.bas"
-goto sc_1566_end;
+goto sc_1592_end;
 #line 14515 "qb64pe.bas"
 }
 #line 14515 "qb64pe.bas"
-S_17099:;
+S_17084:;
 #line 14515 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-f",2))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":extralinkerflags",17))))||is_error_pending()){
 #line 14515 "qb64pe.bas"
-if(qbevent){evnt(14515);if(r)goto S_17099;}
+if(qbevent){evnt(14515);if(r)goto S_17084;}
+#line 14516 "qb64pe.bas"
+S_17085:;
+#line 14516 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__STRING_EXTRALINKERFLAGS))))||is_error_pending()){
+#line 14516 "qb64pe.bas"
+if(qbevent){evnt(14516);if(r)goto S_17085;}
 #line 14516 "qb64pe.bas"
 do{
 #line 14516 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE= -1ll ;
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1607= 3 ),&(pass1608= 1 ));
+#line 14516 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
 #line 14516 "qb64pe.bas"
 if(!qbevent)break;evnt(14516);}while(r);
+#line 14516 "qb64pe.bas"
+}
 #line 14517 "qb64pe.bas"
+sc_ec_69_end:;
+#line 14517 "qb64pe.bas"
+goto sc_1592_end;
+#line 14517 "qb64pe.bas"
+}
+#line 14517 "qb64pe.bas"
+S_17088:;
+#line 14517 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":maxcompilerprocesses",21))))||is_error_pending()){
+#line 14517 "qb64pe.bas"
+if(qbevent){evnt(14517);if(r)goto S_17088;}
+#line 14518 "qb64pe.bas"
+S_17089:;
+#line 14518 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_MAXPARALLELPROCESSES))))||is_error_pending()){
+#line 14518 "qb64pe.bas"
+if(qbevent){evnt(14518);if(r)goto S_17089;}
+#line 14518 "qb64pe.bas"
 do{
-#line 14517 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_SETTING,func_mid(_FUNC_PARSECMDLINEARGS_STRING_TOKEN, 3 ,NULL,0));
-#line 14517 "qb64pe.bas"
+#line 14518 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1609= 2 ),&(pass1610= 1 ));
+#line 14518 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14517 "qb64pe.bas"
-if(!qbevent)break;evnt(14517);}while(r);
+#line 14518 "qb64pe.bas"
+if(!qbevent)break;evnt(14518);}while(r);
+#line 14518 "qb64pe.bas"
+}
+#line 14519 "qb64pe.bas"
+S_17092:;
+#line 14519 "qb64pe.bas"
+if (((-(*__LONG_MAXPARALLELPROCESSES< 1 ))|(-(*__LONG_MAXPARALLELPROCESSES> 128 )))||is_error_pending()){
+#line 14519 "qb64pe.bas"
+if(qbevent){evnt(14519);if(r)goto S_17092;}
 #line 14519 "qb64pe.bas"
 do{
 #line 14519 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_DELIM=func_instr(NULL,_FUNC_PARSECMDLINEARGS_STRING_SETTING,qbs_new_txt_len("=",1),0);
+SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("MaxCompilerProcesses must be in range 1-128.",44),&(pass1611= 0 ),&(pass1612= 1 ));
 #line 14519 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14519 "qb64pe.bas"
 if(!qbevent)break;evnt(14519);}while(r);
+#line 14519 "qb64pe.bas"
+}
 #line 14520 "qb64pe.bas"
+sc_ec_70_end:;
+#line 14520 "qb64pe.bas"
+goto sc_1592_end;
+#line 14520 "qb64pe.bas"
+}
+#line 14520 "qb64pe.bas"
+S_17095:;
+#line 14520 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":targetbits",11))))||is_error_pending()){
+#line 14520 "qb64pe.bas"
+if(qbevent){evnt(14520);if(r)goto S_17095;}
+#line 14521 "qb64pe.bas"
+S_17096:;
+#line 14521 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_TARGET_BITS))))||is_error_pending()){
+#line 14521 "qb64pe.bas"
+if(qbevent){evnt(14521);if(r)goto S_17096;}
+#line 14521 "qb64pe.bas"
+do{
+#line 14521 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1613= 2 ),&(pass1614= 1 ));
+#line 14521 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14521 "qb64pe.bas"
+if(!qbevent)break;evnt(14521);}while(r);
+#line 14521 "qb64pe.bas"
+}
+#line 14522 "qb64pe.bas"
+S_17099:;
+#line 14522 "qb64pe.bas"
+if (((-(*__LONG_TARGET_BITS!= 32 ))&(-(*__LONG_TARGET_BITS!= 64 )))||is_error_pending()){
+#line 14522 "qb64pe.bas"
+if(qbevent){evnt(14522);if(r)goto S_17099;}
+#line 14522 "qb64pe.bas"
+do{
+#line 14522 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("TargetBits must be 32 or 64.",28),&(pass1615= 0 ),&(pass1616= 1 ));
+#line 14522 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14522 "qb64pe.bas"
+if(!qbevent)break;evnt(14522);}while(r);
+#line 14522 "qb64pe.bas"
+}
+#line 14523 "qb64pe.bas"
+sc_ec_71_end:;
+#line 14523 "qb64pe.bas"
+goto sc_1592_end;
+#line 14523 "qb64pe.bas"
+}
+#line 14523 "qb64pe.bas"
+S_17102:;
+#line 14523 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":generatelicensefile",20))))||is_error_pending()){
+#line 14523 "qb64pe.bas"
+if(qbevent){evnt(14523);if(r)goto S_17102;}
+#line 14524 "qb64pe.bas"
 S_17103:;
-#line 14520 "qb64pe.bas"
-if ((-(*_FUNC_PARSECMDLINEARGS_LONG_DELIM== 0 ))||is_error_pending()){
-#line 14520 "qb64pe.bas"
-if(qbevent){evnt(14520);if(r)goto S_17103;}
-#line 14520 "qb64pe.bas"
+#line 14524 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_GENERATELICENSEFILE))))||is_error_pending()){
+#line 14524 "qb64pe.bas"
+if(qbevent){evnt(14524);if(r)goto S_17103;}
+#line 14524 "qb64pe.bas"
 do{
-#line 14520 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_DELIM=_FUNC_PARSECMDLINEARGS_STRING_SETTING->len+ 1 ;
-#line 14520 "qb64pe.bas"
+#line 14524 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1617= 1 ),&(pass1618= 1 ));
+#line 14524 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14520 "qb64pe.bas"
-if(!qbevent)break;evnt(14520);}while(r);
-#line 14520 "qb64pe.bas"
+#line 14524 "qb64pe.bas"
+if(!qbevent)break;evnt(14524);}while(r);
+#line 14524 "qb64pe.bas"
 }
-#line 14521 "qb64pe.bas"
+#line 14525 "qb64pe.bas"
+sc_ec_72_end:;
+#line 14525 "qb64pe.bas"
+goto sc_1592_end;
+#line 14525 "qb64pe.bas"
+}
+#line 14525 "qb64pe.bas"
 S_17106:;
-#line 14521 "qb64pe.bas"
-qbs_set(sc_1643,qbs_lcase(qbs_left(_FUNC_PARSECMDLINEARGS_STRING_SETTING,*_FUNC_PARSECMDLINEARGS_LONG_DELIM- 1 )));
-#line 14521 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14521 "qb64pe.bas"
-if(qbevent){evnt(14521);if(r)goto S_17106;}
-#line 14522 "qb64pe.bas"
+#line 14525 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":usesystemcompiler",18))))||is_error_pending()){
+#line 14525 "qb64pe.bas"
+if(qbevent){evnt(14525);if(r)goto S_17106;}
+#line 14526 "qb64pe.bas"
 S_17107:;
-#line 14522 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 14522 "qb64pe.bas"
-if(qbevent){evnt(14522);if(r)goto S_17107;}
-#line 14523 "qb64pe.bas"
+#line 14526 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_USESYSTEMMINGW))))||is_error_pending()){
+#line 14526 "qb64pe.bas"
+if(qbevent){evnt(14526);if(r)goto S_17107;}
+#line 14526 "qb64pe.bas"
 do{
-#line 14523 "qb64pe.bas"
-sub__dest(func__console());
-#line 14523 "qb64pe.bas"
-if(!qbevent)break;evnt(14523);}while(r);
-#line 14524 "qb64pe.bas"
-S_17109:;
-#line 14524 "qb64pe.bas"
-if ((~(*__BYTE_QB64VERSIONPRINTED))||is_error_pending()){
-#line 14524 "qb64pe.bas"
-if(qbevent){evnt(14524);if(r)goto S_17109;}
-#line 14524 "qb64pe.bas"
-do{
-#line 14524 "qb64pe.bas"
-*__BYTE_QB64VERSIONPRINTED= -1ll ;
-#line 14524 "qb64pe.bas"
-if(!qbevent)break;evnt(14524);}while(r);
-#line 14524 "qb64pe.bas"
-do{
-#line 14524 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14524 "qb64pe.bas"
-qbs_set(tqbs,qbs_add(qbs_new_txt_len("QB64-PE Compiler V",18),__STRING_VERSION));
-#line 14524 "qb64pe.bas"
-if (is_error_pending()) goto skip1644;
-#line 14524 "qb64pe.bas"
-makefit(tqbs);
-#line 14524 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14524 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14524 "qb64pe.bas"
-skip1644:
-#line 14524 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14524 "qb64pe.bas"
+#line 14526 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1619= 1 ),&(pass1620= 1 ));
+#line 14526 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14524 "qb64pe.bas"
-if(!qbevent)break;evnt(14524);}while(r);
-#line 14524 "qb64pe.bas"
-do{
-#line 14524 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14524 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14524 "qb64pe.bas"
-skip1645:
-#line 14524 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14524 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14524 "qb64pe.bas"
-if(!qbevent)break;evnt(14524);}while(r);
-#line 14524 "qb64pe.bas"
-}
-#line 14525 "qb64pe.bas"
-do{
-#line 14525 "qb64pe.bas"
-SUB_CMDLINETEMPORARYSETTINGSHELP();
-#line 14525 "qb64pe.bas"
-if(!qbevent)break;evnt(14525);}while(r);
-#line 14526 "qb64pe.bas"
-do{
-#line 14526 "qb64pe.bas"
-if (sub_gl_called) error(271);
-#line 14526 "qb64pe.bas"
-close_program=1;
-#line 14526 "qb64pe.bas"
-end();
 #line 14526 "qb64pe.bas"
 if(!qbevent)break;evnt(14526);}while(r);
+#line 14526 "qb64pe.bas"
+}
 #line 14527 "qb64pe.bas"
-sc_ec_62_end:;
+sc_ec_73_end:;
 #line 14527 "qb64pe.bas"
-goto sc_1643_end;
+goto sc_1592_end;
 #line 14527 "qb64pe.bas"
 }
 #line 14527 "qb64pe.bas"
-S_17116:;
+S_17110:;
 #line 14527 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":",1))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":autoindent",11))))||is_error_pending()){
 #line 14527 "qb64pe.bas"
-if(qbevent){evnt(14527);if(r)goto S_17116;}
+if(qbevent){evnt(14527);if(r)goto S_17110;}
+#line 14528 "qb64pe.bas"
+S_17111:;
+#line 14528 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOINDENT))))||is_error_pending()){
+#line 14528 "qb64pe.bas"
+if(qbevent){evnt(14528);if(r)goto S_17111;}
 #line 14528 "qb64pe.bas"
 do{
 #line 14528 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Missing setting specification: ",31),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1646= 0 ),&(pass1647= 1 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1621= 1 ),&(pass1622= 1 ));
 #line 14528 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14528 "qb64pe.bas"
 if(!qbevent)break;evnt(14528);}while(r);
-#line 14529 "qb64pe.bas"
-sc_ec_63_end:;
-#line 14529 "qb64pe.bas"
-goto sc_1643_end;
-#line 14529 "qb64pe.bas"
+#line 14528 "qb64pe.bas"
 }
 #line 14529 "qb64pe.bas"
-S_17118:;
-#line 14529 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":optimizecppprogram",19))))||is_error_pending()){
-#line 14529 "qb64pe.bas"
-if(qbevent){evnt(14529);if(r)goto S_17118;}
-#line 14530 "qb64pe.bas"
-S_17119:;
-#line 14530 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_OPTIMIZECPPPROGRAM))))||is_error_pending()){
-#line 14530 "qb64pe.bas"
-if(qbevent){evnt(14530);if(r)goto S_17119;}
-#line 14530 "qb64pe.bas"
 do{
+#line 14529 "qb64pe.bas"
+*__LONG_DEFAUTOINDENT=*__LONG_IDEAUTOINDENT;
+#line 14529 "qb64pe.bas"
+if(!qbevent)break;evnt(14529);}while(r);
 #line 14530 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1648= 1 ),&(pass1649= 1 ));
+sc_ec_74_end:;
 #line 14530 "qb64pe.bas"
+goto sc_1592_end;
+#line 14530 "qb64pe.bas"
+}
+#line 14530 "qb64pe.bas"
+S_17115:;
+#line 14530 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":autoindentsize",15))))||is_error_pending()){
+#line 14530 "qb64pe.bas"
+if(qbevent){evnt(14530);if(r)goto S_17115;}
+#line 14531 "qb64pe.bas"
+S_17116:;
+#line 14531 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOINDENTSIZE))))||is_error_pending()){
+#line 14531 "qb64pe.bas"
+if(qbevent){evnt(14531);if(r)goto S_17116;}
+#line 14531 "qb64pe.bas"
+do{
+#line 14531 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1623= 2 ),&(pass1624= 1 ));
+#line 14531 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14530 "qb64pe.bas"
-if(!qbevent)break;evnt(14530);}while(r);
-#line 14530 "qb64pe.bas"
-}
 #line 14531 "qb64pe.bas"
-sc_ec_64_end:;
-#line 14531 "qb64pe.bas"
-goto sc_1643_end;
+if(!qbevent)break;evnt(14531);}while(r);
 #line 14531 "qb64pe.bas"
 }
-#line 14531 "qb64pe.bas"
-S_17122:;
-#line 14531 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":stripdebugsymbols",18))))||is_error_pending()){
-#line 14531 "qb64pe.bas"
-if(qbevent){evnt(14531);if(r)goto S_17122;}
 #line 14532 "qb64pe.bas"
-S_17123:;
+S_17119:;
 #line 14532 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_STRIPDEBUGSYMBOLS))))||is_error_pending()){
+if (((-(*__LONG_IDEAUTOINDENTSIZE< 1 ))|(-(*__LONG_IDEAUTOINDENTSIZE> 64 )))||is_error_pending()){
 #line 14532 "qb64pe.bas"
-if(qbevent){evnt(14532);if(r)goto S_17123;}
+if(qbevent){evnt(14532);if(r)goto S_17119;}
 #line 14532 "qb64pe.bas"
 do{
 #line 14532 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1650= 1 ),&(pass1651= 1 ));
+SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("AutoIndentSize must be in range 1-64.",37),&(pass1625= 0 ),&(pass1626= 1 ));
 #line 14532 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14532 "qb64pe.bas"
@@ -2235,27 +2569,27 @@ if(!qbevent)break;evnt(14532);}while(r);
 #line 14532 "qb64pe.bas"
 }
 #line 14533 "qb64pe.bas"
-sc_ec_65_end:;
+sc_ec_75_end:;
 #line 14533 "qb64pe.bas"
-goto sc_1643_end;
+goto sc_1592_end;
 #line 14533 "qb64pe.bas"
 }
 #line 14533 "qb64pe.bas"
-S_17126:;
+S_17122:;
 #line 14533 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":absolutedebugpaths",19))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":indentsubs",11))))||is_error_pending()){
 #line 14533 "qb64pe.bas"
-if(qbevent){evnt(14533);if(r)goto S_17126;}
+if(qbevent){evnt(14533);if(r)goto S_17122;}
 #line 14534 "qb64pe.bas"
-S_17127:;
+S_17123:;
 #line 14534 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_ABSOLUTEDEBUGPATHS))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEINDENTSUBS))))||is_error_pending()){
 #line 14534 "qb64pe.bas"
-if(qbevent){evnt(14534);if(r)goto S_17127;}
+if(qbevent){evnt(14534);if(r)goto S_17123;}
 #line 14534 "qb64pe.bas"
 do{
 #line 14534 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1652= 1 ),&(pass1653= 1 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1627= 1 ),&(pass1628= 1 ));
 #line 14534 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14534 "qb64pe.bas"
@@ -2263,27 +2597,27 @@ if(!qbevent)break;evnt(14534);}while(r);
 #line 14534 "qb64pe.bas"
 }
 #line 14535 "qb64pe.bas"
-sc_ec_66_end:;
+sc_ec_76_end:;
 #line 14535 "qb64pe.bas"
-goto sc_1643_end;
+goto sc_1592_end;
 #line 14535 "qb64pe.bas"
 }
 #line 14535 "qb64pe.bas"
-S_17130:;
+S_17126:;
 #line 14535 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":extracppflags",14))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":autolayout",11))))||is_error_pending()){
 #line 14535 "qb64pe.bas"
-if(qbevent){evnt(14535);if(r)goto S_17130;}
+if(qbevent){evnt(14535);if(r)goto S_17126;}
 #line 14536 "qb64pe.bas"
-S_17131:;
+S_17127:;
 #line 14536 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__STRING_EXTRACPPFLAGS))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOLAYOUT))))||is_error_pending()){
 #line 14536 "qb64pe.bas"
-if(qbevent){evnt(14536);if(r)goto S_17131;}
+if(qbevent){evnt(14536);if(r)goto S_17127;}
 #line 14536 "qb64pe.bas"
 do{
 #line 14536 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1654= 3 ),&(pass1655= 1 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1629= 1 ),&(pass1630= 1 ));
 #line 14536 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14536 "qb64pe.bas"
@@ -2291,71 +2625,61 @@ if(!qbevent)break;evnt(14536);}while(r);
 #line 14536 "qb64pe.bas"
 }
 #line 14537 "qb64pe.bas"
-sc_ec_67_end:;
+do{
 #line 14537 "qb64pe.bas"
-goto sc_1643_end;
+*__LONG_DEFAUTOLAYOUT=*__LONG_IDEAUTOLAYOUT;
 #line 14537 "qb64pe.bas"
-}
-#line 14537 "qb64pe.bas"
-S_17134:;
-#line 14537 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":extralinkerflags",17))))||is_error_pending()){
-#line 14537 "qb64pe.bas"
-if(qbevent){evnt(14537);if(r)goto S_17134;}
+if(!qbevent)break;evnt(14537);}while(r);
 #line 14538 "qb64pe.bas"
+sc_ec_77_end:;
+#line 14538 "qb64pe.bas"
+goto sc_1592_end;
+#line 14538 "qb64pe.bas"
+}
+#line 14538 "qb64pe.bas"
+S_17131:;
+#line 14538 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":keywordcapitals",16))))||is_error_pending()){
+#line 14538 "qb64pe.bas"
+if(qbevent){evnt(14538);if(r)goto S_17131;}
+#line 14539 "qb64pe.bas"
+S_17132:;
+#line 14539 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP))))||is_error_pending()){
+#line 14539 "qb64pe.bas"
+if(qbevent){evnt(14539);if(r)goto S_17132;}
+#line 14539 "qb64pe.bas"
+do{
+#line 14539 "qb64pe.bas"
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1631= 1 ),&(pass1632= 1 ));
+#line 14539 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14539 "qb64pe.bas"
+if(!qbevent)break;evnt(14539);}while(r);
+#line 14539 "qb64pe.bas"
+}
+#line 14540 "qb64pe.bas"
+sc_ec_78_end:;
+#line 14540 "qb64pe.bas"
+goto sc_1592_end;
+#line 14540 "qb64pe.bas"
+}
+#line 14540 "qb64pe.bas"
 S_17135:;
-#line 14538 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSESTRINGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__STRING_EXTRALINKERFLAGS))))||is_error_pending()){
-#line 14538 "qb64pe.bas"
-if(qbevent){evnt(14538);if(r)goto S_17135;}
-#line 14538 "qb64pe.bas"
-do{
-#line 14538 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1656= 3 ),&(pass1657= 1 ));
-#line 14538 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14538 "qb64pe.bas"
-if(!qbevent)break;evnt(14538);}while(r);
-#line 14538 "qb64pe.bas"
-}
-#line 14539 "qb64pe.bas"
-sc_ec_68_end:;
-#line 14539 "qb64pe.bas"
-goto sc_1643_end;
-#line 14539 "qb64pe.bas"
-}
-#line 14539 "qb64pe.bas"
-S_17138:;
-#line 14539 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":maxcompilerprocesses",21))))||is_error_pending()){
-#line 14539 "qb64pe.bas"
-if(qbevent){evnt(14539);if(r)goto S_17138;}
 #line 14540 "qb64pe.bas"
-S_17139:;
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1592,qbs_new_txt_len(":keywordlowercase",17))))||is_error_pending()){
 #line 14540 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_MAXPARALLELPROCESSES))))||is_error_pending()){
-#line 14540 "qb64pe.bas"
-if(qbevent){evnt(14540);if(r)goto S_17139;}
-#line 14540 "qb64pe.bas"
-do{
-#line 14540 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1658= 2 ),&(pass1659= 1 ));
-#line 14540 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14540 "qb64pe.bas"
-if(!qbevent)break;evnt(14540);}while(r);
-#line 14540 "qb64pe.bas"
-}
+if(qbevent){evnt(14540);if(r)goto S_17135;}
 #line 14541 "qb64pe.bas"
-S_17142:;
+S_17136:;
 #line 14541 "qb64pe.bas"
-if (((-(*__LONG_MAXPARALLELPROCESSES< 1 ))|(-(*__LONG_MAXPARALLELPROCESSES> 128 )))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW))))||is_error_pending()){
 #line 14541 "qb64pe.bas"
-if(qbevent){evnt(14541);if(r)goto S_17142;}
+if(qbevent){evnt(14541);if(r)goto S_17136;}
 #line 14541 "qb64pe.bas"
 do{
 #line 14541 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("MaxCompilerProcesses must be in range 1-128.",44),&(pass1660= 0 ),&(pass1661= 1 ));
+SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1633= 1 ),&(pass1634= 1 ));
 #line 14541 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14541 "qb64pe.bas"
@@ -2363,465 +2687,315 @@ if(!qbevent)break;evnt(14541);}while(r);
 #line 14541 "qb64pe.bas"
 }
 #line 14542 "qb64pe.bas"
-sc_ec_69_end:;
+sc_ec_79_end:;
 #line 14542 "qb64pe.bas"
-goto sc_1643_end;
+goto sc_1592_end;
 #line 14542 "qb64pe.bas"
 }
-#line 14542 "qb64pe.bas"
-S_17145:;
-#line 14542 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":targetbits",11))))||is_error_pending()){
-#line 14542 "qb64pe.bas"
-if(qbevent){evnt(14542);if(r)goto S_17145;}
-#line 14543 "qb64pe.bas"
-S_17146:;
-#line 14543 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_TARGET_BITS))))||is_error_pending()){
-#line 14543 "qb64pe.bas"
-if(qbevent){evnt(14543);if(r)goto S_17146;}
 #line 14543 "qb64pe.bas"
 do{
 #line 14543 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1662= 2 ),&(pass1663= 1 ));
+SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Unsupported setting: ",21),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1635= 0 ),&(pass1636= 1 ));
 #line 14543 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 14543 "qb64pe.bas"
 if(!qbevent)break;evnt(14543);}while(r);
-#line 14543 "qb64pe.bas"
+#line 14544 "qb64pe.bas"
+sc_1592_end:;
+#line 14546 "qb64pe.bas"
+sc_ec_80_end:;
+#line 14546 "qb64pe.bas"
+goto sc_1515_end;
+#line 14546 "qb64pe.bas"
 }
-#line 14544 "qb64pe.bas"
-S_17149:;
-#line 14544 "qb64pe.bas"
-if (((-(*__LONG_TARGET_BITS!= 32 ))&(-(*__LONG_TARGET_BITS!= 64 )))||is_error_pending()){
-#line 14544 "qb64pe.bas"
-if(qbevent){evnt(14544);if(r)goto S_17149;}
-#line 14544 "qb64pe.bas"
+#line 14546 "qb64pe.bas"
+S_17142:;
+#line 14546 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-w",2))))||is_error_pending()){
+#line 14546 "qb64pe.bas"
+if(qbevent){evnt(14546);if(r)goto S_17142;}
+#line 14547 "qb64pe.bas"
 do{
-#line 14544 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("TargetBits must be 32 or 64.",28),&(pass1664= 0 ),&(pass1665= 1 ));
-#line 14544 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14544 "qb64pe.bas"
-if(!qbevent)break;evnt(14544);}while(r);
-#line 14544 "qb64pe.bas"
-}
-#line 14545 "qb64pe.bas"
-sc_ec_70_end:;
-#line 14545 "qb64pe.bas"
-goto sc_1643_end;
-#line 14545 "qb64pe.bas"
-}
-#line 14545 "qb64pe.bas"
-S_17152:;
-#line 14545 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":generatelicensefile",20))))||is_error_pending()){
-#line 14545 "qb64pe.bas"
-if(qbevent){evnt(14545);if(r)goto S_17152;}
-#line 14546 "qb64pe.bas"
-S_17153:;
-#line 14546 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_GENERATELICENSEFILE))))||is_error_pending()){
-#line 14546 "qb64pe.bas"
-if(qbevent){evnt(14546);if(r)goto S_17153;}
-#line 14546 "qb64pe.bas"
-do{
-#line 14546 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1666= 1 ),&(pass1667= 1 ));
-#line 14546 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14546 "qb64pe.bas"
-if(!qbevent)break;evnt(14546);}while(r);
-#line 14546 "qb64pe.bas"
-}
 #line 14547 "qb64pe.bas"
-sc_ec_71_end:;
+*__BYTE_SHOWWARNINGS= -1ll ;
 #line 14547 "qb64pe.bas"
-goto sc_1643_end;
-#line 14547 "qb64pe.bas"
-}
-#line 14547 "qb64pe.bas"
-S_17156:;
-#line 14547 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":usesystemcompiler",18))))||is_error_pending()){
-#line 14547 "qb64pe.bas"
-if(qbevent){evnt(14547);if(r)goto S_17156;}
-#line 14548 "qb64pe.bas"
-S_17157:;
-#line 14548 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_USESYSTEMMINGW))))||is_error_pending()){
-#line 14548 "qb64pe.bas"
-if(qbevent){evnt(14548);if(r)goto S_17157;}
+if(!qbevent)break;evnt(14547);}while(r);
 #line 14548 "qb64pe.bas"
 do{
 #line 14548 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1668= 1 ),&(pass1669= 1 ));
-#line 14548 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14548 "qb64pe.bas"
 if(!qbevent)break;evnt(14548);}while(r);
-#line 14548 "qb64pe.bas"
-}
-#line 14549 "qb64pe.bas"
-sc_ec_72_end:;
-#line 14549 "qb64pe.bas"
-goto sc_1643_end;
-#line 14549 "qb64pe.bas"
-}
-#line 14549 "qb64pe.bas"
-S_17160:;
-#line 14549 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":autoindent",11))))||is_error_pending()){
-#line 14549 "qb64pe.bas"
-if(qbevent){evnt(14549);if(r)goto S_17160;}
 #line 14550 "qb64pe.bas"
-S_17161:;
+sc_ec_81_end:;
 #line 14550 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOINDENT))))||is_error_pending()){
-#line 14550 "qb64pe.bas"
-if(qbevent){evnt(14550);if(r)goto S_17161;}
-#line 14550 "qb64pe.bas"
-do{
-#line 14550 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1670= 1 ),&(pass1671= 1 ));
-#line 14550 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14550 "qb64pe.bas"
-if(!qbevent)break;evnt(14550);}while(r);
+goto sc_1515_end;
 #line 14550 "qb64pe.bas"
 }
+#line 14550 "qb64pe.bas"
+S_17145:;
+#line 14550 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-q",2))))||is_error_pending()){
+#line 14550 "qb64pe.bas"
+if(qbevent){evnt(14550);if(r)goto S_17145;}
 #line 14551 "qb64pe.bas"
 do{
 #line 14551 "qb64pe.bas"
-*__LONG_DEFAUTOINDENT=*__LONG_IDEAUTOINDENT;
+*__BYTE_QUIETMODE= -1ll ;
 #line 14551 "qb64pe.bas"
 if(!qbevent)break;evnt(14551);}while(r);
 #line 14552 "qb64pe.bas"
-sc_ec_73_end:;
-#line 14552 "qb64pe.bas"
-goto sc_1643_end;
-#line 14552 "qb64pe.bas"
-}
-#line 14552 "qb64pe.bas"
-S_17165:;
-#line 14552 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":autoindentsize",15))))||is_error_pending()){
-#line 14552 "qb64pe.bas"
-if(qbevent){evnt(14552);if(r)goto S_17165;}
-#line 14553 "qb64pe.bas"
-S_17166:;
-#line 14553 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSELONGSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOINDENTSIZE))))||is_error_pending()){
-#line 14553 "qb64pe.bas"
-if(qbevent){evnt(14553);if(r)goto S_17166;}
-#line 14553 "qb64pe.bas"
 do{
-#line 14553 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1672= 2 ),&(pass1673= 1 ));
-#line 14553 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14553 "qb64pe.bas"
-if(!qbevent)break;evnt(14553);}while(r);
-#line 14553 "qb64pe.bas"
+#line 14552 "qb64pe.bas"
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+#line 14552 "qb64pe.bas"
+if(!qbevent)break;evnt(14552);}while(r);
+#line 14554 "qb64pe.bas"
+sc_ec_82_end:;
+#line 14554 "qb64pe.bas"
+goto sc_1515_end;
+#line 14554 "qb64pe.bas"
 }
 #line 14554 "qb64pe.bas"
-S_17169:;
+S_17148:;
 #line 14554 "qb64pe.bas"
-if (((-(*__LONG_IDEAUTOINDENTSIZE< 1 ))|(-(*__LONG_IDEAUTOINDENTSIZE> 64 )))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-m",2))))||is_error_pending()){
 #line 14554 "qb64pe.bas"
-if(qbevent){evnt(14554);if(r)goto S_17169;}
-#line 14554 "qb64pe.bas"
+if(qbevent){evnt(14554);if(r)goto S_17148;}
+#line 14555 "qb64pe.bas"
 do{
-#line 14554 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_new_txt_len("AutoIndentSize must be in range 1-64.",37),&(pass1674= 0 ),&(pass1675= 1 ));
-#line 14554 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14554 "qb64pe.bas"
-if(!qbevent)break;evnt(14554);}while(r);
-#line 14554 "qb64pe.bas"
-}
 #line 14555 "qb64pe.bas"
-sc_ec_74_end:;
+*__BYTE_MONOCHROMELOGGINGMODE= -1ll ;
 #line 14555 "qb64pe.bas"
-goto sc_1643_end;
-#line 14555 "qb64pe.bas"
-}
-#line 14555 "qb64pe.bas"
-S_17172:;
-#line 14555 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":indentsubs",11))))||is_error_pending()){
-#line 14555 "qb64pe.bas"
-if(qbevent){evnt(14555);if(r)goto S_17172;}
-#line 14556 "qb64pe.bas"
-S_17173:;
-#line 14556 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEINDENTSUBS))))||is_error_pending()){
-#line 14556 "qb64pe.bas"
-if(qbevent){evnt(14556);if(r)goto S_17173;}
+if(!qbevent)break;evnt(14555);}while(r);
 #line 14556 "qb64pe.bas"
 do{
 #line 14556 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1676= 1 ),&(pass1677= 1 ));
-#line 14556 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
 #line 14556 "qb64pe.bas"
 if(!qbevent)break;evnt(14556);}while(r);
-#line 14556 "qb64pe.bas"
-}
-#line 14557 "qb64pe.bas"
-sc_ec_75_end:;
-#line 14557 "qb64pe.bas"
-goto sc_1643_end;
-#line 14557 "qb64pe.bas"
-}
-#line 14557 "qb64pe.bas"
-S_17176:;
-#line 14557 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":autolayout",11))))||is_error_pending()){
-#line 14557 "qb64pe.bas"
-if(qbevent){evnt(14557);if(r)goto S_17176;}
 #line 14558 "qb64pe.bas"
-S_17177:;
+sc_ec_83_end:;
 #line 14558 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,__LONG_IDEAUTOLAYOUT))))||is_error_pending()){
-#line 14558 "qb64pe.bas"
-if(qbevent){evnt(14558);if(r)goto S_17177;}
-#line 14558 "qb64pe.bas"
-do{
-#line 14558 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1678= 1 ),&(pass1679= 1 ));
-#line 14558 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14558 "qb64pe.bas"
-if(!qbevent)break;evnt(14558);}while(r);
+goto sc_1515_end;
 #line 14558 "qb64pe.bas"
 }
+#line 14558 "qb64pe.bas"
+S_17151:;
+#line 14558 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1515,qbs_new_txt_len("-u",2))))||is_error_pending()){
+#line 14558 "qb64pe.bas"
+if(qbevent){evnt(14558);if(r)goto S_17151;}
 #line 14559 "qb64pe.bas"
 do{
 #line 14559 "qb64pe.bas"
-*__LONG_DEFAUTOLAYOUT=*__LONG_IDEAUTOLAYOUT;
+*__LONG_HELP_RECACHING= 2 ;
+#line 14559 "qb64pe.bas"
+if(!qbevent)break;evnt(14559);}while(r);
+#line 14559 "qb64pe.bas"
+do{
+#line 14559 "qb64pe.bas"
+*__LONG_HELP_IGNORECACHE= 0 ;
 #line 14559 "qb64pe.bas"
 if(!qbevent)break;evnt(14559);}while(r);
 #line 14560 "qb64pe.bas"
-sc_ec_76_end:;
+S_17154:;
 #line 14560 "qb64pe.bas"
-goto sc_1643_end;
+if ((FUNC_IDEUPDATEHELPBOX())||is_error_pending()){
 #line 14560 "qb64pe.bas"
-}
-#line 14560 "qb64pe.bas"
-S_17181:;
-#line 14560 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":keywordcapitals",16))))||is_error_pending()){
-#line 14560 "qb64pe.bas"
-if(qbevent){evnt(14560);if(r)goto S_17181;}
-#line 14561 "qb64pe.bas"
-S_17182:;
-#line 14561 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP))))||is_error_pending()){
-#line 14561 "qb64pe.bas"
-if(qbevent){evnt(14561);if(r)goto S_17182;}
+if(qbevent){evnt(14560);if(r)goto S_17154;}
 #line 14561 "qb64pe.bas"
 do{
 #line 14561 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1680= 1 ),&(pass1681= 1 ));
-#line 14561 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+sub__dest(func__console());
 #line 14561 "qb64pe.bas"
 if(!qbevent)break;evnt(14561);}while(r);
-#line 14561 "qb64pe.bas"
-}
 #line 14562 "qb64pe.bas"
-sc_ec_77_end:;
+do{
 #line 14562 "qb64pe.bas"
-goto sc_1643_end;
+tqbs=qbs_new(0,0);
 #line 14562 "qb64pe.bas"
-}
+qbs_set(tqbs,qbs_new_txt_len("Help update incomplete, missing pages will be fetched on demand when a user requests it.",88));
 #line 14562 "qb64pe.bas"
-S_17185:;
+if (is_error_pending()) goto skip1637;
 #line 14562 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1643,qbs_new_txt_len(":keywordlowercase",17))))||is_error_pending()){
+makefit(tqbs);
 #line 14562 "qb64pe.bas"
-if(qbevent){evnt(14562);if(r)goto S_17185;}
-#line 14563 "qb64pe.bas"
-S_17186:;
-#line 14563 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,~(FUNC_PARSEBOOLEANSETTING(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW))))||is_error_pending()){
-#line 14563 "qb64pe.bas"
-if(qbevent){evnt(14563);if(r)goto S_17186;}
+qbs_print(tqbs,0);
+#line 14562 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14562 "qb64pe.bas"
+skip1637:
+#line 14562 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14562 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14562 "qb64pe.bas"
+if(!qbevent)break;evnt(14562);}while(r);
 #line 14563 "qb64pe.bas"
 do{
 #line 14563 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(_FUNC_PARSECMDLINEARGS_STRING_TOKEN,&(pass1682= 1 ),&(pass1683= 1 ));
+if(qbevent){evnt(14563);}
 #line 14563 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+exit_code= 1 ;
+#line 14563 "qb64pe.bas"
+if (sub_gl_called) error(271);
+#line 14563 "qb64pe.bas"
+close_program=1;
+#line 14563 "qb64pe.bas"
+end();
 #line 14563 "qb64pe.bas"
 if(!qbevent)break;evnt(14563);}while(r);
-#line 14563 "qb64pe.bas"
-}
-#line 14564 "qb64pe.bas"
-sc_ec_78_end:;
-#line 14564 "qb64pe.bas"
-goto sc_1643_end;
 #line 14564 "qb64pe.bas"
 }
 #line 14565 "qb64pe.bas"
 do{
 #line 14565 "qb64pe.bas"
-SUB_CMDLINESETTINGSERROR(qbs_add(qbs_new_txt_len("Unsupported setting: ",21),_FUNC_PARSECMDLINEARGS_STRING_TOKEN),&(pass1684= 0 ),&(pass1685= 1 ));
+if (sub_gl_called) error(271);
 #line 14565 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
+close_program=1;
+#line 14565 "qb64pe.bas"
+end();
 #line 14565 "qb64pe.bas"
 if(!qbevent)break;evnt(14565);}while(r);
-#line 14566 "qb64pe.bas"
-sc_1643_end:;
-#line 14568 "qb64pe.bas"
-sc_ec_79_end:;
-#line 14568 "qb64pe.bas"
-goto sc_1566_end;
-#line 14568 "qb64pe.bas"
+#line 14567 "qb64pe.bas"
+sc_ec_84_end:;
+#line 14567 "qb64pe.bas"
+goto sc_1515_end;
+#line 14567 "qb64pe.bas"
 }
 #line 14568 "qb64pe.bas"
-S_17192:;
+S_17161:;
 #line 14568 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-w",2))))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
 #line 14568 "qb64pe.bas"
-if(qbevent){evnt(14568);if(r)goto S_17192;}
-#line 14569 "qb64pe.bas"
+if(qbevent){evnt(14568);if(r)goto S_17161;}
+#line 14568 "qb64pe.bas"
 do{
-#line 14569 "qb64pe.bas"
-*__BYTE_SHOWWARNINGS= -1ll ;
-#line 14569 "qb64pe.bas"
-if(!qbevent)break;evnt(14569);}while(r);
-#line 14570 "qb64pe.bas"
-do{
-#line 14570 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
-#line 14570 "qb64pe.bas"
-if(!qbevent)break;evnt(14570);}while(r);
-#line 14572 "qb64pe.bas"
-sc_ec_80_end:;
-#line 14572 "qb64pe.bas"
-goto sc_1566_end;
-#line 14572 "qb64pe.bas"
+#line 14568 "qb64pe.bas"
+qbs_set(_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME,_FUNC_PARSECMDLINEARGS_STRING_TOKEN);
+#line 14568 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14568 "qb64pe.bas"
+if(!qbevent)break;evnt(14568);}while(r);
+#line 14568 "qb64pe.bas"
 }
+#line 14569 "qb64pe.bas"
+sc_1515_end:;
+#line 14570 "qb64pe.bas"
+fornext_continue_1513:;
+#line 14570 "qb64pe.bas"
+}
+#line 14570 "qb64pe.bas"
+fornext_exit_1513:;
 #line 14572 "qb64pe.bas"
-S_17195:;
+S_17166:;
 #line 14572 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-q",2))))||is_error_pending()){
+if (((-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP> -5 ))|(-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW> -5 )))||is_error_pending()){
 #line 14572 "qb64pe.bas"
-if(qbevent){evnt(14572);if(r)goto S_17195;}
+if(qbevent){evnt(14572);if(r)goto S_17166;}
 #line 14573 "qb64pe.bas"
-do{
+S_17167:;
 #line 14573 "qb64pe.bas"
-*__BYTE_QUIETMODE= -1ll ;
+if ((-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP==*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW))||is_error_pending()){
 #line 14573 "qb64pe.bas"
-if(!qbevent)break;evnt(14573);}while(r);
+if(qbevent){evnt(14573);if(r)goto S_17167;}
 #line 14574 "qb64pe.bas"
 do{
 #line 14574 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+*__LONG_IDEAUTOLAYOUTKWSTYLE= 0ll ;
 #line 14574 "qb64pe.bas"
 if(!qbevent)break;evnt(14574);}while(r);
+#line 14575 "qb64pe.bas"
+S_17169:;
+#line 14575 "qb64pe.bas"
+}else{
+#line 14575 "qb64pe.bas"
+if (-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP== -1ll )){
+#line 14575 "qb64pe.bas"
+if(qbevent){evnt(14575);if(r)goto S_17169;}
 #line 14576 "qb64pe.bas"
-sc_ec_81_end:;
-#line 14576 "qb64pe.bas"
-goto sc_1566_end;
-#line 14576 "qb64pe.bas"
-}
-#line 14576 "qb64pe.bas"
-S_17198:;
-#line 14576 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-m",2))))||is_error_pending()){
-#line 14576 "qb64pe.bas"
-if(qbevent){evnt(14576);if(r)goto S_17198;}
-#line 14577 "qb64pe.bas"
 do{
+#line 14576 "qb64pe.bas"
+*__LONG_IDEAUTOLAYOUTKWSTYLE= 1ll ;
+#line 14576 "qb64pe.bas"
+if(!qbevent)break;evnt(14576);}while(r);
 #line 14577 "qb64pe.bas"
-*__BYTE_MONOCHROMELOGGINGMODE= -1ll ;
+S_17171:;
 #line 14577 "qb64pe.bas"
-if(!qbevent)break;evnt(14577);}while(r);
+}else{
+#line 14577 "qb64pe.bas"
+if (-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW== -1ll )){
+#line 14577 "qb64pe.bas"
+if(qbevent){evnt(14577);if(r)goto S_17171;}
 #line 14578 "qb64pe.bas"
 do{
 #line 14578 "qb64pe.bas"
-*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH= -1ll ;
+*__LONG_IDEAUTOLAYOUTKWSTYLE= -1ll ;
 #line 14578 "qb64pe.bas"
 if(!qbevent)break;evnt(14578);}while(r);
-#line 14580 "qb64pe.bas"
-sc_ec_82_end:;
-#line 14580 "qb64pe.bas"
-goto sc_1566_end;
-#line 14580 "qb64pe.bas"
+#line 14579 "qb64pe.bas"
+}
+#line 14579 "qb64pe.bas"
+}
+#line 14579 "qb64pe.bas"
 }
 #line 14580 "qb64pe.bas"
-S_17201:;
-#line 14580 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(sc_1566,qbs_new_txt_len("-u",2))))||is_error_pending()){
-#line 14580 "qb64pe.bas"
-if(qbevent){evnt(14580);if(r)goto S_17201;}
-#line 14581 "qb64pe.bas"
-do{
-#line 14581 "qb64pe.bas"
-*__LONG_HELP_RECACHING= 2 ;
-#line 14581 "qb64pe.bas"
-if(!qbevent)break;evnt(14581);}while(r);
-#line 14581 "qb64pe.bas"
-do{
-#line 14581 "qb64pe.bas"
-*__LONG_HELP_IGNORECACHE= 0 ;
-#line 14581 "qb64pe.bas"
-if(!qbevent)break;evnt(14581);}while(r);
+}
 #line 14582 "qb64pe.bas"
-S_17204:;
+S_17175:;
 #line 14582 "qb64pe.bas"
-if ((FUNC_IDEUPDATEHELPBOX())||is_error_pending()){
+if ((~(*__BYTE_NOIDEMODE))||is_error_pending()){
 #line 14582 "qb64pe.bas"
-if(qbevent){evnt(14582);if(r)goto S_17204;}
-#line 14583 "qb64pe.bas"
+if(qbevent){evnt(14582);if(r)goto S_17175;}
+#line 14582 "qb64pe.bas"
 do{
-#line 14583 "qb64pe.bas"
+#line 14582 "qb64pe.bas"
+*__BYTE_FORCEOPTEXPL= 0ll ;
+#line 14582 "qb64pe.bas"
+if(!qbevent)break;evnt(14582);}while(r);
+#line 14582 "qb64pe.bas"
+}
+#line 14584 "qb64pe.bas"
+S_17178:;
+#line 14584 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,*__BYTE_FORMATMODE&(-(__STRING_CMDLINEOUTFILE->len== 0 ))))||is_error_pending()){
+#line 14584 "qb64pe.bas"
+if(qbevent){evnt(14584);if(r)goto S_17178;}
+#line 14585 "qb64pe.bas"
+do{
+#line 14585 "qb64pe.bas"
 sub__dest(func__console());
-#line 14583 "qb64pe.bas"
-if(!qbevent)break;evnt(14583);}while(r);
-#line 14584 "qb64pe.bas"
-do{
-#line 14584 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14584 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Help update incomplete, missing pages will be fetched on demand when a user requests it.",88));
-#line 14584 "qb64pe.bas"
-if (is_error_pending()) goto skip1686;
-#line 14584 "qb64pe.bas"
-makefit(tqbs);
-#line 14584 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14584 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14584 "qb64pe.bas"
-skip1686:
-#line 14584 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14584 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14584 "qb64pe.bas"
-if(!qbevent)break;evnt(14584);}while(r);
-#line 14585 "qb64pe.bas"
-do{
-#line 14585 "qb64pe.bas"
-if(qbevent){evnt(14585);}
-#line 14585 "qb64pe.bas"
-exit_code= 1 ;
-#line 14585 "qb64pe.bas"
-if (sub_gl_called) error(271);
-#line 14585 "qb64pe.bas"
-close_program=1;
-#line 14585 "qb64pe.bas"
-end();
 #line 14585 "qb64pe.bas"
 if(!qbevent)break;evnt(14585);}while(r);
 #line 14586 "qb64pe.bas"
-}
+do{
+#line 14586 "qb64pe.bas"
+tqbs=qbs_new(0,0);
+#line 14586 "qb64pe.bas"
+qbs_set(tqbs,qbs_new_txt_len("Formatting requires specifying output file with -o option",57));
+#line 14586 "qb64pe.bas"
+if (is_error_pending()) goto skip1639;
+#line 14586 "qb64pe.bas"
+makefit(tqbs);
+#line 14586 "qb64pe.bas"
+qbs_print(tqbs,0);
+#line 14586 "qb64pe.bas"
+qbs_print(nothingstring,1);
+#line 14586 "qb64pe.bas"
+skip1639:
+#line 14586 "qb64pe.bas"
+qbs_free(tqbs);
+#line 14586 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14586 "qb64pe.bas"
+if(!qbevent)break;evnt(14586);}while(r);
 #line 14587 "qb64pe.bas"
 do{
+#line 14587 "qb64pe.bas"
+if(qbevent){evnt(14587);}
+#line 14587 "qb64pe.bas"
+exit_code= 1 ;
 #line 14587 "qb64pe.bas"
 if (sub_gl_called) error(271);
 #line 14587 "qb64pe.bas"
@@ -2830,201 +3004,55 @@ close_program=1;
 end();
 #line 14587 "qb64pe.bas"
 if(!qbevent)break;evnt(14587);}while(r);
-#line 14589 "qb64pe.bas"
-sc_ec_83_end:;
-#line 14589 "qb64pe.bas"
-goto sc_1566_end;
-#line 14589 "qb64pe.bas"
+#line 14588 "qb64pe.bas"
 }
 #line 14590 "qb64pe.bas"
-S_17211:;
+S_17183:;
 #line 14590 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 14590 "qb64pe.bas"
-if(qbevent){evnt(14590);if(r)goto S_17211;}
-#line 14590 "qb64pe.bas"
-do{
-#line 14590 "qb64pe.bas"
-qbs_set(_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME,_FUNC_PARSECMDLINEARGS_STRING_TOKEN);
-#line 14590 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14590 "qb64pe.bas"
-if(!qbevent)break;evnt(14590);}while(r);
-#line 14590 "qb64pe.bas"
-}
-#line 14591 "qb64pe.bas"
-sc_1566_end:;
-#line 14592 "qb64pe.bas"
-fornext_continue_1564:;
-#line 14592 "qb64pe.bas"
-}
-#line 14592 "qb64pe.bas"
-fornext_exit_1564:;
-#line 14594 "qb64pe.bas"
-S_17216:;
-#line 14594 "qb64pe.bas"
-if (((-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP> -5 ))|(-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW> -5 )))||is_error_pending()){
-#line 14594 "qb64pe.bas"
-if(qbevent){evnt(14594);if(r)goto S_17216;}
-#line 14595 "qb64pe.bas"
-S_17217:;
-#line 14595 "qb64pe.bas"
-if ((-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP==*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW))||is_error_pending()){
-#line 14595 "qb64pe.bas"
-if(qbevent){evnt(14595);if(r)goto S_17217;}
-#line 14596 "qb64pe.bas"
-do{
-#line 14596 "qb64pe.bas"
-*__LONG_IDEAUTOLAYOUTKWSTYLE= 0ll ;
-#line 14596 "qb64pe.bas"
-if(!qbevent)break;evnt(14596);}while(r);
-#line 14597 "qb64pe.bas"
-S_17219:;
-#line 14597 "qb64pe.bas"
-}else{
-#line 14597 "qb64pe.bas"
-if (-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWCAP== -1ll )){
-#line 14597 "qb64pe.bas"
-if(qbevent){evnt(14597);if(r)goto S_17219;}
-#line 14598 "qb64pe.bas"
-do{
-#line 14598 "qb64pe.bas"
-*__LONG_IDEAUTOLAYOUTKWSTYLE= 1ll ;
-#line 14598 "qb64pe.bas"
-if(!qbevent)break;evnt(14598);}while(r);
-#line 14599 "qb64pe.bas"
-S_17221:;
-#line 14599 "qb64pe.bas"
-}else{
-#line 14599 "qb64pe.bas"
-if (-(*_FUNC_PARSECMDLINEARGS_LONG_TMPKWLOW== -1ll )){
-#line 14599 "qb64pe.bas"
-if(qbevent){evnt(14599);if(r)goto S_17221;}
-#line 14600 "qb64pe.bas"
-do{
-#line 14600 "qb64pe.bas"
-*__LONG_IDEAUTOLAYOUTKWSTYLE= -1ll ;
-#line 14600 "qb64pe.bas"
-if(!qbevent)break;evnt(14600);}while(r);
-#line 14601 "qb64pe.bas"
-}
-#line 14601 "qb64pe.bas"
-}
-#line 14601 "qb64pe.bas"
-}
-#line 14602 "qb64pe.bas"
-}
-#line 14604 "qb64pe.bas"
-S_17225:;
-#line 14604 "qb64pe.bas"
-if ((~(*__BYTE_NOIDEMODE))||is_error_pending()){
-#line 14604 "qb64pe.bas"
-if(qbevent){evnt(14604);if(r)goto S_17225;}
-#line 14604 "qb64pe.bas"
-do{
-#line 14604 "qb64pe.bas"
-*__BYTE_FORCEOPTEXPL= 0ll ;
-#line 14604 "qb64pe.bas"
-if(!qbevent)break;evnt(14604);}while(r);
-#line 14604 "qb64pe.bas"
-}
-#line 14606 "qb64pe.bas"
-S_17228:;
-#line 14606 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,*__BYTE_FORMATMODE&(-(__STRING_CMDLINEOUTFILE->len== 0 ))))||is_error_pending()){
-#line 14606 "qb64pe.bas"
-if(qbevent){evnt(14606);if(r)goto S_17228;}
-#line 14607 "qb64pe.bas"
-do{
-#line 14607 "qb64pe.bas"
-sub__dest(func__console());
-#line 14607 "qb64pe.bas"
-if(!qbevent)break;evnt(14607);}while(r);
-#line 14608 "qb64pe.bas"
-do{
-#line 14608 "qb64pe.bas"
-tqbs=qbs_new(0,0);
-#line 14608 "qb64pe.bas"
-qbs_set(tqbs,qbs_new_txt_len("Formatting requires specifying output file with -o option",57));
-#line 14608 "qb64pe.bas"
-if (is_error_pending()) goto skip1688;
-#line 14608 "qb64pe.bas"
-makefit(tqbs);
-#line 14608 "qb64pe.bas"
-qbs_print(tqbs,0);
-#line 14608 "qb64pe.bas"
-qbs_print(nothingstring,1);
-#line 14608 "qb64pe.bas"
-skip1688:
-#line 14608 "qb64pe.bas"
-qbs_free(tqbs);
-#line 14608 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 14608 "qb64pe.bas"
-if(!qbevent)break;evnt(14608);}while(r);
-#line 14609 "qb64pe.bas"
-do{
-#line 14609 "qb64pe.bas"
-if(qbevent){evnt(14609);}
-#line 14609 "qb64pe.bas"
-exit_code= 1 ;
-#line 14609 "qb64pe.bas"
-if (sub_gl_called) error(271);
-#line 14609 "qb64pe.bas"
-close_program=1;
-#line 14609 "qb64pe.bas"
-end();
-#line 14609 "qb64pe.bas"
-if(!qbevent)break;evnt(14609);}while(r);
-#line 14610 "qb64pe.bas"
-}
-#line 14612 "qb64pe.bas"
-S_17233:;
-#line 14612 "qb64pe.bas"
 if ((qbs_cleanup(qbs_tmp_base,_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME->len))||is_error_pending()){
-#line 14612 "qb64pe.bas"
-if(qbevent){evnt(14612);if(r)goto S_17233;}
-#line 14613 "qb64pe.bas"
+#line 14590 "qb64pe.bas"
+if(qbevent){evnt(14590);if(r)goto S_17183;}
+#line 14591 "qb64pe.bas"
 do{
-#line 14613 "qb64pe.bas"
+#line 14591 "qb64pe.bas"
 qbs_set(_FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS,_FUNC_PARSECMDLINEARGS_STRING_PASSEDFILENAME);
-#line 14613 "qb64pe.bas"
+#line 14591 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 14613 "qb64pe.bas"
-if(!qbevent)break;evnt(14613);}while(r);
-#line 14614 "qb64pe.bas"
+#line 14591 "qb64pe.bas"
+if(!qbevent)break;evnt(14591);}while(r);
+#line 14592 "qb64pe.bas"
 }else{
-#line 14615 "qb64pe.bas"
-S_17236:;
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
+S_17186:;
+#line 14593 "qb64pe.bas"
 if (((~(*_FUNC_PARSECMDLINEARGS_LONG_CMDLINESWITCH))&*_FUNC_PARSECMDLINEARGS_LONG_SETTINGSMODE)||is_error_pending()){
-#line 14615 "qb64pe.bas"
-if(qbevent){evnt(14615);if(r)goto S_17236;}
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
+if(qbevent){evnt(14593);if(r)goto S_17186;}
+#line 14593 "qb64pe.bas"
 do{
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
 if (sub_gl_called) error(271);
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
 close_program=1;
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
 end();
-#line 14615 "qb64pe.bas"
-if(!qbevent)break;evnt(14615);}while(r);
-#line 14615 "qb64pe.bas"
+#line 14593 "qb64pe.bas"
+if(!qbevent)break;evnt(14593);}while(r);
+#line 14593 "qb64pe.bas"
 }
-#line 14616 "qb64pe.bas"
+#line 14594 "qb64pe.bas"
 }
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 exit_subfunc:;
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 #include "free2.txt"
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 qbs_maketmp(_FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS);return _FUNC_PARSECMDLINEARGS_STRING_PARSECMDLINEARGS;
-#line 14617 "qb64pe.bas"
+#line 14595 "qb64pe.bas"
 }

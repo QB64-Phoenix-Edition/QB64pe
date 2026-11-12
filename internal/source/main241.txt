@@ -1,226 +1,56 @@
-#line 75 "utilities/const_eval.bas"
-void SUB_FINDINNERPARENS(qbs*_SUB_FINDINNERPARENS_STRING_EXP,int32*_SUB_FINDINNERPARENS_LONG_STARTPAREN,int32*_SUB_FINDINNERPARENS_LONG_ENDPAREN){
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
+void SUB_WRITEBUFFERAT(int32*_SUB_WRITEBUFFERAT_LONG_BUF){
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 qbs *tqbs;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 ptrszint tmp_long;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 int32 tmp_fileno;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 #include "data241.txt"
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 mem_lock *sf_mem_lock;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 new_mem_lock();
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 sf_mem_lock=mem_lock_tmp;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 sf_mem_lock->type=3;
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 libqb_check_stack();
-#line 75 "utilities/const_eval.bas"
+#line 230 "utilities/s-buffer/sb_qb64pe_extension.bm"
 if (is_error_pending()) goto exit_subfunc;
-#line 76 "utilities/const_eval.bas"
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
+S_40446:;
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
+if ((qbs_cleanup(qbs_tmp_base,-((FUNC_ISBUFCHANGED(_SUB_WRITEBUFFERAT_LONG_BUF))&&(~(FUNC_BUFMATCHESFILE(_SUB_WRITEBUFFERAT_LONG_BUF,(((qbs**)(__ARRAY_STRING_SBUFN[0]))[array_check((*_SUB_WRITEBUFFERAT_LONG_BUF)-__ARRAY_STRING_SBUFN[4],__ARRAY_STRING_SBUFN[5])])))))))||is_error_pending()){
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
+if(qbevent){evnt(28744,231,"sb_qb64pe_extension.bm");if(r)goto S_40446;}
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
 do{
-#line 76 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_STARTPAREN= 0 ;
-#line 76 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,76,"const_eval.bas");}while(r);
-#line 77 "utilities/const_eval.bas"
-do{
-#line 77 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_ENDPAREN= 0 ;
-#line 77 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,77,"const_eval.bas");}while(r);
-#line 79 "utilities/const_eval.bas"
-do{
-#line 79 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_STRINDEX= 0 ;
-#line 79 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,79,"const_eval.bas");}while(r);
-#line 80 "utilities/const_eval.bas"
-do{
-#line 80 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_PAREN= 0 ;
-#line 80 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,80,"const_eval.bas");}while(r);
-#line 81 "utilities/const_eval.bas"
-S_40700:;
-#line 81 "utilities/const_eval.bas"
-do{
-#line 81 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,81,"const_eval.bas");if(r)goto S_40700;}
-#line 82 "utilities/const_eval.bas"
-do{
-#line 82 "utilities/const_eval.bas"
-qbs_set(_SUB_FINDINNERPARENS_STRING_ELE,FUNC_GETNEXTELEMENT(_SUB_FINDINNERPARENS_STRING_EXP,_SUB_FINDINNERPARENS_LONG_PAREN,_SUB_FINDINNERPARENS_LONG_STRINDEX));
-#line 82 "utilities/const_eval.bas"
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
+SUB_BUFTOFILE(_SUB_WRITEBUFFERAT_LONG_BUF,(((qbs**)(__ARRAY_STRING_SBUFN[0]))[array_check((*_SUB_WRITEBUFFERAT_LONG_BUF)-__ARRAY_STRING_SBUFN[4],__ARRAY_STRING_SBUFN[5])]));
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
 qbs_cleanup(qbs_tmp_base,0);
-#line 82 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,82,"const_eval.bas");}while(r);
-#line 84 "utilities/const_eval.bas"
-S_40702:;
-#line 84 "utilities/const_eval.bas"
-if ((-(*_SUB_FINDINNERPARENS_LONG_PAREN== -1 ))||is_error_pending()){
-#line 84 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,84,"const_eval.bas");if(r)goto S_40702;}
-#line 84 "utilities/const_eval.bas"
-do{
-#line 84 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 84 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,84,"const_eval.bas");}while(r);
-#line 84 "utilities/const_eval.bas"
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
+if(!qbevent)break;evnt(28744,231,"sb_qb64pe_extension.bm");}while(r);
+#line 231 "utilities/s-buffer/sb_qb64pe_extension.bm"
 }
-#line 85 "utilities/const_eval.bas"
-S_40705:;
-#line 85 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_FINDINNERPARENS_STRING_ELE,qbs_new_txt_len(")",1))))||is_error_pending()){
-#line 85 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,85,"const_eval.bas");if(r)goto S_40705;}
-#line 85 "utilities/const_eval.bas"
-do{
-#line 85 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_ENDPAREN=*_SUB_FINDINNERPARENS_LONG_PAREN;
-#line 85 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,85,"const_eval.bas");}while(r);
-#line 85 "utilities/const_eval.bas"
-do{
-#line 85 "utilities/const_eval.bas"
-goto dl_exit_3537;
-#line 85 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,85,"const_eval.bas");}while(r);
-#line 85 "utilities/const_eval.bas"
-}
-#line 86 "utilities/const_eval.bas"
-S_40709:;
-#line 86 "utilities/const_eval.bas"
-if ((-(*_SUB_FINDINNERPARENS_LONG_PAREN> 1000 ))||is_error_pending()){
-#line 86 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,86,"const_eval.bas");if(r)goto S_40709;}
-#line 86 "utilities/const_eval.bas"
-do{
-#line 86 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 86 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,86,"const_eval.bas");}while(r);
-#line 86 "utilities/const_eval.bas"
-}
-#line 87 "utilities/const_eval.bas"
-dl_continue_3537:;
-#line 87 "utilities/const_eval.bas"
-}while(1);
-#line 87 "utilities/const_eval.bas"
-dl_exit_3537:;
-#line 89 "utilities/const_eval.bas"
-do{
-#line 89 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_STRINDEX= 0 ;
-#line 89 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,89,"const_eval.bas");}while(r);
-#line 90 "utilities/const_eval.bas"
-do{
-#line 90 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_PAREN= 0 ;
-#line 90 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,90,"const_eval.bas");}while(r);
-#line 91 "utilities/const_eval.bas"
-S_40715:;
-#line 91 "utilities/const_eval.bas"
-do{
-#line 91 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,91,"const_eval.bas");if(r)goto S_40715;}
-#line 92 "utilities/const_eval.bas"
-do{
-#line 92 "utilities/const_eval.bas"
-qbs_set(_SUB_FINDINNERPARENS_STRING_ELE,FUNC_GETPREVELEMENT(_SUB_FINDINNERPARENS_STRING_EXP,_SUB_FINDINNERPARENS_LONG_PAREN,_SUB_FINDINNERPARENS_LONG_STRINDEX));
-#line 92 "utilities/const_eval.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 92 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,92,"const_eval.bas");}while(r);
-#line 95 "utilities/const_eval.bas"
-S_40717:;
-#line 95 "utilities/const_eval.bas"
-if ((-(*_SUB_FINDINNERPARENS_LONG_PAREN>*_SUB_FINDINNERPARENS_LONG_ENDPAREN))||is_error_pending()){
-#line 95 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,95,"const_eval.bas");if(r)goto S_40717;}
-#line 95 "utilities/const_eval.bas"
-do{
-#line 95 "utilities/const_eval.bas"
-goto dl_continue_3538;
-#line 95 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,95,"const_eval.bas");}while(r);
-#line 95 "utilities/const_eval.bas"
-}
-#line 97 "utilities/const_eval.bas"
-S_40720:;
-#line 97 "utilities/const_eval.bas"
-if ((-(*_SUB_FINDINNERPARENS_LONG_PAREN== -1 ))||is_error_pending()){
-#line 97 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,97,"const_eval.bas");if(r)goto S_40720;}
-#line 97 "utilities/const_eval.bas"
-do{
-#line 97 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 97 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,97,"const_eval.bas");}while(r);
-#line 97 "utilities/const_eval.bas"
-}
-#line 98 "utilities/const_eval.bas"
-S_40723:;
-#line 98 "utilities/const_eval.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_FINDINNERPARENS_STRING_ELE,qbs_new_txt_len("(",1))))||is_error_pending()){
-#line 98 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,98,"const_eval.bas");if(r)goto S_40723;}
-#line 98 "utilities/const_eval.bas"
-do{
-#line 98 "utilities/const_eval.bas"
-*_SUB_FINDINNERPARENS_LONG_STARTPAREN=*_SUB_FINDINNERPARENS_LONG_PAREN;
-#line 98 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,98,"const_eval.bas");}while(r);
-#line 98 "utilities/const_eval.bas"
-do{
-#line 98 "utilities/const_eval.bas"
-goto dl_exit_3538;
-#line 98 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,98,"const_eval.bas");}while(r);
-#line 98 "utilities/const_eval.bas"
-}
-#line 99 "utilities/const_eval.bas"
-S_40727:;
-#line 99 "utilities/const_eval.bas"
-if ((-(*_SUB_FINDINNERPARENS_LONG_PAREN> 1000 ))||is_error_pending()){
-#line 99 "utilities/const_eval.bas"
-if(qbevent){evnt(28830,99,"const_eval.bas");if(r)goto S_40727;}
-#line 99 "utilities/const_eval.bas"
-do{
-#line 99 "utilities/const_eval.bas"
-goto exit_subfunc;
-#line 99 "utilities/const_eval.bas"
-if(!qbevent)break;evnt(28830,99,"const_eval.bas");}while(r);
-#line 99 "utilities/const_eval.bas"
-}
-#line 100 "utilities/const_eval.bas"
-dl_continue_3538:;
-#line 100 "utilities/const_eval.bas"
-}while(1);
-#line 100 "utilities/const_eval.bas"
-dl_exit_3538:;
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 exit_subfunc:;
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 free_mem_lock(sf_mem_lock);
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 #include "free241.txt"
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 cmem_sp=tmp_cmem_sp;
-#line 101 "utilities/const_eval.bas"
+#line 232 "utilities/s-buffer/sb_qb64pe_extension.bm"
 }

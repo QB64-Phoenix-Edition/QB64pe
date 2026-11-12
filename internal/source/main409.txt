@@ -1,280 +1,492 @@
-#line 12418 "ide/ide_methods.bas"
-void SUB_IDENEWSF(qbs*_SUB_IDENEWSF_STRING_SF){
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
+void SUB_COPYFROMOTHER(){
+#line 2 "ide/config/cfg_methods.bas"
 qbs *tqbs;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 ptrszint tmp_long;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 int32 tmp_fileno;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 #include "data409.txt"
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 mem_lock *sf_mem_lock;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 new_mem_lock();
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 sf_mem_lock->type=3;
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 libqb_check_stack();
-#line 12418 "ide/ide_methods.bas"
+#line 2 "ide/config/cfg_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 12420 "ide/ide_methods.bas"
-S_58696:;
-#line 12420 "ide/ide_methods.bas"
-if ((*__LONG_IDESELECT)||is_error_pending()){
-#line 12420 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12420,"ide_methods.bas");if(r)goto S_58696;}
-#line 12421 "ide/ide_methods.bas"
-S_58697:;
-#line 12421 "ide/ide_methods.bas"
-if ((-(*__LONG_IDESELECTY1==*__LONG_IDECY))||is_error_pending()){
-#line 12421 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12421,"ide_methods.bas");if(r)goto S_58697;}
-#line 12422 "ide/ide_methods.bas"
+#line 3 "ide/config/cfg_methods.bas"
+LABEL_CFOAGAIN:;
+#line 3 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,3,"cfg_methods.bas");r=0;}
+#line 4 "ide/config/cfg_methods.bas"
 do{
-#line 12422 "ide/ide_methods.bas"
-qbs_set(_SUB_IDENEWSF_STRING_A,FUNC_IDEGETLINE(__LONG_IDECY));
-#line 12422 "ide/ide_methods.bas"
+#line 4 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBI,func__guiSelectFolderDialog(qbs_new_txt_len("Select another QB64-PE installation...",38),NULL,0|1));
+#line 4 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12422 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12422,"ide_methods.bas");}while(r);
-#line 12423 "ide/ide_methods.bas"
+#line 4 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,4,"cfg_methods.bas");}while(r);
+#line 5 "ide/config/cfg_methods.bas"
+S_45272:;
+#line 5 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_notequal(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 5 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,5,"cfg_methods.bas");if(r)goto S_45272;}
+#line 6 "ide/config/cfg_methods.bas"
 do{
-#line 12423 "ide/ide_methods.bas"
-qbs_set(_SUB_IDENEWSF_STRING_A2,qbs_new_txt_len("",0));
-#line 12423 "ide/ide_methods.bas"
+#line 6 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_CHKNAME,qbs_add(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,__STRING1_PATHSEP),qbs_new_txt_len("qb64pe",6)));
+#line 6 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12423 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12423,"ide_methods.bas");}while(r);
-#line 12424 "ide/ide_methods.bas"
+#line 6 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,6,"cfg_methods.bas");}while(r);
+#line 7 "ide/config/cfg_methods.bas"
+S_45274:;
+#line 7 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,func__fileexists(_SUB_COPYFROMOTHER_STRING_CHKNAME)|func__fileexists(qbs_add(_SUB_COPYFROMOTHER_STRING_CHKNAME,qbs_new_txt_len(".exe",4)))))||is_error_pending()){
+#line 7 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,7,"cfg_methods.bas");if(r)goto S_45274;}
+#line 8 "ide/config/cfg_methods.bas"
+S_45275:;
+#line 8 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,func__direxists(qbs_add(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,__STRING1_PATHSEP),__STRING_CONFIGFOLDER))))||is_error_pending()){
+#line 8 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,8,"cfg_methods.bas");if(r)goto S_45275;}
+#line 9 "ide/config/cfg_methods.bas"
 do{
-#line 12424 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_SX1=*__LONG_IDESELECTX1;
-#line 12424 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12424,"ide_methods.bas");}while(r);
-#line 12424 "ide/ide_methods.bas"
+#line 9 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_INTEGER_OQBV= 0ll ;
+#line 9 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,9,"cfg_methods.bas");}while(r);
+#line 10 "ide/config/cfg_methods.bas"
 do{
-#line 12424 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_SX2=*__LONG_IDECX;
-#line 12424 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12424,"ide_methods.bas");}while(r);
-#line 12425 "ide/ide_methods.bas"
-S_58702:;
-#line 12425 "ide/ide_methods.bas"
-if ((-(*_SUB_IDENEWSF_LONG_SX2<*_SUB_IDENEWSF_LONG_SX1))||is_error_pending()){
-#line 12425 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12425,"ide_methods.bas");if(r)goto S_58702;}
-#line 12425 "ide/ide_methods.bas"
+#line 10 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_add(qbs_add(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,__STRING1_PATHSEP),__STRING_CONFIGFOLDER),__STRING1_PATHSEP));
+#line 10 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 10 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,10,"cfg_methods.bas");}while(r);
+#line 11 "ide/config/cfg_methods.bas"
 do{
-#line 12425 "ide/ide_methods.bas"
-swap_32(&*_SUB_IDENEWSF_LONG_SX1,&*_SUB_IDENEWSF_LONG_SX2);
-#line 12425 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12425,"ide_methods.bas");}while(r);
-#line 12425 "ide/ide_methods.bas"
-}
-#line 12426 "ide/ide_methods.bas"
-S_58705:;
-#line 12426 "ide/ide_methods.bas"
-fornext_value5581=*_SUB_IDENEWSF_LONG_SX1;
-#line 12426 "ide/ide_methods.bas"
-fornext_finalvalue5581=*_SUB_IDENEWSF_LONG_SX2- 1 ;
-#line 12426 "ide/ide_methods.bas"
-fornext_step5581= 1 ;
-#line 12426 "ide/ide_methods.bas"
-if (fornext_step5581<0) fornext_step_negative5581=1; else fornext_step_negative5581=0;
-#line 12426 "ide/ide_methods.bas"
-if (is_error_pending()) goto fornext_error5581;
-#line 12426 "ide/ide_methods.bas"
-goto fornext_entrylabel5581;
-#line 12426 "ide/ide_methods.bas"
-while(1){
-#line 12426 "ide/ide_methods.bas"
-fornext_value5581=fornext_step5581+(*_SUB_IDENEWSF_LONG_X);
-#line 12426 "ide/ide_methods.bas"
-fornext_entrylabel5581:
-#line 12426 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_X=fornext_value5581;
-#line 12426 "ide/ide_methods.bas"
-if (fornext_step_negative5581){
-#line 12426 "ide/ide_methods.bas"
-if (fornext_value5581<fornext_finalvalue5581) break;
-#line 12426 "ide/ide_methods.bas"
+#line 11 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("config.ini",10)),__STRING_CONFIGFILE);
+#line 11 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,11,"cfg_methods.bas");}while(r);
+#line 12 "ide/config/cfg_methods.bas"
 }else{
-#line 12426 "ide/ide_methods.bas"
-if (fornext_value5581>fornext_finalvalue5581) break;
-#line 12426 "ide/ide_methods.bas"
-}
-#line 12426 "ide/ide_methods.bas"
-fornext_error5581:;
-#line 12426 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12426,"ide_methods.bas");if(r)goto S_58705;}
-#line 12427 "ide/ide_methods.bas"
-S_58706:;
-#line 12427 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(*_SUB_IDENEWSF_LONG_X<=_SUB_IDENEWSF_STRING_A->len)))||is_error_pending()){
-#line 12427 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12427,"ide_methods.bas");if(r)goto S_58706;}
-#line 12427 "ide/ide_methods.bas"
+#line 13 "ide/config/cfg_methods.bas"
 do{
-#line 12427 "ide/ide_methods.bas"
-qbs_set(_SUB_IDENEWSF_STRING_A2,qbs_add(_SUB_IDENEWSF_STRING_A2,func_mid(_SUB_IDENEWSF_STRING_A,*_SUB_IDENEWSF_LONG_X, 1 ,0|1)));
-#line 12427 "ide/ide_methods.bas"
+#line 13 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_INTEGER_OQBV= -1ll ;
+#line 13 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,13,"cfg_methods.bas");}while(r);
+#line 14 "ide/config/cfg_methods.bas"
+do{
+#line 14 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_add(qbs_add(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,__STRING1_PATHSEP),qbs_new_txt_len("internal",8)),__STRING1_PATHSEP));
+#line 14 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12427 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12427,"ide_methods.bas");}while(r);
-#line 12427 "ide/ide_methods.bas"
+#line 14 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,14,"cfg_methods.bas");}while(r);
+#line 15 "ide/config/cfg_methods.bas"
+do{
+#line 15 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("config.ini",10)),__STRING_CONFIGFILE);
+#line 15 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,15,"cfg_methods.bas");}while(r);
+#line 16 "ide/config/cfg_methods.bas"
+S_45283:;
+#line 16 "ide/config/cfg_methods.bas"
+if ((-(*_SUB_COPYFROMOTHER_LONG_NUL== 0 ))||is_error_pending()){
+#line 16 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,16,"cfg_methods.bas");if(r)goto S_45283;}
+#line 17 "ide/config/cfg_methods.bas"
+do{
+#line 17 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,func__readfile(__STRING_CONFIGFILE));
+#line 17 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 17 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,17,"cfg_methods.bas");}while(r);
+#line 18 "ide/config/cfg_methods.bas"
+do{
+#line 18 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_INTEGER_SID=func_instr(NULL,_SUB_COPYFROMOTHER_STRING_OQBD,qbs_new_txt_len("SchemeID=",9),0);
+#line 18 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 18 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,18,"cfg_methods.bas");}while(r);
+#line 19 "ide/config/cfg_methods.bas"
+S_45286:;
+#line 19 "ide/config/cfg_methods.bas"
+if ((-(*_SUB_COPYFROMOTHER_INTEGER_SID> 0 ))||is_error_pending()){
+#line 19 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,19,"cfg_methods.bas");if(r)goto S_45286;}
+#line 20 "ide/config/cfg_methods.bas"
+do{
+#line 20 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_INTEGER_ID=qbr_float_to_long(qbs_val<long double>(func_mid(_SUB_COPYFROMOTHER_STRING_OQBD,*_SUB_COPYFROMOTHER_INTEGER_SID+ 9 ,NULL,0)));
+#line 20 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 20 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,20,"cfg_methods.bas");}while(r);
+#line 21 "ide/config/cfg_methods.bas"
+S_45288:;
+#line 21 "ide/config/cfg_methods.bas"
+if ((-(*_SUB_COPYFROMOTHER_INTEGER_ID> 10 ))||is_error_pending()){
+#line 21 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,21,"cfg_methods.bas");if(r)goto S_45288;}
+#line 23 "ide/config/cfg_methods.bas"
+do{
+#line 23 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,qbs_add(qbs_add(qbs_left(_SUB_COPYFROMOTHER_STRING_OQBD,*_SUB_COPYFROMOTHER_INTEGER_SID+ 8 ),qbs__tostr((int64)(*_SUB_COPYFROMOTHER_INTEGER_ID+ 4 ),NULL,0)),func_mid(_SUB_COPYFROMOTHER_STRING_OQBD,*_SUB_COPYFROMOTHER_INTEGER_SID+ 9 +((int32)(qbs__tostr((int16)(*_SUB_COPYFROMOTHER_INTEGER_ID),NULL,0))->len),NULL,0)));
+#line 23 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 23 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,23,"cfg_methods.bas");}while(r);
+#line 24 "ide/config/cfg_methods.bas"
 }else{
-#line 12427 "ide/ide_methods.bas"
+#line 26 "ide/config/cfg_methods.bas"
 do{
-#line 12427 "ide/ide_methods.bas"
-qbs_set(_SUB_IDENEWSF_STRING_A2,qbs_add(_SUB_IDENEWSF_STRING_A2,qbs_new_txt_len(" ",1)));
-#line 12427 "ide/ide_methods.bas"
+#line 26 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_NCSO,qbs_new_txt_len("12349567de",10));
+#line 26 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12427 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12427,"ide_methods.bas");}while(r);
-#line 12427 "ide/ide_methods.bas"
+#line 26 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,26,"cfg_methods.bas");}while(r);
+#line 27 "ide/config/cfg_methods.bas"
+do{
+#line 27 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,qbs_add(qbs_add(qbs_left(_SUB_COPYFROMOTHER_STRING_OQBD,*_SUB_COPYFROMOTHER_INTEGER_SID+ 8 ),qbs__tostr((long double)(qbs_val<long double>(qbs_add(qbs_new_txt_len("&H",2),func_mid(_SUB_COPYFROMOTHER_STRING_NCSO,*_SUB_COPYFROMOTHER_INTEGER_ID, 1 ,0|1)))),NULL,0)),func_mid(_SUB_COPYFROMOTHER_STRING_OQBD,*_SUB_COPYFROMOTHER_INTEGER_SID+ 9 +((int32)(qbs__tostr((int16)(*_SUB_COPYFROMOTHER_INTEGER_ID),NULL,0))->len),NULL,0)));
+#line 27 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 27 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,27,"cfg_methods.bas");}while(r);
+#line 28 "ide/config/cfg_methods.bas"
 }
-#line 12428 "ide/ide_methods.bas"
-fornext_continue_5580:;
-#line 12428 "ide/ide_methods.bas"
+#line 29 "ide/config/cfg_methods.bas"
 }
-#line 12428 "ide/ide_methods.bas"
-fornext_exit_5580:;
-#line 12429 "ide/ide_methods.bas"
+#line 30 "ide/config/cfg_methods.bas"
+do{
+#line 30 "ide/config/cfg_methods.bas"
+sub__writefile(__STRING_CONFIGFILE,_SUB_COPYFROMOTHER_STRING_OQBD);
+#line 30 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 30 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,30,"cfg_methods.bas");}while(r);
+#line 31 "ide/config/cfg_methods.bas"
 }
-#line 12430 "ide/ide_methods.bas"
+#line 32 "ide/config/cfg_methods.bas"
+do{
+#line 32 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_add(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("temp",4)),__STRING1_PATHSEP));
+#line 32 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 32 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,32,"cfg_methods.bas");}while(r);
+#line 33 "ide/config/cfg_methods.bas"
 }
-#line 12432 "ide/ide_methods.bas"
+#line 34 "ide/config/cfg_methods.bas"
 do{
-#line 12432 "ide/ide_methods.bas"
-qbs_set(_SUB_IDENEWSF_STRING_NEWSF,FUNC_IDEINPUTBOX(qbs_add(qbs_new_txt_len("New ",4),_SUB_IDENEWSF_STRING_SF),qbs_new_txt_len("#Name",5),_SUB_IDENEWSF_STRING_A2,qbs_new_txt_len("",0),&(pass5583= 60 ),&(pass5584= 40 ),&(pass5585= 0 )));
-#line 12432 "ide/ide_methods.bas"
+#line 34 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("debug.ini",9)),__STRING_DEBUGFILE);
+#line 34 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12432 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12432,"ide_methods.bas");}while(r);
-#line 12434 "ide/ide_methods.bas"
-S_58715:;
-#line 12434 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,_SUB_IDENEWSF_STRING_NEWSF->len))||is_error_pending()){
-#line 12434 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,12434,"ide_methods.bas");if(r)goto S_58715;}
-#line 12435 "ide/ide_methods.bas"
+#line 34 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,34,"cfg_methods.bas");}while(r);
+#line 35 "ide/config/cfg_methods.bas"
+S_45300:;
+#line 35 "ide/config/cfg_methods.bas"
+if ((-((-(*_SUB_COPYFROMOTHER_LONG_NUL== 0 ))&&*_SUB_COPYFROMOTHER_INTEGER_OQBV))||is_error_pending()){
+#line 35 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,35,"cfg_methods.bas");if(r)goto S_45300;}
+#line 36 "ide/config/cfg_methods.bas"
 do{
-#line 12435 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_Y=*__LONG_IDEN;
-#line 12435 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12435,"ide_methods.bas");}while(r);
-#line 12436 "ide/ide_methods.bas"
-do{
-#line 12436 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_Y=*_SUB_IDENEWSF_LONG_Y+ 1 ;
-#line 12436 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12436,"ide_methods.bas");}while(r);
-#line 12436 "ide/ide_methods.bas"
-do{
-#line 12436 "ide/ide_methods.bas"
-SUB_IDESETLINE(_SUB_IDENEWSF_LONG_Y,qbs_new_txt_len("",0));
-#line 12436 "ide/ide_methods.bas"
+#line 36 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,func__readfile(__STRING_DEBUGFILE));
+#line 36 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12436 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12436,"ide_methods.bas");}while(r);
-#line 12437 "ide/ide_methods.bas"
+#line 36 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,36,"cfg_methods.bas");}while(r);
+#line 37 "ide/config/cfg_methods.bas"
 do{
-#line 12437 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_Y=*_SUB_IDENEWSF_LONG_Y+ 1 ;
-#line 12437 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12437,"ide_methods.bas");}while(r);
-#line 12437 "ide/ide_methods.bas"
-do{
-#line 12437 "ide/ide_methods.bas"
-SUB_IDESETLINE(_SUB_IDENEWSF_LONG_Y,qbs_add(qbs_add(_SUB_IDENEWSF_STRING_SF,qbs_new_txt_len(" ",1)),_SUB_IDENEWSF_STRING_NEWSF));
-#line 12437 "ide/ide_methods.bas"
+#line 37 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,FUNC_STRREPLACE(_SUB_COPYFROMOTHER_STRING_OQBD,qbs_new_txt_len("[settings]",10),qbs_new_txt_len("[VWATCH PANEL 1]",16)));
+#line 37 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12437 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12437,"ide_methods.bas");}while(r);
-#line 12438 "ide/ide_methods.bas"
+#line 37 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,37,"cfg_methods.bas");}while(r);
+#line 38 "ide/config/cfg_methods.bas"
 do{
-#line 12438 "ide/ide_methods.bas"
-*__LONG_IDESY=*_SUB_IDENEWSF_LONG_Y;
-#line 12438 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12438,"ide_methods.bas");}while(r);
-#line 12439 "ide/ide_methods.bas"
-do{
-#line 12439 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_Y=*_SUB_IDENEWSF_LONG_Y+ 1 ;
-#line 12439 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12439,"ide_methods.bas");}while(r);
-#line 12439 "ide/ide_methods.bas"
-do{
-#line 12439 "ide/ide_methods.bas"
-SUB_IDESETLINE(_SUB_IDENEWSF_LONG_Y,qbs_new_txt_len("",0));
-#line 12439 "ide/ide_methods.bas"
+#line 38 "ide/config/cfg_methods.bas"
+sub__writefile(__STRING_DEBUGFILE,_SUB_COPYFROMOTHER_STRING_OQBD);
+#line 38 "ide/config/cfg_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 12439 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12439,"ide_methods.bas");}while(r);
-#line 12440 "ide/ide_methods.bas"
-do{
-#line 12440 "ide/ide_methods.bas"
-*__LONG_IDECY=*_SUB_IDENEWSF_LONG_Y;
-#line 12440 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12440,"ide_methods.bas");}while(r);
-#line 12441 "ide/ide_methods.bas"
-do{
-#line 12441 "ide/ide_methods.bas"
-*_SUB_IDENEWSF_LONG_Y=*_SUB_IDENEWSF_LONG_Y+ 1 ;
-#line 12441 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12441,"ide_methods.bas");}while(r);
-#line 12441 "ide/ide_methods.bas"
-do{
-#line 12441 "ide/ide_methods.bas"
-SUB_IDESETLINE(_SUB_IDENEWSF_LONG_Y,qbs_add(qbs_new_txt_len("END ",4),_SUB_IDENEWSF_STRING_SF));
-#line 12441 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 12441 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12441,"ide_methods.bas");}while(r);
-#line 12442 "ide/ide_methods.bas"
-do{
-#line 12442 "ide/ide_methods.bas"
-*__LONG_IDECX= 1 ;
-#line 12442 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12442,"ide_methods.bas");}while(r);
-#line 12442 "ide/ide_methods.bas"
-do{
-#line 12442 "ide/ide_methods.bas"
-*__LONG_IDESX= 1 ;
-#line 12442 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12442,"ide_methods.bas");}while(r);
-#line 12443 "ide/ide_methods.bas"
-do{
-#line 12443 "ide/ide_methods.bas"
-*__INTEGER_IDECHANGEMADE= 1 ;
-#line 12443 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12443,"ide_methods.bas");}while(r);
-#line 12444 "ide/ide_methods.bas"
-do{
-#line 12444 "ide/ide_methods.bas"
-*__BYTE_STARTPAUSEDPENDING= 0 ;
-#line 12444 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,12444,"ide_methods.bas");}while(r);
-#line 12445 "ide/ide_methods.bas"
+#line 38 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,38,"cfg_methods.bas");}while(r);
+#line 39 "ide/config/cfg_methods.bas"
 }
-#line 12446 "ide/ide_methods.bas"
+#line 40 "ide/config/cfg_methods.bas"
+do{
+#line 40 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("bookmarks.bin",13)),__STRING_BOOKMARKSFILE);
+#line 40 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 40 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,40,"cfg_methods.bas");}while(r);
+#line 41 "ide/config/cfg_methods.bas"
+do{
+#line 41 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("recent.bin",10)),__STRING_RECENTFILE);
+#line 41 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 41 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,41,"cfg_methods.bas");}while(r);
+#line 42 "ide/config/cfg_methods.bas"
+S_45307:;
+#line 42 "ide/config/cfg_methods.bas"
+if ((-((-(*_SUB_COPYFROMOTHER_LONG_NUL== 0 ))&&*_SUB_COPYFROMOTHER_INTEGER_OQBV))||is_error_pending()){
+#line 42 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,42,"cfg_methods.bas");if(r)goto S_45307;}
+#line 43 "ide/config/cfg_methods.bas"
+do{
+#line 43 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,func__readfile(__STRING_RECENTFILE));
+#line 43 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 43 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,43,"cfg_methods.bas");}while(r);
+#line 44 "ide/config/cfg_methods.bas"
+do{
+#line 44 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,func_mid(FUNC_STRREPLACE(_SUB_COPYFROMOTHER_STRING_OQBD,qbs_add(__STRING_CRLF,__STRING_CRLF),__STRING_CRLF), 3 ,NULL,0));
+#line 44 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 44 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,44,"cfg_methods.bas");}while(r);
+#line 45 "ide/config/cfg_methods.bas"
+do{
+#line 45 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,FUNC_STRREPLACE(_SUB_COPYFROMOTHER_STRING_OQBD,__STRING_CRLF,__STRING_NATIVE_LINEENDING));
+#line 45 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 45 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,45,"cfg_methods.bas");}while(r);
+#line 46 "ide/config/cfg_methods.bas"
+do{
+#line 46 "ide/config/cfg_methods.bas"
+sub__writefile(__STRING_RECENTFILE,_SUB_COPYFROMOTHER_STRING_OQBD);
+#line 46 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 46 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,46,"cfg_methods.bas");}while(r);
+#line 47 "ide/config/cfg_methods.bas"
+}
+#line 48 "ide/config/cfg_methods.bas"
+do{
+#line 48 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_COPYFILE(qbs_add(_SUB_COPYFROMOTHER_STRING_OQBI,qbs_new_txt_len("searched.bin",12)),__STRING_SEARCHEDFILE);
+#line 48 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 48 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,48,"cfg_methods.bas");}while(r);
+#line 49 "ide/config/cfg_methods.bas"
+S_45314:;
+#line 49 "ide/config/cfg_methods.bas"
+if ((-((-(*_SUB_COPYFROMOTHER_LONG_NUL== 0 ))&&*_SUB_COPYFROMOTHER_INTEGER_OQBV))||is_error_pending()){
+#line 49 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,49,"cfg_methods.bas");if(r)goto S_45314;}
+#line 50 "ide/config/cfg_methods.bas"
+do{
+#line 50 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,func__readfile(__STRING_SEARCHEDFILE));
+#line 50 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 50 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,50,"cfg_methods.bas");}while(r);
+#line 51 "ide/config/cfg_methods.bas"
+do{
+#line 51 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_OQBD,FUNC_STRREPLACE(_SUB_COPYFROMOTHER_STRING_OQBD,__STRING_CRLF,__STRING_NATIVE_LINEENDING));
+#line 51 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 51 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,51,"cfg_methods.bas");}while(r);
+#line 52 "ide/config/cfg_methods.bas"
+do{
+#line 52 "ide/config/cfg_methods.bas"
+sub__writefile(__STRING_SEARCHEDFILE,_SUB_COPYFROMOTHER_STRING_OQBD);
+#line 52 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 52 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,52,"cfg_methods.bas");}while(r);
+#line 53 "ide/config/cfg_methods.bas"
+}
+#line 55 "ide/config/cfg_methods.bas"
+do{
+#line 55 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DebugInfo",9),_SUB_COPYFROMOTHER_STRING_TEMP);
+#line 55 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 55 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,55,"cfg_methods.bas");}while(r);
+#line 56 "ide/config/cfg_methods.bas"
+do{
+#line 56 "ide/config/cfg_methods.bas"
+SUB_INIDELETEKEY(__STRING_CONFIGFILE,__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DebugInfo",9));
+#line 56 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 56 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,56,"cfg_methods.bas");}while(r);
+#line 57 "ide/config/cfg_methods.bas"
+S_45321:;
+#line 57 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_TFSTRINGTOBOOL(_SUB_COPYFROMOTHER_STRING_TEMP)== -2 )))||is_error_pending()){
+#line 57 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,57,"cfg_methods.bas");if(r)goto S_45321;}
+#line 57 "ide/config/cfg_methods.bas"
+do{
+#line 57 "ide/config/cfg_methods.bas"
+qbs_set(_SUB_COPYFROMOTHER_STRING_TEMP,qbs_new_txt_len("False",5));
+#line 57 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 57 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,57,"cfg_methods.bas");}while(r);
+#line 57 "ide/config/cfg_methods.bas"
+}
+#line 58 "ide/config/cfg_methods.bas"
+do{
+#line 58 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_COMPILERSETTINGSSECTION,qbs_new_txt_len("IncludeDebugInfo",16),_SUB_COPYFROMOTHER_STRING_TEMP);
+#line 58 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 58 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,58,"cfg_methods.bas");}while(r);
+#line 60 "ide/config/cfg_methods.bas"
+S_45325:;
+#line 60 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+#line 60 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,60,"cfg_methods.bas");if(r)goto S_45325;}
+#line 60 "ide/config/cfg_methods.bas"
+do{
+#line 60 "ide/config/cfg_methods.bas"
+SUB_INIDELETEKEY(__STRING_CONFIGFILE,__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("DefaultTerminal",15));
+#line 60 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 60 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,60,"cfg_methods.bas");}while(r);
+#line 60 "ide/config/cfg_methods.bas"
+}
+#line 62 "ide/config/cfg_methods.bas"
+do{
+#line 62 "ide/config/cfg_methods.bas"
+*_SUB_COPYFROMOTHER_LONG_NUL=FUNC_READCONFIGSETTING(__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("LoggingEnabled",14),_SUB_COPYFROMOTHER_STRING_TEMP);
+#line 62 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 62 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,62,"cfg_methods.bas");}while(r);
+#line 63 "ide/config/cfg_methods.bas"
+do{
+#line 63 "ide/config/cfg_methods.bas"
+SUB_INIDELETEKEY(__STRING_CONFIGFILE,__STRING_GENERALSETTINGSSECTION,qbs_new_txt_len("LoggingEnabled",14));
+#line 63 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 63 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,63,"cfg_methods.bas");}while(r);
+#line 64 "ide/config/cfg_methods.bas"
+S_45330:;
+#line 64 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(FUNC_TFSTRINGTOBOOL(_SUB_COPYFROMOTHER_STRING_TEMP)!= -1 )))||is_error_pending()){
+#line 64 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,64,"cfg_methods.bas");if(r)goto S_45330;}
+#line 65 "ide/config/cfg_methods.bas"
+do{
+#line 65 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogMinLevel",11),qbs_new_txt_len("None",4));
+#line 65 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 65 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,65,"cfg_methods.bas");}while(r);
+#line 66 "ide/config/cfg_methods.bas"
+}else{
+#line 67 "ide/config/cfg_methods.bas"
+do{
+#line 67 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogMinLevel",11),qbs_new_txt_len("Information",11));
+#line 67 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 67 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,67,"cfg_methods.bas");}while(r);
+#line 68 "ide/config/cfg_methods.bas"
+do{
+#line 68 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogScopes",9),qbs_new_txt_len("qb64,libqb,libqb-image,libqb-audio",34));
+#line 68 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 68 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,68,"cfg_methods.bas");}while(r);
+#line 69 "ide/config/cfg_methods.bas"
+do{
+#line 69 "ide/config/cfg_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_LOGGINGSETTINGSSECTION,qbs_new_txt_len("LogHandlers",11),qbs_new_txt_len("console",7));
+#line 69 "ide/config/cfg_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 69 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,69,"cfg_methods.bas");}while(r);
+#line 70 "ide/config/cfg_methods.bas"
+}
+#line 71 "ide/config/cfg_methods.bas"
+}else{
+#line 72 "ide/config/cfg_methods.bas"
+S_45338:;
+#line 72 "ide/config/cfg_methods.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(func__guiMessageBox(qbs_new_txt_len("QB64-PE IDE",11),qbs_new_txt_len("No qb64pe executable found, so that seems not to be a QB64-PE installation, select another folder?",98),qbs_new_txt_len("yesno",5),qbs_new_txt_len("warning",7),NULL,0|1|2|4|8)== 1 )))||is_error_pending()){
+#line 72 "ide/config/cfg_methods.bas"
+if(qbevent){evnt(28760,72,"cfg_methods.bas");if(r)goto S_45338;}
+#line 72 "ide/config/cfg_methods.bas"
+do{
+#line 72 "ide/config/cfg_methods.bas"
+goto LABEL_CFOAGAIN;
+#line 72 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,72,"cfg_methods.bas");}while(r);
+#line 72 "ide/config/cfg_methods.bas"
+}
+#line 73 "ide/config/cfg_methods.bas"
+}
+#line 74 "ide/config/cfg_methods.bas"
+}
+#line 75 "ide/config/cfg_methods.bas"
+do{
+#line 75 "ide/config/cfg_methods.bas"
+*__DOUBLE_QB64_UPTIME=func_timer( 0.001E+0 ,0|1);
+#line 75 "ide/config/cfg_methods.bas"
+if(!qbevent)break;evnt(28760,75,"cfg_methods.bas");}while(r);
+#line 76 "ide/config/cfg_methods.bas"
 exit_subfunc:;
-#line 12446 "ide/ide_methods.bas"
+#line 76 "ide/config/cfg_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 12446 "ide/ide_methods.bas"
+#line 76 "ide/config/cfg_methods.bas"
 #include "free409.txt"
-#line 12446 "ide/ide_methods.bas"
+#line 76 "ide/config/cfg_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 12446 "ide/ide_methods.bas"
+#line 76 "ide/config/cfg_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 12446 "ide/ide_methods.bas"
+#line 76 "ide/config/cfg_methods.bas"
 }
