@@ -230,7 +230,7 @@ DIM SHARED FileMenuExportAs AS INTEGER, FileMenuExportAsSubMenuID AS INTEGER
 DIM SHARED ViewMenuCompilerWarnings AS INTEGER
 DIM SHARED RunMenuID AS INTEGER, RunMenuSaveExeWithSource AS INTEGER
 DIM SHARED GenerateLicenseEnableMenu AS INTEGER
-DIM SHARED OptionsMenuGuiDialogs AS INTEGER
+DIM SHARED OptionsMenuGuiDialogs AS INTEGER, OptionsMenuWriteWhileTranslating AS INTEGER
 DIM SHARED DebugMenuID AS INTEGER, DebugMenuCallStack AS INTEGER, DebugMenuWatchListToConsole AS INTEGER
 DIM SHARED DebugMenuAutoAddCommand AS INTEGER
 DIM SHARED PresetColorSchemes AS INTEGER, TotalColorSchemes AS INTEGER, ColorSchemes$(0)

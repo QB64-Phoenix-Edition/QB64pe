@@ -14,6 +14,49 @@ FUNCTION CopyFile& (sourceFile$, destFile$)
 END FUNCTION
 
 '
+' The length of a file in bytes, or 0 when there is no such file
+'
+FUNCTION FileLength&& (fileSpec$)
+    DIM ff AS INTEGER
+
+    IF NOT _FILEEXISTS(fileSpec$) THEN EXIT FUNCTION
+    ff = FREEFILE
+    OPEN fileSpec$ FOR BINARY AS ff
+    FileLength&& = LOF(ff)
+    CLOSE ff
+END FUNCTION
+
+'
+' The modification time of a file, in nanoseconds since the epoch, or 0 when it
+' cannot be read (no such file, no permission, a platform where the helper does
+' not work). Callers treat 0 as "unknown" and fall back to reading the file.
+'
+FUNCTION FileModTime&& (fileSpec$)
+    DECLARE LIBRARY "source/utilities/filetime/filetime"
+        FUNCTION qb64pe_file_mtime&& (fileName$)
+    END DECLARE
+
+    FileModTime&& = qb64pe_file_mtime&&(fileSpec$ + CHR$(0))
+END FUNCTION
+
+'
+' Takes an exclusive lock on a file and holds it for the life of the process,
+' as QB64-PE's claim on a temp folder. Returns non-zero when the lock is ours,
+' 0 when another instance already holds it.
+'
+' The lock is never released by us: the OS drops it when the process ends,
+' however it ends, so a folder left behind by a crashed instance is free again
+' straight away.
+'
+FUNCTION ClaimInstanceLock% (fileSpec$)
+    DECLARE LIBRARY "source/utilities/instancelock/instancelock"
+        FUNCTION qb64pe_claim_lock& (fileName$)
+    END DECLARE
+
+    ClaimInstanceLock% = qb64pe_claim_lock&(fileSpec$ + CHR$(0)) <> 0
+END FUNCTION
+
+'
 ' Splits the filename from its path, and returns the path
 '
 ' Returns: The path + trailing separator, or empty if no path

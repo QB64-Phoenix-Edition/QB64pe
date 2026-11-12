@@ -18,7 +18,7 @@ cd $1
 # xargs trims the front whitespace on OSX
 tempCount=$(find ./internal/temp/ -type f | wc -l | xargs)
 [ "$tempCount" == "1" ]
-assert_success_named "./Internal/temp file count" echo "Temp has too many files: $tempCount"
+assert_success_named "./Internal/temp file count" "Count was incorrect: $tempCount" ls ./internal/temp
 
 # Specific steps for each platform
 case "$2" in
@@ -26,12 +26,12 @@ case "$2" in
         # Verify that the Resource information was correctly applied
         # windres returns an error if the exe has no resource section
         windresResult=$($ROOT/internal/c/c_compiler/bin/llvm-objdump -s -j .rsrc ./qb64pe.exe)
-        assert_success_named "Windows Resource Section" printf "\n$windresResult\n"
+        assert_success_named "Windows Resource Section" "Winres section was incorrect: " printf "\n$windresResult\n"
         ;;
 
     lnx)
         ./setup_lnx.sh "dont_run" 1>"$RESULTS_DIR/linux-setup.txt"
-        assert_success_named "Linux setup" cat "$RESULTS_DIR/linux-setup.txt"
+        assert_success_named "Linux setup" "Linux setup failed: " cat "$RESULTS_DIR/linux-setup.txt"
         ;;
 
     osx)
@@ -46,7 +46,7 @@ case "$2" in
         popd > /dev/null
 
         (exit $ERR)
-        assert_success_named "OSX setup" cat "$RESULTS_DIR/osx-setup.txt"
+        assert_success_named "OSX setup" "MacOS setup failed: " cat "$RESULTS_DIR/osx-setup.txt"
         ;;
 esac
 

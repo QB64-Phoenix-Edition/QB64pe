@@ -1,64 +1,104 @@
-#line 11244 "ide/ide_methods.bas"
-void SUB_IDECHANGED(int32*_SUB_IDECHANGED_LONG_TOTALCHANGES){
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
+int64 FUNC_EMBEDMANNUMBER(qbs*_FUNC_EMBEDMANNUMBER_STRING_FLD){
+#line 377 "emit/embed.bas"
 qbs *tqbs;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 ptrszint tmp_long;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 int32 tmp_fileno;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 #include "data392.txt"
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 mem_lock *sf_mem_lock;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 new_mem_lock();
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 sf_mem_lock->type=3;
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 libqb_check_stack();
-#line 11244 "ide/ide_methods.bas"
+#line 377 "emit/embed.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 11245 "ide/ide_methods.bas"
-S_57408:;
-#line 11245 "ide/ide_methods.bas"
-if ((-(*_SUB_IDECHANGED_LONG_TOTALCHANGES> 1 ))||is_error_pending()){
-#line 11245 "ide/ide_methods.bas"
-if(qbevent){evnt(28843,11245,"ide_methods.bas");if(r)goto S_57408;}
-#line 11245 "ide/ide_methods.bas"
+#line 378 "emit/embed.bas"
 do{
-#line 11245 "ide/ide_methods.bas"
-qbs_set(_SUB_IDECHANGED_STRING_PL,qbs_new_txt_len("s",1));
-#line 11245 "ide/ide_methods.bas"
+#line 378 "emit/embed.bas"
+if(!qbevent)break;evnt(28753,378,"embed.bas");}while(r);
+#line 380 "emit/embed.bas"
+S_44955:;
+#line 380 "emit/embed.bas"
+fornext_value4080= 1 ;
+#line 380 "emit/embed.bas"
+fornext_finalvalue4080=_FUNC_EMBEDMANNUMBER_STRING_FLD->len;
+#line 380 "emit/embed.bas"
+fornext_step4080= 1 ;
+#line 380 "emit/embed.bas"
+if (fornext_step4080<0) fornext_step_negative4080=1; else fornext_step_negative4080=0;
+#line 380 "emit/embed.bas"
+if (is_error_pending()) goto fornext_error4080;
+#line 380 "emit/embed.bas"
+goto fornext_entrylabel4080;
+#line 380 "emit/embed.bas"
+while(1){
+#line 380 "emit/embed.bas"
+fornext_value4080=fornext_step4080+(*_FUNC_EMBEDMANNUMBER_LONG_I);
+#line 380 "emit/embed.bas"
+fornext_entrylabel4080:
+#line 380 "emit/embed.bas"
+*_FUNC_EMBEDMANNUMBER_LONG_I=fornext_value4080;
+#line 380 "emit/embed.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 11245 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,11245,"ide_methods.bas");}while(r);
-#line 11245 "ide/ide_methods.bas"
+#line 380 "emit/embed.bas"
+if (fornext_step_negative4080){
+#line 380 "emit/embed.bas"
+if (fornext_value4080<fornext_finalvalue4080) break;
+#line 380 "emit/embed.bas"
+}else{
+#line 380 "emit/embed.bas"
+if (fornext_value4080>fornext_finalvalue4080) break;
+#line 380 "emit/embed.bas"
 }
-#line 11246 "ide/ide_methods.bas"
+#line 380 "emit/embed.bas"
+fornext_error4080:;
+#line 380 "emit/embed.bas"
+if(qbevent){evnt(28753,380,"embed.bas");if(r)goto S_44955;}
+#line 381 "emit/embed.bas"
 do{
-#line 11246 "ide/ide_methods.bas"
-*_SUB_IDECHANGED_LONG_RESULT=FUNC_IDEMESSAGEBOX(qbs_new_txt_len("Change Complete",15),qbs_add(qbs_add(qbs_add(qbs__tostr((int32)(*_SUB_IDECHANGED_LONG_TOTALCHANGES),NULL,0),qbs_new_txt_len(" substitution",13)),_SUB_IDECHANGED_STRING_PL),qbs_new_txt_len(".",1)),qbs_new_txt_len("",0));
-#line 11246 "ide/ide_methods.bas"
+#line 381 "emit/embed.bas"
+*_FUNC_EMBEDMANNUMBER_INTEGER64_V=(*_FUNC_EMBEDMANNUMBER_INTEGER64_V* 10 )+((qbs_asc(_FUNC_EMBEDMANNUMBER_STRING_FLD,*_FUNC_EMBEDMANNUMBER_LONG_I)- 48 ));
+#line 381 "emit/embed.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 11246 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28843,11246,"ide_methods.bas");}while(r);
-#line 11247 "ide/ide_methods.bas"
+#line 381 "emit/embed.bas"
+if(!qbevent)break;evnt(28753,381,"embed.bas");}while(r);
+#line 382 "emit/embed.bas"
+fornext_continue_4079:;
+#line 382 "emit/embed.bas"
+}
+#line 382 "emit/embed.bas"
+fornext_exit_4079:;
+#line 383 "emit/embed.bas"
+do{
+#line 383 "emit/embed.bas"
+*_FUNC_EMBEDMANNUMBER_INTEGER64_EMBEDMANNUMBER=*_FUNC_EMBEDMANNUMBER_INTEGER64_V;
+#line 383 "emit/embed.bas"
+if(!qbevent)break;evnt(28753,383,"embed.bas");}while(r);
+#line 384 "emit/embed.bas"
 exit_subfunc:;
-#line 11247 "ide/ide_methods.bas"
+#line 384 "emit/embed.bas"
 free_mem_lock(sf_mem_lock);
-#line 11247 "ide/ide_methods.bas"
+#line 384 "emit/embed.bas"
 #include "free392.txt"
-#line 11247 "ide/ide_methods.bas"
+#line 384 "emit/embed.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 11247 "ide/ide_methods.bas"
+#line 384 "emit/embed.bas"
 cmem_sp=tmp_cmem_sp;
-#line 11247 "ide/ide_methods.bas"
+#line 384 "emit/embed.bas"
+return *_FUNC_EMBEDMANNUMBER_INTEGER64_EMBEDMANNUMBER;
+#line 384 "emit/embed.bas"
 }

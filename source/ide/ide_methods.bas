@@ -423,6 +423,12 @@ FUNCTION ide2 (ignore)
         IF UseGuiDialogs THEN
             menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuGuiDialogs)
         END IF
+        OptionsMenuWriteWhileTranslating = i
+        menu$(m, i) = "Write Files While #Translating": i = i + 1
+        menuDesc$(m, i - 1) = "Toggles whether the generated C++ is immediately written to disk, this saves memory but writes to disk more often."
+        IF WriteFilesWhileTranslating THEN
+            menu$(OptionsMenuID, OptionsMenuWriteWhileTranslating) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuWriteWhileTranslating)
+        END IF
         menusize(m) = i - 1
 
         m = m + 1: i = 0
@@ -5297,6 +5303,19 @@ FUNCTION ide2 (ignore)
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = CHR$(7) + "#GUI Dialogs"
                 ELSE
                     menu$(OptionsMenuID, OptionsMenuGuiDialogs) = "#GUI Dialogs"
+                END IF
+                PCOPY 3, 0: SCREEN , , 3, 0
+                GOTO ideloop
+            END IF
+
+            IF RIGHT$(menu$(m, s), 30) = "Write Files While #Translating" THEN
+                PCOPY 2, 0
+                WriteFilesWhileTranslating = NOT WriteFilesWhileTranslating
+                WriteConfigSetting compilerSettingsSection$, "WriteFilesWhileTranslating", BoolToTFString$(WriteFilesWhileTranslating)
+                IF WriteFilesWhileTranslating THEN
+                    menu$(OptionsMenuID, OptionsMenuWriteWhileTranslating) = CHR$(7) + "Write Files While #Translating"
+                ELSE
+                    menu$(OptionsMenuID, OptionsMenuWriteWhileTranslating) = "Write Files While #Translating"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
@@ -16307,7 +16326,7 @@ FUNCTION ideCompilerSettingsBox
 
     '-------- init dialog box & objects --------
     i = 0
-    idepar p, 48, _IIF(os$ = "WIN", 17, 16), "Compiler Settings"
+    idepar p, 48, _IIF(os$ = "WIN", 18, 17), "Compiler Settings"
 
     i = i + 1: ocpChk = i
     o(i).typ = 4 'check box
@@ -16329,43 +16348,48 @@ FUNCTION ideCompilerSettingsBox
     o(i).y = 5
     o(i).nam = idenewtxt("Use a#bsolute source paths in debug info")
     o(i).sel = ABS(AbsoluteDebugPaths)
+    i = i + 1: sofChk = i
+    o(i).typ = 4 'check box
+    o(i).y = 6
+    o(i).nam = idenewtxt("Compile C++ as multiple ob#ject files")
+    o(i).sel = ABS(SplitObjectFiles)
 
     i = i + 1: ecfBox = i
     o(i).typ = 1 'text box
-    o(i).y = 7
+    o(i).y = 8
     o(i).nam = idenewtxt("C++ Compiler #Flags"): a2$ = ExtraCppFlags$
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
     i = i + 1: elfBox = i
     o(i).typ = 1 'text box
-    o(i).y = 10
+    o(i).y = 11
     o(i).nam = idenewtxt("C++ #Linker Flags"): a2$ = ExtraLinkerFlags$
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$)
 
     i = i + 1: mppBox = i
     o(i).typ = 1 'text box
-    o(i).y = 13
+    o(i).y = 14
     o(i).nam = idenewtxt("#Max C++ Compiler Processes"): a2$ = _TOSTR$(MaxParallelProcesses)
     o(i).txt = idenewtxt(a2$): o(i).v1 = LEN(a2$): o(i).blk = 6
     i = i + 1: mppSymUp = i
     o(i).typ = 5 'symbol button
-    o(i).x = 41: o(i).y = 13
+    o(i).x = 41: o(i).y = 14
     o(i).txt = idenewtxt(CHR$(30)): o(i).rpt = 10
     i = i + 1: mppSymDn = i
     o(i).typ = 5 'symbol button
-    o(i).x = 44: o(i).y = 13
+    o(i).x = 44: o(i).y = 14
     o(i).txt = idenewtxt(CHR$(31)): o(i).rpt = 10
 
     IF os$ = "WIN" THEN
         i = i + 1: uscChk = i
         o(i).typ = 4 'check box
-        o(i).y = 15
+        o(i).y = 16
         o(i).nam = idenewtxt("#Use system C++ compiler")
         o(i).sel = ABS(UseSystemMinGW)
     END IF
 
     i = i + 1: okBut = i: caBut = i + 1
     o(i).typ = 3 'action buttons
-    o(i).y = _IIF(os$ = "WIN", 17, 16)
+    o(i).y = _IIF(os$ = "WIN", 18, 17)
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel"): o(i).dft = 1
     '-------- end of init dialog box & objects --------
 
@@ -16485,6 +16509,8 @@ FUNCTION ideCompilerSettingsBox
             IF IncludeDebugInfo <> v% THEN IncludeDebugInfo = v%: optChg% = _TRUE
             v% = o(adpChk).sel: IF v% <> 0 THEN v% = _TRUE
             IF AbsoluteDebugPaths <> v% THEN AbsoluteDebugPaths = v%: optChg% = _TRUE
+            v% = o(sofChk).sel: IF v% <> 0 THEN v% = _TRUE
+            IF SplitObjectFiles <> v% THEN SplitObjectFiles = v%: optChg% = _TRUE
 
             v$ = idetxt(o(ecfBox).txt)
             IF ExtraCppFlags$ <> v$ THEN ExtraCppFlags$ = v$: optChg% = _TRUE
@@ -16505,6 +16531,7 @@ FUNCTION ideCompilerSettingsBox
                 WriteConfigSetting compilerSettingsSection$, "StripDebugSymbols", BoolToTFString$(StripDebugSymbols)
                 WriteConfigSetting compilerSettingsSection$, "IncludeDebugInfo", BoolToTFString$(IncludeDebugInfo)
                 WriteConfigSetting compilerSettingsSection$, "AbsoluteDebugPaths", BoolToTFString$(AbsoluteDebugPaths)
+                WriteConfigSetting compilerSettingsSection$, "SplitObjectFiles", BoolToTFString$(SplitObjectFiles)
 
                 WriteConfigSetting compilerSettingsSection$, "ExtraCppFlags", ExtraCppFlags$
                 WriteConfigSetting compilerSettingsSection$, "ExtraLinkerFlags", ExtraLinkerFlags$
