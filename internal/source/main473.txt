@@ -1,100 +1,100 @@
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 void SUB_IDESETTCPPORTBOX(){
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 qbs *tqbs;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 ptrszint tmp_long;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 int32 tmp_fileno;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 #include "data473.txt"
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 mem_lock *sf_mem_lock;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 new_mem_lock();
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 sf_mem_lock->type=3;
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 libqb_check_stack();
-#line 16288 "ide/ide_methods.bas"
+#line 16291 "ide/ide_methods.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 16289 "ide/ide_methods.bas"
+#line 16292 "ide/ide_methods.bas"
 do{
-#line 16289 "ide/ide_methods.bas"
+#line 16292 "ide/ide_methods.bas"
 qbs_set(_SUB_IDESETTCPPORTBOX_STRING_A2,qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
-#line 16289 "ide/ide_methods.bas"
+#line 16292 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 16289 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28761,16289,"ide_methods.bas");}while(r);
-#line 16290 "ide/ide_methods.bas"
-do{
-#line 16290 "ide/ide_methods.bas"
-qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass6093= 45 ),&(pass6094= 5 ),&(pass6095= 0 )));
-#line 16290 "ide/ide_methods.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 16290 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28761,16290,"ide_methods.bas");}while(r);
-#line 16291 "ide/ide_methods.bas"
-S_63488:;
-#line 16291 "ide/ide_methods.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
-#line 16291 "ide/ide_methods.bas"
-if(qbevent){evnt(28761,16291,"ide_methods.bas");if(r)goto S_63488;}
-#line 16291 "ide/ide_methods.bas"
-do{
-#line 16291 "ide/ide_methods.bas"
-goto exit_subfunc;
-#line 16291 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28761,16291,"ide_methods.bas");}while(r);
-#line 16291 "ide/ide_methods.bas"
-}
+#line 16292 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28761,16292,"ide_methods.bas");}while(r);
 #line 16293 "ide/ide_methods.bas"
 do{
 #line 16293 "ide/ide_methods.bas"
-*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+qbs_set(_SUB_IDESETTCPPORTBOX_STRING_V,FUNC_IDEINPUTBOX(qbs_new_txt_len("Base TCP/IP Port Number",23),qbs_new_txt_len("#Port number for $DEBUG mode",28),_SUB_IDESETTCPPORTBOX_STRING_A2,qbs_new_txt_len("0123456789",10),&(pass473_1= 45 ),&(pass473_2= 5 ),&(pass473_3= 0 )));
 #line 16293 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
 #line 16293 "ide/ide_methods.bas"
 if(!qbevent)break;evnt(28761,16293,"ide_methods.bas");}while(r);
 #line 16294 "ide/ide_methods.bas"
-S_63492:;
+S_473_3:;
 #line 16294 "ide/ide_methods.bas"
-if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_IDESETTCPPORTBOX_STRING_V,qbs_new_txt_len("",0))))||is_error_pending()){
 #line 16294 "ide/ide_methods.bas"
-if(qbevent){evnt(28761,16294,"ide_methods.bas");if(r)goto S_63492;}
+if(qbevent){evnt(28761,16294,"ide_methods.bas");if(r)goto S_473_3;}
 #line 16294 "ide/ide_methods.bas"
 do{
 #line 16294 "ide/ide_methods.bas"
-*__LONG_IDEBASETCPPORT= 9000 ;
+goto exit_subfunc;
 #line 16294 "ide/ide_methods.bas"
 if(!qbevent)break;evnt(28761,16294,"ide_methods.bas");}while(r);
 #line 16294 "ide/ide_methods.bas"
 }
-#line 16295 "ide/ide_methods.bas"
+#line 16296 "ide/ide_methods.bas"
 do{
-#line 16295 "ide/ide_methods.bas"
-SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
-#line 16295 "ide/ide_methods.bas"
+#line 16296 "ide/ide_methods.bas"
+*__LONG_IDEBASETCPPORT=qbr(qbs_val<long double>(_SUB_IDESETTCPPORTBOX_STRING_V));
+#line 16296 "ide/ide_methods.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 16295 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28761,16295,"ide_methods.bas");}while(r);
 #line 16296 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28761,16296,"ide_methods.bas");}while(r);
+#line 16297 "ide/ide_methods.bas"
+S_473_7:;
+#line 16297 "ide/ide_methods.bas"
+if ((-(*__LONG_IDEBASETCPPORT== 0 ))||is_error_pending()){
+#line 16297 "ide/ide_methods.bas"
+if(qbevent){evnt(28761,16297,"ide_methods.bas");if(r)goto S_473_7;}
+#line 16297 "ide/ide_methods.bas"
+do{
+#line 16297 "ide/ide_methods.bas"
+*__LONG_IDEBASETCPPORT= 9000 ;
+#line 16297 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28761,16297,"ide_methods.bas");}while(r);
+#line 16297 "ide/ide_methods.bas"
+}
+#line 16298 "ide/ide_methods.bas"
+do{
+#line 16298 "ide/ide_methods.bas"
+SUB_WRITECONFIGSETTING(__STRING_DEBUGSETTINGSSECTION,qbs_new_txt_len("BaseTCPPort",11),qbs__tostr((int32)(*__LONG_IDEBASETCPPORT),NULL,0));
+#line 16298 "ide/ide_methods.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16298 "ide/ide_methods.bas"
+if(!qbevent)break;evnt(28761,16298,"ide_methods.bas");}while(r);
+#line 16299 "ide/ide_methods.bas"
 exit_subfunc:;
-#line 16296 "ide/ide_methods.bas"
+#line 16299 "ide/ide_methods.bas"
 free_mem_lock(sf_mem_lock);
-#line 16296 "ide/ide_methods.bas"
+#line 16299 "ide/ide_methods.bas"
 #include "free473.txt"
-#line 16296 "ide/ide_methods.bas"
+#line 16299 "ide/ide_methods.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 16296 "ide/ide_methods.bas"
+#line 16299 "ide/ide_methods.bas"
 cmem_sp=tmp_cmem_sp;
-#line 16296 "ide/ide_methods.bas"
+#line 16299 "ide/ide_methods.bas"
 }
