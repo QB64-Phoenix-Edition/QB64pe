@@ -367,8 +367,15 @@ void sub__title(qbs *title) {
 }
 
 qbs *func__title() {
-    auto svTitle = GLUTEmu_WindowGetTitle();
-    return qbs_new_txt_len(svTitle.data(), svTitle.length());
+    auto title = GLUTEmu_WindowGetTitle();
+
+    // qbs_new_txt_len() only points at the text, and title is gone once we return, so copy it
+    auto tqbs = qbs_new(title.length(), 1);
+    if (!title.empty()) {
+        memcpy(tqbs->chr, title.data(), title.length());
+    }
+
+    return tqbs;
 }
 
 void GLUT_DROPFILES_FUNC(int count, const char *paths[]) {
