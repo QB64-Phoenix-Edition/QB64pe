@@ -2151,6 +2151,8 @@ DO
                     IF LEN(a$) THEN
                         IF Debug THEN PRINT #9, "PP[" + a$ + "]"
                         n = numelements(a$)
+                        NormalizeProcStaticHeader a$, ca$, n
+                        IF Error_Happened THEN GOTO errmes
                         firstelement$ = getelement(a$, 1)
                         secondelement$ = getelement(a$, 2)
                         thirdelement$ = getelement(a$, 3)
@@ -4234,6 +4236,8 @@ DO
     IF Debug THEN PRINT #9, a$
     n = numelements(a$)
     IF n = 0 THEN GOTO finishednonexec
+    NormalizeProcStaticHeader a$, ca$, n
+    IF Error_Happened THEN GOTO errmes
 
     'convert non-UDT dimensioned periods to _046_
     IF INSTR(ca$, sp + "." + sp) THEN
@@ -4253,15 +4257,18 @@ DO
                     GOTO udtperiod
                 END IF
 
-                'find an ID of that type
-                try = findid(UCASE$(a3$))
+                'A dotted name may already have been fused (My.Make).
+                'Check the entire prefix before treating .x as another name segment.
+                udtPeriodName$ = a3$
+                IF lastfuse = x - 2 THEN udtPeriodName$ = getelement$(aa$, numelements(aa$) - 1)
+                try = findid(UCASE$(udtPeriodName$))
                 IF Error_Happened THEN GOTO errmes
                 DO WHILE try
                     IF ((id.t AND ISUDT) <> 0) OR ((id.arraytype AND ISUDT) <> 0) OR (id.subfunc = 1 AND id.internal_subfunc = 0 AND id.ccall = 0 AND (id.ret AND ISUDT) <> 0) THEN
                         except = 1
                         GOTO udtperiod
                     END IF
-                    IF try = 2 THEN findanotherid = 1: try = findid(UCASE$(a3$)) ELSE try = 0
+                    IF try = 2 THEN findanotherid = 1: try = findid(UCASE$(udtPeriodName$)) ELSE try = 0
                     IF Error_Happened THEN GOTO errmes
                 LOOP
                 'not a udt; fuse lhs & rhs with _046_
@@ -9007,10 +9014,27 @@ DO
                             ' misdiagnosed as "Expected variable/value before ')'".
                             redimTargetEval$ = fixoperationorder$(redimTargetExpr$)
                             IF Error_Happened THEN GOTO errmes
-                            udt_allow_bare_array = -1
-                            redimTargetRef$ = evaluate(redimTargetEval$, redimTargetTyp)
-                            udt_allow_bare_array = 0
-                            IF Error_Happened THEN GOTO errmes
+
+                            ' Inside a UDT FUNCTION, FunctionName.member is the local
+                            ' caller-backed result object, not a recursive FUNCTION call.
+                            ' Reuse the same LHS resolver as member assignment so REDIM
+                            ' can resize its _Dynamic member arrays without changing the
+                            ' existing descriptor ownership/reallocation code below.
+                            redimRetOK = 0
+                            GetAsgRefSyntax redimTargetEval$, redimRefKind, redimRefName$, redimHasMember, redimRoot$
+                            IF redimHasMember AND redimRefKind = 1 THEN
+                                udt_allow_bare_array = -1
+                                ResolveUDTFuncRetLHS redimTargetEval$, redimRoot$, redimRetOK, redimTargetRef$, redimTargetTyp
+                                udt_allow_bare_array = 0
+                                IF Error_Happened THEN GOTO errmes
+                            END IF
+
+                            IF redimRetOK = 0 THEN
+                                udt_allow_bare_array = -1
+                                redimTargetRef$ = evaluate(redimTargetEval$, redimTargetTyp)
+                                udt_allow_bare_array = 0
+                                IF Error_Happened THEN GOTO errmes
+                            END IF
                             IF (redimTargetTyp AND ISREFERENCE) = 0 OR (redimTargetTyp AND ISARRAY) = 0 THEN
                                 a$ = "Expected array-name": GOTO errmes
                             END IF
@@ -12127,6 +12151,17 @@ DO
 
                         IF LEFT$(separgs2(i), 2) = "(" + sp THEN dereference = 1 ELSE dereference = 0
 
+                        ' A UDT FUNCTION return already evaluates to a pointer to its caller-owned
+                        ' result. Pass that pointer directly to a matching scalar UDT parameter;
+                        ' unlike a variable reference, it has no encoded identifier for refer().
+                        IF (targettyp AND ISPOINTER) <> 0 AND (targettyp AND ISUDT) <> 0 AND (targettyp AND ISARRAY) = 0 THEN
+                            IF (sourcetyp AND ISPOINTER) <> 0 AND (sourcetyp AND ISUDT) <> 0 THEN
+                                IF (sourcetyp AND ISREFERENCE) = 0 AND (sourcetyp AND ISARRAY) = 0 THEN
+                                    IF (targettyp AND UDTMASK) = (sourcetyp AND UDTMASK) THEN GOTO sete
+                                END IF
+                            END IF
+                        END IF
+
                         'pass by reference
                         IF (targettyp AND ISPOINTER) THEN
                             IF dereference = 0 THEN 'check dereferencing wasn't used
@@ -14838,6 +14873,71 @@ FUNCTION ParseStringSetting& (token$, setting AS STRING)
 
     ParseStringSetting& = -1
 END FUNCTION
+
+' Normalize alternative STATIC placements in procedure definitions before
+' registration and code generation. The existing compiler expects STATIC just
+' before AS type, or at the end of a header with no AS return clause.
+' Do not touch ordinary STATIC variable declarations or DECLARE LIBRARY.
+SUB NormalizeProcStaticHeader (header_upper AS STRING, header_case AS STRING, token_count AS LONG)
+    IF token_count < 3 THEN EXIT SUB
+
+    prefix_static = 0
+    suffix_static = 0
+    header_first$ = getelement$(header_upper, 1)
+    IF header_first$ = "STATIC" THEN
+        header_second$ = getelement$(header_upper, 2)
+        IF header_second$ = "FUNCTION" OR header_second$ = "SUB" THEN
+            prefix_static = -1
+            header_upper = getelements$(header_upper, 2, token_count)
+            header_case = getelements$(header_case, 2, token_count)
+            token_count = token_count - 1
+            header_first$ = header_second$
+        END IF
+    END IF
+
+    IF header_first$ <> "FUNCTION" AND header_first$ <> "SUB" THEN EXIT SUB
+
+    IF getelement$(header_upper, token_count) = "STATIC" THEN
+        suffix_static = -1
+        header_upper = getelements$(header_upper, 1, token_count - 1)
+        header_case = getelements$(header_case, 1, token_count - 1)
+        token_count = token_count - 1
+    END IF
+
+    IF prefix_static = 0 AND suffix_static = 0 THEN EXIT SUB
+    IF prefix_static AND suffix_static THEN Give_Error "STATIC specified twice": EXIT SUB
+
+    ' Find AS outside the parameter parentheses. Parameter types also contain
+    ' AS, but they must not be mistaken for the FUNCTION return clause.
+    return_as_pos = 0
+    paren_depth = 0
+    IF header_first$ = "FUNCTION" THEN
+        FOR header_token_pos = 3 TO token_count
+            header_token$ = getelement$(header_upper, header_token_pos)
+            IF header_token$ = "(" THEN paren_depth = paren_depth + 1
+            IF header_token$ = ")" THEN paren_depth = paren_depth - 1
+            IF header_token$ = "AS" AND paren_depth = 0 THEN
+                return_as_pos = header_token_pos
+                EXIT FOR
+            END IF
+        NEXT header_token_pos
+    END IF
+
+    IF return_as_pos THEN
+        IF getelement$(header_upper, return_as_pos - 1) = "STATIC" THEN
+            Give_Error "STATIC specified twice": EXIT SUB
+        END IF
+        header_upper = getelements$(header_upper, 1, return_as_pos - 1) + sp + "STATIC" + sp + getelements$(header_upper, return_as_pos, token_count)
+        header_case = getelements$(header_case, 1, return_as_pos - 1) + sp + "STATIC" + sp + getelements$(header_case, return_as_pos, token_count)
+    ELSE
+        IF getelement$(header_upper, token_count) = "STATIC" THEN
+            Give_Error "STATIC specified twice": EXIT SUB
+        END IF
+        header_upper = header_upper + sp + "STATIC"
+        header_case = header_case + sp + "STATIC"
+    END IF
+    token_count = token_count + 1
+END SUB
 
 ' Extracts an explicit FUNCTION return clause and removes it from the header.
 ' Both compiler passes call this routine, so registration, formatting and C
@@ -20563,6 +20663,11 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                 oldtyp = typ
                 newtyp = blocktype(i + 1)
 
+                ' A UDT value (including a FUNCTION result) cannot be an operator operand.
+                IF (oldtyp AND ISUDT) <> 0 OR (newtyp AND ISUDT) <> 0 THEN
+                    Give_Error "User defined types in expressions are invalid": EXIT FUNCTION
+                END IF
+
                 'IF block(i - 1) = "6" THEN
                 'PRINT o$
                 'PRINT oldtyp AND ISFLOAT
@@ -22307,6 +22412,17 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                     IF (targettyp AND ISPOINTER) THEN targettyp = targettyp - ISPOINTER
                 END IF
 
+                ' A UDT FUNCTION return already evaluates to a pointer to its caller-owned
+                ' result. Pass that pointer directly to a matching scalar UDT parameter;
+                ' unlike a variable reference, it has no encoded identifier for refer().
+                IF (targettyp AND ISPOINTER) <> 0 AND (targettyp AND ISUDT) <> 0 AND (targettyp AND ISARRAY) = 0 THEN
+                    IF (sourcetyp AND ISPOINTER) <> 0 AND (sourcetyp AND ISUDT) <> 0 THEN
+                        IF (sourcetyp AND ISREFERENCE) = 0 AND (sourcetyp AND ISARRAY) = 0 THEN
+                            IF (targettyp AND UDTMASK) = (sourcetyp AND UDTMASK) THEN GOTO dontevaluate
+                        END IF
+                    END IF
+                END IF
+
                 'pointer?
                 IF (targettyp AND ISPOINTER) THEN
                     IF dereference = 0 THEN 'check dereferencing wasn't used
@@ -22761,12 +22877,13 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     r$ = r$ + ")"
     IF udtretcall THEN
         IF udtretowned THEN
-            ' Reuse cannot memset live qbs or descriptor pointers. Release the old
-            ' ownership graph, clear the record, reinitialize its owners/descriptors,
-            ' invoke the FUNCTION and use its returned result address.  The
-            ' callee contract guarantees that this is the same caller-owned
-            ' pointer passed as the hidden first argument.
-            r$ = "([&](){if(" + udtrettmp + "==NULL){" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ");}else{" + udtretfree + "(" + udtrettmp + ");}memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ");" + udtretinit + "(" + udtrettmp + ");return " + r$ + ";})()"
+            ' Sequence slot preparation in the call expression so an owned UDT
+            ' return does not keep a separate lambda frame alive during recursion.
+            ' Allocate on first use; on reuse, release the old qbs/descriptor graph
+            ' before clearing and initializing the record. Both conditional branches
+            ' are void, and the final comma operand invokes the callee exactly once
+            ' and yields the same caller-owned address as the hidden first argument.
+            r$ = "((" + udtrettmp + "==NULL?(void)(" + udtrettmp + "=(void*)mem_static_malloc(" + _TOSTR$(udtretsize) + ")):" + udtretfree + "(" + udtrettmp + ")),memset(" + udtrettmp + ",0," + _TOSTR$(udtretsize) + ")," + udtretinit + "(" + udtrettmp + ")," + r$ + ")"
         ELSE
             ' Fixed-layout results retain the compact Step 2A path, with the
             ' final comma operand now being the callee's returned pointer.
@@ -23946,7 +24063,7 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     END IF
     'check if successful
     IF (sourcetyp AND ISPOINTER) THEN
-        Give_Error "evaluatetotyp couldn't convert pointer type!": EXIT FUNCTION
+        Give_Error "Type mismatch": EXIT FUNCTION
     END IF
 
     'round to integer if required
