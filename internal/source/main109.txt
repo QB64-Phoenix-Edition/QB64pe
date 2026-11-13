@@ -1,50 +1,118 @@
-#line 28347 "qb64pe.bas"
-qbs* FUNC_RGBS(uint32*_FUNC_RGBS_ULONG_C){
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
+uint32 FUNC_VRGBS(qbs*_FUNC_VRGBS_STRING_TEXT,uint32*_FUNC_VRGBS_ULONG_DEFAULTCOLOR){
+#line 28244 "qb64pe.bas"
 qbs *tqbs;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 ptrszint tmp_long;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 int32 tmp_fileno;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 #include "data109.txt"
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 mem_lock *sf_mem_lock;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 new_mem_lock();
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 sf_mem_lock->type=3;
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 libqb_check_stack();
-#line 28347 "qb64pe.bas"
+#line 28244 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 28348 "qb64pe.bas"
+#line 28250 "qb64pe.bas"
 do{
-#line 28348 "qb64pe.bas"
-qbs_set(_FUNC_RGBS_STRING_RGBS,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("_RGB32(",7),qbs__tostr((int32)(func__red32(*_FUNC_RGBS_ULONG_C)),NULL,0)),qbs_new_txt_len(", ",2)),qbs__tostr((int32)(func__green32(*_FUNC_RGBS_ULONG_C)),NULL,0)),qbs_new_txt_len(", ",2)),qbs__tostr((int32)(func__blue32(*_FUNC_RGBS_ULONG_C)),NULL,0)),qbs_new_txt_len(")",1)));
-#line 28348 "qb64pe.bas"
+#line 28250 "qb64pe.bas"
+*_FUNC_VRGBS_ULONG_VRGBS=*_FUNC_VRGBS_ULONG_DEFAULTCOLOR;
+#line 28250 "qb64pe.bas"
+if(!qbevent)break;evnt(28250);}while(r);
+#line 28251 "qb64pe.bas"
+S_109_2:;
+#line 28251 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_ucase(qbs_left(_FUNC_VRGBS_STRING_TEXT, 4 )),qbs_new_txt_len("_RGB",4))))||is_error_pending()){
+#line 28251 "qb64pe.bas"
+if(qbevent){evnt(28251);if(r)goto S_109_2;}
+#line 28252 "qb64pe.bas"
+do{
+#line 28252 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_RPOS=func_instr(NULL,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len("(",1),0);
+#line 28252 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 28348 "qb64pe.bas"
-if(!qbevent)break;evnt(28348);}while(r);
-#line 28349 "qb64pe.bas"
+#line 28252 "qb64pe.bas"
+if(!qbevent)break;evnt(28252);}while(r);
+#line 28253 "qb64pe.bas"
+do{
+#line 28253 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_GPOS=func_instr(*_FUNC_VRGBS_LONG_RPOS,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
+#line 28253 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28253 "qb64pe.bas"
+if(!qbevent)break;evnt(28253);}while(r);
+#line 28254 "qb64pe.bas"
+do{
+#line 28254 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_BPOS=func_instr(*_FUNC_VRGBS_LONG_GPOS+ 1 ,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
+#line 28254 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28254 "qb64pe.bas"
+if(!qbevent)break;evnt(28254);}while(r);
+#line 28255 "qb64pe.bas"
+S_109_6:;
+#line 28255 "qb64pe.bas"
+if (((-(*_FUNC_VRGBS_LONG_RPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_BPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_GPOS!= 0 )))||is_error_pending()){
+#line 28255 "qb64pe.bas"
+if(qbevent){evnt(28255);if(r)goto S_109_6;}
+#line 28256 "qb64pe.bas"
+do{
+#line 28256 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_RED=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_RPOS+ 1 ,NULL,0))));
+#line 28256 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28256 "qb64pe.bas"
+if(!qbevent)break;evnt(28256);}while(r);
+#line 28257 "qb64pe.bas"
+do{
+#line 28257 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_GREEN=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_GPOS+ 1 ,NULL,0))));
+#line 28257 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28257 "qb64pe.bas"
+if(!qbevent)break;evnt(28257);}while(r);
+#line 28258 "qb64pe.bas"
+do{
+#line 28258 "qb64pe.bas"
+*_FUNC_VRGBS_LONG_BLUE=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_BPOS+ 1 ,NULL,0))));
+#line 28258 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 28258 "qb64pe.bas"
+if(!qbevent)break;evnt(28258);}while(r);
+#line 28259 "qb64pe.bas"
+do{
+#line 28259 "qb64pe.bas"
+*_FUNC_VRGBS_ULONG_VRGBS=func__rgb32(*_FUNC_VRGBS_LONG_RED,*_FUNC_VRGBS_LONG_GREEN,*_FUNC_VRGBS_LONG_BLUE);
+#line 28259 "qb64pe.bas"
+if(!qbevent)break;evnt(28259);}while(r);
+#line 28260 "qb64pe.bas"
+}
+#line 28261 "qb64pe.bas"
+}
+#line 28262 "qb64pe.bas"
 exit_subfunc:;
-#line 28349 "qb64pe.bas"
+#line 28262 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
-#line 28349 "qb64pe.bas"
+#line 28262 "qb64pe.bas"
 #include "free109.txt"
-#line 28349 "qb64pe.bas"
+#line 28262 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 28349 "qb64pe.bas"
+#line 28262 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-#line 28349 "qb64pe.bas"
-qbs_maketmp(_FUNC_RGBS_STRING_RGBS);return _FUNC_RGBS_STRING_RGBS;
-#line 28349 "qb64pe.bas"
+#line 28262 "qb64pe.bas"
+return *_FUNC_VRGBS_ULONG_VRGBS;
+#line 28262 "qb64pe.bas"
 }

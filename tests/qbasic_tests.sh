@@ -11,6 +11,10 @@ mkdir -p $EXES_DIR
 
 QB64=$1
 
+# Setting QB64PE_TEST_FLAGS in the environment adds flags to every compile here,
+# which is how this corpus gets compiled under a different compiler setting
+read -ra extraFlags <<< "$QB64PE_TEST_FLAGS"
+
 show_failure()
 {
     cat "$RESULTS_DIR/$1-compile_result.txt"
@@ -31,7 +35,7 @@ do
     # Clear out temp folder before next compile, avoids stale compilelog files
     rm -fr ./internal/temp/*
 
-    "$QB64" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
+    "$QB64" "${extraFlags[@]}" -x  "$sourceFile" -o "./$EXES_DIR/$test-output.exe" 1>$RESULTS_DIR/$test-compile_result.txt
     ERR=$?
     cp_if_exists ./internal/temp/compilelog.txt $RESULTS_DIR/$test-compilelog.txt
 

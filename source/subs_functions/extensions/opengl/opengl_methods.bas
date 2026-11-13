@@ -64,10 +64,11 @@ FUNCTION readchunk$ (a$, last_character$)
 END FUNCTION
 
 
+'Parses gl.h for the constants and function signatures the _GL* keywords are
+'built from. Called once at start-up because it depends on nothing but gl.h.
+'The C++ wrappers it produces are held in GL_HELPER_CODE and written out by
+'gl_include_content, which runs only for a program that actually uses GL.
 SUB gl_scan_header
-
-    IF GL_KIT THEN hk = FREEFILE: OPEN "internal\c\parts\core\gl_header_for_parsing\temp\gl_kit.bas" FOR OUTPUT AS #hk
-    IF GL_KIT THEN PRINT #hk, "DECLARE LIBRARY"
 
     d = 0: a2$ = ""
     h = FREEFILE
@@ -137,20 +138,22 @@ SUB gl_scan_header
                 c = GL_COMMANDS_LAST
 
                 hc$ = ""
-                hd$ = ""
+                'The helper functions are emitted into gl_helper_code.h, which is
+                'included by internal/c/qbx.h and therefore by every translation
+                'unit of the compiled program. They must be inline so that each
+                'unit gets its own copy rather than a duplicate definition.
+                hd$ = "inline "
                 need_helper_function = 0
 
                 IF is_func THEN
                     GL_COMMANDS(c).subfunc = 1
-                    IF GL_KIT THEN PRINT #hk, "FUNCTION ";
                 ELSE
                     GL_COMMANDS(c).subfunc = 2
-                    IF GL_KIT THEN PRINT #hk, "SUB ";
                 END IF
 
                 proc_name$ = readchunk(a$, l$)
 
-                GL_COMMANDS(c).cn = "_" + proc_name$: IF GL_KIT THEN PRINT #hk, proc_name$;
+                GL_COMMANDS(c).cn = "_" + proc_name$
                 GL_COMMANDS(c).callname = proc_name$
 
                 GL_COMMANDS(c).ret = 0
@@ -166,13 +169,10 @@ SUB gl_scan_header
                         GL_COMMANDS(c).ret = typ
                         hd$ = hd$ + ctyp$ + " "
                     END IF
-                    IF GL_KIT THEN PRINT #hk, s$;
                     hc$ = hc$ + "return (" + ctyp$ + ")(" + ret_type$ + ")"
                 ELSE
                     hd$ = hd$ + "void "
                 END IF
-
-                IF GL_KIT THEN PRINT #hk, "(";
 
                 hc$ = hc$ + proc_name$ + "("
                 hd$ = hd$ + "call_" + proc_name$ + "("
@@ -218,12 +218,6 @@ SUB gl_scan_header
                     'IF pointer THEN need_helper_function = 1
                     need_helper_function = 1
 
-                    IF GL_KIT THEN
-                        IF pointer = 0 THEN PRINT #hk, "BYVAL ";
-                        PRINT #hk, var_name$ + " AS " + qb_type$;
-                        IF l$ <> ")" THEN PRINT #hk, ",";
-                    END IF
-
                     IF pointer = 0 THEN
                         arg$ = MKL$(typ)
                     END IF
@@ -262,7 +256,6 @@ SUB gl_scan_header
 
                 hd$ = hd$ + "){"
                 hc$ = hc$ + ");"
-                IF GL_KIT THEN PRINT #hk, ")"
                 h$ = hd$ + CRLF + "if (!sub_gl_called) error(270);" + CRLF + hc$ + CRLF + "}" + CRLF
 
                 IF need_helper_function THEN 'do we need the helper function for this command?
@@ -291,20 +284,12 @@ SUB gl_scan_header
     LOOP
     CLOSE #h
 
-    IF GL_KIT THEN PRINT #hk, "END DECLARE"
-
     GL_DEFINES_LAST = d
     REDIM _PRESERVE GL_DEFINES(d) AS STRING
     'PRINT "Defines:"; GL_DEFINES_LAST
 
     REDIM _PRESERVE GL_COMMANDS(GL_COMMANDS_LAST) AS GL_idstruct
     'PRINT "Commands:"; GL_COMMANDS_LAST
-
-    IF GL_KIT THEN
-        FOR i = 1 TO GL_DEFINES_LAST
-            PRINT #hk, "CONST " + GL_DEFINES(i) + "="; GL_DEFINES_VALUE(i)
-        NEXT
-    END IF
 
     'FOR i = 1 TO GL_COMMANDS_LAST
     '    PRINT ".cn="; GL_COMMANDS(i).cn
@@ -317,18 +302,14 @@ SUB gl_scan_header
     '    PRINT ".ret="; GL_COMMANDS(i).ret
     'NEXT
 
-    IF GL_KIT THEN CLOSE #hk
-
-
-    fh = FREEFILE
-    OPEN "internal\c\parts\core\gl_header_for_parsing\temp\gl_helper_code.h" FOR OUTPUT AS #fh
-    PRINT #fh, GL_HELPER_CODE
-    CLOSE #fh
-
-
 END SUB
 
+' Produces a header containing helper wrapper functions for OpenGL.
 SUB gl_include_content
+
+    DIM glHelperBuf AS LONG
+    glHelperBuf = OpenBuffer&("O", tmpdir$ + "gl_helper_code.h")
+    WriteBufRawData glHelperBuf, GL_HELPER_CODE
 
     'add constants
     FOR d = 1 TO GL_DEFINES_LAST

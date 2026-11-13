@@ -1,46 +1,56 @@
-#line 11407 "ide/ide_methods.bas"
-void SUB_IDEDELTXT(){
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
+void SUB_DECLAREGLOBALFUNC(qbs*_SUB_DECLAREGLOBALFUNC_STRING_SIGNATURE){
+#line 24 "emit/globals.bas"
 qbs *tqbs;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 ptrszint tmp_long;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 int32 tmp_fileno;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 #include "data395.txt"
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 mem_lock *sf_mem_lock;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 new_mem_lock();
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 sf_mem_lock->type=3;
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 libqb_check_stack();
-#line 11407 "ide/ide_methods.bas"
+#line 24 "emit/globals.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 11408 "ide/ide_methods.bas"
+#line 25 "emit/globals.bas"
 do{
-#line 11408 "ide/ide_methods.bas"
-*__INTEGER_IDETXTLAST= 0 ;
-#line 11408 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(28841,11408,"ide_methods.bas");}while(r);
-#line 11409 "ide/ide_methods.bas"
+#line 25 "emit/globals.bas"
+SUB_WRITEBUFLINE(__LONG_GLOBTXTBUF,_SUB_DECLAREGLOBALFUNC_STRING_SIGNATURE);
+#line 25 "emit/globals.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 25 "emit/globals.bas"
+if(!qbevent)break;evnt(28754,25,"globals.bas");}while(r);
+#line 26 "emit/globals.bas"
+do{
+#line 26 "emit/globals.bas"
+SUB_WRITEBUFLINE(__LONG_GLOBDECLBUF,qbs_add(qbs_left(_SUB_DECLAREGLOBALFUNC_STRING_SIGNATURE,_SUB_DECLAREGLOBALFUNC_STRING_SIGNATURE->len- 1 ),qbs_new_txt_len(";",1)));
+#line 26 "emit/globals.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 26 "emit/globals.bas"
+if(!qbevent)break;evnt(28754,26,"globals.bas");}while(r);
+#line 27 "emit/globals.bas"
 exit_subfunc:;
-#line 11409 "ide/ide_methods.bas"
+#line 27 "emit/globals.bas"
 free_mem_lock(sf_mem_lock);
-#line 11409 "ide/ide_methods.bas"
+#line 27 "emit/globals.bas"
 #include "free395.txt"
-#line 11409 "ide/ide_methods.bas"
+#line 27 "emit/globals.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 11409 "ide/ide_methods.bas"
+#line 27 "emit/globals.bas"
 cmem_sp=tmp_cmem_sp;
-#line 11409 "ide/ide_methods.bas"
+#line 27 "emit/globals.bas"
 }

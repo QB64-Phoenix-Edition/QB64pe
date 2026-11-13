@@ -98,37 +98,22 @@ do
     category=$(basename "$(dirname "$test")")
     testName=$(basename "$test" .bas)
 
-    TESTCASE="$category/$testName"
-    EXE="$RESULTS_DIR/$category-$testName - output"
-
-    if [ "$OS" == "win" ]; then
-        EXE="$EXE.exe"
-    fi
-
-    # If a .err file exists, then this test is actually testing a compilation error
-    testType="success"
-    if test -f "./tests/compile_tests/$category/$testName.err"; then
-        testType="error"
-    fi
-
-    # Clear out temp folder before next compile, avoids stale compilelog files
-    rm -fr ./internal/temp/*
-
-    # Clean up existing EXE, so we don't use it by accident
-    rm -f "$EXE*"
-
-    compileResultOutput="$RESULTS_DIR/$category-$testName-compile_result.txt"
-
-    # A .flags file contains any extra compiler flags to provide to QB64 for this test
-    compilerFlags=
+    # A .flags file contains any extra compiler flags to provide to QB64 for this
+    # test. These are kept as an array so that a flag containing a space stays
+    # one argument.
+    testFlags=()
     if test -f "./tests/compile_tests/$category/$testName.flags"; then
-        compilerFlags=$(cat "./tests/compile_tests/$category/$testName.flags")
+        while IFS= read -r flagLine || [ -n "$flagLine" ]
+        do
+            flagLine=${flagLine%$'\r'}
+            [ -n "$flagLine" ] && testFlags+=("$flagLine")
+        done < "./tests/compile_tests/$category/$testName.flags"
     fi
 
     # If a license file for this OS exists, then we also check the generated license is correct
     checkLicense=
     if [ ! -z "$OS" ] && test -f "./tests/compile_tests/$category/$testName.$OS.license"; then
-        compilerFlags="$compilerFlags -f:GenerateLicenseFile=true"
+        testFlags+=("-f:GenerateLicenseFile=true")
         checkLicense=y
     fi
 
@@ -147,83 +132,178 @@ do
         compileFromBase=y
     fi
 
-    if [ "$compileFromBase" == "y" ]; then
-        # -m and -q make sure that we get predictable results
-        "$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
-        ERR=$?
-    else
-        pushd . >/dev/null
-        cd "./tests/compile_tests/$category"
+    # A .variants file adds a run of this test per line, with the extra compiler
+    # flags on that line. The empty entry here is the run every test gets.
+    variantFlags=("")
+    variantLabels=("")
+    if test -f "./tests/compile_tests/$category/$testName.variants"; then
+        while IFS= read -r variantLine || [ -n "$variantLine" ]
+        do
+            variantLine=${variantLine%$'\r'}
 
-        # -m and -q make sure that we get predictable results
-        "../../../$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" $compilerFlags -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
-        ERR=$?
+            case "$variantLine" in
+                ""|"#"*) continue ;;
+            esac
 
-        popd >/dev/null
+            # A line written as "label: flags" names its run, otherwise the run
+            # is named after the line's position in the file
+            variantLabel=${#variantFlags[@]}
+            if [[ "$variantLine" =~ ^([A-Za-z0-9_]+):[[:space:]]+(.*)$ ]]; then
+                variantLabel="${BASH_REMATCH[1]}"
+                variantLine="${BASH_REMATCH[2]}"
+            fi
+
+            # Two runs sharing a label would write each other's result files,
+            # which would look like a passing test rather than a broken one.
+            for usedLabel in "${variantLabels[@]}"
+            do
+                if [ "$usedLabel" == "$variantLabel" ]; then
+                    echo "$testName.variants uses the label '$variantLabel' more than once" >&2
+                    exit 1
+                fi
+            done
+
+            variantFlags+=("$variantLine")
+            variantLabels+=("$variantLabel")
+        done < "./tests/compile_tests/$category/$testName.variants"
     fi
 
-    cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testName-compilelog.txt"
-
-    if [ "$testType" == "success" ]; then
-        (exit $ERR)
-        assert_success_named "Compile" "Compilation Error:" show_failure "$category" "$testName"
-
-        test -f "$EXE"
-        assert_success_named "exe exists" "$test-output executable does not exist!" show_failure "$category" "$testName"
-
-        if [ "$checkLicense" == "y" ]; then
-            expectedResult="$(cat "./tests/compile_tests/$category/$testName.$OS.license")"
-            testResult="$(cat "$EXE.license.txt")"
-
-            [ "$testResult" == "$expectedResult" ]
-            assert_success_named "license" "License file is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+    for variant in "${!variantFlags[@]}"
+    do
+        testId="$testName"
+        if [ "$variant" -ne 0 ]; then
+            testId="$testName-${variantLabels[$variant]}"
         fi
 
-        # Some tests do not have an output or err file because they should
-        # compile successfully but cannot be run on the build agents
-        if [ ! -f "./tests/compile_tests/$category/$testName.output" ]; then
-            continue
+        # A run gets its own expected output if one exists, and the test's
+        # shared expected output otherwise
+        expectedOutput="./tests/compile_tests/$category/$testName.output"
+        expectedErr="./tests/compile_tests/$category/$testName.err"
+        if test -f "./tests/compile_tests/$category/$testId.output"; then
+            expectedOutput="./tests/compile_tests/$category/$testId.output"
+        fi
+        if test -f "./tests/compile_tests/$category/$testId.err"; then
+            expectedErr="./tests/compile_tests/$category/$testId.err"
         fi
 
-        runOutput="$RESULTS_DIR/$category-$testName-run-output.txt"
-
-        pushd . > /dev/null
-        cd "./tests/compile_tests/$category"
-        QB64PE_NOPROMPT="$nopromptValue" \
-        QB64PE_LOG_HANDLERS=file \
-        QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
-        QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testName-log.txt" \
-        $LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testName" \
-            > "../../../$runOutput" 2>&1
-        ERR=$?
-        popd > /dev/null
-
-        (exit $ERR)
-        assert_success_named "run" "Execution Error:" cat "$runOutput"
-
-        (exit $ERR) || (echo "Log from failed run is below:"; cat "$RESULTS_DIR/$category-$testName-log.txt")
-
-        compare_output_files "./tests/compile_tests/$category/$testName.output" "$runOutput"
-        assert_success_named "result" "Result is wrong:" \
-            diff "./tests/compile_tests/$category/$testName.output" "$runOutput"
-
-        # Restart pulseaudio between each test to make sound tests work on Linux
-        if [ "$CI_TESTING" == "y" ] && command -v pulseaudio > /dev/null
-        then
-            pulseaudio -k
-            sleep .5
-            pulseaudio -D
+        # If the compilation may only fail on specific platforms, then .err is
+        # prefixed with the respective OS string e.g. testName.lnx.err for a
+        # compilation failure on Linux only. For the platforms w/o a
+        # personalized .err file success is expected and a .output file may be
+        # given for check. The OS-specific file wins over the general one, and a
+        # per-run one wins over the test's shared one.
+        if [ -n "$OS" ] && test -f "./tests/compile_tests/$category/$testName.$OS.err"; then
+            expectedErr="./tests/compile_tests/$category/$testName.$OS.err"
         fi
-    else
-        ! (exit $ERR)
-        assert_success_named "Compile" "Compilation Success, was expecting error:" show_failure "$category" "$testName"
+        if [ -n "$OS" ] && test -f "./tests/compile_tests/$category/$testId.$OS.err"; then
+            expectedErr="./tests/compile_tests/$category/$testId.$OS.err"
+        fi
 
-        ! test -f "$EXE"
-        assert_success_named "Exe exists" "'$category-$testName - output' exists, it should not!" show_failure "$category" "$testName"
+        # A test with an .err file is testing a compilation error instead of a
+        # program's output. This is decided per run, so that a run can be the
+        # one that is expected to fail.
+        testType="success"
+        if test -f "$expectedErr"; then
+            testType="error"
+        fi
 
-        expectedErr="$(cat "./tests/compile_tests/$category/$testName.err")"
+        # The variant's flags go after the test's own, and QB64PE_TEST_FLAGS
+        # after both, so that the more specific setting is the one that wins
+        read -ra variantExtra <<< "${variantFlags[$variant]}"
+        read -ra globalExtra <<< "$QB64PE_TEST_FLAGS"
+        compilerFlags=("${testFlags[@]}" "${variantExtra[@]}" "${globalExtra[@]}")
 
-        diffResult=$(diff -y "./tests/compile_tests/$category/$testName.err" "$compileResultOutput")
-        assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
-    fi
+        TESTCASE="$category/$testId"
+        EXE="$RESULTS_DIR/$category-$testId - output"
+
+        if [ "$OS" == "win" ]; then
+            EXE="$EXE.exe"
+        fi
+
+        # Clear out temp folder before next compile, avoids stale compilelog
+        # files and stops a variant from linking the previous variant's objects
+        rm -fr ./internal/temp/*
+
+        # Clean up existing EXE and the files generated alongside it, so we
+        # don't use any of them by accident
+        rm -f "$EXE" "$EXE".*
+
+        compileResultOutput="$RESULTS_DIR/$category-$testId-compile_result.txt"
+
+        if [ "$compileFromBase" == "y" ]; then
+            "$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" "${compilerFlags[@]}" -q -m -x "./tests/compile_tests/$category/$testName.bas" -o "$EXE" 1>"$compileResultOutput"
+            ERR=$?
+        else
+            pushd . >/dev/null
+            cd "./tests/compile_tests/$category"
+
+            "../../../$QB64" "-f:OptimizeCppProgram=true" "-f:StripDebugSymbols=false" "${compilerFlags[@]}" -q -m -x "$testName.bas" -o "../../../$EXE" 1>"../../../$compileResultOutput"
+            ERR=$?
+
+            popd >/dev/null
+        fi
+
+        cp_if_exists ./internal/temp/compilelog.txt "$RESULTS_DIR/$category-$testId-compilelog.txt"
+
+        if [ "$testType" == "success" ]; then
+            (exit $ERR)
+            assert_success_named "Compile" "Compilation Error:" show_failure "$category" "$testId"
+
+            test -f "$EXE"
+            assert_success_named "exe exists" "$test-output executable does not exist!" show_failure "$category" "$testId"
+
+            if [ "$checkLicense" == "y" ]; then
+                expectedResult="$(cat "./tests/compile_tests/$category/$testName.$OS.license")"
+                testResult="$(cat "$EXE.license.txt")"
+
+                [ "$testResult" == "$expectedResult" ]
+                assert_success_named "license" "License file is wrong:" show_incorrect_result "$expectedResult" "$testResult"
+            fi
+
+            # Some tests do not have an output or err file because they should
+            # compile successfully but cannot be run on the build agents
+            if [ ! -f "$expectedOutput" ]; then
+                continue
+            fi
+
+            runOutput="$RESULTS_DIR/$category-$testId-run-output.txt"
+
+            pushd . > /dev/null
+            cd "./tests/compile_tests/$category"
+            QB64PE_NOPROMPT="$nopromptValue" \
+            QB64PE_LOG_HANDLERS=file \
+            QB64PE_LOG_SCOPES="qb64,libqb,libqb-image,libqb-audio" \
+            QB64PE_LOG_FILE_PATH="../../../$RESULTS_DIR/$category-$testId-log.txt" \
+            $LNX_PREFIX "../../../$EXE" "../../../$RESULTS_DIR" "$category-$testId" \
+                > "../../../$runOutput" 2>&1
+            ERR=$?
+            popd > /dev/null
+
+            (exit $ERR)
+            assert_success_named "run" "Execution Error:" cat "$runOutput"
+
+            (exit $ERR) || (echo "Log from failed run is below:"; cat "$RESULTS_DIR/$category-$testId-log.txt")
+
+            compare_output_files "$expectedOutput" "$runOutput"
+            assert_success_named "result" "Result is wrong:" \
+                diff "$expectedOutput" "$runOutput"
+
+            # Restart pulseaudio between each test to make sound tests work on Linux
+            if [ "$CI_TESTING" == "y" ] && command -v pulseaudio > /dev/null
+            then
+                pulseaudio -k
+                sleep .5
+                pulseaudio -D
+            fi
+        else
+            ! (exit $ERR)
+            assert_success_named "Compile" "Compilation Success, was expecting error:" show_failure "$category" "$testId"
+
+            ! test -f "$EXE"
+            assert_success_named "Exe exists" "'$category-$testId - output' exists, it should not!" show_failure "$category" "$testId"
+
+            diffResult=$(diff -y "$expectedErr" "$compileResultOutput")
+            assert_success_named "Error result" "Error reporting is wrong:" echo "$diffResult"
+        fi
+    done
 done < <(find "./tests/compile_tests$CATEGORY" -name "$TESTS_TO_RUN" -print)
