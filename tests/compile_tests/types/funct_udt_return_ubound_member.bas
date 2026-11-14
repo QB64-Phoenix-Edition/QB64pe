@@ -1,0 +1,14 @@
+$CONSOLE:ONLY
+$UNSTABLE:TYPEFIELDS
+OPTION _EXPLICIT
+
+TYPE BoxValue
+    items(0) _DYNAMIC AS LONG
+END TYPE
+
+PRINT UBOUND(MakeBox(5).items)
+SYSTEM
+
+FUNCTION MakeBox (itemCount AS LONG) AS BoxValue
+    REDIM MakeBox.items(1 TO itemCount)
+END FUNCTION

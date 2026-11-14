@@ -689,6 +689,10 @@ DIM SHARED scopeuniqueouter AS LONG
 
 DIM SHARED udt_allow_bare_array AS INTEGER
 
+' One-shot diagnostic context for the first argument of LBOUND/UBOUND.
+' evaluate$ consumes it before evaluating any nested calls or subscripts.
+DIM SHARED udt_bound_result_kind AS LONG
+
 
 'Assignment syntax guard state. These values are set only by assign() while the
 'right side of a normal assignment is being evaluated. The guard never decides
@@ -2122,7 +2126,7 @@ DO
                     IF LEN(a$) THEN
                         IF Debug THEN PRINT #9, "PP[" + a$ + "]"
                         n = numelements(a$)
-                        NormalizeProcStaticHeader a$, ca$, n
+                        NormalizeProcStaticHeader a$, ca$, n, procStaticPosition
                         IF Error_Happened THEN GOTO errmes
                         firstelement$ = getelement(a$, 1)
                         secondelement$ = getelement(a$, 2)
@@ -4221,7 +4225,7 @@ DO
     IF Debug THEN PRINT #9, a$
     n = numelements(a$)
     IF n = 0 THEN GOTO finishednonexec
-    NormalizeProcStaticHeader a$, ca$, n
+    NormalizeProcStaticHeader a$, ca$, n, procStaticPosition
     IF Error_Happened THEN GOTO errmes
 
     'convert non-UDT dimensioned periods to _046_
@@ -5894,7 +5898,9 @@ DO
             END IF 'n>2
             AllowLocalName = 0
 
-            IF addstatic2layout THEN l$ = l$ + sp + SCase$("Static")
+            ' Preserve the source position of STATIC independently of the
+            ' canonical header used by both compiler passes.
+            IF addstatic2layout AND procStaticPosition = 0 THEN l$ = l$ + sp + SCase$("Static")
             IF hasfuncret THEN
                 IF funcrettyp AND ISUDT THEN
                     ' Formatting is intentionally separate from semantic type text.
@@ -5905,6 +5911,10 @@ DO
                     funcretlayout$ = SCase2$(UCASE$(funcrettext$))
                 END IF
                 l$ = l$ + sp + SCase$("As") + sp + funcretlayout$
+            END IF
+            IF addstatic2layout THEN
+                IF procStaticPosition = 1 THEN l$ = SCase$("Static") + sp + l$
+                IF procStaticPosition = 2 THEN l$ = l$ + sp + SCase$("Static")
             END IF
             layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
@@ -14860,7 +14870,9 @@ END FUNCTION
 ' registration and code generation. The existing compiler expects STATIC just
 ' before AS type, or at the end of a header with no AS return clause.
 ' Do not touch ordinary STATIC variable declarations or DECLARE LIBRARY.
-SUB NormalizeProcStaticHeader (header_upper AS STRING, header_case AS STRING, token_count AS LONG)
+SUB NormalizeProcStaticHeader (header_upper AS STRING, header_case AS STRING, token_count AS LONG, source_position AS LONG)
+    ' 0 = canonical, 1 = leading, 2 = trailing in the source header.
+    source_position = 0
     IF token_count < 3 THEN EXIT SUB
 
     prefix_static = 0
@@ -14888,6 +14900,7 @@ SUB NormalizeProcStaticHeader (header_upper AS STRING, header_case AS STRING, to
 
     IF prefix_static = 0 AND suffix_static = 0 THEN EXIT SUB
     IF prefix_static AND suffix_static THEN Give_Error "STATIC specified twice": EXIT SUB
+    IF prefix_static THEN source_position = 1 ELSE source_position = 2
 
     ' Find AS outside the parameter parentheses. Parameter types also contain
     ' AS, but they must not be mistaken for the FUNCTION return clause.
@@ -19859,7 +19872,7 @@ END FUNCTION
 'layout. The caller snapshots the call expression once before using the C++
 'expression returned here, so descriptor guards and member reads cannot invoke
 'the BASIC FUNCTION more than once.
-FUNCTION ResolveUDTCallMember$ (call_ptr AS STRING, member_path AS STRING, root_udt AS LONG, result_typ AS LONG)
+FUNCTION ResolveUDTCallMember$ (call_ptr AS STRING, member_path AS STRING, root_udt AS LONG, result_typ AS LONG, bound_kind AS LONG)
     DIM layout_mode AS LONG
     DIM current_udt AS LONG
     DIM path_count AS LONG
@@ -19957,7 +19970,14 @@ FUNCTION ResolveUDTCallMember$ (call_ptr AS STRING, member_path AS STRING, root_
                 NEXT
                 IF close_index = 0 THEN Give_Error "Expected )": EXIT FUNCTION
                 IF udtearrayelements(found_member) = 0 THEN Give_Error "Element is not an array": EXIT FUNCTION
-                IF close_index = path_index + 1 THEN Give_Error "Array index missing": EXIT FUNCTION
+                IF close_index = path_index + 1 THEN
+                    IF bound_kind AND close_index = path_count THEN
+                        Give_Error UDTResultBoundError$(bound_kind)
+                    ELSE
+                        Give_Error "Array index missing"
+                    END IF
+                    EXIT FUNCTION
+                END IF
 
                 index_text = getelements$(member_path, path_index + 1, close_index - 1)
                 IF layout_mode AND UDTMemberDynDesc%(found_member) THEN
@@ -19986,7 +20006,12 @@ FUNCTION ResolveUDTCallMember$ (call_ptr AS STRING, member_path AS STRING, root_
                 Give_Error "Expected array index": EXIT FUNCTION
             END IF
         ELSEIF udtearrayelements(found_member) THEN
-            Give_Error "Expected array index": EXIT FUNCTION
+            IF bound_kind THEN
+                Give_Error UDTResultBoundError$(bound_kind)
+            ELSE
+                Give_Error "Expected array index"
+            END IF
+            EXIT FUNCTION
         END IF
 
         IF path_index <= path_count THEN
@@ -20031,9 +20056,16 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
     DIM call_member_path AS STRING
     DIM call_member_expr AS STRING
     DIM call_member_end AS LONG
+    DIM call_root_start AS LONG
     DIM call_member_depth AS LONG
     DIM call_member_scan AS LONG
     DIM call_member_token AS STRING
+    DIM bound_kind AS LONG
+    DIM call_member_bound_kind AS LONG
+
+    bound_kind = udt_bound_result_kind
+    udt_bound_result_kind = 0
+
     'typ IS A RETURN VALUE
     '''DIM cli(15) AS INTEGER
     a$ = a2$
@@ -20222,6 +20254,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                     'is l$ a function?
                     IF id.subfunc = 1 THEN
+                        call_root_start = i
                         ' A FUNCTION name on the right-hand side always denotes
                         ' a call, including inside that FUNCTION's own body.
                         ' Do not reinterpret FunctionName.member as access to
@@ -20273,7 +20306,9 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                     NEXT
                                     call_member_path = getelements$(a$, i + 1, call_member_end)
                                     call_member_tmp = "udt_call_member_" + _TOSTR$(uniquenumber)
-                                    call_member_expr = ResolveUDTCallMember$(call_member_tmp, call_member_path, typ2 AND UDTMASK, typ2)
+                                    call_member_bound_kind = 0
+                                    IF call_root_start = 1 AND call_member_end = n THEN call_member_bound_kind = bound_kind
+                                    call_member_expr = ResolveUDTCallMember$(call_member_tmp, call_member_path, typ2 AND UDTMASK, typ2, call_member_bound_kind)
                                     IF Error_Happened THEN EXIT FUNCTION
                                     c$ = "([&](){void *" + call_member_tmp + "=(void*)(" + c$ + ");return " + call_member_expr + ";})()"
                                     i = call_member_end
@@ -20376,6 +20411,7 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
         IF l$ = ")" THEN
             b = b - 1
             IF b = 0 THEN
+                IF i1 = 2 AND i = n THEN udt_bound_result_kind = bound_kind
                 c$ = evaluate(getelements$(a$, i1, i - 1), typ2)
                 IF Error_Happened THEN EXIT FUNCTION
                 IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
@@ -20928,6 +20964,14 @@ END FUNCTION
 
 
 
+FUNCTION UDTResultBoundError$ (bound_kind AS LONG)
+    DIM bound_name AS STRING
+    DIM diagnostic AS STRING
+    IF bound_kind = 1 THEN bound_name = "UBOUND" ELSE bound_name = "LBOUND"
+    diagnostic = "Assign the UDT function result to a variable before using " + bound_name + " on its array member."
+    UDTResultBoundError$ = diagnostic
+END FUNCTION
+
 FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     a$ = a2$
 
@@ -20940,6 +20984,7 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
     DIM ulboundoffset AS STRING
     DIM ulboundbase AS STRING
     DIM ulbounddesc AS STRING
+    DIM ulbound_result_kind AS LONG
     DIM udtretindex AS LONG
     DIM udtretsize AS LONG
     DIM udtrettmp AS STRING
@@ -21304,9 +21349,14 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         '   Items(0).Grid()
                         ' which then raises "Expected array index".
                         IF INSTR(original_e$, ".") THEN
+                            IF n$ = "UBOUND" THEN ulbound_result_kind = 1 ELSE ulbound_result_kind = 2
+                            udt_bound_result_kind = ulbound_result_kind
                             udt_allow_bare_array = -1
                             e$ = evaluate(original_e$, sourcetyp)
                             udt_allow_bare_array = 0
+                            IF Error_Happened THEN
+                                IF Error_Message = UDTResultBoundError$(ulbound_result_kind) THEN EXIT FUNCTION
+                            END IF
 
                             IF Error_Happened = 0 THEN
                                 IF ((sourcetyp AND ISREFERENCE) <> 0) AND ((sourcetyp AND ISARRAY) <> 0) THEN
