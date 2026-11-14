@@ -17093,7 +17093,7 @@ int32 func__statusCode(int32 handle) {
     int real_handle = -(handle + 1);
 
     special_handle_struct *sh = (special_handle_struct *)list_get(special_handles, real_handle);
-    if (sh->type != special_handle_type::Http) {
+    if (!sh || sh->type != special_handle_type::Http) {
         error(52);
         return -1;
     }

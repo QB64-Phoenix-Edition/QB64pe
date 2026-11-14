@@ -10,6 +10,9 @@ Print _StatusCode(h&)
 Print _StatusCode(0)
 Print _StatusCode(20)
 
+' Error, negative handle that was never opened
+Print _StatusCode(-1000)
+
 System
 
 errorhand:
