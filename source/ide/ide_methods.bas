@@ -2949,10 +2949,9 @@ FUNCTION ide2 (ignore)
                     FOR y = 1 TO iden
                         a$ = idegetline(y)
                         a$ = LTRIM$(RTRIM$(a$))
-                        sf = 0
-                        nca$ = UCASE$(a$)
-                        IF LEFT$(nca$, 4) = "SUB " THEN sf = 1: sf$ = "SUB "
-                        IF LEFT$(nca$, 9) = "FUNCTION " THEN sf = 2: sf$ = "FUNCTION "
+                        sf = IdeProcedureHeader&(a$, nca$)
+                        IF sf = 1 THEN sf$ = "SUB "
+                        IF sf = 2 THEN sf$ = "FUNCTION "
                         IF sf THEN
                             IF RIGHT$(nca$, 7) = " STATIC" THEN
                                 a$ = RTRIM$(LEFT$(a$, LEN(a$) - 7))
@@ -13035,11 +13034,10 @@ SUB ideshowtext
                     LOOP
 
                     IF InvalidLine(y) <> 0 THEN _CONTINUE
-                    a$ = UCASE$(_TRIM$(idegetline(y)))
-                    sf = 0
-                    IF LEFT$(a$, 4) = "SUB " THEN sf = 1
-                    IF LEFT$(a$, 9) = "FUNCTION " THEN sf = 2
+                    a$ = _TRIM$(idegetline(y))
+                    sf = IdeProcedureHeader&(a$, nca$)
                     IF sf THEN
+                        a$ = nca$
                         IF RIGHT$(a$, 7) = " STATIC" THEN
                             a$ = RTRIM$(LEFT$(a$, LEN(a$) - 7))
                         END IF
@@ -13778,12 +13776,11 @@ FUNCTION idesubs$
         a$ = idegetline(y)
         IF NOT SubClosed THEN ModuleSize = ModuleSize + 1
         a$ = LTRIM$(RTRIM$(a$))
-        sf = 0
-        nca$ = UCASE$(a$)
+        sf = IdeProcedureHeader&(a$, nca$)
         IF LEFT$(nca$, 8) = "DECLARE " AND INSTR(nca$, " LIBRARY") > 0 THEN InsideDECLARE = -1
         IF LEFT$(nca$, 11) = "END DECLARE" THEN InsideDECLARE = 0
-        IF LEFT$(nca$, 4) = "SUB " THEN sf = 1: sf$ = "SUB   "
-        IF LEFT$(nca$, 9) = "FUNCTION " THEN sf = 2: sf$ = "FUNC  "
+        IF sf = 1 THEN sf$ = "SUB   "
+        IF sf = 2 THEN sf$ = "FUNC  "
         IF sf THEN
             'Resize SortedSubsList() and helper arrays
             TotalSUBs = TotalSUBs + 1
@@ -19562,10 +19559,9 @@ SUB IdeMakeContextualMenu
             FOR y = 1 TO iden
                 a$ = idegetline(y)
                 a$ = LTRIM$(RTRIM$(a$))
-                sf = 0
-                nca$ = UCASE$(a$)
-                IF LEFT$(nca$, 4) = "SUB " THEN sf = 1: sf$ = "SUB  "
-                IF LEFT$(nca$, 9) = "FUNCTION " THEN sf = 2: sf$ = "FUNC "
+                sf = IdeProcedureHeader&(a$, nca$)
+                IF sf = 1 THEN sf$ = "SUB  "
+                IF sf = 2 THEN sf$ = "FUNC "
                 IF sf THEN
                     IF RIGHT$(nca$, 7) = " STATIC" THEN
                         a$ = RTRIM$(LEFT$(a$, LEN(a$) - 7))
@@ -20724,6 +20720,31 @@ FUNCTION FindProposedTitle$
     FindProposedTitle$ = LTRIM$(RTRIM$(Found_TITLE$))
 END FUNCTION
 
+FUNCTION IdeProcedureHeader& (line_text AS STRING, line_upper AS STRING)
+    DIM without_static AS STRING
+    DIM without_static_upper AS STRING
+    DIM header_kind AS LONG
+
+    line_upper = UCASE$(line_text)
+    IF LEFT$(line_upper, 7) = "STATIC " OR LEFT$(line_upper, 7) = "STATIC" + CHR$(9) THEN
+        ' Work on the caller's local copy, never on the editor buffer.
+        without_static = MID$(line_text, 8)
+        DO WHILE LEN(without_static)
+            IF LEFT$(without_static, 1) <> " " AND LEFT$(without_static, 1) <> CHR$(9) THEN EXIT DO
+            without_static = MID$(without_static, 2)
+        LOOP
+        without_static_upper = UCASE$(without_static)
+        IF LEFT$(without_static_upper, 4) = "SUB " OR LEFT$(without_static_upper, 9) = "FUNCTION " THEN
+            line_text = without_static
+            line_upper = without_static_upper
+        END IF
+    END IF
+
+    IF LEFT$(line_upper, 4) = "SUB " THEN header_kind = 1
+    IF LEFT$(line_upper, 9) = "FUNCTION " THEN header_kind = 2
+    IdeProcedureHeader& = header_kind
+END FUNCTION
+
 FUNCTION FindCurrentSF$ (whichline)
     'Get the SUB/FUNCTION name 'whichline' is in.
     'The FOR...NEXT loop goes backwards from 'whichline' to the start of the program
@@ -20734,10 +20755,7 @@ FUNCTION FindCurrentSF$ (whichline)
         FOR currSF_CHECK = whichline TO 1 STEP -1
             thisline$ = idegetline(currSF_CHECK)
             thisline$ = LTRIM$(RTRIM$(thisline$))
-            isSF = 0
-            ncthisline$ = UCASE$(thisline$)
-            IF LEFT$(ncthisline$, 4) = "SUB " THEN isSF = 1
-            IF LEFT$(ncthisline$, 9) = "FUNCTION " THEN isSF = 2
+            isSF = IdeProcedureHeader&(thisline$, ncthisline$)
             IF LEFT$(ncthisline$, 7) = "END SUB" AND currSF_CHECK < whichline THEN EXIT FOR
             IF LEFT$(ncthisline$, 12) = "END FUNCTION" AND currSF_CHECK < whichline THEN EXIT FOR
             IF isSF THEN
@@ -20780,13 +20798,11 @@ FUNCTION FindCurrentSF$ (whichline)
                     FOR endSF_CHECK = whichline TO iden
                         thisline$ = idegetline(endSF_CHECK)
                         thisline$ = LTRIM$(RTRIM$(thisline$))
-                        ncthisline$ = UCASE$(thisline$)
+                        nextSF = IdeProcedureHeader&(thisline$, ncthisline$)
                         IF LEFT$(ncthisline$, 7) = "END SUB" THEN endedSF = 1: EXIT FOR
                         IF LEFT$(ncthisline$, 12) = "END FUNCTION" THEN endedSF = 2: EXIT FOR
-                        IF LEFT$(ncthisline$, 4) = "SUB " AND endSF_CHECK = whichline THEN endedSF = 1: EXIT FOR
-                        IF LEFT$(ncthisline$, 9) = "FUNCTION " AND endSF_CHECK = whichline THEN endedSF = 2: EXIT FOR
-                        IF LEFT$(ncthisline$, 4) = "SUB " AND InsideDECLARE = 0 THEN EXIT FOR
-                        IF LEFT$(ncthisline$, 9) = "FUNCTION " AND InsideDECLARE = 0 THEN EXIT FOR
+                        IF nextSF AND endSF_CHECK = whichline THEN endedSF = nextSF: EXIT FOR
+                        IF nextSF AND InsideDECLARE = 0 THEN EXIT FOR
                         IF LEFT$(ncthisline$, 8) = "DECLARE " AND INSTR(ncthisline$, " LIBRARY") > 0 THEN InsideDECLARE = -1
                         IF LEFT$(ncthisline$, 11) = "END DECLARE" THEN InsideDECLARE = 0
                     NEXT
