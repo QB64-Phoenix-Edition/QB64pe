@@ -1,128 +1,92 @@
-#line 78 "utilities/file.bas"
-int32 FUNC_FILEHASEXTENSION(qbs*_FUNC_FILEHASEXTENSION_STRING_F){
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
+qbs* FUNC_READWRITESTRINGSETTINGVALUE(qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,qbs*_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT){
+#line 116 "utilities/strings.bas"
 qbs *tqbs;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 #include "data159.txt"
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 new_mem_lock();
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 libqb_check_stack();
-#line 78 "utilities/file.bas"
+#line 116 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 79 "utilities/file.bas"
-S_159_1:;
-#line 79 "utilities/file.bas"
-fornext_value159_3=_FUNC_FILEHASEXTENSION_STRING_F->len;
-#line 79 "utilities/file.bas"
-fornext_finalvalue159_3= 1 ;
-#line 79 "utilities/file.bas"
-fornext_step159_3= -1 ;
-#line 79 "utilities/file.bas"
-if (fornext_step159_3<0) fornext_step_negative159_3=1; else fornext_step_negative159_3=0;
-#line 79 "utilities/file.bas"
-if (is_error_pending()) goto fornext_error159_3;
-#line 79 "utilities/file.bas"
-goto fornext_entrylabel159_3;
-#line 79 "utilities/file.bas"
-while(1){
-#line 79 "utilities/file.bas"
-fornext_value159_3=fornext_step159_3+(*_FUNC_FILEHASEXTENSION_LONG_I);
-#line 79 "utilities/file.bas"
-fornext_entrylabel159_3:
-#line 79 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_I=fornext_value159_3;
-#line 79 "utilities/file.bas"
+#line 117 "utilities/strings.bas"
+do{
+#line 117 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,117,"strings.bas");}while(r);
+#line 118 "utilities/strings.bas"
+do{
+#line 118 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,118,"strings.bas");}while(r);
+#line 120 "utilities/strings.bas"
+do{
+#line 120 "utilities/strings.bas"
+*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT=FUNC_READCONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
+#line 120 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 79 "utilities/file.bas"
-if (fornext_step_negative159_3){
-#line 79 "utilities/file.bas"
-if (fornext_value159_3<fornext_finalvalue159_3) break;
-#line 79 "utilities/file.bas"
+#line 120 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,120,"strings.bas");}while(r);
+#line 122 "utilities/strings.bas"
+S_159_4:;
+#line 122 "utilities/strings.bas"
+if ((-(*_FUNC_READWRITESTRINGSETTINGVALUE_INTEGER_RESULT== 0 ))||is_error_pending()){
+#line 122 "utilities/strings.bas"
+if(qbevent){evnt(29632,122,"strings.bas");if(r)goto S_159_4;}
+#line 123 "utilities/strings.bas"
+do{
+#line 123 "utilities/strings.bas"
+SUB_WRITECONFIGSETTING(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SECTION,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_SETTING,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
+#line 123 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 123 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,123,"strings.bas");}while(r);
+#line 124 "utilities/strings.bas"
+do{
+#line 124 "utilities/strings.bas"
+qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_DEFAULT);
+#line 124 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 124 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,124,"strings.bas");}while(r);
+#line 125 "utilities/strings.bas"
 }else{
-#line 79 "utilities/file.bas"
-if (fornext_value159_3>fornext_finalvalue159_3) break;
-#line 79 "utilities/file.bas"
-}
-#line 79 "utilities/file.bas"
-fornext_error159_3:;
-#line 79 "utilities/file.bas"
-if(qbevent){evnt(28739,79,"file.bas");if(r)goto S_159_1;}
-#line 80 "utilities/file.bas"
+#line 126 "utilities/strings.bas"
 do{
-#line 80 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_A=qbs_asc(_FUNC_FILEHASEXTENSION_STRING_F,*_FUNC_FILEHASEXTENSION_LONG_I);
-#line 80 "utilities/file.bas"
+#line 126 "utilities/strings.bas"
+qbs_set(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE,_FUNC_READWRITESTRINGSETTINGVALUE_STRING_VALUE);
+#line 126 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 80 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,80,"file.bas");}while(r);
-#line 81 "utilities/file.bas"
-S_159_3:;
-#line 81 "utilities/file.bas"
-if (((-(*_FUNC_FILEHASEXTENSION_LONG_A== 47 ))|(-(*_FUNC_FILEHASEXTENSION_LONG_A== 92 )))||is_error_pending()){
-#line 81 "utilities/file.bas"
-if(qbevent){evnt(28739,81,"file.bas");if(r)goto S_159_3;}
-#line 81 "utilities/file.bas"
-do{
-#line 81 "utilities/file.bas"
-goto fornext_exit_159_2;
-#line 81 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,81,"file.bas");}while(r);
-#line 81 "utilities/file.bas"
+#line 126 "utilities/strings.bas"
+if(!qbevent)break;evnt(29632,126,"strings.bas");}while(r);
+#line 127 "utilities/strings.bas"
 }
-#line 82 "utilities/file.bas"
-S_159_6:;
-#line 82 "utilities/file.bas"
-if ((-(*_FUNC_FILEHASEXTENSION_LONG_A== 46 ))||is_error_pending()){
-#line 82 "utilities/file.bas"
-if(qbevent){evnt(28739,82,"file.bas");if(r)goto S_159_6;}
-#line 82 "utilities/file.bas"
-do{
-#line 82 "utilities/file.bas"
-*_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION= -1 ;
-#line 82 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,82,"file.bas");}while(r);
-#line 82 "utilities/file.bas"
-do{
-#line 82 "utilities/file.bas"
-goto exit_subfunc;
-#line 82 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,82,"file.bas");}while(r);
-#line 82 "utilities/file.bas"
-}
-#line 83 "utilities/file.bas"
-fornext_continue_159_2:;
-#line 83 "utilities/file.bas"
-}
-#line 83 "utilities/file.bas"
-fornext_exit_159_2:;
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
 exit_subfunc:;
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
 #include "free159.txt"
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 84 "utilities/file.bas"
-return *_FUNC_FILEHASEXTENSION_LONG_FILEHASEXTENSION;
-#line 84 "utilities/file.bas"
+#line 128 "utilities/strings.bas"
+qbs_maketmp(_FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE);return _FUNC_READWRITESTRINGSETTINGVALUE_STRING_READWRITESTRINGSETTINGVALUE;
+#line 128 "utilities/strings.bas"
 }

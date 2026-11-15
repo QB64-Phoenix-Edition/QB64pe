@@ -1,182 +1,86 @@
-#line 116 "utilities/file.bas"
-void SUB_PATH_SLASH_CORRECT(qbs*_SUB_PATH_SLASH_CORRECT_STRING_A){
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
+int64 FUNC_FILELENGTH(qbs*_FUNC_FILELENGTH_STRING_FILESPEC){
+#line 19 "utilities/file.bas"
 qbs *tqbs;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 ptrszint tmp_long;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 int32 tmp_fileno;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 #include "data162.txt"
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 mem_lock *sf_mem_lock;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 new_mem_lock();
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 sf_mem_lock->type=3;
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 libqb_check_stack();
-#line 116 "utilities/file.bas"
+#line 19 "utilities/file.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 117 "utilities/file.bas"
-S_162_1:;
-#line 117 "utilities/file.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
-#line 117 "utilities/file.bas"
-if(qbevent){evnt(28739,117,"file.bas");if(r)goto S_162_1;}
-#line 118 "utilities/file.bas"
+#line 20 "utilities/file.bas"
+do{
+#line 20 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,20,"file.bas");}while(r);
+#line 22 "utilities/file.bas"
 S_162_2:;
-#line 118 "utilities/file.bas"
-fornext_value162_3= 1 ;
-#line 118 "utilities/file.bas"
-fornext_finalvalue162_3=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
-#line 118 "utilities/file.bas"
-fornext_step162_3= 1 ;
-#line 118 "utilities/file.bas"
-if (fornext_step162_3<0) fornext_step_negative162_3=1; else fornext_step_negative162_3=0;
-#line 118 "utilities/file.bas"
-if (is_error_pending()) goto fornext_error162_3;
-#line 118 "utilities/file.bas"
-goto fornext_entrylabel162_3;
-#line 118 "utilities/file.bas"
-while(1){
-#line 118 "utilities/file.bas"
-fornext_value162_3=fornext_step162_3+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
-#line 118 "utilities/file.bas"
-fornext_entrylabel162_3:
-#line 118 "utilities/file.bas"
-*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value162_3;
-#line 118 "utilities/file.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 118 "utilities/file.bas"
-if (fornext_step_negative162_3){
-#line 118 "utilities/file.bas"
-if (fornext_value162_3<fornext_finalvalue162_3) break;
-#line 118 "utilities/file.bas"
-}else{
-#line 118 "utilities/file.bas"
-if (fornext_value162_3>fornext_finalvalue162_3) break;
-#line 118 "utilities/file.bas"
-}
-#line 118 "utilities/file.bas"
-fornext_error162_3:;
-#line 118 "utilities/file.bas"
-if(qbevent){evnt(28739,118,"file.bas");if(r)goto S_162_2;}
-#line 119 "utilities/file.bas"
-S_162_3:;
-#line 119 "utilities/file.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 47 )))||is_error_pending()){
-#line 119 "utilities/file.bas"
-if(qbevent){evnt(28739,119,"file.bas");if(r)goto S_162_3;}
-#line 119 "utilities/file.bas"
+#line 22 "utilities/file.bas"
+if ((qbs_cleanup(qbs_tmp_base,~(func__fileexists(_FUNC_FILELENGTH_STRING_FILESPEC))))||is_error_pending()){
+#line 22 "utilities/file.bas"
+if(qbevent){evnt(29633,22,"file.bas");if(r)goto S_162_2;}
+#line 22 "utilities/file.bas"
 do{
-#line 119 "utilities/file.bas"
-tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
-#line 119 "utilities/file.bas"
-tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
-#line 119 "utilities/file.bas"
-tmp_long= 92 ; if (!is_error_pending()){
-#line 119 "utilities/file.bas"
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-#line 119 "utilities/file.bas"
-}}}
-#line 119 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,119,"file.bas");}while(r);
-#line 119 "utilities/file.bas"
+#line 22 "utilities/file.bas"
+goto exit_subfunc;
+#line 22 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,22,"file.bas");}while(r);
+#line 22 "utilities/file.bas"
 }
-#line 120 "utilities/file.bas"
-fornext_continue_162_2:;
-#line 120 "utilities/file.bas"
-}
-#line 120 "utilities/file.bas"
-fornext_exit_162_2:;
-#line 121 "utilities/file.bas"
-}else{
-#line 122 "utilities/file.bas"
-S_162_8:;
-#line 122 "utilities/file.bas"
-fornext_value162_6= 1 ;
-#line 122 "utilities/file.bas"
-fornext_finalvalue162_6=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
-#line 122 "utilities/file.bas"
-fornext_step162_6= 1 ;
-#line 122 "utilities/file.bas"
-if (fornext_step162_6<0) fornext_step_negative162_6=1; else fornext_step_negative162_6=0;
-#line 122 "utilities/file.bas"
-if (is_error_pending()) goto fornext_error162_6;
-#line 122 "utilities/file.bas"
-goto fornext_entrylabel162_6;
-#line 122 "utilities/file.bas"
-while(1){
-#line 122 "utilities/file.bas"
-fornext_value162_6=fornext_step162_6+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
-#line 122 "utilities/file.bas"
-fornext_entrylabel162_6:
-#line 122 "utilities/file.bas"
-*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value162_6;
-#line 122 "utilities/file.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 122 "utilities/file.bas"
-if (fornext_step_negative162_6){
-#line 122 "utilities/file.bas"
-if (fornext_value162_6<fornext_finalvalue162_6) break;
-#line 122 "utilities/file.bas"
-}else{
-#line 122 "utilities/file.bas"
-if (fornext_value162_6>fornext_finalvalue162_6) break;
-#line 122 "utilities/file.bas"
-}
-#line 122 "utilities/file.bas"
-fornext_error162_6:;
-#line 122 "utilities/file.bas"
-if(qbevent){evnt(28739,122,"file.bas");if(r)goto S_162_8;}
-#line 123 "utilities/file.bas"
-S_162_9:;
-#line 123 "utilities/file.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 92 )))||is_error_pending()){
-#line 123 "utilities/file.bas"
-if(qbevent){evnt(28739,123,"file.bas");if(r)goto S_162_9;}
-#line 123 "utilities/file.bas"
+#line 23 "utilities/file.bas"
 do{
-#line 123 "utilities/file.bas"
-tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
-#line 123 "utilities/file.bas"
-tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
-#line 123 "utilities/file.bas"
-tmp_long= 47 ; if (!is_error_pending()){
-#line 123 "utilities/file.bas"
-if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
-#line 123 "utilities/file.bas"
-}}}
-#line 123 "utilities/file.bas"
-if(!qbevent)break;evnt(28739,123,"file.bas");}while(r);
-#line 123 "utilities/file.bas"
-}
-#line 124 "utilities/file.bas"
-fornext_continue_162_5:;
-#line 124 "utilities/file.bas"
-}
-#line 124 "utilities/file.bas"
-fornext_exit_162_5:;
-#line 125 "utilities/file.bas"
-}
-#line 126 "utilities/file.bas"
+#line 23 "utilities/file.bas"
+*_FUNC_FILELENGTH_INTEGER_FF=func_freefile();
+#line 23 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,23,"file.bas");}while(r);
+#line 24 "utilities/file.bas"
+do{
+#line 24 "utilities/file.bas"
+sub_open(_FUNC_FILELENGTH_STRING_FILESPEC, 2 ,NULL,NULL,*_FUNC_FILELENGTH_INTEGER_FF,NULL,0);
+#line 24 "utilities/file.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 24 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,24,"file.bas");}while(r);
+#line 25 "utilities/file.bas"
+do{
+#line 25 "utilities/file.bas"
+*_FUNC_FILELENGTH_INTEGER64_FILELENGTH=func_lof(*_FUNC_FILELENGTH_INTEGER_FF);
+#line 25 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,25,"file.bas");}while(r);
+#line 26 "utilities/file.bas"
+do{
+#line 26 "utilities/file.bas"
+sub_close(*_FUNC_FILELENGTH_INTEGER_FF,1);
+#line 26 "utilities/file.bas"
+if(!qbevent)break;evnt(29633,26,"file.bas");}while(r);
+#line 27 "utilities/file.bas"
 exit_subfunc:;
-#line 126 "utilities/file.bas"
+#line 27 "utilities/file.bas"
 free_mem_lock(sf_mem_lock);
-#line 126 "utilities/file.bas"
+#line 27 "utilities/file.bas"
 #include "free162.txt"
-#line 126 "utilities/file.bas"
+#line 27 "utilities/file.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 126 "utilities/file.bas"
+#line 27 "utilities/file.bas"
 cmem_sp=tmp_cmem_sp;
-#line 126 "utilities/file.bas"
+#line 27 "utilities/file.bas"
+return *_FUNC_FILELENGTH_INTEGER64_FILELENGTH;
+#line 27 "utilities/file.bas"
 }

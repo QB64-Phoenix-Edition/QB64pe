@@ -1155,7 +1155,7 @@ free((void*)(__ARRAY_BYTE_UNSTABLEFLAGS[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_BYTE_UNSTABLEFLAGS)[8] );
-#line 775 "qb64pe.bas"
+#line 780 "qb64pe.bas"
 qbs_free(*(qbs**)(((char*)(__UDT_ID2))+((0+2966))));
 if (__ARRAY_LONG_SFIDLIST[2]&1){
 if (__ARRAY_LONG_SFIDLIST[2]&4){
@@ -1212,6 +1212,22 @@ free((void*)(__ARRAY_INTEGER_UDTXCANONMODE[0]));
 }
 }
 free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTXCANONMODE)[8] );
+if (__ARRAY_INTEGER_UDTFUNCRETLIFEHELPERDONE[2]&1){
+if (__ARRAY_INTEGER_UDTFUNCRETLIFEHELPERDONE[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_INTEGER_UDTFUNCRETLIFEHELPERDONE[0]));
+}else{
+free((void*)(__ARRAY_INTEGER_UDTFUNCRETLIFEHELPERDONE[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTFUNCRETLIFEHELPERDONE)[8] );
+if (__ARRAY_INTEGER_UDTFUNCRETCOPYHELPERDONE[2]&1){
+if (__ARRAY_INTEGER_UDTFUNCRETCOPYHELPERDONE[2]&4){
+cmem_dynamic_free((uint8*)(__ARRAY_INTEGER_UDTFUNCRETCOPYHELPERDONE[0]));
+}else{
+free((void*)(__ARRAY_INTEGER_UDTFUNCRETCOPYHELPERDONE[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)__ARRAY_INTEGER_UDTFUNCRETCOPYHELPERDONE)[8] );
 if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&1){
 if (__ARRAY_LONG_UDTEFDYNOFFSET[2]&4){
 cmem_dynamic_free((uint8*)(__ARRAY_LONG_UDTEFDYNOFFSET[0]));
@@ -1314,12 +1330,14 @@ qbs_free(__STRING_HASHNAME);
 qbs_free(__STRING_CN);
 qbs_free(__STRING_S);
 qbs_free(__STRING_E2);
-#line 2557 "qb64pe.bas"
+#line 2566 "qb64pe.bas"
 qbs_free(*(qbs**)(((char*)(__UDT_TEMPNUM))+((0+48))));
 qbs_free(__STRING_TEMP1);
 qbs_free(__STRING_THISCONSTVAL);
 qbs_free(__STRING_SYMBOL);
 qbs_free(__STRING_ALIASNAME);
+qbs_free(__STRING_FUNCRETTEXT);
+qbs_free(__STRING_FUNCRETSYMBOL);
 qbs_free(__STRING_PARAMS);
 qbs_free(__STRING_PARAMSIZE);
 qbs_free(__STRING_NELE);
@@ -1331,6 +1349,7 @@ qbs_free(__STRING_N2);
 qbs_free(__STRING_SYMBOL2);
 qbs_free(__STRING_CTYPE);
 qbs_free(__STRING_PWL);
+qbs_free(__STRING_FUNCRETLAYOUT);
 qbs_free(__STRING_P);
 qbs_free(__STRING_INCDAT);
 qbs_free(__STRING_X);
@@ -1353,6 +1372,7 @@ qbs_free(__STRING_INCLINENUMP);
 qbs_free(__STRING_THISINCNAME);
 qbs_free(__STRING_E1);
 qbs_free(__STRING_AA);
+qbs_free(__STRING_UDTPERIODNAME);
 qbs_free(__STRING_THISELEMENT);
 qbs_free(__STRING_NEXTELEMENT);
 qbs_free(__STRING_LIBNAME);
@@ -1369,8 +1389,10 @@ qbs_free(__STRING_DLLNAME);
 qbs_free(__STRING_ERRORTRACKCALL);
 qbs_free(__STRING_EORIG);
 qbs_free(__STRING_EE);
+qbs_free(__STRING_FUNCRETTAIL);
 qbs_free(__STRING_SUBFUNCORIGINALNAME);
 qbs_free(__STRING_SUBFUNCRET);
+qbs_free(__STRING_FUNCRETVARTYPE);
 qbs_free(__STRING_T3);
 qbs_free(__STRING_CALLNAME);
 qbs_free(__STRING_TYP);
@@ -1416,6 +1438,8 @@ qbs_free(__STRING_REDIMTARGETEXPR);
 qbs_free(__STRING_REDIMBOUNDS);
 qbs_free(__STRING_REDIMTYPESUFFIX);
 qbs_free(__STRING_REDIMTARGETEVAL);
+qbs_free(__STRING_REDIMREFNAME);
+qbs_free(__STRING_REDIMROOT);
 qbs_free(__STRING_REDIMTARGETREF);
 qbs_free(__STRING_REDIMOFFSET);
 qbs_free(__STRING_REDIMBASE);
