@@ -1,9 +1,20 @@
-int32 *_SUB_REGINTERNAL_LONG_IDERET=NULL;
-#line 4413 "subs_functions/subs_functions.bas"
-if(_SUB_REGINTERNAL_LONG_IDERET==NULL){
-#line 4413 "subs_functions/subs_functions.bas"
-_SUB_REGINTERNAL_LONG_IDERET=(int32*)mem_static_malloc(4);
-#line 4413 "subs_functions/subs_functions.bas"
-*_SUB_REGINTERNAL_LONG_IDERET=0;
-#line 4413 "subs_functions/subs_functions.bas"
+#line 26429 "qb64pe.bas"
+qbs*oldstr84_1=NULL;
+#line 26429 "qb64pe.bas"
+if(_SUB_MAKEIDREFER_STRING_REF->tmp||_SUB_MAKEIDREFER_STRING_REF->fixed||_SUB_MAKEIDREFER_STRING_REF->readonly){
+#line 26429 "qb64pe.bas"
+oldstr84_1=_SUB_MAKEIDREFER_STRING_REF;
+#line 26429 "qb64pe.bas"
+if (oldstr84_1->cmem_descriptor){
+#line 26429 "qb64pe.bas"
+_SUB_MAKEIDREFER_STRING_REF=qbs_new_cmem(oldstr84_1->len,0);
+#line 26429 "qb64pe.bas"
+}else{
+#line 26429 "qb64pe.bas"
+_SUB_MAKEIDREFER_STRING_REF=qbs_new(oldstr84_1->len,0);
+#line 26429 "qb64pe.bas"
+}
+#line 26429 "qb64pe.bas"
+memcpy(_SUB_MAKEIDREFER_STRING_REF->chr,oldstr84_1->chr,oldstr84_1->len);
+#line 26429 "qb64pe.bas"
 }

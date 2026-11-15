@@ -1,56 +1,34 @@
-#line 239 "emit/embed.bas"
-void SUB_EMBEDMANADD(qbs*_SUB_EMBEDMANADD_STRING_HANDLE,qbs*_SUB_EMBEDMANADD_STRING_FILESPEC,int64*_SUB_EMBEDMANADD_INTEGER64_FILESIZE,int64*_SUB_EMBEDMANADD_INTEGER64_FILETIME,qbs*_SUB_EMBEDMANADD_STRING_FILEHASH,int8*_SUB_EMBEDMANADD_BYTE_PACKED){
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
+qbs* FUNC_FINDWORKINGTERMINAL(){
+#line 7 "utilities/terminal.bas"
 qbs *tqbs;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 ptrszint tmp_long;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 int32 tmp_fileno;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 #include "data386.txt"
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 mem_lock *sf_mem_lock;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 new_mem_lock();
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 sf_mem_lock->type=3;
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 libqb_check_stack();
-#line 239 "emit/embed.bas"
+#line 7 "utilities/terminal.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 240 "emit/embed.bas"
+#line 8 "utilities/terminal.bas"
 do{
-#line 240 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,240,"embed.bas");}while(r);
-#line 242 "emit/embed.bas"
-do{
-#line 242 "emit/embed.bas"
-*_SUB_EMBEDMANADD_LONG_IDX=*__LONG_EMBEDMANCOUNT;
-#line 242 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,242,"embed.bas");}while(r);
-#line 243 "emit/embed.bas"
-S_386_3:;
-#line 243 "emit/embed.bas"
-if ((qbs_cleanup(qbs_tmp_base,-(*_SUB_EMBEDMANADD_LONG_IDX>func_ubound(__ARRAY_STRING_EMBEDMANHAND,1,1))))||is_error_pending()){
-#line 243 "emit/embed.bas"
-if(qbevent){evnt(28753,243,"embed.bas");if(r)goto S_386_3;}
-#line 244 "emit/embed.bas"
-do{
-#line 244 "emit/embed.bas"
-*_SUB_EMBEDMANADD_LONG_NEWUB=*_SUB_EMBEDMANADD_LONG_IDX+ 15 ;
-#line 244 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,244,"embed.bas");}while(r);
-#line 245 "emit/embed.bas"
-do{
-if (__ARRAY_STRING_EMBEDMANHAND[2]&2){
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&2){
 error(10);
 }else{
 static int64 alloc_new_desc[8];
@@ -58,22 +36,11 @@ static uint64 alloc_req_elems;
 static uint64 alloc_req_bytes;
 static uint64 alloc_dim_value;
 static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING_EMBEDMANHAND)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING_EMBEDMANHAND[2]&1){
-preserve_old_ptr=__ARRAY_STRING_EMBEDMANHAND[0];
-preserve_old_flags=__ARRAY_STRING_EMBEDMANHAND[2];
-preserve_old_total=__ARRAY_STRING_EMBEDMANHAND[5];
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&1){
+if (!error_occurred) error(10);
 }else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
 alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
+alloc_new_desc[5]=( 8 )-alloc_new_desc[4]+1;
 if (alloc_new_desc[5]<=0) error(5);
 alloc_new_desc[6]=1;
 alloc_req_elems=1;
@@ -93,49 +60,22 @@ if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257
 alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
 if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
 if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-__ARRAY_STRING_EMBEDMANHAND[0]=preserve_new_ptr;
-__ARRAY_STRING_EMBEDMANHAND[2]|=1;
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]|=1;
 tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANHAND[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[tmp_long]=qbs_new_cmem(0,0);
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[2]&4){
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=qbs_new_cmem(0,0);
 }else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[tmp_long]=qbs_new(0,0);
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long]=qbs_new(0,0);
 }
-tmp_long=preserve_copy_count;
-while(tmp_long--){
-qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);
-}
-tmp_long=preserve_old_total;
-while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);
-free((void*)(preserve_old_ptr));
-__ARRAY_STRING_EMBEDMANHAND[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING_EMBEDMANHAND[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING_EMBEDMANHAND[0]) error(257);
-__ARRAY_STRING_EMBEDMANHAND[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANHAND[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[tmp_long]=qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[tmp_long]=qbs_new(0,0);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4]=alloc_new_desc[4];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]=alloc_new_desc[5];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[6]=alloc_new_desc[6];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[7]=alloc_new_desc[7];
 }
 }
-__ARRAY_STRING_EMBEDMANHAND[4]=alloc_new_desc[4];
-__ARRAY_STRING_EMBEDMANHAND[5]=alloc_new_desc[5];
-__ARRAY_STRING_EMBEDMANHAND[6]=alloc_new_desc[6];
-__ARRAY_STRING_EMBEDMANHAND[7]=alloc_new_desc[7];
-}
-#line 245 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,245,"embed.bas");}while(r);
-#line 246 "emit/embed.bas"
-do{
-if (__ARRAY_STRING_EMBEDMANPATH[2]&2){
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&2){
 error(10);
 }else{
 static int64 alloc_new_desc[8];
@@ -143,22 +83,11 @@ static uint64 alloc_req_elems;
 static uint64 alloc_req_bytes;
 static uint64 alloc_dim_value;
 static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING_EMBEDMANPATH)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING_EMBEDMANPATH[2]&1){
-preserve_old_ptr=__ARRAY_STRING_EMBEDMANPATH[0];
-preserve_old_flags=__ARRAY_STRING_EMBEDMANPATH[2];
-preserve_old_total=__ARRAY_STRING_EMBEDMANPATH[5];
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&1){
+if (!error_occurred) error(10);
 }else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
 alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
+alloc_new_desc[5]=( 8 )-alloc_new_desc[4]+1;
 if (alloc_new_desc[5]<=0) error(5);
 alloc_new_desc[6]=1;
 alloc_req_elems=1;
@@ -178,469 +107,276 @@ if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257
 alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
 if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
 if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-__ARRAY_STRING_EMBEDMANPATH[0]=preserve_new_ptr;
-__ARRAY_STRING_EMBEDMANPATH[2]|=1;
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
+if (!_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]) error(257);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]|=1;
 tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANPATH[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[tmp_long]=qbs_new_cmem(0,0);
+if (_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[2]&4){
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=qbs_new_cmem(0,0);
 }else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[tmp_long]=qbs_new(0,0);
+while(tmp_long--) ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long]=qbs_new(0,0);
 }
-tmp_long=preserve_copy_count;
-while(tmp_long--){
-qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);
-}
-tmp_long=preserve_old_total;
-while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);
-free((void*)(preserve_old_ptr));
-__ARRAY_STRING_EMBEDMANPATH[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING_EMBEDMANPATH[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING_EMBEDMANPATH[0]) error(257);
-__ARRAY_STRING_EMBEDMANPATH[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANPATH[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[tmp_long]=qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[tmp_long]=qbs_new(0,0);
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4]=alloc_new_desc[4];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]=alloc_new_desc[5];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[6]=alloc_new_desc[6];
+_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[7]=alloc_new_desc[7];
 }
 }
-__ARRAY_STRING_EMBEDMANPATH[4]=alloc_new_desc[4];
-__ARRAY_STRING_EMBEDMANPATH[5]=alloc_new_desc[5];
-__ARRAY_STRING_EMBEDMANPATH[6]=alloc_new_desc[6];
-__ARRAY_STRING_EMBEDMANPATH[7]=alloc_new_desc[7];
-}
-#line 246 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,246,"embed.bas");}while(r);
-#line 247 "emit/embed.bas"
+#line 8 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,8,"terminal.bas");}while(r);
+#line 9 "utilities/terminal.bas"
 do{
-if (__ARRAY_STRING_EMBEDMANHASH[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_STRING_EMBEDMANHASH)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_STRING_EMBEDMANHASH[2]&1){
-preserve_old_ptr=__ARRAY_STRING_EMBEDMANHASH[0];
-preserve_old_flags=__ARRAY_STRING_EMBEDMANHASH[2];
-preserve_old_total=__ARRAY_STRING_EMBEDMANHASH[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(8);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-__ARRAY_STRING_EMBEDMANHASH[0]=preserve_new_ptr;
-__ARRAY_STRING_EMBEDMANHASH[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANHASH[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[tmp_long]=qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[tmp_long]=qbs_new(0,0);
-}
-tmp_long=preserve_copy_count;
-while(tmp_long--){
-qbs_set(((qbs**)(preserve_new_ptr))[tmp_long],((qbs**)(preserve_old_ptr))[tmp_long]);
-}
-tmp_long=preserve_old_total;
-while(tmp_long--) qbs_free(((qbs**)(preserve_old_ptr))[tmp_long]);
-free((void*)(preserve_old_ptr));
-__ARRAY_STRING_EMBEDMANHASH[0]=preserve_new_ptr;
-}else{
-__ARRAY_STRING_EMBEDMANHASH[0]=(ptrszint)malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_STRING_EMBEDMANHASH[0]) error(257);
-__ARRAY_STRING_EMBEDMANHASH[2]|=1;
-tmp_long=(ptrszint)alloc_req_elems;
-if (__ARRAY_STRING_EMBEDMANHASH[2]&4){
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[tmp_long]=qbs_new_cmem(0,0);
-}else{
-while(tmp_long--) ((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[tmp_long]=qbs_new(0,0);
-}
-}
-__ARRAY_STRING_EMBEDMANHASH[4]=alloc_new_desc[4];
-__ARRAY_STRING_EMBEDMANHASH[5]=alloc_new_desc[5];
-__ARRAY_STRING_EMBEDMANHASH[6]=alloc_new_desc[6];
-__ARRAY_STRING_EMBEDMANHASH[7]=alloc_new_desc[7];
-}
-#line 247 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,247,"embed.bas");}while(r);
-#line 248 "emit/embed.bas"
-do{
-if (__ARRAY_INTEGER64_EMBEDMANSIZE[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_INTEGER64_EMBEDMANSIZE)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_INTEGER64_EMBEDMANSIZE[2]&1){
-preserve_old_ptr=__ARRAY_INTEGER64_EMBEDMANSIZE[0];
-preserve_old_flags=__ARRAY_INTEGER64_EMBEDMANSIZE[2];
-preserve_old_total=__ARRAY_INTEGER64_EMBEDMANSIZE[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(8);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_INTEGER64_EMBEDMANSIZE[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER64_EMBEDMANSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER64_EMBEDMANSIZE[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_INTEGER64_EMBEDMANSIZE[0]) error(257);
-memset((void*)(__ARRAY_INTEGER64_EMBEDMANSIZE[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER64_EMBEDMANSIZE[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER64_EMBEDMANSIZE[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_INTEGER64_EMBEDMANSIZE[0]) error(257);
-}
-}
-__ARRAY_INTEGER64_EMBEDMANSIZE[2]|=1;
-__ARRAY_INTEGER64_EMBEDMANSIZE[4]=alloc_new_desc[4];
-__ARRAY_INTEGER64_EMBEDMANSIZE[5]=alloc_new_desc[5];
-__ARRAY_INTEGER64_EMBEDMANSIZE[6]=alloc_new_desc[6];
-__ARRAY_INTEGER64_EMBEDMANSIZE[7]=alloc_new_desc[7];
-}
-#line 248 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,248,"embed.bas");}while(r);
-#line 249 "emit/embed.bas"
-do{
-if (__ARRAY_INTEGER64_EMBEDMANTIME[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_INTEGER64_EMBEDMANTIME)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_INTEGER64_EMBEDMANTIME[2]&1){
-preserve_old_ptr=__ARRAY_INTEGER64_EMBEDMANTIME[0];
-preserve_old_flags=__ARRAY_INTEGER64_EMBEDMANTIME[2];
-preserve_old_total=__ARRAY_INTEGER64_EMBEDMANTIME[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(8);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_INTEGER64_EMBEDMANTIME[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER64_EMBEDMANTIME[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER64_EMBEDMANTIME[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_INTEGER64_EMBEDMANTIME[0]) error(257);
-memset((void*)(__ARRAY_INTEGER64_EMBEDMANTIME[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*8);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_INTEGER64_EMBEDMANTIME[0]=preserve_new_ptr;
-}else{
-__ARRAY_INTEGER64_EMBEDMANTIME[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_INTEGER64_EMBEDMANTIME[0]) error(257);
-}
-}
-__ARRAY_INTEGER64_EMBEDMANTIME[2]|=1;
-__ARRAY_INTEGER64_EMBEDMANTIME[4]=alloc_new_desc[4];
-__ARRAY_INTEGER64_EMBEDMANTIME[5]=alloc_new_desc[5];
-__ARRAY_INTEGER64_EMBEDMANTIME[6]=alloc_new_desc[6];
-__ARRAY_INTEGER64_EMBEDMANTIME[7]=alloc_new_desc[7];
-}
-#line 249 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,249,"embed.bas");}while(r);
-#line 250 "emit/embed.bas"
-do{
-if (__ARRAY_BYTE_EMBEDMANPACKED[2]&2){
-error(10);
-}else{
-static int64 alloc_new_desc[8];
-static uint64 alloc_req_elems;
-static uint64 alloc_req_bytes;
-static uint64 alloc_dim_value;
-static uint64 alloc_bytes_per_element;
-((mem_lock*)((ptrszint*)__ARRAY_BYTE_EMBEDMANPACKED)[8])->id=(++mem_lock_id);
-static ptrszint preserve_old_ptr;
-static ptrszint preserve_old_flags;
-static uint64 preserve_old_total;
-static uint64 preserve_new_total;
-static uint64 preserve_copy_count;
-static ptrszint preserve_new_ptr;
-if (__ARRAY_BYTE_EMBEDMANPACKED[2]&1){
-preserve_old_ptr=__ARRAY_BYTE_EMBEDMANPACKED[0];
-preserve_old_flags=__ARRAY_BYTE_EMBEDMANPACKED[2];
-preserve_old_total=__ARRAY_BYTE_EMBEDMANPACKED[5];
-}else{
-preserve_old_total=0; preserve_old_ptr=0; preserve_old_flags=0; preserve_new_total=0; preserve_copy_count=0;
-}
-alloc_new_desc[4]= 0 ;
-alloc_new_desc[5]=(*_SUB_EMBEDMANADD_LONG_NEWUB)-alloc_new_desc[4]+1;
-if (alloc_new_desc[5]<=0) error(5);
-alloc_new_desc[6]=1;
-alloc_req_elems=1;
-alloc_bytes_per_element=(uint64)(1);
-if (!alloc_bytes_per_element) error(257);
-if (((int64)((ptrszint)alloc_new_desc[4]))!=alloc_new_desc[4]) error(257);
-if (alloc_new_desc[5]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[5]))!=alloc_new_desc[5]) error(257);
-if (alloc_new_desc[6]<0) error(257);
-if (((int64)((ptrszint)alloc_new_desc[6]))!=alloc_new_desc[6]) error(257);
-alloc_dim_value=(uint64)alloc_new_desc[5];
-if (alloc_dim_value){
-if (alloc_req_elems>(18446744073709551615ull/alloc_dim_value)) error(257);
-alloc_req_elems*=alloc_dim_value;
-}
-if (alloc_req_elems>(18446744073709551615ull/alloc_bytes_per_element)) error(257);
-alloc_req_bytes=alloc_req_elems*alloc_bytes_per_element;
-if (((uint64)((ptrszint)alloc_req_elems))!=alloc_req_elems) error(257);
-if (((uint64)((size_t)alloc_req_bytes))!=alloc_req_bytes) error(257);
-preserve_new_total=alloc_req_elems;
-preserve_copy_count=preserve_old_total;
-if (preserve_new_total<preserve_copy_count) preserve_copy_count=preserve_new_total;
-if (__ARRAY_BYTE_EMBEDMANPACKED[2]&4){
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!preserve_new_ptr) error(257);
-memset((void*)(preserve_new_ptr),0,(size_t)alloc_req_bytes);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*1);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_BYTE_EMBEDMANPACKED[0]=preserve_new_ptr;
-}else{
-__ARRAY_BYTE_EMBEDMANPACKED[0]=(ptrszint)cmem_dynamic_malloc((size_t)alloc_req_bytes);
-if (!__ARRAY_BYTE_EMBEDMANPACKED[0]) error(257);
-memset((void*)(__ARRAY_BYTE_EMBEDMANPACKED[0]),0,(size_t)alloc_req_bytes);
-}
-}else{
-if (preserve_old_total){
-preserve_new_ptr=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!preserve_new_ptr) error(257);
-if (preserve_copy_count) memcpy((void*)(preserve_new_ptr),(void*)(preserve_old_ptr),preserve_copy_count*1);
-if (preserve_old_flags&4){
-cmem_dynamic_free((uint8*)(preserve_old_ptr));
-}else{
-free((void*)(preserve_old_ptr));
-}
-__ARRAY_BYTE_EMBEDMANPACKED[0]=preserve_new_ptr;
-}else{
-__ARRAY_BYTE_EMBEDMANPACKED[0]=(ptrszint)calloc((size_t)alloc_req_bytes,1);
-if (!__ARRAY_BYTE_EMBEDMANPACKED[0]) error(257);
-}
-}
-__ARRAY_BYTE_EMBEDMANPACKED[2]|=1;
-__ARRAY_BYTE_EMBEDMANPACKED[4]=alloc_new_desc[4];
-__ARRAY_BYTE_EMBEDMANPACKED[5]=alloc_new_desc[5];
-__ARRAY_BYTE_EMBEDMANPACKED[6]=alloc_new_desc[6];
-__ARRAY_BYTE_EMBEDMANPACKED[7]=alloc_new_desc[7];
-}
-#line 250 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,250,"embed.bas");}while(r);
-#line 251 "emit/embed.bas"
-}
-#line 252 "emit/embed.bas"
-do{
-#line 252 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_STRING_EMBEDMANHAND[4],__ARRAY_STRING_EMBEDMANHAND[5]);
-#line 252 "emit/embed.bas"
-if (!is_error_pending()) qbs_set( ((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[tmp_long],_SUB_EMBEDMANADD_STRING_HANDLE);
-#line 252 "emit/embed.bas"
+#line 9 "utilities/terminal.bas"
+tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 9 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("gnome-terminal",14));
+#line 9 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 252 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,252,"embed.bas");}while(r);
-#line 253 "emit/embed.bas"
+#line 9 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,9,"terminal.bas");}while(r);
+#line 9 "utilities/terminal.bas"
 do{
-#line 253 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_STRING_EMBEDMANPATH[4],__ARRAY_STRING_EMBEDMANPATH[5]);
-#line 253 "emit/embed.bas"
-if (!is_error_pending()) qbs_set( ((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[tmp_long],_SUB_EMBEDMANADD_STRING_FILESPEC);
-#line 253 "emit/embed.bas"
+#line 9 "utilities/terminal.bas"
+tmp_long=array_check(( 1 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 9 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-- $$ $@",8));
+#line 9 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 253 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,253,"embed.bas");}while(r);
-#line 254 "emit/embed.bas"
+#line 9 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,9,"terminal.bas");}while(r);
+#line 10 "utilities/terminal.bas"
 do{
-#line 254 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_STRING_EMBEDMANHASH[4],__ARRAY_STRING_EMBEDMANHASH[5]);
-#line 254 "emit/embed.bas"
-if (!is_error_pending()) qbs_set( ((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[tmp_long],_SUB_EMBEDMANADD_STRING_FILEHASH);
-#line 254 "emit/embed.bas"
+#line 10 "utilities/terminal.bas"
+tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 10 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("konsole",7));
+#line 10 "utilities/terminal.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 254 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,254,"embed.bas");}while(r);
-#line 255 "emit/embed.bas"
+#line 10 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,10,"terminal.bas");}while(r);
+#line 10 "utilities/terminal.bas"
 do{
-#line 255 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_INTEGER64_EMBEDMANSIZE[4],__ARRAY_INTEGER64_EMBEDMANSIZE[5]);
-#line 255 "emit/embed.bas"
-if (!is_error_pending()) ((int64*)(__ARRAY_INTEGER64_EMBEDMANSIZE[0]))[tmp_long]=*_SUB_EMBEDMANADD_INTEGER64_FILESIZE;
-#line 255 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,255,"embed.bas");}while(r);
-#line 256 "emit/embed.bas"
+#line 10 "utilities/terminal.bas"
+tmp_long=array_check(( 2 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 10 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 10 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 10 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,10,"terminal.bas");}while(r);
+#line 11 "utilities/terminal.bas"
 do{
-#line 256 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_INTEGER64_EMBEDMANTIME[4],__ARRAY_INTEGER64_EMBEDMANTIME[5]);
-#line 256 "emit/embed.bas"
-if (!is_error_pending()) ((int64*)(__ARRAY_INTEGER64_EMBEDMANTIME[0]))[tmp_long]=*_SUB_EMBEDMANADD_INTEGER64_FILETIME;
-#line 256 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,256,"embed.bas");}while(r);
-#line 257 "emit/embed.bas"
+#line 11 "utilities/terminal.bas"
+tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 11 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("lxterminal",10));
+#line 11 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,11,"terminal.bas");}while(r);
+#line 11 "utilities/terminal.bas"
 do{
-#line 257 "emit/embed.bas"
-tmp_long=array_check((*_SUB_EMBEDMANADD_LONG_IDX)-__ARRAY_BYTE_EMBEDMANPACKED[4],__ARRAY_BYTE_EMBEDMANPACKED[5]);
-#line 257 "emit/embed.bas"
-if (!is_error_pending()) ((int8*)(__ARRAY_BYTE_EMBEDMANPACKED[0]))[tmp_long]=*_SUB_EMBEDMANADD_BYTE_PACKED;
-#line 257 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,257,"embed.bas");}while(r);
-#line 258 "emit/embed.bas"
+#line 11 "utilities/terminal.bas"
+tmp_long=array_check(( 3 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 11 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 11 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 11 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,11,"terminal.bas");}while(r);
+#line 12 "utilities/terminal.bas"
 do{
-#line 258 "emit/embed.bas"
-*__LONG_EMBEDMANCOUNT=*_SUB_EMBEDMANADD_LONG_IDX+ 1 ;
-#line 258 "emit/embed.bas"
-if(!qbevent)break;evnt(28753,258,"embed.bas");}while(r);
-#line 259 "emit/embed.bas"
+#line 12 "utilities/terminal.bas"
+tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 12 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("mate-terminal",13));
+#line 12 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,12,"terminal.bas");}while(r);
+#line 12 "utilities/terminal.bas"
+do{
+#line 12 "utilities/terminal.bas"
+tmp_long=array_check(( 4 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 12 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-x $$ $@",8));
+#line 12 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 12 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,12,"terminal.bas");}while(r);
+#line 13 "utilities/terminal.bas"
+do{
+#line 13 "utilities/terminal.bas"
+tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 13 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("xfce4-terminal",14));
+#line 13 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 13 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,13,"terminal.bas");}while(r);
+#line 13 "utilities/terminal.bas"
+do{
+#line 13 "utilities/terminal.bas"
+tmp_long=array_check(( 5 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 13 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-x $$ $@",8));
+#line 13 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 13 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,13,"terminal.bas");}while(r);
+#line 14 "utilities/terminal.bas"
+do{
+#line 14 "utilities/terminal.bas"
+tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 14 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("urxvt",5));
+#line 14 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,14,"terminal.bas");}while(r);
+#line 14 "utilities/terminal.bas"
+do{
+#line 14 "utilities/terminal.bas"
+tmp_long=array_check(( 6 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 14 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 14 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 14 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,14,"terminal.bas");}while(r);
+#line 15 "utilities/terminal.bas"
+do{
+#line 15 "utilities/terminal.bas"
+tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 15 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("xterm",5));
+#line 15 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,15,"terminal.bas");}while(r);
+#line 15 "utilities/terminal.bas"
+do{
+#line 15 "utilities/terminal.bas"
+tmp_long=array_check(( 7 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 15 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-e $$ $@",8));
+#line 15 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 15 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,15,"terminal.bas");}while(r);
+#line 16 "utilities/terminal.bas"
+do{
+#line 16 "utilities/terminal.bas"
+tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5]);
+#line 16 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[tmp_long],qbs_new_txt_len("ptyxis",6));
+#line 16 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,16,"terminal.bas");}while(r);
+#line 16 "utilities/terminal.bas"
+do{
+#line 16 "utilities/terminal.bas"
+tmp_long=array_check(( 8 )-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5]);
+#line 16 "utilities/terminal.bas"
+if (!is_error_pending()) qbs_set( ((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[tmp_long],qbs_new_txt_len("-- $$ $@",8));
+#line 16 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 16 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,16,"terminal.bas");}while(r);
+#line 18 "utilities/terminal.bas"
+S_386_18:;
+#line 18 "utilities/terminal.bas"
+fornext_value386_2= 1 ;
+#line 18 "utilities/terminal.bas"
+fornext_finalvalue386_2=func_ubound(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES,1,1);
+#line 18 "utilities/terminal.bas"
+fornext_step386_2= 1 ;
+#line 18 "utilities/terminal.bas"
+if (fornext_step386_2<0) fornext_step_negative386_2=1; else fornext_step_negative386_2=0;
+#line 18 "utilities/terminal.bas"
+if (is_error_pending()) goto fornext_error386_2;
+#line 18 "utilities/terminal.bas"
+goto fornext_entrylabel386_2;
+#line 18 "utilities/terminal.bas"
+while(1){
+#line 18 "utilities/terminal.bas"
+fornext_value386_2=fornext_step386_2+(*_FUNC_FINDWORKINGTERMINAL_LONG_I);
+#line 18 "utilities/terminal.bas"
+fornext_entrylabel386_2:
+#line 18 "utilities/terminal.bas"
+*_FUNC_FINDWORKINGTERMINAL_LONG_I=fornext_value386_2;
+#line 18 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 18 "utilities/terminal.bas"
+if (fornext_step_negative386_2){
+#line 18 "utilities/terminal.bas"
+if (fornext_value386_2<fornext_finalvalue386_2) break;
+#line 18 "utilities/terminal.bas"
+}else{
+#line 18 "utilities/terminal.bas"
+if (fornext_value386_2>fornext_finalvalue386_2) break;
+#line 18 "utilities/terminal.bas"
+}
+#line 18 "utilities/terminal.bas"
+fornext_error386_2:;
+#line 18 "utilities/terminal.bas"
+if(qbevent){evnt(29645,18,"terminal.bas");if(r)goto S_386_18;}
+#line 19 "utilities/terminal.bas"
+do{
+#line 19 "utilities/terminal.bas"
+*_FUNC_FINDWORKINGTERMINAL_LONG_RET=func_shell(qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("command -v ",11),func_chr( 34 )),(((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])])),func_chr( 34 )),qbs_new_txt_len(" >/dev/null 2>&1",16)));
+#line 19 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 19 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,19,"terminal.bas");}while(r);
+#line 21 "utilities/terminal.bas"
+S_386_20:;
+#line 21 "utilities/terminal.bas"
+if ((-(*_FUNC_FINDWORKINGTERMINAL_LONG_RET== 0 ))||is_error_pending()){
+#line 21 "utilities/terminal.bas"
+if(qbevent){evnt(29645,21,"terminal.bas");if(r)goto S_386_20;}
+#line 22 "utilities/terminal.bas"
+do{
+#line 22 "utilities/terminal.bas"
+qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_add(qbs_add((((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_EXES[5])]),qbs_new_txt_len(" ",1)),(((qbs**)(_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[0]))[array_check((*_FUNC_FINDWORKINGTERMINAL_LONG_I)-_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[4],_FUNC_FINDWORKINGTERMINAL_ARRAY_STRING_FORMATS[5])])));
+#line 22 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 22 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,22,"terminal.bas");}while(r);
+#line 23 "utilities/terminal.bas"
+do{
+#line 23 "utilities/terminal.bas"
+goto exit_subfunc;
+#line 23 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,23,"terminal.bas");}while(r);
+#line 24 "utilities/terminal.bas"
+}
+#line 25 "utilities/terminal.bas"
+fornext_continue_386_1:;
+#line 25 "utilities/terminal.bas"
+}
+#line 25 "utilities/terminal.bas"
+fornext_exit_386_1:;
+#line 27 "utilities/terminal.bas"
+do{
+#line 27 "utilities/terminal.bas"
+qbs_set(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL,qbs_new_txt_len("",0));
+#line 27 "utilities/terminal.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 27 "utilities/terminal.bas"
+if(!qbevent)break;evnt(29645,27,"terminal.bas");}while(r);
+#line 28 "utilities/terminal.bas"
 exit_subfunc:;
-#line 259 "emit/embed.bas"
+#line 28 "utilities/terminal.bas"
 free_mem_lock(sf_mem_lock);
-#line 259 "emit/embed.bas"
+#line 28 "utilities/terminal.bas"
 #include "free386.txt"
-#line 259 "emit/embed.bas"
+#line 28 "utilities/terminal.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 259 "emit/embed.bas"
+#line 28 "utilities/terminal.bas"
 cmem_sp=tmp_cmem_sp;
-#line 259 "emit/embed.bas"
+#line 28 "utilities/terminal.bas"
+qbs_maketmp(_FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL);return _FUNC_FINDWORKINGTERMINAL_STRING_FINDWORKINGTERMINAL;
+#line 28 "utilities/terminal.bas"
 }

@@ -1,50 +1,102 @@
-#line 116 "utilities/elements.bas"
-qbs* FUNC_GETELEMENTSBEFORE(qbs*_FUNC_GETELEMENTSBEFORE_STRING_A,int32*_FUNC_GETELEMENTSBEFORE_LONG_I1){
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
+void SUB_WRITEBUILDFLAGS(qbs*_SUB_WRITEBUILDFLAGS_STRING_MAKEDEPS,qbs*_SUB_WRITEBUILDFLAGS_STRING_CXXFLAGS){
+#line 45 "utilities/build.bas"
 qbs *tqbs;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 ptrszint tmp_long;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 int32 tmp_fileno;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 #include "data178.txt"
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 mem_lock *sf_mem_lock;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 new_mem_lock();
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 sf_mem_lock->type=3;
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 libqb_check_stack();
-#line 116 "utilities/elements.bas"
+#line 45 "utilities/build.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 117 "utilities/elements.bas"
+#line 46 "utilities/build.bas"
 do{
-#line 117 "utilities/elements.bas"
-qbs_set(_FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE,FUNC_GETELEMENTS(_FUNC_GETELEMENTSBEFORE_STRING_A,&(pass178_2= 1 ),_FUNC_GETELEMENTSBEFORE_LONG_I1));
-#line 117 "utilities/elements.bas"
+#line 46 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,46,"build.bas");}while(r);
+#line 48 "utilities/build.bas"
+do{
+#line 48 "utilities/build.bas"
+*_SUB_WRITEBUILDFLAGS_LONG_BUF=FUNC_OPENBUFFER(qbs_new_txt_len("O",1),qbs_add(__STRING_TMPDIR,qbs_new_txt_len("buildflags.txt",14)));
+#line 48 "utilities/build.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 117 "utilities/elements.bas"
-if(!qbevent)break;evnt(28741,117,"elements.bas");}while(r);
-#line 118 "utilities/elements.bas"
+#line 48 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,48,"build.bas");}while(r);
+#line 49 "utilities/build.bas"
+do{
+#line 49 "utilities/build.bas"
+SUB_WRITEBUFLINE(_SUB_WRITEBUILDFLAGS_LONG_BUF,qbs_add(qbs_new_txt_len("deps:",5),_SUB_WRITEBUILDFLAGS_STRING_MAKEDEPS));
+#line 49 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 49 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,49,"build.bas");}while(r);
+#line 50 "utilities/build.bas"
+do{
+#line 50 "utilities/build.bas"
+SUB_WRITEBUFLINE(_SUB_WRITEBUILDFLAGS_LONG_BUF,qbs_add(qbs_new_txt_len("cxxflags:",9),_SUB_WRITEBUILDFLAGS_STRING_CXXFLAGS));
+#line 50 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 50 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,50,"build.bas");}while(r);
+#line 51 "utilities/build.bas"
+do{
+#line 51 "utilities/build.bas"
+SUB_WRITEBUFLINE(_SUB_WRITEBUILDFLAGS_LONG_BUF,qbs_add(qbs_new_txt_len("bits:",5),qbs__tostr((int32)(*__LONG_TARGET_BITS),NULL,0)));
+#line 51 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 51 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,51,"build.bas");}while(r);
+#line 52 "utilities/build.bas"
+S_178_6:;
+#line 52 "utilities/build.bas"
+if ((*__LONG_SPLITOBJECTFILES)||is_error_pending()){
+#line 52 "utilities/build.bas"
+if(qbevent){evnt(29634,52,"build.bas");if(r)goto S_178_6;}
+#line 53 "utilities/build.bas"
+do{
+#line 53 "utilities/build.bas"
+SUB_WRITEBUFLINE(_SUB_WRITEBUILDFLAGS_LONG_BUF,qbs_new_txt_len("split:y",7));
+#line 53 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 53 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,53,"build.bas");}while(r);
+#line 54 "utilities/build.bas"
+}else{
+#line 55 "utilities/build.bas"
+do{
+#line 55 "utilities/build.bas"
+SUB_WRITEBUFLINE(_SUB_WRITEBUILDFLAGS_LONG_BUF,qbs_new_txt_len("split:n",7));
+#line 55 "utilities/build.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 55 "utilities/build.bas"
+if(!qbevent)break;evnt(29634,55,"build.bas");}while(r);
+#line 56 "utilities/build.bas"
+}
+#line 57 "utilities/build.bas"
 exit_subfunc:;
-#line 118 "utilities/elements.bas"
+#line 57 "utilities/build.bas"
 free_mem_lock(sf_mem_lock);
-#line 118 "utilities/elements.bas"
+#line 57 "utilities/build.bas"
 #include "free178.txt"
-#line 118 "utilities/elements.bas"
+#line 57 "utilities/build.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 118 "utilities/elements.bas"
+#line 57 "utilities/build.bas"
 cmem_sp=tmp_cmem_sp;
-#line 118 "utilities/elements.bas"
-qbs_maketmp(_FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE);return _FUNC_GETELEMENTSBEFORE_STRING_GETELEMENTSBEFORE;
-#line 118 "utilities/elements.bas"
+#line 57 "utilities/build.bas"
 }
