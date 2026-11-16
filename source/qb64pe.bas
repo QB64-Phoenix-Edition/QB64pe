@@ -7393,6 +7393,26 @@ DO
             IF secondelement$ = "USING" THEN
                 l$ = SCase$("Palette" + sp + "Using" + sp)
                 IF n < 3 THEN a$ = "Expected PALETTE USING array-name": GOTO errmes
+
+                ' PALETTE USING accepts a whole array with or without empty parentheses.
+                e$ = getelements$(ca$, 3, n)
+                IF INSTR(e$, sp + "." + sp) THEN
+                    e$ = fixoperationorder$(e$)
+                    IF Error_Happened THEN GOTO errmes
+                    byteMemberRef$ = WholeMemberBufferRef$(e$, byteMemberTyp, -1)
+                    IF Error_Happened THEN GOTO errmes
+                    IF byteMemberRef$ <> "" THEN
+                        bits = byteMemberTyp AND UDTMASK
+                        IF (bits <> 16 AND bits <> 32) OR (byteMemberTyp AND (ISFLOAT OR ISOFFSETINBITS OR ISSTRING OR ISUDT OR ISUNSIGNED)) THEN
+                            a$ = "Array must be of type INTEGER or LONG": GOTO errmes
+                        END IF
+                        l$ = l$ + tlayout$
+                        e$ = WholeMemberByteView$(byteMemberRef$)
+                        IF Error_Happened THEN GOTO errmes
+                        GOTO pu_emit
+                    END IF
+                END IF
+
                 'check array
                 e$ = getelement$(ca$, 3)
                 IF FindArray(e$) THEN
@@ -7424,6 +7444,7 @@ DO
                 l$ = l$ + tlayout$
                 e$ = evaluatetotyp(e$, -2)
                 IF Error_Happened THEN GOTO errmes
+                pu_emit:
                 WriteBufLineCpp MainTxtBuf, "sub_paletteusing(" + e$ + "," + _TOSTR$(bits) + ");"
                 layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
                 GOTO finishedline
@@ -11237,8 +11258,17 @@ DO
                                     e$ = fixoperationorder$(a3$)
                                     IF Error_Happened THEN GOTO errmes
                                     l$ = l$ + sp2 + "," + sp + tlayout$
-                                    e$ = evaluate(e$, t)
+                                    IF lineinput THEN
+                                        e$ = evaluate(e$, t)
+                                    ELSE
+                                        EvalFileTextItem e$, e$, t, inputWholeKind
+                                    END IF
                                     IF Error_Happened THEN GOTO errmes
+                                    IF lineinput = 0 AND inputWholeKind THEN
+                                        EmitFileTextArray e$, t, inputWholeKind, 3, "", 0, 0, "skip" + u$
+                                        IF Error_Happened THEN GOTO errmes
+                                        GOTO fileinputitemdone
+                                    END IF
                                     IF (t AND ISREFERENCE) = 0 THEN a$ = "Expected variable-name": GOTO errmes
                                     IF (t AND ISSTRING) THEN
                                         e$ = refer(e$, t, 0)
@@ -11276,6 +11306,7 @@ DO
                                         WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                                     END IF
+                                    fileinputitemdone:
                                     IF i = n THEN EXIT FOR
                                     IF lineinput THEN a$ = "Too many variables": GOTO errmes
                                     a3$ = "": a2$ = ""
@@ -11978,47 +12009,46 @@ DO
 
 
 
-                        ' Special handling: _WAVE
-                        IF firstelement$ = "_WAVE" THEN
-                            e2$ = e$ 'backup
+                        ' Resolve an explicit whole member before the legacy array/slice path.
+                        ' Audio accepts an indexed start as well as the whole array.
+                        ' Resolve the member once, keeping the final indices separate.
+                        byteMemberRef$ = WholeMemberBufferRef$(e$, byteMemberTyp, 0)
+                        IF Error_Happened THEN GOTO errmes
+                        audioIndexes$ = ""
 
-                            e$ = evaluate(e$, sourcetyp)
-                            IF Error_Happened THEN GOTO errmes
-
-                            ' It must be an array
-                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
-                                a$ = "Expected _BYTE array name": GOTO errmes
+                        IF firstelement$ = "_WAVE" OR firstelement$ = "_SNDRAWBATCH" THEN
+                            IF byteMemberRef$ = "" THEN
+                                audioWholeExpr$ = FinalMemberArrayWholeExpr$(e$, audioIndexes$)
+                                IF audioWholeExpr$ <> "" THEN
+                                    byteMemberRef$ = WholeMemberBufferRef$(audioWholeExpr$, byteMemberTyp, 0)
+                                    IF Error_Happened THEN GOTO errmes
+                                END IF
+                            END IF
+                            IF byteMemberRef$ <> "" THEN
+                                sourcetyp = byteMemberTyp
+                            ELSE
+                                byteArrayCheck$ = evaluate(e$, sourcetyp)
+                                IF Error_Happened THEN GOTO errmes
                             END IF
 
-                            ' Only _BYTE array is allowed
-                            IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND ISUNSIGNED) OR (sourcetyp AND UDTMASK) <> 8 THEN
-                                a$ = "Expected _BYTE array name": GOTO errmes
+                            IF firstelement$ = "_WAVE" THEN
+                                IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN a$ = "Expected _BYTE array name": GOTO errmes
+                                IF (sourcetyp AND (ISSTRING OR ISFLOAT OR ISOFFSET OR ISUDT OR ISUNSIGNED)) OR (sourcetyp AND UDTMASK) <> 8 THEN a$ = "Expected _BYTE array name": GOTO errmes
+                            ELSE
+                                IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN a$ = "Expected SINGLE array name": GOTO errmes
+                                IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND UDTMASK) <> 32 THEN a$ = "Expected SINGLE array name": GOTO errmes
                             END IF
-
-                            e$ = e2$ 'restore
                         END IF
 
-                        ' Special handling: _SNDRAWBATCH
-                        IF firstelement$ = "_SNDRAWBATCH" THEN
-                            e2$ = e$ 'backup
-
-                            e$ = evaluate(e$, sourcetyp)
+                        IF byteMemberRef$ <> "" THEN
+                            IF audioIndexes$ = "" THEN
+                                e$ = WholeMemberByteView$(byteMemberRef$)
+                            ELSE
+                                e$ = MemberAudioSliceView$(byteMemberRef$, audioIndexes$)
+                            END IF
                             IF Error_Happened THEN GOTO errmes
-
-                            ' It must be an array
-                            IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
-                                a$ = "Expected SINGLE array name": GOTO errmes
-                            END IF
-
-                            ' Only 32-bit floating-point array is allowed
-                            IF (sourcetyp AND ISFLOAT) = 0 OR (sourcetyp AND UDTMASK) <> 32 THEN
-                                a$ = "Expected SINGLE array name": GOTO errmes
-                            END IF
-
-                            e$ = e2$ 'restore
+                            GOTO sete
                         END IF
-
-
 
                         e$ = evaluatetotyp(e$, -2)
                         IF Error_Happened THEN GOTO errmes
@@ -12051,6 +12081,14 @@ DO
 
                         'GET/PUT RANDOM-ACCESS override
                         IF firstelement$ = "GET" OR firstelement$ = "PUT" THEN
+                            byteMemberRef$ = WholeMemberBufferRef$(e$, byteMemberTyp, 0)
+                            IF Error_Happened THEN GOTO errmes
+                            IF byteMemberRef$ <> "" THEN
+                                e$ = WholeMemberByteView$(byteMemberRef$)
+                                IF Error_Happened THEN GOTO errmes
+                                GOTO sete
+                            END IF
+
                             e2$ = e$ 'backup
 
                             'Whole UDT array references like dynArr() are normally evaluated via
@@ -19580,7 +19618,7 @@ FUNCTION HasIndexedFinalMemberArray% (expr$)
     NEXT
 END FUNCTION
 
-FUNCTION FinalMemberArrayWholeExpr$ (expr AS STRING)
+FUNCTION FinalMemberArrayWholeExpr$ (expr AS STRING, indexes AS STRING)
     DIM work AS STRING
     DIM leading_wraps AS STRING
     DIM trailing_wraps AS STRING
@@ -19591,6 +19629,7 @@ FUNCTION FinalMemberArrayWholeExpr$ (expr AS STRING)
     DIM token AS STRING
     DIM open_index AS LONG
 
+    indexes = ""
     work = expr
     tok_count = numelements(work)
     IF tok_count = 0 THEN EXIT FUNCTION
@@ -19611,8 +19650,8 @@ FUNCTION FinalMemberArrayWholeExpr$ (expr AS STRING)
         IF wrapped = 0 OR depth <> 0 THEN EXIT DO
 
         work = getelements$(work, 2, tok_count - 1)
-        leading_wraps = leading_wraps + "("
-        trailing_wraps = trailing_wraps + ")"
+        leading_wraps = leading_wraps + "(" + sp
+        trailing_wraps = trailing_wraps + sp + ")"
         tok_count = numelements(work)
         IF tok_count = 0 THEN EXIT FUNCTION
     LOOP
@@ -19637,7 +19676,8 @@ FUNCTION FinalMemberArrayWholeExpr$ (expr AS STRING)
     IF open_index < 3 THEN EXIT FUNCTION
     IF getelement$(work, open_index - 2) <> "." THEN EXIT FUNCTION
 
-    FinalMemberArrayWholeExpr$ = leading_wraps + getelements$(work, 1, open_index) + ")" + trailing_wraps
+    indexes = getelements$(work, open_index + 1, tok_count - 1)
+    FinalMemberArrayWholeExpr$ = leading_wraps + getelements$(work, 1, open_index) + sp + ")" + trailing_wraps
 END FUNCTION
 
 FUNCTION udtreference$ (o$, a$, typ AS LONG)
@@ -21487,6 +21527,30 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 '------------------------------------------------------------------------------------------------------------
                 e2$ = e$
 
+                IF n$ = "_UCHARPOS" AND curarg = 2 THEN
+                    byte_member_ref$ = WholeMemberBufferRef$(e2$, sourcetyp, 0)
+                    IF Error_Happened THEN EXIT FUNCTION
+                    IF byte_member_ref$ = "" THEN
+                        e$ = evaluate(e2$, sourcetyp)
+                        IF Error_Happened THEN EXIT FUNCTION
+                    END IF
+
+                    IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
+                        Give_Error "Expected LONG array-name": EXIT FUNCTION
+                    END IF
+                    IF (sourcetyp AND (ISSTRING OR ISFLOAT OR ISOFFSET OR ISUDT)) OR (sourcetyp AND UDTMASK) <> 32 THEN
+                        Give_Error "Expected LONG array-name": EXIT FUNCTION
+                    END IF
+
+                    IF byte_member_ref$ <> "" THEN
+                        e$ = WholeMemberByteView$(byte_member_ref$)
+                    ELSE
+                        e$ = evaluatetotyp(e2$, -2)
+                    END IF
+                    IF Error_Happened THEN EXIT FUNCTION
+                    GOTO dontevaluate
+                END IF
+
                 allow_bare_member_array = 0
                 member_array_arg_source$ = ""
                 ' These contexts may address a whole TYPE member array; later stages distinguish
@@ -21741,27 +21805,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         r$ = r$ + e$ + ")"
 
                         GOTO evalfuncspecial ' evaluate now that we have everything
-                    END IF
-                END IF
-
-                ' UCHARPOS special case for arg 2
-                IF n$ = "_UCHARPOS" THEN
-                    IF curarg = 2 THEN
-                        ' It must be an array
-                        IF (sourcetyp AND ISREFERENCE) = 0 OR (sourcetyp AND ISARRAY) = 0 THEN
-                            Give_Error "Expected LONG array-name"
-                            EXIT FUNCTION
-                        END IF
-
-                        ' Cannot be one of these
-                        IF (sourcetyp AND ISSTRING) OR (sourcetyp AND ISFLOAT) OR (sourcetyp AND ISOFFSET) OR (sourcetyp AND ISUDT) OR (sourcetyp AND UDTMASK) <> 32 THEN
-                            Give_Error "Expected LONG array-name"
-                            EXIT FUNCTION
-                        END IF
-
-                        e$ = evaluatetotyp(e2$, -2) ' get byte_element_struct
-
-                        GOTO dontevaluate
                     END IF
                 END IF
 
@@ -23009,11 +23052,215 @@ END FUNCTION
 
 
 
+'Resolve a direct whole member array. Only consumers that permit an omitted
+'pair of parentheses enable accept_bare. Leave indexed operands on their existing path.
+FUNCTION WholeMemberBufferRef$ (expr AS STRING, value_type AS LONG, accept_bare AS LONG)
+    DIM AS LONG ref_kind, has_member
+    DIM AS LONG token_pos, token_count
+    DIM AS STRING final_name, root_name, resolved, syntax_expr
+    DIM AS STRING token_text, unsuffixed, type_suffix
+    DIM saved_bare AS INTEGER
+
+    IF INSTR(expr, sp + "." + sp) = 0 THEN EXIT FUNCTION
+    IF accept_bare = 0 THEN
+        IF HasFinalEmptyArrayBrackets%(expr) = 0 THEN EXIT FUNCTION
+    END IF
+    GetAsgRefSyntax expr, ref_kind, final_name, has_member, root_name
+    IF ref_kind = 0 THEN
+        ' The syntax classifier expects bare names. Strip a valid type suffix
+        ' after a dot only in the classifier's copy, not in the real operand.
+        syntax_expr = expr
+        token_count = numelements(expr)
+        FOR token_pos = 3 TO token_count
+            IF getelement$(expr, token_pos - 1) = "." THEN
+                token_text = getelement$(expr, token_pos)
+                unsuffixed = token_text
+                type_suffix = tryRemoveSymbol$(unsuffixed)
+                IF type_suffix <> "" THEN
+                    removeelements syntax_expr, token_pos, token_pos, 0
+                    insertelements syntax_expr, token_pos - 1, unsuffixed
+                END IF
+            END IF
+        NEXT token_pos
+        IF syntax_expr = expr THEN EXIT FUNCTION
+        GetAsgRefSyntax syntax_expr, ref_kind, final_name, has_member, root_name
+    END IF
+    IF has_member = 0 THEN EXIT FUNCTION
+    IF ref_kind <> 2 AND (accept_bare = 0 OR ref_kind <> 1) THEN EXIT FUNCTION
+
+    saved_bare = udt_allow_bare_array
+    udt_allow_bare_array = -1
+    resolved = evaluate(expr, value_type)
+    udt_allow_bare_array = saved_bare
+    IF Error_Happened THEN EXIT FUNCTION
+
+    IF IsWholeMemberArrayRef%(resolved, value_type) THEN WholeMemberBufferRef$ = resolved
+END FUNCTION
+
+'Resolve an encoded whole member to its inline storage or descriptor slot.
+FUNCTION WholeMemberStorage$ (ref_text AS STRING, member_id AS LONG, parent_mode AS LONG, uses_descriptor AS LONG)
+    DIM AS LONG sep_one, sep_two, sep_three
+    DIM AS STRING root_expr, root_desc
+
+    sep_one = INSTR(ref_text, sp3)
+    sep_two = INSTR(sep_one + LEN(sp3), ref_text, sp3)
+    sep_three = INSTR(sep_two + LEN(sp3), ref_text, sp3)
+    member_id = VAL(MID$(ref_text, sep_two + LEN(sp3), sep_three - sep_two - LEN(sp3)))
+    getid VAL(LEFT$(ref_text, sep_one - 1))
+    IF Error_Happened THEN EXIT FUNCTION
+    parent_mode = 0
+    uses_descriptor = 0
+    IF id.dynudt THEN
+        parent_mode = id.dynudtmode
+        uses_descriptor = UDTMemberDynDesc%(member_id)
+    END IF
+
+    root_expr = scope$ + "UDT_" + RTRIM$(id.n)
+    IF id.arraytype THEN
+        root_desc = scope$ + "ARRAY_UDT_" + RTRIM$(id.n)
+        root_expr = UDTRootDataGuard$(root_desc, id.arraytype AND UDTMASK, parent_mode)
+        IF Error_Happened THEN EXIT FUNCTION
+    END IF
+    WholeMemberStorage$ = "(((char*)" + root_expr + ")+(" + MID$(ref_text, sep_three + LEN(sp3)) + "))"
+END FUNCTION
+
+'Build the byte_element used by raw buffer consumers. The member reference
+'addresses inline storage or a descriptor slot, never descriptor payload bytes.
+FUNCTION WholeMemberByteView$ (ref_text AS STRING)
+    DIM AS LONG member_id, member_type, item_udt, elem_bytes, parent_mode, uses_descriptor
+    DIM AS STRING addr_expr, desc_expr, helper_name, elem_text
+
+    addr_expr = WholeMemberStorage$(ref_text, member_id, parent_mode, uses_descriptor)
+    IF Error_Happened THEN EXIT FUNCTION
+    member_type = udtetype(member_id)
+    IF member_type AND ISOFFSETINBITS THEN Give_Error "Variable/element cannot be _BIT aligned": EXIT FUNCTION
+    IF member_type AND ISSTRING THEN
+        IF (member_type AND ISFIXEDLENGTH) = 0 THEN Give_Error "Cannot pass array of variable-length strings": EXIT FUNCTION
+    END IF
+
+    IF member_type AND ISUDT THEN
+        item_udt = member_type AND UDTMASK
+        IF udtxvariable(item_udt) THEN Give_Error "UDT must have fixed size": EXIT FUNCTION
+        IF UDTDynHasMemberArrays%(item_udt, parent_mode) THEN Give_Error "Raw buffer cannot contain UDT elements with _Dynamic member arrays": EXIT FUNCTION
+    END IF
+
+    IF uses_descriptor THEN
+        elem_bytes = udt_dyn_array_elem_bytes(member_id)
+        IF elem_bytes <= 0 THEN Give_Error "Cannot process the declared bounds of this TYPE member array": EXIT FUNCTION
+        desc_expr = "(*((ptrszint**)" + addr_expr + "))"
+        helper_name = "udt_member_byte_view_" + _TOSTR$(uniquenumber)
+        elem_text = _TOSTR$(elem_bytes)
+
+        ' Evaluate the member address once. Use live rank and bounds after REDIM
+        ' and check the length before narrowing to byte_element's signed int32.
+        DeclareGlobalFunc "void *" + helper_name + "(ptrszint *d, byte_element_struct *be){"
+        WriteBufLine GlobTxtBuf, "if (is_error_pending()) return byte_element(0,0,be);"
+        WriteBufLine GlobTxtBuf, "if (!d || !(d[2]&1) || d[3]<=0 || !d[0] || d[0]==(ptrszint)nothingvalue){error(9); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "uint64 bytes=" + elem_text + ";"
+        WriteBufLine GlobTxtBuf, "for (ptrszint dim=0; dim<d[3]; ++dim){"
+        WriteBufLine GlobTxtBuf, "ptrszint count=d[dim*4+5];"
+        WriteBufLine GlobTxtBuf, "if (count<0){error(9); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "if (count && bytes>2147483647ull/(uint64)count){error(6); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "bytes*=(uint64)count;"
+        WriteBufLine GlobTxtBuf, "}"
+        WriteBufLine GlobTxtBuf, "return byte_element((uint64)d[0],(int32)bytes,be);"
+        WriteBufLine GlobTxtBuf, "}"
+        WholeMemberByteView$ = helper_name + "(" + desc_expr + "," + NewByteElement$ + ")"
+    ELSE
+        WholeMemberByteView$ = "byte_element((uint64)" + addr_expr + "," + _TOSTR$(udtesize(member_id) \ 8) + "," + NewByteElement$ + ")"
+    END IF
+END FUNCTION
+
+'Audio slices start at one indexed member element and extend to the end of
+'that member, not the end of the parent UDT. Resolve the parent and each start
+'coordinate once. For _Dynamic members both rank and bounds come from REDIM.
+FUNCTION MemberAudioSliceView$ (ref_text AS STRING, indexes AS STRING)
+    DIM AS LONG member_id, parent_mode, uses_descriptor, elem_bytes
+    DIM AS LONG rank_count, axis, token_at, token_count, first_token, depth, desc_pos
+    DIM AS LONG lower_bound, extent, slot_at
+    DIM AS STRING storage, helper_name, signature, args, token, index_expr, axis_text
+    DIM AS STRING lo_expr, count_expr, limit_text
+
+    storage = WholeMemberStorage$(ref_text, member_id, parent_mode, uses_descriptor)
+    IF Error_Happened THEN EXIT FUNCTION
+    rank_count = DynMemberIndexDims%(indexes)
+    IF rank_count <= 0 THEN Give_Error "Array index missing": EXIT FUNCTION
+    IF uses_descriptor = 0 THEN
+        IF rank_count <> udtearraydims(member_id) THEN Give_Error "Cannot change the number of elements an array has!": EXIT FUNCTION
+    END IF
+    elem_bytes = (udtetype(member_id) AND UDTMASK) \ 8
+    limit_text = _TOSTR$(2147483647 \ elem_bytes)
+
+    helper_name = "udt_member_audio_slice_" + _TOSTR$(uniquenumber)
+    IF uses_descriptor THEN
+        signature = "ptrszint *d"
+        args = "(*((ptrszint**)" + storage + "))"
+    ELSE
+        signature = "uint8 *data"
+        args = "(uint8*)" + storage
+    END IF
+
+    token_count = numelements(indexes)
+    first_token = 1
+    FOR token_at = 1 TO token_count
+        token = getelement$(indexes, token_at)
+        IF token = "(" THEN depth = depth + 1
+        IF token = ")" THEN depth = depth - 1
+        IF (token = "," AND depth = 0) OR token_at = token_count THEN
+            IF token = "," THEN
+                index_expr = getelements$(indexes, first_token, token_at - 1)
+            ELSE
+                index_expr = getelements$(indexes, first_token, token_at)
+            END IF
+            IF index_expr = "" THEN Give_Error "Array index missing": EXIT FUNCTION
+            index_expr = evaluatetotyp$(index_expr, 64&)
+            IF Error_Happened THEN EXIT FUNCTION
+            axis = axis + 1
+            signature = signature + ",int64 i" + _TOSTR$(axis)
+            args = args + "," + index_expr
+            first_token = token_at + 1
+        END IF
+    NEXT
+    IF axis <> rank_count THEN Give_Error "Array index missing": EXIT FUNCTION
+
+    DeclareGlobalFunc "void *" + helper_name + "(" + signature + ",byte_element_struct *be){"
+    WriteBufLine GlobTxtBuf, "if (is_error_pending()) return byte_element(0,0,be);"
+    IF uses_descriptor THEN
+        WriteBufLine GlobTxtBuf, "if (!d || !(d[2]&1) || !d[0] || d[0]==(ptrszint)nothingvalue || d[3]!=" + _TOSTR$(rank_count) + "){error(9); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "uint8 *data=(uint8*)d[0];"
+    END IF
+    WriteBufLine GlobTxtBuf, "uint64 total=1, start=0;"
+    desc_pos = 1
+    FOR axis = 1 TO rank_count
+        IF uses_descriptor THEN
+            slot_at = (rank_count - axis) * 4 + 4
+            lo_expr = "d[" + _TOSTR$(slot_at) + "]"
+            count_expr = "d[" + _TOSTR$(slot_at + 1) + "]"
+        ELSE
+            IF ParseNextUDTArrayDescriptorDim(udtearraydesc(member_id), desc_pos, lower_bound, extent) = 0 THEN
+                Give_Error "Cannot process the declared bounds of this TYPE member array": EXIT FUNCTION
+            END IF
+            lo_expr = _TOSTR$(lower_bound)
+            count_expr = _TOSTR$(extent)
+        END IF
+        axis_text = "i" + _TOSTR$(axis)
+        WriteBufLine GlobTxtBuf, "{const int64 lo=" + lo_expr + ", count=" + count_expr + ";"
+        ' Unsigned subtraction cannot overflow when the BASIC index is extreme.
+        WriteBufLine GlobTxtBuf, "const uint64 delta=(uint64)" + axis_text + "-(uint64)lo;"
+        WriteBufLine GlobTxtBuf, "if (count<=0 || " + axis_text + "<lo || delta>=(uint64)count){error(9); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "if (total>" + limit_text + "ull/(uint64)count){error(6); return byte_element(0,0,be);}"
+        WriteBufLine GlobTxtBuf, "start+=delta*total; total*=(uint64)count;}"
+    NEXT
+    WriteBufLine GlobTxtBuf, "return byte_element((uint64)(data+start*" + _TOSTR$(elem_bytes) + "),(int32)((total-start)*" + _TOSTR$(elem_bytes) + "),be);"
+    WriteBufLine GlobTxtBuf, "}"
+    MemberAudioSliceView$ = helper_name + "(" + args + "," + NewByteElement$ + ")"
+END FUNCTION
+
 FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
     'note: 'evaluatetotyp' no longer performs 'fixoperationorder' on a2$ (in many cases, this has already been done)
 
     DIM AS LONG member_element_id, final_member_array_indexed, elem_typ 'member_element_id indexes TYPE member-array metadata
-    DIM AS STRING desc_expr
+    DIM AS STRING desc_expr, member_check_expr
     DIM udtElem AS LONG
 
     a$ = a2$
@@ -23910,6 +24157,16 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
 
 
     IF targettyp = -2 THEN '? -> byte_element(offset,max possible bytes)
+        ' CALL INTERRUPT[X] and other byte-buffer consumers can arrive here with
+        ' an already resolved whole member. Do not use its inline offset and
+        ' declared size for a _Dynamic member, or treat an indexed element as the whole array.
+        IF IsWholeMemberArrayRef%(e$, sourcetyp) THEN
+            member_check_expr = a2$
+            IF HasIndexedFinalMemberArray%(member_check_expr) = 0 THEN
+                evaluatetotyp$ = WholeMemberByteView$(e$)
+                EXIT FUNCTION
+            END IF
+        END IF
         method2useall:
         ' print "CI: eval2typ detected target type of -2 for ["+a2$+"] evaluated as ["+e$+"]":sleep 1
 
@@ -28173,7 +28430,165 @@ SUB xend
     WriteBufLineCpp MainTxtBuf, "sub_end();"
 END SUB
 
+'Classify a single file text I/O item, not array references inside scalar expressions.
+'whole_kind: 0 = scalar, 1 = top-level array, 2 = TYPE member array.
+SUB EvalFileTextItem (expr AS STRING, output_ref AS STRING, output_type AS LONG, whole_kind AS LONG)
+    DIM AS LONG explicit_array
+    DIM whole_ref AS STRING
+    whole_kind = 0
+    explicit_array = HasFinalEmptyArrayBrackets%(expr)
+    IF explicit_array THEN
+        whole_ref = WholeMemberBufferRef$(expr, output_type, 0)
+        IF Error_Happened THEN EXIT SUB
+        IF whole_ref <> "" THEN output_ref = whole_ref: whole_kind = 2: EXIT SUB
+    END IF
+    output_ref = evaluate(expr, output_type)
+    IF Error_Happened THEN EXIT SUB
+    IF explicit_array THEN
+        IF (output_type AND (ISREFERENCE OR ISARRAY)) = (ISREFERENCE OR ISARRAY) THEN whole_kind = 1
+    END IF
+END SUB
+
+'Emit one typed runtime loop in QB array order (the first subscript varies fastest).
+'PRINT uses the statement's separator between elements, or ; at end of line.
+'WRITE supplies commas between values. USING carries the same format position as scalar items.
+'INPUT uses the scalar file readers and commits each element only after it is read.
+SUB EmitFileTextArray (array_ref AS STRING, array_type AS LONG, whole_kind AS LONG, text_mode AS LONG, format_ref AS STRING, tab_after AS LONG, line_after AS LONG, skip_ref AS STRING)
+    DIM AS LONG member_id, parent_mode, uses_descriptor, rank_count, string_size
+    DIM AS LONG is_string, is_fixed, type_bits
+    DIM AS STRING storage, descriptor, rank_expr, data_expr, item_expr, c_type, text_expr
+    DIM AS STRING qmark, tab_expr, newline_expr, format_call
+
+    IF array_type AND ISUDT THEN Give_Error "User defined types in expressions are invalid": EXIT SUB
+    is_string = (array_type AND ISSTRING) <> 0
+    is_fixed = (array_type AND ISFIXEDLENGTH) <> 0
+    type_bits = array_type AND UDTMASK
+
+    IF whole_kind = 2 THEN
+        storage = WholeMemberStorage$(array_ref, member_id, parent_mode, uses_descriptor)
+        IF Error_Happened THEN EXIT SUB
+        IF uses_descriptor THEN
+            descriptor = "(*((ptrszint**)" + storage + "))"
+            rank_expr = "qb_text_desc[3]"
+        END IF
+        string_size = udtetypesize(member_id)
+    ELSE
+        getid VAL(array_ref)
+        IF Error_Happened THEN EXIT SUB
+        descriptor = RTRIM$(id.callname)
+        rank_count = id.arrayelements
+        IF rank_count <= 0 THEN rank_count = arrayelementslist(currentid)
+        IF rank_count <= 0 THEN rank_count = 1
+        rank_expr = _TOSTR$(rank_count)
+        string_size = id.tsize
+    END IF
+
+    data_expr = "qb_text_data"
+    IF is_string THEN
+        IF is_fixed THEN
+            item_expr = "qbs_new_fixed(" + data_expr + "+qb_text_i*" + _TOSTR$(string_size) + "," + _TOSTR$(string_size) + ",1)"
+        ELSE
+            'Use the native qbs* slots used by the array's scalar element path.
+            item_expr = "((qbs**)" + data_expr + ")[qb_text_i]"
+        END IF
+    ELSEIF array_type AND ISOFFSETINBITS THEN
+        IF array_type AND ISUNSIGNED THEN c_type = "getubits" ELSE c_type = "getbits"
+        item_expr = c_type + "(" + _TOSTR$(type_bits) + "," + data_expr + ",qb_text_i)"
+    ELSE
+        c_type = typ2ctyp$(array_type AND NOT ISARRAY, "")
+        IF Error_Happened THEN EXIT SUB
+        IF c_type = "" THEN Give_Error "Cannot find C type to return array data": EXIT SUB
+        item_expr = "((" + c_type + "*)" + data_expr + ")[qb_text_i]"
+    END IF
+
+    WriteBufLineCpp MainTxtBuf, "{"
+    IF descriptor <> "" THEN
+        WriteBufLineCpp MainTxtBuf, "ptrszint *qb_text_desc=" + descriptor + ";"
+        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto " + skip_ref + ";"
+        WriteBufLineCpp MainTxtBuf, "if (!qb_text_desc || !(qb_text_desc[2]&1) || !qb_text_desc[0] || qb_text_desc[0]==(ptrszint)nothingvalue){error(9); goto " + skip_ref + ";}"
+        WriteBufLineCpp MainTxtBuf, "const ptrszint qb_text_rank=" + rank_expr + ";"
+        WriteBufLineCpp MainTxtBuf, "if (qb_text_rank<=0){error(9); goto " + skip_ref + ";}"
+        WriteBufLineCpp MainTxtBuf, "uint8 *qb_text_data=(uint8*)qb_text_desc[0];"
+        WriteBufLineCpp MainTxtBuf, "ptrszint qb_text_count=1;"
+        WriteBufLineCpp MainTxtBuf, "for (ptrszint qb_dim=0; qb_dim<qb_text_rank; ++qb_dim){"
+        WriteBufLineCpp MainTxtBuf, "const ptrszint qb_extent=qb_text_desc[qb_dim*4+5];"
+        WriteBufLineCpp MainTxtBuf, "if (qb_extent<=0){error(9); goto " + skip_ref + ";}"
+        WriteBufLineCpp MainTxtBuf, "if (qb_text_count>INTPTR_MAX/qb_extent){error(6); goto " + skip_ref + ";}"
+        WriteBufLineCpp MainTxtBuf, "qb_text_count*=qb_extent;"
+        WriteBufLineCpp MainTxtBuf, "}"
+    ELSE
+        WriteBufLineCpp MainTxtBuf, "uint8 *qb_text_data=(uint8*)" + storage + ";"
+        WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto " + skip_ref + ";"
+        WriteBufLineCpp MainTxtBuf, "const ptrszint qb_text_count=" + _TOSTR$(udtearrayelements(member_id)) + ";"
+    END IF
+    WriteBufLineCpp MainTxtBuf, "for (ptrszint qb_text_i=0; qb_text_i<qb_text_count; ++qb_text_i){"
+    WriteBufLineCpp MainTxtBuf, "const uint32 qb_text_tmp=qbs_tmp_list_nexti;"
+
+    IF text_mode = 3 THEN
+        IF is_string THEN
+            WriteBufLineCpp MainTxtBuf, "qbs *qb_text_value=qbs_new(0,1);"
+            WriteBufLineCpp MainTxtBuf, "sub_file_input_string(tmp_fileno,qb_text_value);"
+            WriteBufLineCpp MainTxtBuf, "if (!is_error_pending()) qbs_set(" + item_expr + ",qb_text_value);"
+        ELSE
+            IF (array_type AND ISFLOAT) OR type_bits <> 64 THEN
+                text_expr = "func_file_input_float(tmp_fileno," + _TOSTR$(array_type) + ")"
+            ELSEIF array_type AND ISUNSIGNED THEN
+                text_expr = "func_file_input_uint64(tmp_fileno)"
+            ELSE
+                text_expr = "func_file_input_int64(tmp_fileno)"
+            END IF
+            WriteBufLineCpp MainTxtBuf, "const auto qb_text_value=" + text_expr + ";"
+            IF array_type AND ISOFFSETINBITS THEN
+                WriteBufLineCpp MainTxtBuf, "if (!is_error_pending()) setbits(" + _TOSTR$(type_bits) + ",qb_text_data,qb_text_i,(int64)qb_text_value);"
+            ELSE
+                WriteBufLineCpp MainTxtBuf, "if (!is_error_pending()) " + item_expr + "=qb_text_value;"
+            END IF
+        END IF
+    ELSEIF text_mode = 2 THEN
+        IF is_string THEN
+            format_call = "print_using(" + format_ref + ",tmp_long,tqbs," + item_expr + ")"
+        ELSE
+            IF array_type AND ISFLOAT THEN
+                IF type_bits = 32 THEN c_type = "single"
+                IF type_bits = 64 THEN c_type = "double"
+                IF type_bits > 64 THEN c_type = "float"
+            ELSE
+                c_type = "integer64"
+                IF (type_bits = 64) AND (array_type AND ISUNSIGNED) THEN c_type = "uinteger64"
+            END IF
+            format_call = "print_using_" + c_type + "(" + format_ref + "," + item_expr + ",tmp_long,tqbs)"
+        END IF
+        WriteBufLineCpp MainTxtBuf, "tmp_long=" + format_call + ";"
+    ELSE
+        newline_expr = "0"
+        IF line_after THEN newline_expr = "(qb_text_i+1==qb_text_count)"
+        IF text_mode = 1 THEN
+            IF is_string THEN
+                qmark = "qbs_new_txt_len(" + CHR$(34) + "\042" + CHR$(34) + ",1)"
+                text_expr = "qbs_add(qbs_add(" + qmark + "," + item_expr + ")," + qmark + ")"
+            ELSE
+                text_expr = "qbs_ltrim(qbs_str(" + item_expr + "))"
+            END IF
+            WriteBufLineCpp MainTxtBuf, "qbs *qb_text_value=" + text_expr + ";"
+            IF line_after THEN
+                WriteBufLineCpp MainTxtBuf, "if (qb_text_i+1<qb_text_count) "
+            END IF
+            WriteBufLineCpp MainTxtBuf, "qb_text_value=qbs_add(qb_text_value,qbs_new_txt_len(" + CHR$(34) + "," + CHR$(34) + ",1));"
+            WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,qb_text_value,0,0," + newline_expr + ");"
+        ELSE
+            tab_expr = _TOSTR$(tab_after)
+            IF is_string THEN text_expr = item_expr ELSE text_expr = "qbs_str(" + item_expr + ")"
+            WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno," + text_expr + "," + _TOSTR$(1 + is_string) + "," + tab_expr + "," + newline_expr + ");"
+        END IF
+    END IF
+    WriteBufLineCpp MainTxtBuf, "qbs_cleanup(qb_text_tmp,0);"
+    WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto " + skip_ref + ";"
+    WriteBufLineCpp MainTxtBuf, "}"
+    WriteBufLineCpp MainTxtBuf, "}"
+END SUB
+
 SUB xfileprint (a$, ca$, n)
+    DIM whole_kind AS LONG
     u$ = scopeunique$
     WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
     IF n = 2 THEN Give_Error "Expected # ... , ...": EXIT SUB
@@ -28257,8 +28672,15 @@ SUB xfileprint (a$, ca$, n)
                         e$ = fixoperationorder$(e$)
                         IF Error_Happened THEN EXIT SUB
                         IF last THEN l$ = l$ + sp + tlayout$ ELSE l$ = l$ + sp + tlayout$ + sp2 + a2$
-                        e$ = evaluate(e$, typ)
+                        EvalFileTextItem e$, e$, typ, whole_kind
                         IF Error_Happened THEN EXIT SUB
+                        IF whole_kind THEN
+                            EmitFileTextArray e$, typ, whole_kind, 2, puf$, 0, 0, "skip_pu" + u$
+                            IF Error_Happened THEN EXIT SUB
+                            e$ = ""
+                            IF last THEN EXIT FOR
+                            GOTO fprintunext
+                        END IF
                         IF (typ AND ISREFERENCE) THEN e$ = refer(e$, typ, 0)
                         IF Error_Happened THEN EXIT SUB
                         IF typ AND ISSTRING THEN
@@ -28363,8 +28785,18 @@ SUB xfileprint (a$, ca$, n)
                             l$ = l$ + sp + tlayout$ + sp2 + a2$
                         END IF
                     END IF
-                    e$ = evaluate(e$, typ)
-                    IF Error_Happened THEN EXIT SUB
+                    IF pnrtnum = 0 THEN
+                        EvalFileTextItem e$, e$, typ, whole_kind
+                        IF Error_Happened THEN EXIT SUB
+                        IF whole_kind THEN
+                            EmitFileTextArray e$, typ, whole_kind, 0, "", usetab, newline, "skip" + u$
+                            IF Error_Happened THEN EXIT SUB
+                            GOTO printfileitemdone
+                        END IF
+                    ELSE
+                        e$ = evaluate(e$, typ)
+                        IF Error_Happened THEN EXIT SUB
+                    END IF
                     IF (typ AND ISSTRING) = 0 THEN
                         e$ = "STR$" + sp + "(" + sp + ebak$ + sp + ")"
                         extraspace = 1
@@ -28382,6 +28814,7 @@ SUB xfileprint (a$, ca$, n)
                     END IF
                     IF usetab THEN WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno,nothingstring,0,1,0);"
                 END IF 'len(e$)
+                printfileitemdone:
                 WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
 
                 e$ = ""
@@ -28402,6 +28835,7 @@ SUB xfileprint (a$, ca$, n)
 END SUB
 
 SUB xfilewrite (ca$, n)
+    DIM whole_kind AS LONG
     l$ = SCase$("Write") + sp + "#"
     u$ = scopeunique$
     WriteBufLineCpp MainTxtBuf, "tab_spc_cr_size=2;"
@@ -28452,8 +28886,18 @@ SUB xfilewrite (ca$, n)
                     l$ = l$ + sp + tlayout$
                     IF last = 0 THEN l$ = l$ + sp2 + ","
                 END IF
-                e$ = evaluate(e$, typ)
-                IF Error_Happened THEN EXIT SUB
+                IF reevaled = 0 THEN
+                    EvalFileTextItem e$, e$, typ, whole_kind
+                    IF Error_Happened THEN EXIT SUB
+                    IF whole_kind THEN
+                        EmitFileTextArray e$, typ, whole_kind, 1, "", 0, newline, "skip" + u$
+                        IF Error_Happened THEN EXIT SUB
+                        GOTO writefileitemdone
+                    END IF
+                ELSE
+                    e$ = evaluate(e$, typ)
+                    IF Error_Happened THEN EXIT SUB
+                END IF
                 IF reevaled = 0 THEN
                     IF (typ AND ISSTRING) = 0 THEN
                         e$ = "LTRIM$" + sp + "(" + sp + "STR$" + sp + "(" + sp + ebak$ + sp + ")" + sp + ")"
@@ -28471,6 +28915,7 @@ SUB xfilewrite (ca$, n)
                 IF Error_Happened THEN EXIT SUB
                 'format: string, (1/0) extraspace, (1/0) tab, (1/0)begin a new line
                 WriteBufLineCpp MainTxtBuf, "sub_file_print(tmp_fileno," + e$ + ",0,0," + STR$(newline) + ");"
+                writefileitemdone:
                 WriteBufLineCpp MainTxtBuf, "if (is_error_pending()) goto skip" + u$ + ";"
                 e$ = ""
                 IF last THEN EXIT FOR
