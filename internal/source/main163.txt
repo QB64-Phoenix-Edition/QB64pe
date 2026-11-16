@@ -1,50 +1,58 @@
-#line 34 "utilities/file.bas"
-int64 FUNC_FILEMODTIME(qbs*_FUNC_FILEMODTIME_STRING_FILESPEC){
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
+int32 FUNC_READCONFIGSETTING(qbs*_FUNC_READCONFIGSETTING_STRING_SECTION,qbs*_FUNC_READCONFIGSETTING_STRING_ITEM,qbs*_FUNC_READCONFIGSETTING_STRING_VALUE){
+#line 88 "utilities/strings.bas"
 qbs *tqbs;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 ptrszint tmp_long;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 int32 tmp_fileno;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 #include "data163.txt"
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 mem_lock *sf_mem_lock;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 new_mem_lock();
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 sf_mem_lock->type=3;
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 libqb_check_stack();
-#line 34 "utilities/file.bas"
+#line 88 "utilities/strings.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 39 "utilities/file.bas"
+#line 89 "utilities/strings.bas"
 do{
-#line 39 "utilities/file.bas"
-*_FUNC_FILEMODTIME_INTEGER64_FILEMODTIME=(  int64  )qb64pe_file_mtime((char*)(qbs_add(_FUNC_FILEMODTIME_STRING_FILESPEC,func_chr( 0 )))->chr);
-#line 39 "utilities/file.bas"
+#line 89 "utilities/strings.bas"
+qbs_set(_FUNC_READCONFIGSETTING_STRING_VALUE,FUNC_READSETTING(__STRING_CONFIGFILE,_FUNC_READCONFIGSETTING_STRING_SECTION,_FUNC_READCONFIGSETTING_STRING_ITEM));
+#line 89 "utilities/strings.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 39 "utilities/file.bas"
-if(!qbevent)break;evnt(29633,39,"file.bas");}while(r);
-#line 40 "utilities/file.bas"
+#line 89 "utilities/strings.bas"
+if(!qbevent)break;evnt(30077,89,"strings.bas");}while(r);
+#line 90 "utilities/strings.bas"
+do{
+#line 90 "utilities/strings.bas"
+*_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING=(-(_FUNC_READCONFIGSETTING_STRING_VALUE->len> 0 ));
+#line 90 "utilities/strings.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 90 "utilities/strings.bas"
+if(!qbevent)break;evnt(30077,90,"strings.bas");}while(r);
+#line 91 "utilities/strings.bas"
 exit_subfunc:;
-#line 40 "utilities/file.bas"
+#line 91 "utilities/strings.bas"
 free_mem_lock(sf_mem_lock);
-#line 40 "utilities/file.bas"
+#line 91 "utilities/strings.bas"
 #include "free163.txt"
-#line 40 "utilities/file.bas"
+#line 91 "utilities/strings.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 40 "utilities/file.bas"
+#line 91 "utilities/strings.bas"
 cmem_sp=tmp_cmem_sp;
-#line 40 "utilities/file.bas"
-return *_FUNC_FILEMODTIME_INTEGER64_FILEMODTIME;
-#line 40 "utilities/file.bas"
+#line 91 "utilities/strings.bas"
+return *_FUNC_READCONFIGSETTING_LONG_READCONFIGSETTING;
+#line 91 "utilities/strings.bas"
 }

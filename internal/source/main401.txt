@@ -1,56 +1,168 @@
-#line 17 "emit/globals.bas"
-void SUB_DECLAREGLOBALVAR(qbs*_SUB_DECLAREGLOBALVAR_STRING_DECL){
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
+void SUB_EMBEDMANSAVE(){
+#line 321 "emit/embed.bas"
 qbs *tqbs;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 ptrszint tmp_long;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 int32 tmp_fileno;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 #include "data401.txt"
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 mem_lock *sf_mem_lock;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 new_mem_lock();
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 sf_mem_lock->type=3;
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 libqb_check_stack();
-#line 17 "emit/globals.bas"
+#line 321 "emit/embed.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 18 "emit/globals.bas"
+#line 322 "emit/embed.bas"
 do{
-#line 18 "emit/globals.bas"
-SUB_WRITEBUFLINE(__LONG_GLOBTXTBUF,_SUB_DECLAREGLOBALVAR_STRING_DECL);
-#line 18 "emit/globals.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 18 "emit/globals.bas"
-if(!qbevent)break;evnt(29648,18,"globals.bas");}while(r);
-#line 19 "emit/globals.bas"
+#line 322 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,322,"embed.bas");}while(r);
+#line 324 "emit/embed.bas"
 do{
-#line 19 "emit/globals.bas"
-SUB_WRITEBUFLINE(__LONG_GLOBDECLBUF,qbs_add(qbs_new_txt_len("extern ",7),FUNC_DECLWITHOUTINITIALIZER(_SUB_DECLAREGLOBALVAR_STRING_DECL)));
-#line 19 "emit/globals.bas"
+#line 324 "emit/embed.bas"
+qbs_set(_SUB_EMBEDMANSAVE_STRING_SPEC,FUNC_EMBEDMANSPEC());
+#line 324 "emit/embed.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 19 "emit/globals.bas"
-if(!qbevent)break;evnt(29648,19,"globals.bas");}while(r);
-#line 20 "emit/globals.bas"
+#line 324 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,324,"embed.bas");}while(r);
+#line 325 "emit/embed.bas"
+S_401_3:;
+#line 325 "emit/embed.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(_SUB_EMBEDMANSAVE_STRING_SPEC->len== 0 )))||is_error_pending()){
+#line 325 "emit/embed.bas"
+if(qbevent){evnt(30092,325,"embed.bas");if(r)goto S_401_3;}
+#line 325 "emit/embed.bas"
+do{
+#line 325 "emit/embed.bas"
+goto exit_subfunc;
+#line 325 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,325,"embed.bas");}while(r);
+#line 325 "emit/embed.bas"
+}
+#line 326 "emit/embed.bas"
+do{
+#line 326 "emit/embed.bas"
+*_SUB_EMBEDMANSAVE_INTEGER_FF=func_freefile();
+#line 326 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,326,"embed.bas");}while(r);
+#line 327 "emit/embed.bas"
+do{
+#line 327 "emit/embed.bas"
+sub_open(_SUB_EMBEDMANSAVE_STRING_SPEC, 4 ,NULL,NULL,*_SUB_EMBEDMANSAVE_INTEGER_FF,NULL,0);
+#line 327 "emit/embed.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 327 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,327,"embed.bas");}while(r);
+#line 328 "emit/embed.bas"
+do{
+#line 328 "emit/embed.bas"
+tab_spc_cr_size=2;
+#line 328 "emit/embed.bas"
+tab_fileno=tmp_fileno=*_SUB_EMBEDMANSAVE_INTEGER_FF;
+#line 328 "emit/embed.bas"
+if (is_error_pending()) goto skip401_2;
+#line 328 "emit/embed.bas"
+sub_file_print(tmp_fileno,qbs_add(qbs_add(qbs_add(qbs_add(qbs_new_txt_len("qb64pe-embed-manifest 1",23),qbs_new_txt_len(" ",1)),qbs__tostr((int64)(*__INTEGER64_EMBEDMANCPPLEN),NULL,0)),qbs_new_txt_len(" ",1)),__STRING_VERSION), 0, 0, 1);
+#line 328 "emit/embed.bas"
+if (is_error_pending()) goto skip401_2;
+#line 328 "emit/embed.bas"
+skip401_2:
+#line 328 "emit/embed.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 328 "emit/embed.bas"
+tab_spc_cr_size=1;
+#line 328 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,328,"embed.bas");}while(r);
+#line 329 "emit/embed.bas"
+S_401_9:;
+#line 329 "emit/embed.bas"
+fornext_value401_4= 0 ;
+#line 329 "emit/embed.bas"
+fornext_finalvalue401_4=*__LONG_EMBEDMANCOUNT- 1 ;
+#line 329 "emit/embed.bas"
+fornext_step401_4= 1 ;
+#line 329 "emit/embed.bas"
+if (fornext_step401_4<0) fornext_step_negative401_4=1; else fornext_step_negative401_4=0;
+#line 329 "emit/embed.bas"
+if (is_error_pending()) goto fornext_error401_4;
+#line 329 "emit/embed.bas"
+goto fornext_entrylabel401_4;
+#line 329 "emit/embed.bas"
+while(1){
+#line 329 "emit/embed.bas"
+fornext_value401_4=fornext_step401_4+(*_SUB_EMBEDMANSAVE_LONG_I);
+#line 329 "emit/embed.bas"
+fornext_entrylabel401_4:
+#line 329 "emit/embed.bas"
+*_SUB_EMBEDMANSAVE_LONG_I=fornext_value401_4;
+#line 329 "emit/embed.bas"
+if (fornext_step_negative401_4){
+#line 329 "emit/embed.bas"
+if (fornext_value401_4<fornext_finalvalue401_4) break;
+#line 329 "emit/embed.bas"
+}else{
+#line 329 "emit/embed.bas"
+if (fornext_value401_4>fornext_finalvalue401_4) break;
+#line 329 "emit/embed.bas"
+}
+#line 329 "emit/embed.bas"
+fornext_error401_4:;
+#line 329 "emit/embed.bas"
+if(qbevent){evnt(30092,329,"embed.bas");if(r)goto S_401_9;}
+#line 330 "emit/embed.bas"
+do{
+#line 330 "emit/embed.bas"
+tab_spc_cr_size=2;
+#line 330 "emit/embed.bas"
+tab_fileno=tmp_fileno=*_SUB_EMBEDMANSAVE_INTEGER_FF;
+#line 330 "emit/embed.bas"
+if (is_error_pending()) goto skip401_5;
+#line 330 "emit/embed.bas"
+sub_file_print(tmp_fileno,qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs_add(qbs__tostr((int64)(((int64*)(__ARRAY_INTEGER64_EMBEDMANSIZE[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_INTEGER64_EMBEDMANSIZE[4],__ARRAY_INTEGER64_EMBEDMANSIZE[5])]),NULL,0),qbs_new_txt_len(" ",1)),qbs__tostr((int64)(((int64*)(__ARRAY_INTEGER64_EMBEDMANTIME[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_INTEGER64_EMBEDMANTIME[4],__ARRAY_INTEGER64_EMBEDMANTIME[5])]),NULL,0)),qbs_new_txt_len(" ",1)),(((qbs**)(__ARRAY_STRING_EMBEDMANHASH[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_STRING_EMBEDMANHASH[4],__ARRAY_STRING_EMBEDMANHASH[5])])),qbs_new_txt_len(" ",1)),qbs__tostr((int8)(((int8*)(__ARRAY_BYTE_EMBEDMANPACKED[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_BYTE_EMBEDMANPACKED[4],__ARRAY_BYTE_EMBEDMANPACKED[5])]),NULL,0)),qbs_new_txt_len(" ",1)),(((qbs**)(__ARRAY_STRING_EMBEDMANHAND[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_STRING_EMBEDMANHAND[4],__ARRAY_STRING_EMBEDMANHAND[5])])),qbs_new_txt_len(" ",1)),(((qbs**)(__ARRAY_STRING_EMBEDMANPATH[0]))[array_check((*_SUB_EMBEDMANSAVE_LONG_I)-__ARRAY_STRING_EMBEDMANPATH[4],__ARRAY_STRING_EMBEDMANPATH[5])])), 0, 0, 1);
+#line 330 "emit/embed.bas"
+if (is_error_pending()) goto skip401_5;
+#line 330 "emit/embed.bas"
+skip401_5:
+#line 330 "emit/embed.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 330 "emit/embed.bas"
+tab_spc_cr_size=1;
+#line 330 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,330,"embed.bas");}while(r);
+#line 331 "emit/embed.bas"
+fornext_continue_401_3:;
+#line 331 "emit/embed.bas"
+}
+#line 331 "emit/embed.bas"
+fornext_exit_401_3:;
+#line 332 "emit/embed.bas"
+do{
+#line 332 "emit/embed.bas"
+sub_close(*_SUB_EMBEDMANSAVE_INTEGER_FF,1);
+#line 332 "emit/embed.bas"
+if(!qbevent)break;evnt(30092,332,"embed.bas");}while(r);
+#line 333 "emit/embed.bas"
 exit_subfunc:;
-#line 20 "emit/globals.bas"
+#line 333 "emit/embed.bas"
 free_mem_lock(sf_mem_lock);
-#line 20 "emit/globals.bas"
+#line 333 "emit/embed.bas"
 #include "free401.txt"
-#line 20 "emit/globals.bas"
+#line 333 "emit/embed.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 20 "emit/globals.bas"
+#line 333 "emit/embed.bas"
 cmem_sp=tmp_cmem_sp;
-#line 20 "emit/globals.bas"
+#line 333 "emit/embed.bas"
 }

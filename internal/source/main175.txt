@@ -1,68 +1,182 @@
-#line 20 "utilities/build.bas"
-qbs* FUNC_GETMAKEEXECUTABLE(){
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
+void SUB_PATH_SLASH_CORRECT(qbs*_SUB_PATH_SLASH_CORRECT_STRING_A){
+#line 116 "utilities/file.bas"
 qbs *tqbs;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 ptrszint tmp_long;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 int32 tmp_fileno;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 #include "data175.txt"
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 mem_lock *sf_mem_lock;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 new_mem_lock();
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 sf_mem_lock->type=3;
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 libqb_check_stack();
-#line 20 "utilities/build.bas"
+#line 116 "utilities/file.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 21 "utilities/build.bas"
+#line 117 "utilities/file.bas"
 S_175_1:;
-#line 21 "utilities/build.bas"
+#line 117 "utilities/file.bas"
 if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
-#line 21 "utilities/build.bas"
-if(qbevent){evnt(29634,21,"build.bas");if(r)goto S_175_1;}
-#line 22 "utilities/build.bas"
-do{
-#line 22 "utilities/build.bas"
-qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_add(FUNC_GETCOMPILERPATH(),qbs_new_txt_len("mingw32-make.exe",16)));
-#line 22 "utilities/build.bas"
+#line 117 "utilities/file.bas"
+if(qbevent){evnt(30078,117,"file.bas");if(r)goto S_175_1;}
+#line 118 "utilities/file.bas"
+S_175_2:;
+#line 118 "utilities/file.bas"
+fornext_value175_3= 1 ;
+#line 118 "utilities/file.bas"
+fornext_finalvalue175_3=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
+#line 118 "utilities/file.bas"
+fornext_step175_3= 1 ;
+#line 118 "utilities/file.bas"
+if (fornext_step175_3<0) fornext_step_negative175_3=1; else fornext_step_negative175_3=0;
+#line 118 "utilities/file.bas"
+if (is_error_pending()) goto fornext_error175_3;
+#line 118 "utilities/file.bas"
+goto fornext_entrylabel175_3;
+#line 118 "utilities/file.bas"
+while(1){
+#line 118 "utilities/file.bas"
+fornext_value175_3=fornext_step175_3+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
+#line 118 "utilities/file.bas"
+fornext_entrylabel175_3:
+#line 118 "utilities/file.bas"
+*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value175_3;
+#line 118 "utilities/file.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 22 "utilities/build.bas"
-if(!qbevent)break;evnt(29634,22,"build.bas");}while(r);
-#line 23 "utilities/build.bas"
+#line 118 "utilities/file.bas"
+if (fornext_step_negative175_3){
+#line 118 "utilities/file.bas"
+if (fornext_value175_3<fornext_finalvalue175_3) break;
+#line 118 "utilities/file.bas"
 }else{
-#line 24 "utilities/build.bas"
-do{
-#line 24 "utilities/build.bas"
-qbs_set(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE,qbs_new_txt_len("make",4));
-#line 24 "utilities/build.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 24 "utilities/build.bas"
-if(!qbevent)break;evnt(29634,24,"build.bas");}while(r);
-#line 25 "utilities/build.bas"
+#line 118 "utilities/file.bas"
+if (fornext_value175_3>fornext_finalvalue175_3) break;
+#line 118 "utilities/file.bas"
 }
-#line 26 "utilities/build.bas"
+#line 118 "utilities/file.bas"
+fornext_error175_3:;
+#line 118 "utilities/file.bas"
+if(qbevent){evnt(30078,118,"file.bas");if(r)goto S_175_2;}
+#line 119 "utilities/file.bas"
+S_175_3:;
+#line 119 "utilities/file.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 47 )))||is_error_pending()){
+#line 119 "utilities/file.bas"
+if(qbevent){evnt(30078,119,"file.bas");if(r)goto S_175_3;}
+#line 119 "utilities/file.bas"
+do{
+#line 119 "utilities/file.bas"
+tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
+#line 119 "utilities/file.bas"
+tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
+#line 119 "utilities/file.bas"
+tmp_long= 92 ; if (!is_error_pending()){
+#line 119 "utilities/file.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 119 "utilities/file.bas"
+}}}
+#line 119 "utilities/file.bas"
+if(!qbevent)break;evnt(30078,119,"file.bas");}while(r);
+#line 119 "utilities/file.bas"
+}
+#line 120 "utilities/file.bas"
+fornext_continue_175_2:;
+#line 120 "utilities/file.bas"
+}
+#line 120 "utilities/file.bas"
+fornext_exit_175_2:;
+#line 121 "utilities/file.bas"
+}else{
+#line 122 "utilities/file.bas"
+S_175_8:;
+#line 122 "utilities/file.bas"
+fornext_value175_6= 1 ;
+#line 122 "utilities/file.bas"
+fornext_finalvalue175_6=_SUB_PATH_SLASH_CORRECT_STRING_A->len;
+#line 122 "utilities/file.bas"
+fornext_step175_6= 1 ;
+#line 122 "utilities/file.bas"
+if (fornext_step175_6<0) fornext_step_negative175_6=1; else fornext_step_negative175_6=0;
+#line 122 "utilities/file.bas"
+if (is_error_pending()) goto fornext_error175_6;
+#line 122 "utilities/file.bas"
+goto fornext_entrylabel175_6;
+#line 122 "utilities/file.bas"
+while(1){
+#line 122 "utilities/file.bas"
+fornext_value175_6=fornext_step175_6+(*_SUB_PATH_SLASH_CORRECT_LONG_X);
+#line 122 "utilities/file.bas"
+fornext_entrylabel175_6:
+#line 122 "utilities/file.bas"
+*_SUB_PATH_SLASH_CORRECT_LONG_X=fornext_value175_6;
+#line 122 "utilities/file.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 122 "utilities/file.bas"
+if (fornext_step_negative175_6){
+#line 122 "utilities/file.bas"
+if (fornext_value175_6<fornext_finalvalue175_6) break;
+#line 122 "utilities/file.bas"
+}else{
+#line 122 "utilities/file.bas"
+if (fornext_value175_6>fornext_finalvalue175_6) break;
+#line 122 "utilities/file.bas"
+}
+#line 122 "utilities/file.bas"
+fornext_error175_6:;
+#line 122 "utilities/file.bas"
+if(qbevent){evnt(30078,122,"file.bas");if(r)goto S_175_8;}
+#line 123 "utilities/file.bas"
+S_175_9:;
+#line 123 "utilities/file.bas"
+if ((qbs_cleanup(qbs_tmp_base,-(qbs_asc(_SUB_PATH_SLASH_CORRECT_STRING_A,*_SUB_PATH_SLASH_CORRECT_LONG_X)== 92 )))||is_error_pending()){
+#line 123 "utilities/file.bas"
+if(qbevent){evnt(30078,123,"file.bas");if(r)goto S_175_9;}
+#line 123 "utilities/file.bas"
+do{
+#line 123 "utilities/file.bas"
+tqbs=_SUB_PATH_SLASH_CORRECT_STRING_A; if (!is_error_pending()){
+#line 123 "utilities/file.bas"
+tmp_fileno=*_SUB_PATH_SLASH_CORRECT_LONG_X; if (!is_error_pending()){
+#line 123 "utilities/file.bas"
+tmp_long= 47 ; if (!is_error_pending()){
+#line 123 "utilities/file.bas"
+if ((tmp_fileno>0)&&(tmp_fileno<=tqbs->len)){tqbs->chr[tmp_fileno-1]=tmp_long;}else{error(5);}
+#line 123 "utilities/file.bas"
+}}}
+#line 123 "utilities/file.bas"
+if(!qbevent)break;evnt(30078,123,"file.bas");}while(r);
+#line 123 "utilities/file.bas"
+}
+#line 124 "utilities/file.bas"
+fornext_continue_175_5:;
+#line 124 "utilities/file.bas"
+}
+#line 124 "utilities/file.bas"
+fornext_exit_175_5:;
+#line 125 "utilities/file.bas"
+}
+#line 126 "utilities/file.bas"
 exit_subfunc:;
-#line 26 "utilities/build.bas"
+#line 126 "utilities/file.bas"
 free_mem_lock(sf_mem_lock);
-#line 26 "utilities/build.bas"
+#line 126 "utilities/file.bas"
 #include "free175.txt"
-#line 26 "utilities/build.bas"
+#line 126 "utilities/file.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 26 "utilities/build.bas"
+#line 126 "utilities/file.bas"
 cmem_sp=tmp_cmem_sp;
-#line 26 "utilities/build.bas"
-qbs_maketmp(_FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE);return _FUNC_GETMAKEEXECUTABLE_STRING_GETMAKEEXECUTABLE;
-#line 26 "utilities/build.bas"
+#line 126 "utilities/file.bas"
 }

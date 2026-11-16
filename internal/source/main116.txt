@@ -1,118 +1,86 @@
-#line 29138 "qb64pe.bas"
-uint32 FUNC_VRGBS(qbs*_FUNC_VRGBS_STRING_TEXT,uint32*_FUNC_VRGBS_ULONG_DEFAULTCOLOR){
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
+qbs* FUNC_QUOTEDFILENAME(qbs*_FUNC_QUOTEDFILENAME_STRING_F){
+#line 29468 "qb64pe.bas"
 qbs *tqbs;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 ptrszint tmp_long;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 int32 tmp_fileno;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 #include "data116.txt"
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 mem_lock *sf_mem_lock;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 new_mem_lock();
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 sf_mem_lock->type=3;
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 libqb_check_stack();
-#line 29138 "qb64pe.bas"
+#line 29468 "qb64pe.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 29144 "qb64pe.bas"
+#line 29470 "qb64pe.bas"
+S_116_1:;
+#line 29470 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("WIN",3))))||is_error_pending()){
+#line 29470 "qb64pe.bas"
+if(qbevent){evnt(29470);if(r)goto S_116_1;}
+#line 29471 "qb64pe.bas"
 do{
-#line 29144 "qb64pe.bas"
-*_FUNC_VRGBS_ULONG_VRGBS=*_FUNC_VRGBS_ULONG_DEFAULTCOLOR;
-#line 29144 "qb64pe.bas"
-if(!qbevent)break;evnt(29144);}while(r);
-#line 29145 "qb64pe.bas"
-S_116_2:;
-#line 29145 "qb64pe.bas"
-if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_ucase(qbs_left(_FUNC_VRGBS_STRING_TEXT, 4 )),qbs_new_txt_len("_RGB",4))))||is_error_pending()){
-#line 29145 "qb64pe.bas"
-if(qbevent){evnt(29145);if(r)goto S_116_2;}
-#line 29146 "qb64pe.bas"
-do{
-#line 29146 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_RPOS=func_instr(NULL,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len("(",1),0);
-#line 29146 "qb64pe.bas"
+#line 29471 "qb64pe.bas"
+qbs_set(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME,qbs_add(qbs_add(func_chr( 34 ),_FUNC_QUOTEDFILENAME_STRING_F),func_chr( 34 )));
+#line 29471 "qb64pe.bas"
 qbs_cleanup(qbs_tmp_base,0);
-#line 29146 "qb64pe.bas"
-if(!qbevent)break;evnt(29146);}while(r);
-#line 29147 "qb64pe.bas"
+#line 29471 "qb64pe.bas"
+if(!qbevent)break;evnt(29471);}while(r);
+#line 29472 "qb64pe.bas"
 do{
-#line 29147 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_GPOS=func_instr(*_FUNC_VRGBS_LONG_RPOS,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
-#line 29147 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 29147 "qb64pe.bas"
-if(!qbevent)break;evnt(29147);}while(r);
-#line 29148 "qb64pe.bas"
-do{
-#line 29148 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_BPOS=func_instr(*_FUNC_VRGBS_LONG_GPOS+ 1 ,_FUNC_VRGBS_STRING_TEXT,qbs_new_txt_len(",",1),0|1);
-#line 29148 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 29148 "qb64pe.bas"
-if(!qbevent)break;evnt(29148);}while(r);
-#line 29149 "qb64pe.bas"
-S_116_6:;
-#line 29149 "qb64pe.bas"
-if (((-(*_FUNC_VRGBS_LONG_RPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_BPOS!= 0 ))&(-(*_FUNC_VRGBS_LONG_GPOS!= 0 )))||is_error_pending()){
-#line 29149 "qb64pe.bas"
-if(qbevent){evnt(29149);if(r)goto S_116_6;}
-#line 29150 "qb64pe.bas"
-do{
-#line 29150 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_RED=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_RPOS+ 1 ,NULL,0))));
-#line 29150 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 29150 "qb64pe.bas"
-if(!qbevent)break;evnt(29150);}while(r);
-#line 29151 "qb64pe.bas"
-do{
-#line 29151 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_GREEN=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_GPOS+ 1 ,NULL,0))));
-#line 29151 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 29151 "qb64pe.bas"
-if(!qbevent)break;evnt(29151);}while(r);
-#line 29152 "qb64pe.bas"
-do{
-#line 29152 "qb64pe.bas"
-*_FUNC_VRGBS_LONG_BLUE=qbr(qbs_val<long double>(qbs__trim(func_mid(_FUNC_VRGBS_STRING_TEXT,*_FUNC_VRGBS_LONG_BPOS+ 1 ,NULL,0))));
-#line 29152 "qb64pe.bas"
-qbs_cleanup(qbs_tmp_base,0);
-#line 29152 "qb64pe.bas"
-if(!qbevent)break;evnt(29152);}while(r);
-#line 29153 "qb64pe.bas"
-do{
-#line 29153 "qb64pe.bas"
-*_FUNC_VRGBS_ULONG_VRGBS=func__rgb32(*_FUNC_VRGBS_LONG_RED,*_FUNC_VRGBS_LONG_GREEN,*_FUNC_VRGBS_LONG_BLUE);
-#line 29153 "qb64pe.bas"
-if(!qbevent)break;evnt(29153);}while(r);
-#line 29154 "qb64pe.bas"
+#line 29472 "qb64pe.bas"
+goto exit_subfunc;
+#line 29472 "qb64pe.bas"
+if(!qbevent)break;evnt(29472);}while(r);
+#line 29473 "qb64pe.bas"
 }
-#line 29155 "qb64pe.bas"
+#line 29475 "qb64pe.bas"
+S_116_5:;
+#line 29475 "qb64pe.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(__STRING_OS,qbs_new_txt_len("LNX",3))))||is_error_pending()){
+#line 29475 "qb64pe.bas"
+if(qbevent){evnt(29475);if(r)goto S_116_5;}
+#line 29476 "qb64pe.bas"
+do{
+#line 29476 "qb64pe.bas"
+qbs_set(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME,qbs_add(qbs_add(qbs_new_txt_len("'",1),_FUNC_QUOTEDFILENAME_STRING_F),qbs_new_txt_len("'",1)));
+#line 29476 "qb64pe.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 29476 "qb64pe.bas"
+if(!qbevent)break;evnt(29476);}while(r);
+#line 29477 "qb64pe.bas"
+do{
+#line 29477 "qb64pe.bas"
+goto exit_subfunc;
+#line 29477 "qb64pe.bas"
+if(!qbevent)break;evnt(29477);}while(r);
+#line 29478 "qb64pe.bas"
 }
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
 exit_subfunc:;
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
 free_mem_lock(sf_mem_lock);
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
 #include "free116.txt"
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
 cmem_sp=tmp_cmem_sp;
-#line 29156 "qb64pe.bas"
-return *_FUNC_VRGBS_ULONG_VRGBS;
-#line 29156 "qb64pe.bas"
+#line 29480 "qb64pe.bas"
+qbs_maketmp(_FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME);return _FUNC_QUOTEDFILENAME_STRING_QUOTEDFILENAME;
+#line 29480 "qb64pe.bas"
 }
