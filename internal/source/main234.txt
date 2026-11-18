@@ -1,162 +1,218 @@
-#line 351 "utilities/s-buffer/simplebuffer.bm"
-void SUB_DELETEBUFRAWDATA(int32*_SUB_DELETEBUFRAWDATA_LONG_HANDLE,int32*_SUB_DELETEBUFRAWDATA_LONG_SIZE){
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
+void SUB_INIPARSELINE(qbs*_SUB_INIPARSELINE_STRING_TEXT,int8*_SUB_INIPARSELINE_BYTE_KIND,qbs*_SUB_INIPARSELINE_STRING_NM,qbs*_SUB_INIPARSELINE_STRING_RAW){
+#line 660 "utilities/ini-manager/ini.bm"
 qbs *tqbs;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 ptrszint tmp_long;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 int32 tmp_fileno;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 #include "data234.txt"
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 mem_lock *sf_mem_lock;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 new_mem_lock();
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 sf_mem_lock=mem_lock_tmp;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 sf_mem_lock->type=3;
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 libqb_check_stack();
-#line 351 "utilities/s-buffer/simplebuffer.bm"
+#line 660 "utilities/ini-manager/ini.bm"
 if (is_error_pending()) goto exit_subfunc;
-#line 353 "utilities/s-buffer/simplebuffer.bm"
+#line 661 "utilities/ini-manager/ini.bm"
 do{
-#line 353 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,353,"simplebuffer.bm");}while(r);
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-S_234_2:;
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-if ((~(FUNC_CHECKHANDLE(_SUB_DELETEBUFRAWDATA_LONG_HANDLE)))||is_error_pending()){
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-if(qbevent){evnt(30083,355,"simplebuffer.bm");if(r)goto S_234_2;}
-#line 355 "utilities/s-buffer/simplebuffer.bm"
+#line 661 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,661,"ini.bm");}while(r);
+#line 663 "utilities/ini-manager/ini.bm"
 do{
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-error( 258 );
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,355,"simplebuffer.bm");}while(r);
-#line 355 "utilities/s-buffer/simplebuffer.bm"
+#line 663 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_NM,qbs_new_txt_len("",0));
+#line 663 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 663 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,663,"ini.bm");}while(r);
+#line 664 "utilities/ini-manager/ini.bm"
 do{
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-close_program=1;
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-end();
-#line 355 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,355,"simplebuffer.bm");}while(r);
-#line 355 "utilities/s-buffer/simplebuffer.bm"
+#line 664 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_RAW,qbs_new_txt_len("",0));
+#line 664 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 664 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,664,"ini.bm");}while(r);
+#line 665 "utilities/ini-manager/ini.bm"
+do{
+#line 665 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_T,FUNC_INITRIM(_SUB_INIPARSELINE_STRING_TEXT));
+#line 665 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 665 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,665,"ini.bm");}while(r);
+#line 666 "utilities/ini-manager/ini.bm"
+S_234_5:;
+#line 666 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_INIPARSELINE_STRING_T,qbs_new_txt_len("",0))))||is_error_pending()){
+#line 666 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(30082,666,"ini.bm");if(r)goto S_234_5;}
+#line 666 "utilities/ini-manager/ini.bm"
+do{
+#line 666 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 0 ;
+#line 666 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,666,"ini.bm");}while(r);
+#line 666 "utilities/ini-manager/ini.bm"
+do{
+#line 666 "utilities/ini-manager/ini.bm"
+goto exit_subfunc;
+#line 666 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,666,"ini.bm");}while(r);
+#line 666 "utilities/ini-manager/ini.bm"
 }
-#line 356 "utilities/s-buffer/simplebuffer.bm"
+#line 668 "utilities/ini-manager/ini.bm"
 do{
-#line 356 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_BUF=*_SUB_DELETEBUFRAWDATA_LONG_HANDLE* 2ll ;
-#line 356 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,356,"simplebuffer.bm");}while(r);
-#line 358 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 358 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_CUR=FUNC_GETBUFPOS(_SUB_DELETEBUFRAWDATA_LONG_HANDLE);
-#line 358 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,358,"simplebuffer.bm");}while(r);
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_INTEGER64_CBL=FUNC_GETBUFLEN(_SUB_DELETEBUFRAWDATA_LONG_HANDLE);
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,359,"simplebuffer.bm");}while(r);
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_EOB=*_SUB_DELETEBUFRAWDATA_INTEGER64_CBL+ 1 ;
-#line 359 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,359,"simplebuffer.bm");}while(r);
-#line 360 "utilities/s-buffer/simplebuffer.bm"
+#line 668 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_C,qbs_left(_SUB_INIPARSELINE_STRING_T, 1 ));
+#line 668 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 668 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,668,"ini.bm");}while(r);
+#line 669 "utilities/ini-manager/ini.bm"
 S_234_10:;
-#line 360 "utilities/s-buffer/simplebuffer.bm"
-if ((-(*_SUB_DELETEBUFRAWDATA_LONG_SIZE>(*_SUB_DELETEBUFRAWDATA_LONG_EOB-*_SUB_DELETEBUFRAWDATA_LONG_CUR)))||is_error_pending()){
-#line 360 "utilities/s-buffer/simplebuffer.bm"
-if(qbevent){evnt(30083,360,"simplebuffer.bm");if(r)goto S_234_10;}
-#line 360 "utilities/s-buffer/simplebuffer.bm"
+#line 669 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,(qbs_equal(_SUB_INIPARSELINE_STRING_C,qbs_new_txt_len(";",1)))|(qbs_equal(_SUB_INIPARSELINE_STRING_C,qbs_new_txt_len("#",1)))|(qbs_equal(_SUB_INIPARSELINE_STRING_C,qbs_new_txt_len("'",1)))))||is_error_pending()){
+#line 669 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(30082,669,"ini.bm");if(r)goto S_234_10;}
+#line 669 "utilities/ini-manager/ini.bm"
 do{
-#line 360 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_SIZE=*_SUB_DELETEBUFRAWDATA_LONG_EOB-*_SUB_DELETEBUFRAWDATA_LONG_CUR;
-#line 360 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,360,"simplebuffer.bm");}while(r);
-#line 360 "utilities/s-buffer/simplebuffer.bm"
+#line 669 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 1 ;
+#line 669 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,669,"ini.bm");}while(r);
+#line 669 "utilities/ini-manager/ini.bm"
+do{
+#line 669 "utilities/ini-manager/ini.bm"
+goto exit_subfunc;
+#line 669 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,669,"ini.bm");}while(r);
+#line 669 "utilities/ini-manager/ini.bm"
 }
-#line 362 "utilities/s-buffer/simplebuffer.bm"
+#line 671 "utilities/ini-manager/ini.bm"
+S_234_14:;
+#line 671 "utilities/ini-manager/ini.bm"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(_SUB_INIPARSELINE_STRING_C,qbs_new_txt_len("[",1))))||is_error_pending()){
+#line 671 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(30082,671,"ini.bm");if(r)goto S_234_14;}
+#line 672 "utilities/ini-manager/ini.bm"
 do{
-#line 362 "utilities/s-buffer/simplebuffer.bm"
-sub_mid((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]),*_SUB_DELETEBUFRAWDATA_LONG_CUR,0,func_mid((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]),*_SUB_DELETEBUFRAWDATA_LONG_CUR+*_SUB_DELETEBUFRAWDATA_LONG_SIZE,*_SUB_DELETEBUFRAWDATA_INTEGER64_CBL-(*_SUB_DELETEBUFRAWDATA_LONG_CUR+*_SUB_DELETEBUFRAWDATA_LONG_SIZE)+ 1 ,0|1),0);
-#line 362 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,362,"simplebuffer.bm");}while(r);
-#line 363 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 363 "utilities/s-buffer/simplebuffer.bm"
-sub_mid((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]), 5 , 4 ,l2string(*_SUB_DELETEBUFRAWDATA_INTEGER64_CBL-*_SUB_DELETEBUFRAWDATA_LONG_SIZE),1);
-#line 363 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,363,"simplebuffer.bm");}while(r);
-#line 364 "utilities/s-buffer/simplebuffer.bm"
-S_234_15:;
-#line 364 "utilities/s-buffer/simplebuffer.bm"
-if ((-(*_SUB_DELETEBUFRAWDATA_LONG_SIZE> 0 ))||is_error_pending()){
-#line 364 "utilities/s-buffer/simplebuffer.bm"
-if(qbevent){evnt(30083,364,"simplebuffer.bm");if(r)goto S_234_15;}
-#line 365 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 365 "utilities/s-buffer/simplebuffer.bm"
-sub_mid((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 1 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]), 13 , 4 ,l2string( -1 ),1);
-#line 365 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,365,"simplebuffer.bm");}while(r);
-#line 367 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 367 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_EXT=(((*_SUB_DELETEBUFRAWDATA_INTEGER64_CBL-*_SUB_DELETEBUFRAWDATA_LONG_SIZE+ 1 )+ 16383 )& -16384 );
-#line 367 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,367,"simplebuffer.bm");}while(r);
-#line 368 "utilities/s-buffer/simplebuffer.bm"
-do{
-#line 368 "utilities/s-buffer/simplebuffer.bm"
-*_SUB_DELETEBUFRAWDATA_LONG_FSZ=(((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])->len-*_SUB_DELETEBUFRAWDATA_LONG_EXT;
-#line 368 "utilities/s-buffer/simplebuffer.bm"
+#line 672 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_LONG_I=func_instr(NULL,_SUB_INIPARSELINE_STRING_T,qbs_new_txt_len("]",1),0);
+#line 672 "utilities/ini-manager/ini.bm"
 qbs_cleanup(qbs_tmp_base,0);
-#line 368 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,368,"simplebuffer.bm");}while(r);
-#line 369 "utilities/s-buffer/simplebuffer.bm"
-S_234_19:;
-#line 369 "utilities/s-buffer/simplebuffer.bm"
-if ((qbs_cleanup(qbs_tmp_base,-(*_SUB_DELETEBUFRAWDATA_LONG_FSZ>=(qb_safe_idiv((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])])->len, 4 )))))||is_error_pending()){
-#line 369 "utilities/s-buffer/simplebuffer.bm"
-if(qbevent){evnt(30083,369,"simplebuffer.bm");if(r)goto S_234_19;}
-#line 370 "utilities/s-buffer/simplebuffer.bm"
+#line 672 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,672,"ini.bm");}while(r);
+#line 673 "utilities/ini-manager/ini.bm"
+S_234_16:;
+#line 673 "utilities/ini-manager/ini.bm"
+if ((*_SUB_INIPARSELINE_LONG_I)||is_error_pending()){
+#line 673 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(30082,673,"ini.bm");if(r)goto S_234_16;}
+#line 674 "utilities/ini-manager/ini.bm"
 do{
-#line 370 "utilities/s-buffer/simplebuffer.bm"
-tmp_long=array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5]);
-#line 370 "utilities/s-buffer/simplebuffer.bm"
-if (!is_error_pending()) qbs_set( ((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[tmp_long],qbs_left((((qbs**)(__ARRAY_STRING_SIMPLEBUFFER_ARRAY[0]))[array_check((*_SUB_DELETEBUFRAWDATA_LONG_BUF+ 0 )-__ARRAY_STRING_SIMPLEBUFFER_ARRAY[4],__ARRAY_STRING_SIMPLEBUFFER_ARRAY[5])]),*_SUB_DELETEBUFRAWDATA_LONG_EXT));
-#line 370 "utilities/s-buffer/simplebuffer.bm"
+#line 674 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 2 ;
+#line 674 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,674,"ini.bm");}while(r);
+#line 675 "utilities/ini-manager/ini.bm"
+do{
+#line 675 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_NM,FUNC_INITRIM(func_mid(_SUB_INIPARSELINE_STRING_T, 2 ,*_SUB_INIPARSELINE_LONG_I- 2 ,0|1)));
+#line 675 "utilities/ini-manager/ini.bm"
 qbs_cleanup(qbs_tmp_base,0);
-#line 370 "utilities/s-buffer/simplebuffer.bm"
-if(!qbevent)break;evnt(30083,370,"simplebuffer.bm");}while(r);
-#line 371 "utilities/s-buffer/simplebuffer.bm"
+#line 675 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,675,"ini.bm");}while(r);
+#line 676 "utilities/ini-manager/ini.bm"
+}else{
+#line 677 "utilities/ini-manager/ini.bm"
+do{
+#line 677 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 4 ;
+#line 677 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,677,"ini.bm");}while(r);
+#line 678 "utilities/ini-manager/ini.bm"
 }
-#line 372 "utilities/s-buffer/simplebuffer.bm"
+#line 679 "utilities/ini-manager/ini.bm"
+do{
+#line 679 "utilities/ini-manager/ini.bm"
+goto exit_subfunc;
+#line 679 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,679,"ini.bm");}while(r);
+#line 680 "utilities/ini-manager/ini.bm"
 }
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 682 "utilities/ini-manager/ini.bm"
+do{
+#line 682 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_LONG_I=func_instr(NULL,_SUB_INIPARSELINE_STRING_T,qbs_new_txt_len("=",1),0);
+#line 682 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 682 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,682,"ini.bm");}while(r);
+#line 683 "utilities/ini-manager/ini.bm"
+S_234_25:;
+#line 683 "utilities/ini-manager/ini.bm"
+if ((-(*_SUB_INIPARSELINE_LONG_I> 1 ))||is_error_pending()){
+#line 683 "utilities/ini-manager/ini.bm"
+if(qbevent){evnt(30082,683,"ini.bm");if(r)goto S_234_25;}
+#line 684 "utilities/ini-manager/ini.bm"
+do{
+#line 684 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_NM,FUNC_INITRIM(qbs_left(_SUB_INIPARSELINE_STRING_T,*_SUB_INIPARSELINE_LONG_I- 1 )));
+#line 684 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 684 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,684,"ini.bm");}while(r);
+#line 685 "utilities/ini-manager/ini.bm"
+do{
+#line 685 "utilities/ini-manager/ini.bm"
+qbs_set(_SUB_INIPARSELINE_STRING_RAW,func_mid(_SUB_INIPARSELINE_STRING_T,*_SUB_INIPARSELINE_LONG_I+ 1 ,NULL,0));
+#line 685 "utilities/ini-manager/ini.bm"
+qbs_cleanup(qbs_tmp_base,0);
+#line 685 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,685,"ini.bm");}while(r);
+#line 686 "utilities/ini-manager/ini.bm"
+do{
+#line 686 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 3 ;
+#line 686 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,686,"ini.bm");}while(r);
+#line 687 "utilities/ini-manager/ini.bm"
+do{
+#line 687 "utilities/ini-manager/ini.bm"
+goto exit_subfunc;
+#line 687 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,687,"ini.bm");}while(r);
+#line 688 "utilities/ini-manager/ini.bm"
+}
+#line 690 "utilities/ini-manager/ini.bm"
+do{
+#line 690 "utilities/ini-manager/ini.bm"
+*_SUB_INIPARSELINE_BYTE_KIND= 4 ;
+#line 690 "utilities/ini-manager/ini.bm"
+if(!qbevent)break;evnt(30082,690,"ini.bm");}while(r);
+#line 691 "utilities/ini-manager/ini.bm"
 exit_subfunc:;
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 691 "utilities/ini-manager/ini.bm"
 free_mem_lock(sf_mem_lock);
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 691 "utilities/ini-manager/ini.bm"
 #include "free234.txt"
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 691 "utilities/ini-manager/ini.bm"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 691 "utilities/ini-manager/ini.bm"
 cmem_sp=tmp_cmem_sp;
-#line 373 "utilities/s-buffer/simplebuffer.bm"
+#line 691 "utilities/ini-manager/ini.bm"
 }
