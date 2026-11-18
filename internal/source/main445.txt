@@ -1,46 +1,114 @@
-#line 11428 "ide/ide_methods.bas"
-void SUB_IDEDELTXT(){
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
+void SUB_FORGETGENERATEDFILEBUFFERS(){
+#line 313 "emit/split_units.bas"
 qbs *tqbs;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 ptrszint tmp_long;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 int32 tmp_fileno;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 uint32 qbs_tmp_base=qbs_tmp_list_nexti;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 uint8 *tmp_mem_static_pointer=mem_static_pointer;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 uint32 tmp_cmem_sp=cmem_sp;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 #include "data445.txt"
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 mem_lock *sf_mem_lock;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 new_mem_lock();
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 sf_mem_lock=mem_lock_tmp;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 sf_mem_lock->type=3;
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 libqb_check_stack();
-#line 11428 "ide/ide_methods.bas"
+#line 313 "emit/split_units.bas"
 if (is_error_pending()) goto exit_subfunc;
-#line 11429 "ide/ide_methods.bas"
+#line 314 "emit/split_units.bas"
+S_445_1:;
+#line 314 "emit/split_units.bas"
+fornext_value445_2= 0 ;
+#line 314 "emit/split_units.bas"
+fornext_finalvalue445_2=func_ubound(__ARRAY_STRING_SBUFN,1,1);
+#line 314 "emit/split_units.bas"
+fornext_step445_2= 1 ;
+#line 314 "emit/split_units.bas"
+if (fornext_step445_2<0) fornext_step_negative445_2=1; else fornext_step_negative445_2=0;
+#line 314 "emit/split_units.bas"
+if (is_error_pending()) goto fornext_error445_2;
+#line 314 "emit/split_units.bas"
+goto fornext_entrylabel445_2;
+#line 314 "emit/split_units.bas"
+while(1){
+#line 314 "emit/split_units.bas"
+fornext_value445_2=fornext_step445_2+(*_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF);
+#line 314 "emit/split_units.bas"
+fornext_entrylabel445_2:
+#line 314 "emit/split_units.bas"
+*_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF=fornext_value445_2;
+#line 314 "emit/split_units.bas"
+qbs_cleanup(qbs_tmp_base,0);
+#line 314 "emit/split_units.bas"
+if (fornext_step_negative445_2){
+#line 314 "emit/split_units.bas"
+if (fornext_value445_2<fornext_finalvalue445_2) break;
+#line 314 "emit/split_units.bas"
+}else{
+#line 314 "emit/split_units.bas"
+if (fornext_value445_2>fornext_finalvalue445_2) break;
+#line 314 "emit/split_units.bas"
+}
+#line 314 "emit/split_units.bas"
+fornext_error445_2:;
+#line 314 "emit/split_units.bas"
+if(qbevent){evnt(30094,314,"split_units.bas");if(r)goto S_445_1;}
+#line 315 "emit/split_units.bas"
+S_445_2:;
+#line 315 "emit/split_units.bas"
+if ((qbs_cleanup(qbs_tmp_base,(((qbs**)(__ARRAY_STRING_SBUFN[0]))[array_check((*_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF)-__ARRAY_STRING_SBUFN[4],__ARRAY_STRING_SBUFN[5])])->len))||is_error_pending()){
+#line 315 "emit/split_units.bas"
+if(qbevent){evnt(30094,315,"split_units.bas");if(r)goto S_445_2;}
+#line 316 "emit/split_units.bas"
+S_445_3:;
+#line 316 "emit/split_units.bas"
+if ((qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_left((((qbs**)(__ARRAY_STRING_SBUFN[0]))[array_check((*_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF)-__ARRAY_STRING_SBUFN[4],__ARRAY_STRING_SBUFN[5])]),__STRING_TMPDIR->len),__STRING_TMPDIR)))||is_error_pending()){
+#line 316 "emit/split_units.bas"
+if(qbevent){evnt(30094,316,"split_units.bas");if(r)goto S_445_3;}
+#line 317 "emit/split_units.bas"
+S_445_4:;
+#line 317 "emit/split_units.bas"
+if ((qbs_cleanup(qbs_tmp_base,FUNC_ISGENERATEDFILENAME(func_mid((((qbs**)(__ARRAY_STRING_SBUFN[0]))[array_check((*_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF)-__ARRAY_STRING_SBUFN[4],__ARRAY_STRING_SBUFN[5])]),__STRING_TMPDIR->len+ 1 ,NULL,0))))||is_error_pending()){
+#line 317 "emit/split_units.bas"
+if(qbevent){evnt(30094,317,"split_units.bas");if(r)goto S_445_4;}
+#line 317 "emit/split_units.bas"
 do{
-#line 11429 "ide/ide_methods.bas"
-*__INTEGER_IDETXTLAST= 0 ;
-#line 11429 "ide/ide_methods.bas"
-if(!qbevent)break;evnt(30100,11429,"ide_methods.bas");}while(r);
-#line 11430 "ide/ide_methods.bas"
+#line 317 "emit/split_units.bas"
+SUB_CLEARBUFFERAT(_SUB_FORGETGENERATEDFILEBUFFERS_LONG_BUF);
+#line 317 "emit/split_units.bas"
+if(!qbevent)break;evnt(30094,317,"split_units.bas");}while(r);
+#line 317 "emit/split_units.bas"
+}
+#line 318 "emit/split_units.bas"
+}
+#line 319 "emit/split_units.bas"
+}
+#line 320 "emit/split_units.bas"
+fornext_continue_445_1:;
+#line 320 "emit/split_units.bas"
+}
+#line 320 "emit/split_units.bas"
+fornext_exit_445_1:;
+#line 321 "emit/split_units.bas"
 exit_subfunc:;
-#line 11430 "ide/ide_methods.bas"
+#line 321 "emit/split_units.bas"
 free_mem_lock(sf_mem_lock);
-#line 11430 "ide/ide_methods.bas"
+#line 321 "emit/split_units.bas"
 #include "free445.txt"
-#line 11430 "ide/ide_methods.bas"
+#line 321 "emit/split_units.bas"
 if ((tmp_mem_static_pointer>=mem_static)&&(tmp_mem_static_pointer<=mem_static_limit)) mem_static_pointer=tmp_mem_static_pointer; else mem_static_pointer=mem_static;
-#line 11430 "ide/ide_methods.bas"
+#line 321 "emit/split_units.bas"
 cmem_sp=tmp_cmem_sp;
-#line 11430 "ide/ide_methods.bas"
+#line 321 "emit/split_units.bas"
 }
