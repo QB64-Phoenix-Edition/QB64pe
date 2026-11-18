@@ -113,6 +113,7 @@ mem_block func__memnew(intptr_t bytes) {
         if (!bytes) {
             b.offset = 1; // non-zero=success
             b.size = 0;
+            mem_lock_tmp->type = 0;
         } else {
             b.offset = (intptr_t)malloc(bytes);
             if (!b.offset) {
