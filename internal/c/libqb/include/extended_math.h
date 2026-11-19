@@ -85,15 +85,11 @@ static inline double func_csch(double num) {
 }
 
 static inline double func_coth(double num) {
-    if (num > 44.014845) {
+    if (num == 0) {
         error(5);
         return 0;
     }
-    if (2 * std::exp(num) - 1 == 0) {
-        error(5);
-        return 0;
-    }
-    return 2 * std::exp(num) - 1;
+    return 1 / std::tanh(num);
 }
 
 static inline double func_sec(double num) {
